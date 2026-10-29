@@ -78,6 +78,8 @@ date >= 2024-01-01
 tag = "entreprise" AND country = "FR"
 (tag = "personne" OR tag = "entreprise") AND confidence > 50
 NOT (tag = "archivé")
+in_group = "Équipe A"
+in_group NOT EXISTS
 ```
 
 ### Opérateurs logiques
@@ -129,6 +131,7 @@ WITHIN 2 HOPS OF tag = "suspect"
 | `type` | texte | "element" ou "link" |
 | `has_geo` | booléen | Possède des coordonnées géo |
 | `group` | booléen | Est un groupe |
+| `in_group` | texte | Nom du groupe qui contient l'élément, et des groupes qui contiennent celui-ci |
 | `country` | texte | Pays (propriétés de type country) |
 
 ### Champs des liens
@@ -240,7 +243,7 @@ Après exécution, deux modes d'affichage sont disponibles (cumulables) :
 | Mode | Icône | Description |
 |------|-------|-------------|
 | **Filtre canvas** | Entonnoir | Atténue les éléments non-matchés sur le canvas, la carte, la timeline et la matrice |
-| **Table** | Tableau | Affiche les résultats dans un tableau triable avec export CSV |
+| **Table** | Tableau | Affiche les résultats dans un tableau triable : le libellé, puis les champs testés par la requête. L'export CSV ajoute les autres propriétés |
 
 Les boutons de mode se trouvent en haut du panneau requêtes, à côté du compteur de résultats.
 
@@ -253,8 +256,17 @@ Quand la requête trouve des liens, le filtre canvas garde en évidence les él�
 - **Afficher les résultats** (icône cible) : cadre la vue sur ce que la requête a trouvé, extrémités des liens comprises (canvas ; carte pour les éléments géolocalisés ; la timeline se place sur le premier)
 - **Sélectionner / Désélectionner** (bascule) : sélectionne les résultats, ou les retire de la sélection quand ils sont déjà tous sélectionnés. Quand la requête filtre le canvas, elle porte sur les éléments affichés (filtres compris), comme le bouton du panneau Filtres, avec lequel elle reste synchronisée
 - **Inverser la sélection** : sélectionne ce que la requête n'a pas trouvé, du même type que ses résultats (les autres éléments, ou les autres liens) ; les éléments masqués sont exclus. Un second clic resélectionne les résultats ; le bouton reste en évidence tant que l'inverse est sélectionné
+- **Grouper les résultats** : place les éléments trouvés dans un nouveau groupe sur le canvas, là où ils sont, nommé d'après la requête (renommable). Les éléments déjà dans un groupe et les groupes eux-mêmes ne sont pas repris ; il en faut au moins deux. Un seul **Ctrl+Z** annule. Pour resserrer un groupe dispersé : clic-droit sur le groupe → **Rapprocher les membres** (voir [Groupes]({{< relref "elements-links#groupes" >}}))
 - **Sauvegarder comme vue** : crée une vue sauvegardée qui garde la requête, les filtres et le choix atténuer / masquer
-- **Clic sur une ligne** (mode table) : sélectionne l'élément et centre la vue dessus
+- **Clic sur une ligne** (mode table) : sélectionne l'élément et le montre dans la vue active (canvas, carte ou timeline) ; un lien est montré avec ses deux extrémités
+
+### Grouper les résultats
+
+En mode table, la liste **Grouper par** regroupe les résultats selon un champ : `tag`, `in_group` (groupe du canvas), `country` ou une propriété présente dans les résultats. La table affiche alors une ligne par valeur avec le nombre de résultats, les plus nombreuses d'abord ; les résultats sans valeur sont regroupés en dernière ligne.
+
+- Un résultat qui porte plusieurs valeurs (plusieurs tags, groupes imbriqués) est compté sur chacune de ses lignes, comme dans une requête : un membre d'« Équipe A », elle-même dans « Réseau », compte dans les deux lignes.
+- **Clic sur une ligne** : sélectionne les résultats de cette valeur et les cadre dans la vue.
+- **Exporter CSV** exporte alors les valeurs et leur nombre.
 
 ### Actualisation automatique
 

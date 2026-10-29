@@ -128,6 +128,8 @@ export const RESERVED_FIELDS = new Set([
   'date', 'date.start', 'date.end',
   'created', 'updated',
   'type', 'has_geo', 'group', 'country',
+  // Names of the groups holding the element, nested groups included
+  'in_group',
   // Link-specific
   'from.label', 'from.tag', 'to.label', 'to.tag', 'directed',
   // Geo fields (numeric lat/lng for bounding box queries)

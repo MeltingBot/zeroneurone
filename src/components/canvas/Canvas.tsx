@@ -88,6 +88,7 @@ import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
 import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
 import { withImportProgress } from '../../services/importProgress';
+import { gatherGroup, groupElements } from '../../utils/groupElements';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { elementRepository } from '../../db/repositories/elementRepository';
 import { emitExport, importFormatOf } from '../../plugins/pluginEventBus';
@@ -3876,6 +3877,18 @@ export function Canvas() {
     clearSelection();
   }, [groupableSelectedIds, elementMap, assetMap, degreeMap, t, createGroup, clearSelection, pushAction]);
 
+  // Group the selection after packing it in a grid around its centre
+  const handleGroupGather = useCallback(async () => {
+    await groupElements(groupableSelectedIds, 'Groupe', t('empty.unnamed'), { gather: true });
+    clearSelection();
+  }, [groupableSelectedIds, t, clearSelection]);
+
+  // Pack the members of the group under the menu in a grid
+  const handleGatherGroup = useCallback(async () => {
+    if (!contextMenu?.elementId) return;
+    await gatherGroup(contextMenu.elementId, t('empty.unnamed'));
+  }, [contextMenu, t]);
+
   // Dissolve group handler
   const handleDissolveGroup = useCallback(async () => {
     if (!contextMenu) return;
@@ -5742,6 +5755,8 @@ export function Canvas() {
               hasMultipleSelected={selectedElementIds.size > 1}
               selectedCount={selectedElementIds.size}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
+              onGroupGather={canGroupSelection ? handleGroupGather : undefined}
+              onGatherGroup={handleGatherGroup}
               onDissolveGroup={handleDissolveGroup}
               onRemoveFromGroup={handleRemoveFromGroup}
               isPositionLocked={!!elementMap.get(contextMenu.elementId)?.isPositionLocked}
@@ -5807,6 +5822,7 @@ export function Canvas() {
               selectionLocked={selectionLocked}
               onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
+              onGroupGather={canGroupSelection ? handleGroupGather : undefined}
               onCopyAsMermaid={handleCopyAsMermaid}
               onCopyAsDot={handleCopyAsDot}
               onFindSimilar={handleFindSimilar}

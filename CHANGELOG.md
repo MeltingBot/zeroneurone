@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.85.0
+
+### Requêtes (ZNQuery)
+
+- **Champ `in_group`** — trouve les éléments selon leur groupe :
+  `in_group = "Équipe A"`, `in_group EXISTS`, `in_group NOT EXISTS`. Un
+  élément compte aussi dans les groupes qui contiennent le sien.
+  Autocomplétion des noms de groupes en mode texte et visuel.
+- **Table : colonnes de la requête** — la table affiche le libellé puis les
+  champs testés par la requête, au lieu de colonnes fixes (tags, confiance,
+  date). L'export CSV ajoute les autres propriétés.
+- **Table : Grouper par** — une ligne par valeur d'un champ (`tag`,
+  `in_group`, `country` ou une propriété) avec le nombre de résultats ; clic
+  pour sélectionner et cadrer, export CSV des valeurs et de leur nombre.
+- **Table : clic sur une ligne** — centre correctement la vue sur l'élément
+  (canvas, carte ou timeline, onglet compris) ; un lien est cadré avec ses
+  deux extrémités.
+- **Grouper les résultats** — crée sur le canvas un groupe autour des éléments
+  trouvés, nommé d'après la requête.
+
+### Groupes
+
+- **Grouper et rapprocher** — nouvelle entrée du menu de sélection : range les
+  éléments en grille autour de leur centre, puis crée le groupe. « Grouper »
+  ne déplace toujours rien.
+- **Rapprocher les membres** — clic droit sur un groupe existant : range ses
+  membres en grille et ajuste le cadre. Un seul Ctrl+Z annule.
+- Le cadre d'un groupe tient compte des pointes des losanges et du libellé
+  sous les éléments avec image.
+
 ## 2.84.2
 
 ### Import

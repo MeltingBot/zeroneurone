@@ -225,7 +225,9 @@ Organize your elements into visual **groups**.
 
 After a lasso selection (Shift + drag), right-click on the selection frame.
 
-The group appears as a frame containing its members. Groups and elements already in a group are left out.
+The group appears as a frame containing its members, where they stand. Groups and elements already in a group are left out.
+
+For scattered elements, **Group and gather** (same menu) first packs them in a grid around the centre of their spread, in reading order, so the group stays compact. **Group** moves nothing. A group already made is tightened with **Gather members** (below).
 
 
 ### Manipulate a Group
@@ -233,6 +235,7 @@ The group appears as a frame containing its members. Groups and elements already
 - **Click on the group**: selects the entire group
 - **Double-click**: enter the group to edit members
 - **Drag an element** in/out of the group to change membership
+- **Right-click → Gather members**: packs the members in a grid at the group's top left, in reading order (top to bottom, then left to right), and fits the frame. Useful when the members were scattered over the canvas. Only **Ctrl+Z** brings back where they were, as long as the session history lasts (it is lost when the page reloads or the dossier closes)
 
 ---
 

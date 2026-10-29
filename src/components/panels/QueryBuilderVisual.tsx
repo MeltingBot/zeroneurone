@@ -26,7 +26,7 @@ type FieldCategory = 'string' | 'number' | 'date' | 'boolean' | 'geo' | 'any';
 
 const FIELD_CATEGORIES: Record<string, FieldCategory> = {
   _id: 'string', label: 'string', notes: 'string', tag: 'string', source: 'string',
-  confidence: 'number', type: 'string', country: 'string',
+  confidence: 'number', type: 'string', country: 'string', in_group: 'string',
   evaluation: 'string', 'evaluation.source': 'string', 'evaluation.info': 'string', 'evaluation.scale': 'string',
   date: 'date', 'date.start': 'date', 'date.end': 'date',
   created: 'date', updated: 'date',

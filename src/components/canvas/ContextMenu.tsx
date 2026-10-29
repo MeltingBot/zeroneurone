@@ -41,6 +41,10 @@ interface ContextMenuProps {
   /** Elements selected; the menu acts on all of them when there are several */
   selectedCount: number;
   onGroupSelection?: () => void;
+  /** Group the selection after packing it in a grid */
+  onGroupGather?: () => void;
+  /** Pack the members of the group under the menu in a grid */
+  onGatherGroup?: () => void;
   onDissolveGroup: () => void;
   onRemoveFromGroup: () => void;
   // Position lock
@@ -108,6 +112,8 @@ function ContextMenuComponent({
   hasMultipleSelected,
   selectedCount,
   onGroupSelection,
+  onGroupGather,
+  onGatherGroup,
   onDissolveGroup,
   onRemoveFromGroup,
   isPositionLocked,
@@ -173,6 +179,8 @@ function ContextMenuComponent({
 
   const organizeItem = submenu('organize', cm('organize'), Boxes, [
     hasMultipleSelected && !isGroup && onGroupSelection && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
+    hasMultipleSelected && !isGroup && onGroupGather && { id: 'group-gather', label: cm('groupGather'), icon: Group, onSelect: onGroupGather },
+    isGroup && onGatherGroup && { id: 'gather-group', label: cm('gatherGroup'), icon: Group, onSelect: onGatherGroup },
     isGroup && { id: 'dissolve-group', label: cm('dissolveGroup'), icon: Ungroup, onSelect: onDissolveGroup },
     isInGroup && { id: 'remove-from-group', label: cm('removeFromGroup'), icon: BoxSelect, onSelect: onRemoveFromGroup },
     // Two elements or more selected (the caller passes onMerge only then)

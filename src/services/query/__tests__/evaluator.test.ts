@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseQuery } from '../parser';
-import { evaluateQuery } from '../evaluator';
+import { evaluateQuery, fieldValue, queryFields } from '../evaluator';
 import type { Element, Link } from '../../../types';
 
 // ── Test data factories ──
@@ -324,6 +324,34 @@ describe('evaluator — boolean fields', () => {
     ];
     const r = query('group = true', els);
     expect(r.elementIds.size).toBe(1);
+  });
+
+  describe('in_group', () => {
+    const outer = makeElement({ id: 'g-outer', label: 'Réseau', isGroup: true });
+    const inner = makeElement({ id: 'g-inner', label: 'Équipe A', isGroup: true, parentGroupId: 'g-outer' });
+    const member = makeElement({ id: 'm-1', label: 'Alice', parentGroupId: 'g-inner' });
+    const loose = makeElement({ id: 'm-2', label: 'Bob' });
+    const els = [outer, inner, member, loose];
+
+    it('matches the direct group, case-insensitive', () => {
+      const r = query('in_group = "équipe a"', els);
+      expect([...r.elementIds]).toEqual(['m-1']);
+    });
+
+    it('matches an enclosing group', () => {
+      const r = query('in_group = "Réseau"', els);
+      expect([...r.elementIds].sort()).toEqual(['g-inner', 'm-1']);
+    });
+
+    it('EXISTS / NOT EXISTS', () => {
+      expect([...query('in_group EXISTS', els).elementIds].sort()).toEqual(['g-inner', 'm-1']);
+      expect([...query('in_group NOT EXISTS', els).elementIds].sort()).toEqual(['g-outer', 'm-2']);
+    });
+
+    it('combines with other fields', () => {
+      const r = query('in_group = "Équipe A" AND label = "Alice"', els);
+      expect([...r.elementIds]).toEqual(['m-1']);
+    });
   });
 });
 
@@ -983,5 +1011,42 @@ describe('parser — accented field names', () => {
   it('reads `Société` and `Identité` without quotes', () => {
     const el = makeElement({ properties: [{ key: 'Société', value: 'Bosch', type: 'text' }] });
     expect(query('Société = "bosch"', [el]).elementIds.size).toBe(1);
+  });
+});
+
+// ── Fields shown in the results table ──
+
+describe('queryFields', () => {
+  const fields = (q: string) => queryFields(parseQuery(q).ast);
+
+  it('lists the tested fields in order, once, case ignored', () => {
+    expect(fields('tag = "a" AND (ville = "Paris" OR Ville = "Lyon") AND NOT confidence > 50'))
+      .toEqual(['tag', 'ville', 'confidence']);
+  });
+
+  it('leaves out the fields of a WITHIN target', () => {
+    expect(fields('label CONTAINS "x" AND WITHIN 1 HOPS OF tag = "suspect"')).toEqual(['label']);
+  });
+
+  it('is empty without a query', () => {
+    expect(queryFields(null)).toEqual([]);
+  });
+});
+
+describe('fieldValue', () => {
+  it('reads reserved fields, properties and event values', () => {
+    const el = makeElement({
+      tags: ['personne'],
+      properties: [{ key: 'Ville', value: 'Paris' }],
+      events: [
+        { id: 'e1', label: 'Rencontre', date: new Date('2024-02-01'), properties: [] },
+        { id: 'e2', label: '', date: new Date('2024-03-01'), properties: [] },
+      ],
+    } as Partial<Element>);
+    const map = new Map([[el.id, el]]);
+    expect(fieldValue(el, 'tag', map)).toEqual(['personne']);
+    expect(fieldValue(el, 'ville', map)).toBe('Paris');
+    expect(fieldValue(el, 'event.label', map)).toEqual(['Rencontre']);
+    expect(fieldValue(el, 'event.date', map)).toHaveLength(2);
   });
 });

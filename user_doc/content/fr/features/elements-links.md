@@ -225,7 +225,9 @@ Organisez vos éléments en **groupes** visuels.
 
 Après une sélection au lasso (Maj + glisser), le clic-droit se fait sur le cadre de sélection.
 
-Le groupe apparaît comme un cadre englobant ses membres. Les groupes et les éléments déjà dans un groupe ne sont pas repris.
+Le groupe apparaît comme un cadre englobant ses membres, là où ils se trouvent. Les groupes et les éléments déjà dans un groupe ne sont pas repris.
+
+Pour des éléments dispersés, **Grouper et rapprocher** (même menu) les range d'abord en grille autour du centre de leur ensemble, dans leur ordre de lecture : le groupe reste compact. **Grouper** ne déplace rien. Un groupe déjà créé se resserre avec **Rapprocher les membres** (ci-dessous).
 
 
 ### Manipuler un groupe
@@ -233,6 +235,7 @@ Le groupe apparaît comme un cadre englobant ses membres. Les groupes et les él
 - **Clic sur le groupe** : sélectionne le groupe entier
 - **Double-clic** : entre dans le groupe pour éditer les membres
 - **Glisser un élément** dans/hors du groupe pour modifier l'appartenance
+- **Clic-droit → Rapprocher les membres** : range les membres en grille dans le coin haut gauche du groupe, dans leur ordre de lecture (de haut en bas, puis de gauche à droite), et ajuste le cadre. Utile quand les membres étaient dispersés sur le canvas. Leur place d'avant n'est rendue que par **Ctrl+Z**, tant que l'historique de la session existe (il disparaît au rechargement de la page ou à la fermeture du dossier)
 
 ---
 

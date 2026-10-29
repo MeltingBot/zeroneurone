@@ -22,8 +22,6 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
-import { computeElementDimensions } from '../../utils/elementDimensions';
-import { buildDegreeMap, scaleByDegree } from '../../utils/degreeSize';
 import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { StatsOverview } from './StatsOverview';
@@ -36,10 +34,11 @@ import { computeBetweenTabs, type BetweenTabs } from '../../utils/betweenTabs';
 import { useProgressStore } from '../../stores/progressStore';
 import { dateLocale } from '../../utils/dates';
 import { revealElement, revealElements } from '../../utils/revealElement';
+import { groupElements } from '../../utils/groupElements';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
-  const { elements, links, createGroup, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
+  const { elements, links, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore(useShallow((s) => ({ hideElements: s.hideElements, hiddenElementIds: s.hiddenElementIds, showElement: s.showElement, setFilters: s.setFilters, clearFilters: s.clearFilters })));
@@ -239,59 +238,9 @@ export function InsightsPanel() {
   // Create a visual group from cluster elements
   const handleGroupCluster = useCallback(
     async (elementIds: string[], clusterId: number) => {
-      const clusterElements = elements.filter(
-        (el) => elementIds.includes(el.id) && !el.isGroup && !el.parentGroupId
-      );
-      if (clusterElements.length < 2) return;
-
-      // Snapshot absolute positions for undo
-      const absolutePositions = clusterElements.map(el => ({
-        id: el.id,
-        position: { ...el.position },
-      }));
-
-      const padding = 40;
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      // Size each element as the canvas draws it (thumbnail included)
-      const thumbnails = new Map(
-        useDossierStore.getState().assets.map(a => [a.id, a.thumbnailDataUrl] as const),
-      );
-      const { currentDossier, links } = useDossierStore.getState();
-      const degreeMap = currentDossier?.settings?.sizeByDegree ? buildDegreeMap(links) : null;
-      for (const el of clusterElements) {
-        const firstAssetId = el.assetIds?.[0];
-        const hasImage = Boolean(firstAssetId && thumbnails.get(firstAssetId)) && el.visual.hideMedia !== true;
-        const shown = degreeMap ? scaleByDegree(el, degreeMap.get(el.id) ?? 0, hasImage) : el;
-        const { width: w, height: h } = computeElementDimensions(shown.visual, el.label || t('common:empty.unnamed'), hasImage);
-        minX = Math.min(minX, shown.position.x);
-        minY = Math.min(minY, shown.position.y);
-        maxX = Math.max(maxX, shown.position.x + w);
-        maxY = Math.max(maxY, shown.position.y + h);
-      }
-
-      const groupPos = { x: minX - padding, y: minY - padding };
-      const groupSize = {
-        width: maxX - minX + padding * 2,
-        height: maxY - minY + padding * 2,
-      };
-
-      const childIds = clusterElements.map(el => el.id);
-      const group = await createGroup(t('insights.clusters.name', { id: clusterId + 1 }), groupPos, groupSize, childIds);
-
-      const relativePositions = clusterElements.map(el => ({
-        id: el.id,
-        position: { x: el.position.x - groupPos.x, y: el.position.y - groupPos.y },
-      }));
-      const groupSnapshot = useDossierStore.getState().elements.find(el => el.id === group.id);
-      if (groupSnapshot) {
-        pushAction({
-          type: 'create-group',
-          undo: { positions: absolutePositions },
-          redo: { elements: [groupSnapshot], elementIds: [group.id], positions: relativePositions },
-        });
-      }
+      await groupElements(elementIds, t('insights.clusters.name', { id: clusterId + 1 }), t('common:empty.unnamed'));
     },
-    [elements, createGroup, t, pushAction]
+    [t]
   );
 
   // Check if all elements in a list are hidden

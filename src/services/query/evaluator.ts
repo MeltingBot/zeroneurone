@@ -23,6 +23,24 @@ function isLink(item: DataItem): item is Link {
 }
 
 /**
+ * Names of the groups holding an element: its group, then the groups around
+ * that one. Empty when the element is in no group.
+ */
+export function groupLabels(element: Element, elements: Map<string, Element>): string[] {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  let parentId = element.parentGroupId;
+  while (parentId && !seen.has(parentId)) {
+    seen.add(parentId);
+    const parent = elements.get(parentId);
+    if (!parent) break;
+    labels.push(parent.label);
+    parentId = parent.parentGroupId;
+  }
+  return labels;
+}
+
+/**
  * Resolve a field value from an Element or Link.
  * Reserved fields map to system attributes; everything else is a free property lookup.
  */
@@ -90,6 +108,8 @@ function resolveField(
     }
     case 'group':
       return isLink(item) ? false : item.isGroup;
+    case 'in_group':
+      return isLink(item) ? null : groupLabels(item, elements);
     case 'directed':
       return isLink(item) ? item.directed : null;
 
@@ -350,6 +370,53 @@ function resolveEventSubField(
       return prop ? prop.value : undefined;
     }
   }
+}
+
+/**
+ * Value of a field on an item, as a query compares it: reserved field, free
+ * property, or the values of the element's events for an event.* field.
+ * Used to show the queried fields in the results table.
+ */
+export function fieldValue(item: DataItem, field: string, elements: Map<string, Element>): unknown {
+  const lower = field.toLowerCase();
+  if (isEventField(lower)) {
+    if (isLink(item) || !item.events) return [];
+    const subField = lower.slice('event.'.length);
+    return item.events
+      .map((ev) => resolveEventSubField(ev, subField))
+      .filter((v) => v !== undefined && v !== null && v !== '');
+  }
+  if (lower === 'geo') {
+    const point = extractGeoPoint(item);
+    return point ? `${point.lat}, ${point.lng}` : null;
+  }
+  return resolveField(item, field, elements);
+}
+
+/**
+ * Fields a query tests, in order of appearance, without duplicates (case
+ * ignored). Fields inside a WITHIN target describe other elements: left out.
+ */
+export function queryFields(ast: QueryNode | null): string[] {
+  const fields = new Map<string, string>();
+  const walk = (node: QueryNode) => {
+    switch (node.type) {
+      case 'condition':
+        if (!fields.has(node.field.toLowerCase())) fields.set(node.field.toLowerCase(), node.field);
+        break;
+      case 'and':
+      case 'or':
+        node.children.forEach(walk);
+        break;
+      case 'not':
+        walk(node.child);
+        break;
+      case 'within':
+        break;
+    }
+  };
+  if (ast) walk(ast);
+  return [...fields.values()];
 }
 
 /**

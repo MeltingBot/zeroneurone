@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStore, withLinkEnds } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
@@ -9,8 +9,9 @@ import { QueryBuilderText } from './QueryBuilderText';
 import { QueryBuilderVisual } from './QueryBuilderVisual';
 import { QueryResultsTable } from './QueryResultsTable';
 import { SavedQueriesList } from './SavedQueriesList';
-import { X, Type, LayoutList, Filter, Table2, CheckSquare, SquareDashed, Eye, History, SearchX, Trash2, Crosshair, ArrowLeftRight } from 'lucide-react';
+import { X, Type, LayoutList, Filter, Table2, CheckSquare, SquareDashed, Eye, History, SearchX, Trash2, Crosshair, ArrowLeftRight, Group } from 'lucide-react';
 import { revealElements } from '../../utils/revealElement';
+import { groupElements, groupableElements } from '../../utils/groupElements';
 
 export function QueryPanel() {
   const { t } = useTranslation('panels');
@@ -50,6 +51,21 @@ export function QueryPanel() {
   const showResults = () => {
     const found = useQueryStore.getState().results;
     if (found) revealElements(withLinkEnds(found));
+  };
+  // Put the element results in a new canvas group, named after the query
+  const elements = useDossierStore((s) => s.elements);
+  const canGroupResults = useMemo(
+    () => (results ? groupableElements(results.elementIds).length >= 2 : false),
+    // elements: re-checked when results join or leave a group
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [results, elements]
+  );
+  const groupResults = () => {
+    const found = useQueryStore.getState().results;
+    if (!found) return;
+    const text = useQueryStore.getState().currentText.trim();
+    const label = text.length > 60 ? `${text.slice(0, 59)}…` : text;
+    groupElements(found.elementIds, label || t('query.groupResults'), t('common:empty.unnamed'));
   };
   const recentQueries = useQueryStore((s) => s.recentQueries);
   const clearRecentQueries = useQueryStore((s) => s.clearRecentQueries);
@@ -196,6 +212,16 @@ export function QueryPanel() {
                   aria-label={t('query.invertSelection')}
                 >
                   <ArrowLeftRight size={12} />
+                </button>
+                <button
+                  onClick={groupResults}
+                  disabled={!canGroupResults}
+                  data-testid="query-group-results"
+                  className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  title={t('query.groupResults')}
+                  aria-label={t('query.groupResults')}
+                >
+                  <Group size={12} />
                 </button>
               </>
             )}

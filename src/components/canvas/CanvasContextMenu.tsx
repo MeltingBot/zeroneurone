@@ -27,6 +27,8 @@ interface CanvasContextMenuProps {
   selectionLocked?: boolean;
   onToggleLockSelection?: () => void;
   onGroupSelection?: () => void;
+  /** Group the selection after packing it in a grid */
+  onGroupGather?: () => void;
   onCopyAsMermaid?: () => void;
   onCopyAsDot?: () => void;
   // Query actions
@@ -66,6 +68,7 @@ function CanvasContextMenuComponent({
   selectionLocked = false,
   onToggleLockSelection,
   onGroupSelection,
+  onGroupGather,
   onCopyAsMermaid,
   onCopyAsDot,
   onFindSimilar,
@@ -112,6 +115,7 @@ function CanvasContextMenuComponent({
             onSuggestLinks && { id: 'suggest-links', label: cm('suggestLinks'), icon: Lightbulb, onSelect: onSuggestLinks },
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
+          selectedCount > 1 && onGroupGather && { id: 'group-gather', label: cm('groupGather'), icon: Group, onSelect: onGroupGather },
           (onNewTabFromSelection || onRemoveSelectionFromTab || (tabs.length > 0 && onAddSelectionToTab)) && submenu('tabs', cm('tabs'), Layers, [
             onNewTabFromSelection && {
               id: 'new-tab-from-selection',

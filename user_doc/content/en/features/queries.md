@@ -78,6 +78,8 @@ date >= 2024-01-01
 tag = "company" AND country = "FR"
 (tag = "person" OR tag = "company") AND confidence > 50
 NOT (tag = "archived")
+in_group = "Team A"
+in_group NOT EXISTS
 ```
 
 ### Logical operators
@@ -129,6 +131,7 @@ WITHIN 2 HOPS OF tag = "suspect"
 | `type` | text | "element" or "link" |
 | `has_geo` | boolean | Has geo coordinates |
 | `group` | boolean | Is a group |
+| `in_group` | text | Name of the group holding the element, and of the groups around that one |
 | `country` | text | Country (properties of type country) |
 
 ### Link fields
@@ -240,7 +243,7 @@ After execution, two display modes are available (can be combined):
 | Mode | Icon | Description |
 |------|------|-------------|
 | **Canvas filter** | Funnel | Dims non-matching elements on the canvas, map, timeline and matrix |
-| **Table** | Grid | Shows results in a sortable table with CSV export |
+| **Table** | Grid | Shows results in a sortable table: the label, then the fields the query tests. The CSV export adds the other properties |
 
 Mode buttons are at the top of the queries panel, next to the results counter.
 
@@ -253,8 +256,17 @@ When the query finds links, the canvas filter keeps the elements at both ends of
 - **Show results** (target icon): frames the view on what the query found, link ends included (canvas; map for geolocated elements; the timeline goes to the first one)
 - **Select / Deselect** (toggle): selects the results, or removes them from the selection when they are all selected already. When the query filters the canvas, it acts on the elements shown (filters included), like the Filters panel button, with which it stays in sync
 - **Invert selection**: selects what the query did not find, of the same kind as its results (the other elements, or the other links); hidden elements are left out. Clicking again selects the results again; the button stays highlighted while the inverse is selected
+- **Group the results**: puts the elements found in a new group on the canvas, where they stand, named after the query (can be renamed). Elements already in a group and groups themselves are left out; at least two are needed. A single **Ctrl+Z** undoes it. To tighten a scattered group: right-click the group → **Gather members** (see [Groups]({{< relref "elements-links#groups" >}}))
 - **Save as view**: creates a saved view that keeps the query, the filters and the dim / hide choice
-- **Click a row** (table mode): selects the element and centers the viewport on it
+- **Click a row** (table mode): selects the element and shows it in the active view (canvas, map or timeline); a link is shown with its two ends
+
+### Grouping results
+
+In table mode, the **Group by** list groups the results by a field: `tag`, `in_group` (canvas group), `country` or a property found in the results. The table then shows one row per value with the number of results, largest first; results without a value are grouped in the last row.
+
+- A result holding several values (several tags, nested groups) counts in each of its rows, as in a query: a member of "Team A", itself inside "Network", counts in both rows.
+- **Click a row**: selects the results with that value and frames them in the view.
+- **Export CSV** then exports the values and their counts.
 
 ### Automatic refresh
 
