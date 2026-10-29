@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.85.1
+
+### Accueil
+
+- **Nom complet du dossier** — dans la liste des dossiers, le survol d'un nom
+  coupé affiche le nom complet en info-bulle.
+
 ## 2.85.0
 
 ### Requêtes (ZNQuery)

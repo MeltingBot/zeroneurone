@@ -105,7 +105,7 @@ export function DossierCard({
         <div className="flex items-start justify-between gap-2 pr-6">
           <div className={`flex-1 min-w-0 ${dossier.isArchived ? 'opacity-60' : ''}`}>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-medium text-text-primary truncate">
+              <h3 className="text-sm font-medium text-text-primary truncate" title={dossier.name}>
                 {dossier.name}
               </h3>
               {dossier.closedAt && (
