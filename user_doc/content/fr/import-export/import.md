@@ -90,16 +90,19 @@ enquete.zip
 
 ---
 
-### JSON par mapping (collage)
+### JSON ou CSV par mapping
 
-Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne suit pas le schéma natif, un assistant de **mapping** permet de relier ses champs aux éléments ZeroNeurone.
+Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) ou un **CSV quelconque** qui ne suit pas le schéma natif, un assistant de **mapping** permet de relier ses champs aux éléments ZeroNeurone.
 
-**Ouvrir :** import → *Mapper un JSON custom*, ou **coller (Ctrl+V) du JSON brut directement sur le canvas**. Un format reconnu (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) est importé normalement ; un JSON générique ouvre le mapping.
+**Ouvrir :** import → *Mapper un JSON ou un CSV* (coller le texte ou choisir un fichier `.json`, `.csv` ou `.tsv`) — depuis un dossier, ou depuis la page d'accueil, où l'entrée crée un nouveau dossier (ou ouvre celui choisi dans *Importer dans*) et y affiche l'assistant — ou **coller (Ctrl+V) du JSON brut directement sur le canvas**. Un format reconnu (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) est importé normalement ; un JSON générique ouvre le mapping.
+
+Un CSV importé sans les colonnes du format natif (voir [CSV](#csv)) ouvre aussi le mapping, y compris depuis la page d'accueil : le dossier est créé puis s'ouvre sur l'assistant. Si l'import est abandonné (assistant fermé ou placement annulé) alors que ce nouveau dossier est encore vide, il est supprimé et l'on revient à l'accueil ; un dossier existant n'est jamais touché. Le CSV devient un tableau nommé d'après le fichier : chaque ligne est un enregistrement, chaque colonne un champ. Le séparateur (`,`, `;` ou tabulation) est détecté ; toutes les valeurs sont lues comme du texte.
 
 **Détection automatique :**
 - la **source d'enregistrements** (un tableau d'objets comme `records`, ou l'objet entier = 1 élément) ;
 - un **modèle de libellé** (ex. `{first_name} {last_name}`) ;
-- les champs **date**, **pays**, **latitude/longitude** (point géo), et les **identifiants** ;
+- les champs **date**, **pays**, **latitude/longitude** (point géo, y compris des noms composés comme `borne_lat`, `cellLng`), et les **identifiants** ;
+- les colonnes **numériques** → propriété de type **nombre** (voir ci-dessous) ;
 - un champ unique **`lat, lng`** combiné → point géo ;
 - les **URL** → propriété de type **lien** ;
 - les **références** : un champ contenant les id d'autres enregistrements crée les **liens** correspondants (orientés ; réciproques → bidirectionnels) ;
@@ -135,7 +138,23 @@ Dès que deux tableaux sont cochés, un **schéma** montre les tableaux et leurs
 
 Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que les enregistrements retenus sont tous importés.
 
-**Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**. Les modèles peuvent aussi être **exportés / importés** en fichier `.json` pour les **partager** entre postes ou utilisateurs.
+**Source :** le champ **Source** (à côté du tag) donne la source de ce que l'import crée : éléments, événements et liens. Il reprend le nom du fichier, et se remplace par un texte libre (« Réponse opérateur du 12/09 »). Il ne s'applique qu'à ce qui n'a pas de source : une colonne mappée en *Source* garde la priorité, ligne par ligne. Il n'est pas enregistré dans les modèles.
+
+**Lignes en événements :** le réglage **Chaque ligne crée** passe d'*un élément* à *un événement*. Chaque ligne devient alors un événement daté (visible sur la timeline et, s'il a un lieu, sur la carte) :
+- **Élément** : la colonne qui désigne l'élément porteur. Un élément est créé par valeur distincte ; si la colonne fait référence à une autre table importée, l'événement va sur l'élément de cette table ;
+- **Date** et **Fin** (facultative) : les colonnes de début et de fin. Les dates partielles (`2020`, `2020-03`) gardent leur précision ; les lignes sans date valide sont ignorées et comptées dans un message ;
+- le **modèle de libellé** donne le libellé de l'événement. Au passage en mode événement, il propose une colonne de catégorie (peu de valeurs différentes, comme un type : « Appel entrant ») ; vide, l'événement prend le tag, sinon la valeur de l'élément ; les champs **notes**, **source**, **latitude/longitude** et les **propriétés** vont sur l'événement ;
+- les champs **pivot** créent et relient d'autres éléments, un seul lien par paire quel que soit le nombre de lignes. Dans une même table, une valeur donne un seul élément, qu'elle soit porteuse ou pivot. Avec **Événement aussi sur les éléments pivots** (coché par défaut), l'événement est aussi posé sur chaque pivot ;
+- les identifiants, références et médias ne s'appliquent pas aux lignes-événements ;
+- le plafond d'import ne s'applique pas : toutes les lignes (filtrées) deviennent des événements, puisqu'elles n'ajoutent pas d'élément au canvas.
+
+Exemple, une fadette (`appelant;appele;date;duree;lat;lng`) : *Élément* = `appelant`, *Date* = `date`, `appele` en **pivot**, `lat`/`lng` en coordonnées. Chaque numéro devient un élément, chaque paire de numéros un lien, et chaque appel un événement sur la frise des deux numéros, placé sur la carte à la borne.
+
+Les événements vont sur des éléments créés par l'import. Pour ajouter des événements à un élément déjà présent dans le dossier, utilisez le [CSV natif](#csv) avec `type` = `event` (la colonne `de` donne le libellé de l'élément), ou importez puis **fusionnez** l'élément créé avec l'existant.
+
+En JSON, un tableau d'objets d'un enregistrement (`appels: [...]`) peut devenir des **événements de l'élément** au lieu de sous-éléments liés : cochez *En événements de l'élément* sur ce tableau. Chaque objet est daté par son premier champ nommé comme une date (`date`, `timestamp`…), sinon par le premier qui en contient une.
+
+**Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**. Les modèles peuvent aussi être **exportés / importés** en fichier `.json` pour les **partager** entre postes ou utilisateurs. Un modèle CSV s'applique à tout fichier aux mêmes colonnes, quel que soit son nom (la fadette du mois suivant, par exemple). Un modèle enregistré sur un CSV n'est proposé que pour un CSV, un modèle enregistré sur du JSON que pour du JSON ; un modèle créé avant cette distinction compte comme un modèle JSON, et n'est proposé pour un CSV que si ses champs correspondent aux colonnes du fichier ; l'enregistrer à nouveau sur un CSV en fait un modèle CSV.
 
 Un modèle enregistre chaque tableau coché (mapping, modèle de libellé, tag, sous-éléments, filtres, plafond) et la liste des tableaux cochés ; le charger les restaure. Avec un modèle sélectionné, **Enregistrer** le met à jour ; sans modèle sélectionné, un nom est demandé et un nouveau modèle est créé. Les anciens modèles à un seul tableau s'appliquent toujours au tableau ouvert.
 
@@ -146,6 +165,10 @@ L'import se fait en un seul lot **annulable** (Ctrl+Z).
 ### CSV
 
 **Import tabulaire** d'éléments et liens.
+
+Un CSV est importé directement s'il suit le format natif : une colonne `type` qui ne contient que `element`, `lien`/`link` ou `event`, ou, sans colonne `type`, une colonne `label` (ou `nom`, `name`), ou les deux colonnes d'un lien (`de`/`vers`, `from`/`to`). Tout autre CSV, par exemple l'export d'un autre outil, ouvre l'assistant de [mapping](#json-ou-csv-par-mapping), où l'on choisit le libellé et le rôle de chaque colonne ; le mapping peut être enregistré comme modèle et se repropose pour un CSV aux mêmes colonnes.
+
+**Nombres :** une colonne dont toutes les valeurs sont des nombres donne des propriétés de type **nombre** (triables et comparables comme des nombres) ; la virgule décimale est acceptée (`12,5`). Restent du texte les valeurs qui ressemblent seulement à des nombres : zéro en tête (téléphones, codes postaux, identifiants), espaces (`06 39 98 33 17`), plus de 12 chiffres (IMEI, IMSI, numéros de compte). Une colonne dont les virgules peuvent séparer des milliers (`1,234`, `25,000`, ou des virgules à côté de points décimaux) reste aussi du texte, plutôt que de donner des nombres faux. Dans le mapping, la cible **Propriété (nombre)** peut être choisie à la main.
 
 
 #### Colonnes requises

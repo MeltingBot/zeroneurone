@@ -1,5 +1,8 @@
 import { parseFlexibleDate } from './index';
 import { parseLatLngPair } from './geo';
+import { parseDateWithPrecision } from './dates';
+import type { DatePrecision, ElementEvent, GeoData, Property } from '../types';
+import { isNumericColumn, parseNumericText } from './numericText';
 
 /**
  * Pure helpers for the "Import JSON (mapping)" feature: turn an arbitrary JSON
@@ -10,6 +13,8 @@ import { parseLatLngPair } from './geo';
 export type MappingTarget =
   | 'ignore'
   | 'property'
+  /** Number → property of type 'number' (decimal comma accepted). */
+  | 'number'
   | 'date'
   | 'country'
   | 'source'
@@ -52,6 +57,21 @@ export interface ChildMapping {
   tag: string;
   labelTemplate: string;
   linkLabel: string;
+  /** Each item becomes an event of the record's element instead of a linked element */
+  asEvents?: boolean;
+}
+
+/**
+ * A table whose records are events: each record is dated and lands on the
+ * element named by `hostField` (one element per distinct value, or the
+ * element of another table when the field is a reference to it).
+ */
+export interface EventMapping {
+  hostField: string;
+  dateField: string;
+  endField?: string;
+  /** The event also goes on the record's pivot elements (absent = yes) */
+  alsoOnPivots?: boolean;
 }
 
 export type FilterOp = 'contains' | 'equals' | 'nonempty';
@@ -69,6 +89,8 @@ export interface TableConfig {
   /** Reference field whose target element receives each record (its fields,
    *  sub-elements and links) instead of an element of its own. */
   mergeField?: string;
+  /** Records are events of an element rather than elements; absent = elements */
+  events?: EventMapping;
 }
 
 /** Reusable mapping config (everything except the JSON data itself). The
@@ -80,6 +102,8 @@ export interface MappingConfig extends TableConfig {
   tables?: Record<string, TableConfig>;
   /** Source keys of the tables imported together. */
   included?: string[];
+  /** Data the template was made on: offered for that format only (absent = JSON) */
+  format?: 'json' | 'csv';
 }
 
 /** A saved, named mapping template, matched to incoming JSON by field signature. */
@@ -144,14 +168,29 @@ function detectByValue(records: Record<string, unknown>[], fields: FieldInfo[], 
   return out;
 }
 
+/** Whether a field's values are mostly numbers within ±`max` (a latitude or longitude). */
+function coordinatesIn(records: Record<string, unknown>[], key: string, max: number): boolean {
+  return detectByValue(records, [{ key } as FieldInfo], (v) => {
+    const n = typeof v === 'number' ? v : Number(valueToString(v).trim().replace(',', '.'));
+    return Number.isFinite(n) && Math.abs(n) <= max;
+  }).has(key);
+}
+
 /** Detect fields whose values are mostly URLs (→ link properties). */
 export function detectLinkFields(records: Record<string, unknown>[], fields: FieldInfo[]): Set<string> {
   return detectByValue(records, fields, isUrl);
 }
 
+/**
+ * A "lat, lng" pair as a field holds one: exactly two numbers, each with a
+ * decimal point ("48.85, 2.35", "48.85 2.35"). Phone numbers ("06 39 98 33
+ * 17") and other runs of integers are not.
+ */
+const LATLNG_PAIR = /^\s*[-+]?\d{1,3}\.\d+\s*(?:[,;]\s*|\s+)[-+]?\d{1,3}\.\d+\s*$/;
+
 /** Detect fields whose values are a single "lat, lng" string (→ geo point). */
 export function detectLatLngFields(records: Record<string, unknown>[], fields: FieldInfo[]): Set<string> {
-  return detectByValue(records, fields, (v) => typeof v === 'string' && /[,;\s]/.test(v) && parseLatLngPair(v) !== null);
+  return detectByValue(records, fields, (v) => typeof v === 'string' && LATLNG_PAIR.test(v) && parseLatLngPair(v) !== null);
 }
 
 /** Guess coordinate order: a value out of latitude range (±90) on the 1st/2nd slot reveals lng position; default lat,lng. */
@@ -420,17 +459,65 @@ export function guessLabelTemplate(fields: FieldInfo[]): string {
   return firstText ? `{${firstText.key}}` : fields[0] ? `{${fields[0].key}}` : '';
 }
 
+/**
+ * Default columns of an event table. The label: a category column (few
+ * distinct values, like a type: "Appel entrant"), named like one (type,
+ * nature, category, action…) first; none gives an empty template, and the
+ * event takes the tag or the element's name. The element: the first column
+ * that is no date, no number, no category and no per-row id.
+ */
+export function guessEventFields(
+  records: Record<string, unknown>[],
+  fields: FieldInfo[],
+  isDate: (key: string) => boolean,
+): { hostField: string; dateField: string; labelTemplate: string } {
+  const scalar = fields.filter((f) => f.kind === 'scalar');
+  const stats = new Map(scalar.map((f) => {
+    const values = records.map((r) => r[f.key]).filter((v) => !isBlank(v)).map((v) => valueToString(v));
+    return [f.key, { filled: values.length, distinct: new Set(values).size, numeric: isNumericColumn(values) }];
+  }));
+  const dateField = scalar.find((f) => isDate(f.key))?.key ?? scalar[0]?.key ?? '';
+  const isCategory = (k: string) => { const st = stats.get(k)!; return !st.numeric && st.distinct >= 2 && st.distinct <= 20; };
+  const perRow = (k: string) => { const st = stats.get(k)!; return st.filled > 1 && st.distinct === st.filled; };
+
+  const categories = scalar.filter((f) => !isDate(f.key) && isCategory(f.key));
+  const named = categories.find((f) => /(^|[._\s-])(type|nature|cat[eé]gor|kind|event|[eé]v[eé]nement|action|statut|status)/i.test(lastSegment(f.key)));
+  const fewest = [...categories].sort((a, b) => stats.get(a.key)!.distinct - stats.get(b.key)!.distinct)[0];
+  const label = named ?? fewest;
+
+  const plain = (f: FieldInfo) => f.key !== dateField && !isDate(f.key) && f.key !== label?.key;
+  const hostField = scalar.find((f) => plain(f) && !stats.get(f.key)!.numeric && !isCategory(f.key) && !perRow(f.key))?.key
+    ?? scalar.find(plain)?.key ?? '';
+  return { hostField, dateField, labelTemplate: label ? `{${label.key}}` : '' };
+}
+
 /** Last segment of a dot-path, used as the default property key. */
 export function lastSegment(path: string): string {
   const parts = path.split('.');
   return parts[parts.length - 1];
 }
 
+/**
+ * Words of a field name: "borne_lat", "lat-borne", "cellLat" and "Latitude
+ * site" all hold a latitude word.
+ */
+function nameWords(key: string): string[] {
+  return lastSegment(key)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .split(/[\s_\-.]+/)
+    .filter(Boolean);
+}
+
+const LAT_WORDS = new Set(['lat', 'latitude']);
+const LNG_WORDS = new Set(['lng', 'lon', 'long', 'longitude']);
+
 /** Heuristic default target for a freshly discovered field. */
 export function guessTarget(key: string): MappingTarget {
   const k = key.toLowerCase();
-  if (/(^|\.)(lat|latitude)$/.test(k)) return 'lat';
-  if (/(^|\.)(lng|lon|longitude)$/.test(k)) return 'lng';
+  const words = nameWords(key);
+  if (words.some((w) => LAT_WORDS.has(w))) return 'lat';
+  if (words.some((w) => LNG_WORDS.has(w))) return 'lng';
   if (/(date|birth.?date|naissance|dob|timestamp|datetime|(^|\.)(created|updated)(_?at)?$)/.test(k)) return 'date';
   if (/(country|pays|nationalit)/.test(k)) return 'country';
   if (/^id$/i.test(key)) return 'id'; // top-level record id → key for reference links
@@ -463,6 +550,9 @@ export function coerceForTarget(
       const n = parseFloat(valueToString(value).replace(',', '.'));
       return Number.isFinite(n) ? n : null;
     }
+    case 'number':
+      // A value that is no number stays as its text rather than being lost
+      return typeof value === 'number' ? value : (parseNumericText(valueToString(value)) ?? valueToString(value));
     default:
       return valueToString(value);
   }
@@ -581,6 +671,12 @@ export function autoFieldMappings(
     } else if (linkSet.has(f.key)) {
       // URL → link-typed property.
       mapping[f.key] = { enabled: true, target: 'link', propKey: lastSegment(f.key) };
+    } else if ((g === 'lat' || g === 'lng') && !coordinatesIn(records, f.key, g === 'lat' ? 90 : 180)) {
+      // Named like a coordinate but holding something else ("long_description")
+      mapping[f.key] = { enabled: true, target: 'property', propKey: lastSegment(f.key) };
+    } else if (g === 'property' && isNumericColumn(records.map((r) => r[f.key]))) {
+      // Every value a number (phone numbers, postcodes and long ids excluded)
+      mapping[f.key] = { enabled: true, target: 'number', propKey: lastSegment(f.key) };
     } else {
       // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
       mapping[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
@@ -628,4 +724,42 @@ export function findSharedIdHub(
     if (better) { hub = candidate.key; best = members; }
   }
   return best.size > 0 ? { hub, members: best } : { hub: null, members: new Set() };
+}
+
+/**
+ * Date of a record value, with its precision ("2020" is a year, "2020-03" a
+ * month): the precise parser first, then the flexible one (French dates,
+ * timestamps with time). Null when the value is no date.
+ */
+export function recordDate(v: unknown): { date: Date; precision?: DatePrecision; approximate: boolean } | null {
+  if (isBlank(v)) return null;
+  const precise = parseDateWithPrecision(typeof v === 'string' ? v : valueToString(v));
+  if (precise) return precise;
+  const flexible = parseFlexibleDate(valueToString(v));
+  return flexible ? { date: flexible, approximate: false } : null;
+}
+
+/**
+ * Event of a record: dated by `dateField` (and `endField`), with the other
+ * mapped fields as its description, source, place and properties. Null when
+ * the record has no valid date (an event needs one).
+ */
+export function buildEvent(
+  flat: Record<string, unknown>,
+  label: string,
+  fields: { dateField: string; endField?: string },
+  extra: { properties: Property[]; source: string; notes: string; geo: GeoData | null },
+): ElementEvent | null {
+  const start = recordDate(flat[fields.dateField]);
+  if (!start) return null;
+  const end = fields.endField ? recordDate(flat[fields.endField]) : null;
+  const event: ElementEvent = { id: crypto.randomUUID(), date: start.date, label };
+  if (end && end.date.getTime() >= start.date.getTime()) event.dateEnd = end.date;
+  if (start.precision) event.precision = start.precision;
+  if (start.approximate) event.approximate = true;
+  if (extra.notes) event.description = extra.notes;
+  if (extra.source) event.source = extra.source;
+  if (extra.geo) event.geo = extra.geo;
+  if (extra.properties.length > 0) event.properties = extra.properties;
+  return event;
 }

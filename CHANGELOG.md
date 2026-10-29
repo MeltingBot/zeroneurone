@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.86.0
+
+### Import CSV par mapping
+
+- **Mapping des CSV** — l'assistant de mapping lit aussi le CSV (fichier
+  `.csv`/`.tsv` ou texte collé, séparateur détecté). Un CSV sans les colonnes
+  du format natif ouvre l'assistant au lieu d'échouer, y compris depuis
+  l'accueil. Une colonne `type` d'un autre outil (« Facebook », « SIM »)
+  passe aussi par le mapping au lieu d'être importée vide.
+- **Lignes en événements** — « Chaque ligne crée : un événement » : chaque
+  ligne devient un événement daté (début, fin, lieu, propriétés) de l'élément
+  désigné par une colonne. Les pivots créent et relient d'autres éléments, un
+  seul lien par paire ; une même valeur donne un seul élément, porteur ou
+  pivot ; l'événement peut aussi aller sur les pivots. Colonne de catégorie
+  proposée comme libellé. Pas de plafond de lignes pour les événements.
+- En JSON, un tableau imbriqué peut devenir des événements de l'élément.
+- **Source** — le nom du fichier (ou un texte libre) devient la source de ce
+  que l'import crée, sauf colonne mappée en source.
+- **Modèles** — un modèle CSV s'applique à tout fichier aux mêmes colonnes,
+  quel que soit son nom ; modèles JSON et CSV proposés séparément.
+- Entrée « Mapper un JSON ou un CSV » depuis l'accueil (nouveau dossier).
+
+### Détection des champs
+
+- **Nombres** — les colonnes numériques donnent des propriétés de type
+  nombre (CSV natif et mapping), virgule décimale acceptée. Restent du texte :
+  zéro en tête (téléphones, codes postaux), espaces, plus de 12 chiffres
+  (IMEI, IMSI), virgules pouvant séparer des milliers.
+- **Coordonnées** — `borne_lat`, `cellLng`, `latitude_site`… reconnues comme
+  latitude et longitude (valeurs vérifiées) ; un numéro de téléphone n'est
+  plus pris pour un point « lat, lng ».
+- CSV natif sans colonne `type` : les colonnes libres deviennent des
+  propriétés au lieu d'être perdues.
+- Table ZNQuery : les nombres écrits en texte se trient comme des nombres.
+
+### Dossiers et fenêtres d'import
+
+- **Renommer le dossier** par double-clic sur son nom, en haut à gauche.
+- Un import abandonné depuis l'accueil (assistant fermé, placement annulé)
+  ne laisse plus de dossier vide ; un dossier existant n'est jamais touché.
+- Fenêtres d'import de l'accueil et du dossier alignées (mêmes zones, même
+  ordre) ; case « Créer les éléments manquants » retirée (toujours active) ;
+  carte « Modèle CSV ZeroNeurone » réduite au téléchargement ; fenêtre de
+  mapping plus large.
+
 ## 2.85.1
 
 ### Accueil

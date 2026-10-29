@@ -90,16 +90,19 @@ dossier.zip
 
 ---
 
-### JSON via mapping (paste)
+### JSON or CSV via mapping
 
-For **arbitrary JSON** (an API export, another tool's output…) that doesn't follow the native schema, a **mapping** assistant connects its fields to ZeroNeurone elements.
+For **arbitrary JSON** (an API export, another tool's output…) or **any CSV** that doesn't follow the native schema, a **mapping** assistant connects its fields to ZeroNeurone elements.
 
-**Open it:** import → *Map a custom JSON*, or **paste (Ctrl+V) raw JSON directly onto the canvas**. A recognized format (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) is imported normally; generic JSON opens the mapper.
+**Open it:** import → *Map a JSON or CSV* (paste the text or pick a `.json`, `.csv` or `.tsv` file) — from a dossier, or from the home page, where the entry creates a new dossier (or opens the one picked in *Import into*) and shows the assistant there — or **paste (Ctrl+V) raw JSON directly onto the canvas**. A recognized format (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) is imported normally; generic JSON opens the mapper.
+
+A CSV imported without the native format's columns (see [CSV](#csv)) opens the mapper too, from the home page as well: the dossier is created, then opens on the assistant. If the import is given up (assistant closed or placement cancelled) while this new dossier is still empty, it is deleted and you are back on the home page; an existing dossier is never touched. The CSV becomes a table named after the file: each row is a record, each column a field. The delimiter (`,`, `;` or tab) is detected; every value is read as text.
 
 **Auto-detection:**
 - the **record source** (an array of objects like `records`, or the whole object = 1 element);
 - a **label template** (e.g. `{first_name} {last_name}`);
-- **date**, **country**, **latitude/longitude** (geo point) and **identifier** fields;
+- **date**, **country**, **latitude/longitude** (geo point, compound names such as `borne_lat`, `cellLng` included) and **identifier** fields;
+- **numeric** columns → **number** property (see below);
 - a single combined **`lat, lng`** field → geo point;
 - **URLs** → **link**-typed property;
 - **references**: a field holding the ids of other records creates the matching **links** (directed; reciprocal → bidirectional);
@@ -135,7 +138,23 @@ As soon as two arrays are ticked, a **diagram** shows the arrays and their links
 
 **Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while the retained records are all imported.
 
-**Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users.
+**Source:** the **Source** field (next to the tag) gives the source of what the import creates: elements, events and links. It takes the file name, and can be replaced by free text ("Operator reply of 12/09"). It only applies to what has no source: a column mapped to *Source* wins, row by row. It is not saved in templates.
+
+**Rows as events:** the **Each row creates** setting switches from *an element* to *an event*. Each row then becomes a dated event (shown on the timeline and, when it has a place, on the map):
+- **Element**: the column naming the element that holds the event. One element is created per distinct value; when the column refers to another imported table, the event goes on that table's element;
+- **Date** and **End** (optional): the start and end columns. Partial dates (`2020`, `2020-03`) keep their precision; rows without a valid date are skipped and counted in a message;
+- the **label template** gives the event's label. On switching to events, it offers a category column (few distinct values, like a type: "Incoming call"); left empty, the event takes the tag, else the element's value; **notes**, **source**, **latitude/longitude** and **properties** fields go on the event;
+- **pivot** fields create and link other elements, one link per pair however many rows share it. Within a table, a value makes one element, whether it holds the event or is a pivot. With **Event on the pivot elements too** (ticked by default), the event also goes on each pivot;
+- ids, references and media do not apply to event rows;
+- the import cap does not apply: every (filtered) row becomes an event, since events add no element to the canvas.
+
+Example, a phone bill (`caller;called;date;duration;lat;lng`): *Element* = `caller`, *Date* = `date`, `called` as **pivot**, `lat`/`lng` as coordinates. Each number becomes an element, each pair of numbers a link, and each call an event on both numbers' timelines, placed on the map at the cell tower.
+
+Events go on elements the import creates. To add events to an element already in the dossier, use the [native CSV](#csv) with `type` = `event` (the `de` column gives the element's label), or import, then **merge** the created element with the existing one.
+
+In JSON, an array of objects of a record (`calls: [...]`) can become **events of the element** instead of linked sub-elements: tick *As events of the element* on that array. Each object is dated by its first field named like a date (`date`, `timestamp`…), else by the first one holding one.
+
+**Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users. A CSV template applies to any file with the same columns, whatever its name (next month's phone bill, say). A template saved on a CSV is offered for CSV only, one saved on JSON for JSON only; a template made before this distinction counts as a JSON one, offered for a CSV only when its fields match the file's columns; saving it again on a CSV makes it a CSV template.
 
 A template saves every ticked array (mapping, label template, tag, sub-elements, filters, cap) and the list of ticked arrays; loading it restores them. With a template selected, **Save** updates it; with none selected, you are asked for a name and a new template is created. Older single-array templates still apply to the open array.
 
@@ -146,6 +165,10 @@ The import happens as a single **undoable** batch (Ctrl+Z).
 ### CSV
 
 **Tabular import** of elements and links.
+
+A CSV is imported directly when it follows the native format: a `type` column holding only `element`, `lien`/`link` or `event`, or, without a `type` column, a `label` column (or `nom`, `name`), or both columns of a link (`de`/`vers`, `from`/`to`). Any other CSV, another tool's export for instance, opens the [mapping](#json-or-csv-via-mapping) assistant, where you pick the label and the role of each column; the mapping can be saved as a template and is offered again for a CSV with the same columns.
+
+**Numbers:** a column whose every value is a number gives **number** properties (sorted and compared as numbers); a decimal comma is accepted (`12,5`). Values that only look like numbers stay text: a leading zero (phone numbers, postcodes, ids), spaces (`06 39 98 33 17`), more than 12 digits (IMEI, IMSI, account numbers). A column whose commas may separate thousands (`1,234`, `25,000`, or commas next to decimal points) also stays text rather than giving wrong numbers. In the mapping, the **Property (number)** target can be picked by hand.
 
 
 #### Required Columns

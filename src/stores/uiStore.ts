@@ -141,6 +141,14 @@ interface UIState {
       hands it to its own import modal once loaded (options, then placement). */
   pendingDossierImport: { dossierId: string; file: File } | null;
   setPendingDossierImport: (pending: { dossierId: string; file: File } | null) => void;
+  /** Dossier opened from the home page to map a JSON or CSV: its page opens
+      the mapping assistant once loaded. */
+  pendingJsonMapping: string | null;
+  setPendingJsonMapping: (dossierId: string | null) => void;
+  /** Dossier the home page created for an import still to be made: deleted
+      if the import is given up while it is still empty. */
+  provisionalDossierId: string | null;
+  setProvisionalDossierId: (dossierId: string | null) => void;
 
   // Capture system for report screenshots
   captureHandlers: Map<DisplayMode, CaptureHandler>;
@@ -263,6 +271,10 @@ export const useUIStore = create<UIState>()(
   importPlacementData: null,
   pendingDossierImport: null,
   setPendingDossierImport: (pending) => set({ pendingDossierImport: pending }),
+  pendingJsonMapping: null,
+  setPendingJsonMapping: (dossierId) => set({ pendingJsonMapping: dossierId }),
+  provisionalDossierId: null,
+  setProvisionalDossierId: (dossierId) => set({ provisionalDossierId: dossierId }),
   captureHandlers: new Map(),
 
   // Capture system

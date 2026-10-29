@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
@@ -18,10 +18,11 @@ import {
 import { FECOptionsPanel } from './FECOptionsPanel';
 import { GeoJSONOptionsPanel, type PendingGeoJSON } from './GeoJSONOptionsPanel';
 import { ImportProgressLine } from './ImportProgressLine';
+import { ImportDropZone, ImportMappingEntry, CsvTemplateCard } from './ImportSections';
 import { withImportProgress } from '../../services/importProgress';
+import { isNativeCSV } from '../../utils/csv';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
-import { SafeHtml } from '../common/SafeHtml';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { emitImported, importFormatOf } from '../../plugins/pluginEventBus';
 
@@ -35,7 +36,6 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [createMissingElements, setCreateMissingElements] = useState(true);
   const [targetDossierId, setTargetDossierId] = useState<string>('new');
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Import en cours : Annuler l'interrompt (ZIP : entre deux médias)
@@ -179,6 +179,18 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       dossierId = dossier.id;
       createdNewDossier = true;
 
+      // CSV without the native columns: the dossier opens on the column mapping
+      if (/\.(csv|tsv)$/i.test(file.name)) {
+        const content = await importService.readFileAsText(file);
+        if (!isNativeCSV(content)) {
+          useUIStore.getState().setProvisionalDossierId(dossierId);
+          setPendingDossierImport({ dossierId, file });
+          onClose();
+          navigate(`/dossier/${dossierId}`);
+          return;
+        }
+      }
+
       let result: ImportResult;
 
       if (file.name.endsWith('.zip')) {
@@ -191,9 +203,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         result = await importService.importFromJSON(content, dossierId);
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromCSV(content, dossierId, {
-          createMissingElements,
-        });
+        result = await importService.importFromCSV(content, dossierId);
       } else if (file.name.endsWith('.anb')) {
         const buffer = await file.arrayBuffer();
         if (!isANBFormat(buffer)) {
@@ -303,7 +313,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetDossierId, createMissingElements, createDossier, deleteDossier, navigate, onClose, t, requestFitView, importIntoExistingDossier]);
+  }, [targetDossierId, createDossier, deleteDossier, navigate, onClose, t, requestFitView, importIntoExistingDossier, setPendingDossierImport]);
 
   // Confirmation d'une étape d'options (FEC, GeoJSON) : le dossier est créé
   // ici seulement, et supprimé si l'import échoue.
@@ -378,6 +388,17 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       () => setPendingGeoJSON(null),
     );
   }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, runPendingImport]);
+
+  // The mapping lives in a dossier: the chosen one, or a new one created here
+  const setPendingJsonMapping = useUIStore((state) => state.setPendingJsonMapping);
+  const openMapping = useCallback(async () => {
+    const created = targetDossierId === 'new';
+    const dossierId = created ? (await createDossier(t('import.newDossier'), '')).id : targetDossierId;
+    if (created) useUIStore.getState().setProvisionalDossierId(dossierId);
+    setPendingJsonMapping(dossierId);
+    onClose();
+    navigate(`/dossier/${dossierId}`);
+  }, [targetDossierId, createDossier, t, setPendingJsonMapping, onClose, navigate]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -470,7 +491,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
+            accept=".zip,.znzip,.json,.csv,.tsv,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"
@@ -606,68 +627,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </div>
           )}
 
-          {/* Import button */}
-          {!pendingFEC && !pendingGeoJSON && !importRunning && (
-          <button
-            onClick={triggerFileSelect}
-            disabled={isProcessing}
-            className="w-full flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-dashed border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
-          >
-            <Download size={32} className="text-text-tertiary" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-text-primary">
-                {isProcessing ? t('import.importing') : t('import.selectFile')}
-              </div>
-              <ImportProgressLine className="text-xs text-text-secondary mt-1" />
-              <div className="text-xs text-text-tertiary mt-1">
-                {t('import.supportedFormats')}
-              </div>
-              <div className="text-xs text-text-tertiary mt-0.5">
-                {t('import.jsonFormats')}
-              </div>
-              <div className="text-xs text-text-tertiary mt-0.5">
-                {t('import.genealogyFormats')}
-              </div>
-            </div>
-          </button>
-          )}
-
-          {/* Options and template for CSV — irrelevant during a FEC or GeoJSON options step */}
+          {/* Same zones as the import into a dossier: file, mapping, CSV template */}
           {!pendingFEC && !pendingGeoJSON && !importRunning && (
             <>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="createMissing"
-                checked={createMissingElements}
-                onChange={(e) => setCreateMissingElements(e.target.checked)}
-                className="rounded border-border-default"
-              />
-              <label htmlFor="createMissing" className="text-xs text-text-secondary">
-                {t('import.createMissing')}
-              </label>
-            </div>
-
-            {/* CSV Template */}
-            <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet size={14} className="text-text-secondary" />
-                  <span className="text-xs font-medium text-text-primary">{t('import.csvTemplate.title')}</span>
-                </div>
-                <button
-                  onClick={downloadCSVTemplate}
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
-                >
-                  <Download size={12} />
-                  {t('import.csvTemplate.download')}
-                </button>
-              </div>
-              <div className="text-xs text-text-tertiary space-y-1">
-                <SafeHtml as="p" html={t('import.csvTemplate.format')} />
-                <p>{t('import.csvTemplate.description')}</p>
-              </div>
-            </div>
+              <ImportDropZone onClick={triggerFileSelect} busy={isProcessing} />
+              <ImportMappingEntry onClick={openMapping} />
+              <CsvTemplateCard onDownload={downloadCSVTemplate} />
             </>
           )}
 

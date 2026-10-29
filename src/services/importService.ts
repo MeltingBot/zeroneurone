@@ -44,7 +44,8 @@ import { sanitizeSvgIcon } from '../utils/svgIcon';
 import { normalizeGeo, computePolygonCenter, computePolygonAreaKm2, openRing, isGeoInRange } from '../utils/geo';
 import { isLambert93CrsName, lambert93ToWgs84 } from '../utils/lambert93';
 import { remapDismissedSuggestions } from './linkSuggestions';
-import { splitCSVRecords } from '../utils/csv';
+import { splitCSVRecords, detectCSVDelimiter, parseCSVLine } from '../utils/csv';
+import { isNumericColumn, parseNumericText } from '../utils/numericText';
 import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
 import { isDossierOptions } from '../utils/dossierOptions';
 import type { ExportData, ExportedAssetMeta } from './exportService';
@@ -190,6 +191,25 @@ async function bulkAddInBatches<T>(table: Table<T, string>, rows: T[], size = 50
   for (let i = 0; i < rows.length; i += size) {
     await table.bulkAdd(rows.slice(i, i + size));
   }
+}
+
+/**
+ * Properties of a CSV row from its free columns. A column whose every value
+ * is a number gives number properties (phone numbers, postcodes and long ids
+ * stay text); the others give text properties.
+ */
+function csvPropertyReader(columns: { index: number; name: string }[], rows: string[][]): (values: string[]) => Property[] {
+  const numeric = new Set(columns.filter(({ index }) => isNumericColumn(rows.map((row) => row[index]))).map(({ index }) => index));
+  return (values) => {
+    const props: Property[] = [];
+    for (const { index, name } of columns) {
+      const value = values[index]?.trim();
+      if (!value) continue;
+      const n = numeric.has(index) ? parseNumericText(value) : null;
+      props.push(n !== null ? { key: name, value: n, type: 'number' } : { key: name, value });
+    }
+    return props;
+  };
 }
 
 class ImportService {
@@ -2104,6 +2124,10 @@ class ImportService {
           customPropertyIndices.push({ index, name: header });
         }
       });
+      const customProperties = csvPropertyReader(
+        customPropertyIndices,
+        dataLines.map((line) => this.parseCSVLine(line, opts.delimiter)),
+      );
 
       // Track created elements by label for linking
       const elementsByLabel = new Map<string, Element>();
@@ -2173,13 +2197,7 @@ class ImportService {
         }
 
         // Parse custom properties from additional columns
-        const properties: Array<{ key: string; value: string }> = [];
-        for (const { index, name } of customPropertyIndices) {
-          const value = values[index]?.trim();
-          if (value) {
-            properties.push({ key: name, value });
-          }
-        }
+        const properties = customProperties(values);
 
         // Parse position
         let posX = Math.random() * 500;
@@ -2358,13 +2376,7 @@ class ImportService {
         }
 
         // Parse custom properties from additional columns
-        const linkProperties: Array<{ key: string; value: string }> = [];
-        for (const { index, name } of customPropertyIndices) {
-          const value = values[index]?.trim();
-          if (value) {
-            linkProperties.push({ key: name, value });
-          }
-        }
+        const linkProperties = customProperties(values);
 
         const link: Link = {
           id: generateUUID(),
@@ -2496,13 +2508,7 @@ class ImportService {
         }
 
         // Parse custom properties from additional columns
-        const eventProperties: Property[] = [];
-        for (const { index, name } of customPropertyIndices) {
-          const value = values[index]?.trim();
-          if (value) {
-            eventProperties.push({ key: name, value });
-          }
-        }
+        const eventProperties = customProperties(values);
 
         const event: ElementEvent = {
           id: generateUUID(),
@@ -2616,6 +2622,13 @@ class ImportService {
         return result;
       }
 
+      // Every other column becomes a property
+      const used = new Set([labelIdx, notesIdx, tagsIdx, posXIdx, posYIdx, geoLatIdx, geoLngIdx, dateIdx, confidenceIdx, sourceIdx, colorIdx, shapeIdx]);
+      const freeColumns = headers
+        .map((name, index) => ({ index, name: name.trim() }))
+        .filter(({ index, name }) => name && !used.has(index));
+      const customProperties = csvPropertyReader(freeColumns, dataLines.map((line) => this.parseCSVLine(line, opts.delimiter)));
+
       // Process each row
       let rowNum = opts.hasHeaders ? 2 : 1;
       for (const line of dataLines) {
@@ -2675,7 +2688,7 @@ class ImportService {
             label,
             notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
             tags,
-            properties: [],
+            properties: customProperties(values),
             confidence,
             source: sourceIdx >= 0 ? values[sourceIdx] || '' : '',
             date,
@@ -3055,67 +3068,12 @@ class ImportService {
     return normalized.replace(/\r\n?/g, '\n');
   }
 
-  /**
-   * Détecte le délimiteur d'un CSV à partir de la première ligne non vide.
-   * Compte les occurrences hors guillemets pour `,`, `;` et `\t`.
-   */
   private detectCSVDelimiter(content: string): string {
-    const candidates = [',', ';', '\t'];
-    const firstLine = splitCSVRecords(content)[0] ?? '';
-
-    let inQuotes = false;
-    const counts: Record<string, number> = { ',': 0, ';': 0, '\t': 0 };
-    for (let i = 0; i < firstLine.length; i++) {
-      const ch = firstLine[i];
-      if (ch === '"') {
-        if (inQuotes && firstLine[i + 1] === '"') {
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-        continue;
-      }
-      if (!inQuotes && candidates.includes(ch)) {
-        counts[ch]++;
-      }
-    }
-
-    let best = ',';
-    let bestCount = -1;
-    for (const c of candidates) {
-      if (counts[c] > bestCount) {
-        best = c;
-        bestCount = counts[c];
-      }
-    }
-    return bestCount > 0 ? best : ',';
+    return detectCSVDelimiter(content);
   }
 
   private parseCSVLine(line: string, delimiter: string): string[] {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === delimiter && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-
-    result.push(current);
-    return result;
+    return parseCSVLine(line, delimiter);
   }
 
   /**

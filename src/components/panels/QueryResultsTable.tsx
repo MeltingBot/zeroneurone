@@ -6,6 +6,7 @@ import { useSelectionStore } from '../../stores/selectionStore';
 import { revealElement, revealElements } from '../../utils/revealElement';
 import type { Element, Link } from '../../types';
 import { fieldValue, queryFields } from '../../services/query/evaluator';
+import { parseNumericText } from '../../utils/numericText';
 import { ArrowUpDown, ArrowUp, ArrowDown, Upload, Box, Link2 } from 'lucide-react';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { GROUP_FIELDS, buildGroups, type GroupRow } from '../../utils/queryGroups';
@@ -47,10 +48,14 @@ function displayText(v: unknown, field: string): string | null {
   return String(v);
 }
 
-/** Value used to sort a column: numbers and dates by value, the rest as text */
+/** Value used to sort a column: numbers (also written as text) and dates by value, the rest as text */
 function sortKey(v: unknown, field: string): number | string | null {
   if (v instanceof Date) return v.getTime();
   if (typeof v === 'number') return v;
+  if (typeof v === 'string') {
+    const n = parseNumericText(v);
+    if (n !== null) return n;
+  }
   return displayText(v, field);
 }
 

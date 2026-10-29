@@ -33,6 +33,8 @@ const Canvas = lazyWithRetry(() => import('../components/canvas').then(m => ({ d
 const TimelineView = lazyWithRetry(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazyWithRetry(() => import('../components/map').then(m => ({ default: m.MapView })));
 const MatrixView = lazyWithRetry(() => import('../components/matrix').then(m => ({ default: m.MatrixView })));
+import { db } from '../db/database';
+import { DossierTitle } from '../components/common/DossierTitle';
 import { useDossierStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore, toast } from '../stores';
 import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';
@@ -134,6 +136,34 @@ export function DossierPage() {
   }, [pendingImportFile, setDisplayMode]);
   const [jsonMappingOpen, setJsonMappingOpen] = useState(false);
   const [jsonMappingInitial, setJsonMappingInitial] = useState<string | undefined>(undefined);
+  const [jsonMappingName, setJsonMappingName] = useState<string | undefined>(undefined);
+
+  // A dossier created on the home page for an import that is given up
+  // (mapping closed, placement cancelled) is deleted while still empty
+  const discardIfProvisional = useCallback(async () => {
+    const ui = useUIStore.getState();
+    const provisional = ui.provisionalDossierId;
+    if (!provisional || provisional !== id || ui.importPlacementMode) return;
+    ui.setProvisionalDossierId(null);
+    const inStore = useDossierStore.getState().elements.length;
+    const inDb = await db.elements.where('dossierId').equals(provisional).count();
+    if (inStore > 0 || inDb > 0) return;
+    await deleteDossier(provisional).catch(() => { /* best-effort */ });
+    navigate('/');
+  }, [id, deleteDossier, navigate]);
+  const placing = useUIStore((state) => state.importPlacementMode);
+  const wasPlacing = useRef(false);
+  useEffect(() => {
+    if (wasPlacing.current && !placing) discardIfProvisional();
+    wasPlacing.current = placing;
+  }, [placing, discardIfProvisional]);
+
+  // Mapping asked for from the home page: open once the dossier is loaded
+  const pendingJsonMapping = useUIStore((state) => state.pendingJsonMapping);
+  const mappingRequested = !!pendingJsonMapping && !isLoading && currentDossier?.id === id && pendingJsonMapping === id;
+  useEffect(() => {
+    if (mappingRequested) setDisplayMode('canvas');
+  }, [mappingRequested, setDisplayMode]);
 
   // Open the JSON mapper pre-filled when raw JSON is pasted onto the canvas
   useEffect(() => {
@@ -561,9 +591,7 @@ export function DossierPage() {
           <IconButton onClick={handleGoHome} data-testid="back-to-home" aria-label={t('home.backToHome')}>
             <ArrowLeft size={16} />
           </IconButton>
-          <h1 className="text-sm font-semibold text-text-primary truncate">
-            {currentDossier.name}
-          </h1>
+          <DossierTitle dossier={currentDossier} />
           <div className="w-px h-4 bg-border-default shrink-0" />
           <div className="flex items-center gap-1 shrink-0">
             <CollaborationInfo />
@@ -799,12 +827,21 @@ export function DossierPage() {
         isOpen={importOpen || pendingImportFile !== null}
         onClose={() => { setImportOpen(false); setPendingDossierImport(null); }}
         initialFile={pendingImportFile}
-        onOpenJsonMapping={() => setJsonMappingOpen(true)}
+        onOpenJsonMapping={(initial) => {
+          setJsonMappingInitial(initial?.content);
+          setJsonMappingName(initial?.name);
+          setJsonMappingOpen(true);
+        }}
       />
       <JsonMappingImportModal
-        isOpen={jsonMappingOpen}
-        onClose={() => { setJsonMappingOpen(false); setJsonMappingInitial(undefined); }}
+        isOpen={jsonMappingOpen || mappingRequested}
+        onClose={() => {
+          setJsonMappingOpen(false); setJsonMappingInitial(undefined); setJsonMappingName(undefined);
+          useUIStore.getState().setPendingJsonMapping(null);
+          discardIfProvisional();
+        }}
         initialJson={jsonMappingInitial}
+        initialName={jsonMappingName}
       />
 
       {/* Synthesis modal */}

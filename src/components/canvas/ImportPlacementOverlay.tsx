@@ -83,6 +83,7 @@ export function ImportPlacementOverlay() {
         <ImportProgressLine />
         <button
           onClick={exitImportPlacementMode}
+          data-testid="import-placement-cancel"
           className="p-1 text-text-tertiary hover:text-text-primary rounded"
           title={t('dossier.importPlacement.cancel')}
         >
