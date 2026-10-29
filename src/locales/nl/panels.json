@@ -549,6 +549,12 @@
     },
     "similar": {
       "title": "Potentiële duplicaten",
+      "mode": {
+        "fuzzy": "Ruim",
+        "exact": "Strikt",
+        "fuzzyDesc": "Gelijkende namen, typfouten inbegrepen",
+        "exactDesc": "Zelfde naam, hoofdletters en schrijfwijze van nummers buiten beschouwing"
+      },
       "description": "Elementen met vergelijkbare namen",
       "count": "{{count}} vergelijkbare paren",
       "noSimilar": "Geen vergelijkbare labels",

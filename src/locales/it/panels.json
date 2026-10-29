@@ -550,6 +550,12 @@
     },
     "similar": {
       "title": "Potenziali duplicati",
+      "mode": {
+        "fuzzy": "Ampio",
+        "exact": "Rigoroso",
+        "fuzzyDesc": "Nomi simili, refusi compresi",
+        "exactDesc": "Stesso nome, a parte maiuscole e scrittura dei numeri"
+      },
       "description": "Elementi con nomi simili",
       "count": "{{count}} coppia/e simile/i",
       "noSimilar": "Nessuna etichetta simile",

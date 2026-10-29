@@ -140,6 +140,9 @@ Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la 
 
 **Source :** le champ **Source** (à côté du tag) donne la source de ce que l'import crée : éléments, événements et liens. Il reprend le nom du fichier, et se remplace par un texte libre (« Réponse opérateur du 12/09 »). Il ne s'applique qu'à ce qui n'a pas de source : une colonne mappée en *Source* garde la priorité, ligne par ligne. Il n'est pas enregistré dans les modèles.
 
+**Éléments existants :**
+- **Ajouter aux éléments existants** (décoché par défaut) : un élément porteur ou pivot dont le nom correspond à un élément du dossier n'est pas recréé ; ses événements et ses liens vont sur l'élément existant, sans doubler un lien qui existe déjà. Un seul **Ctrl+Z** retire les éléments créés et les événements ajoutés. Les valeurs sont comparées telles quelles : `06 39 98 33 17` et `0639983317` donnent deux éléments. **Analyses → Doublons potentiels** les rapproche (un même numéro quelle que soit son écriture) et propose de les fusionner.
+
 **Lignes en événements :** le réglage **Chaque ligne crée** passe d'*un élément* à *un événement*. Chaque ligne devient alors un événement daté (visible sur la timeline et, s'il a un lieu, sur la carte) :
 - **Élément** : la colonne qui désigne l'élément porteur. Un élément est créé par valeur distincte ; si la colonne fait référence à une autre table importée, l'événement va sur l'élément de cette table ;
 - **Date** et **Fin** (facultative) : les colonnes de début et de fin. Les dates partielles (`2020`, `2020-03`) gardent leur précision ; les lignes sans date valide sont ignorées et comptées dans un message ;

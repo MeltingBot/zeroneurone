@@ -551,6 +551,12 @@
     },
     "similar": {
       "title": "Potencjalne duplikaty",
+      "mode": {
+        "fuzzy": "Szeroki",
+        "exact": "Ścisły",
+        "fuzzyDesc": "Podobne nazwy, łącznie z literówkami",
+        "exactDesc": "Ta sama nazwa, pomijając wielkość liter i zapis numerów"
+      },
       "description": "Elementy o podobnych nazwach",
       "count": "{{count}} podobnych par",
       "noSimilar": "Brak podobnych etykiet",

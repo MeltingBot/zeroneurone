@@ -824,6 +824,7 @@
     "childAsEvents": "Як події елемента",
     "importSource": "Джерело",
     "importSourcePlaceholder": "Назва файлу або текст",
+    "attachExisting": "Додати до наявних елементів",
     "eventOnPivots": "Подія також на елементах-півотах",
     "previewLabel": "перегляд:",
     "noLabel": "Без назви",

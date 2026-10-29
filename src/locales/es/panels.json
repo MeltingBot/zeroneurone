@@ -549,6 +549,12 @@
     },
     "similar": {
       "title": "Duplicados potenciales",
+      "mode": {
+        "fuzzy": "Amplio",
+        "exact": "Estricto",
+        "fuzzyDesc": "Nombres parecidos, erratas incluidas",
+        "exactDesc": "Mismo nombre, salvo mayúsculas y escritura de los números"
+      },
       "description": "Elementos con nombres similares",
       "count": "{{count}} par(es) similar(es)",
       "noSimilar": "Sin etiquetas similares",

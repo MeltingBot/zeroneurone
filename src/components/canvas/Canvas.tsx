@@ -4134,13 +4134,33 @@ export function Canvas() {
             pasteElements(shifted, placedLinks);
             const placedIds = shifted.map((e) => e.id);
             if (activeTabId) addTabMembers(activeTabId, placedIds);
+            // Events for elements already in the dossier: added to them, and
+            // taken back by the same undo as the elements created
+            const before: { id: string; changes: Partial<Element> }[] = [];
+            const calls: { kind: 'elements'; ids: string[]; changes: Partial<Element> }[] = [];
+            let attachedEvents = 0;
+            for (const { elementId, events } of importPlacementData.prebuilt.attached ?? []) {
+              const current = useDossierStore.getState().elements.find((el) => el.id === elementId);
+              if (!current) continue;
+              const merged = [...(current.events ?? []), ...events];
+              before.push({ id: elementId, changes: { events: current.events ?? [] } });
+              calls.push({ kind: 'elements', ids: [elementId], changes: { events: merged } });
+              await updateElement(elementId, { events: merged });
+              attachedEvents += events.length;
+            }
             pushAction({
               type: 'create-elements',
-              undo: {},
-              redo: { elements: shifted, links: placedLinks, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
+              undo: before.length > 0 ? { bulkElements: before } : {},
+              redo: {
+                elements: shifted, links: placedLinks, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id),
+                ...(calls.length > 0 ? { bulkCalls: calls } : {}),
+              },
             });
-            selectElements(placedIds);
+            selectElements([...placedIds, ...before.map((b) => b.id)]);
             toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
+            if (before.length > 0) {
+              toast.info(tPages('dossier.importPlacement.attached', { count: before.length, events: attachedEvents }));
+            }
             importPlacementData.onComplete?.();
             setIsImportingPlacement(false);
             exitImportPlacementMode();
@@ -4384,7 +4404,7 @@ export function Canvas() {
     // Also reset any Insights highlight (bridges, clusters, centrality…) so a
     // click on empty canvas restores the normal display.
     clearHighlight();
-  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
+  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset, updateElement]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { Fragment, useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Network,
@@ -22,7 +22,7 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
-import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
+import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore, useUIStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
@@ -74,6 +74,14 @@ export function InsightsPanel() {
     clearHighlight,
     clearPaths,
   } = useInsightsStore();
+  // Potential duplicates: close names, or the same name only (case and the
+  // writing of a number aside)
+  const similarMode = useUIStore((s) => s.similarMode);
+  const setSimilarMode = useUIStore((s) => s.setSimilarMode);
+  const shownSimilar = useMemo(
+    () => (similarMode === 'exact' ? similarLabels.filter((p) => p.similarity >= 1) : similarLabels),
+    [similarLabels, similarMode],
+  );
 
   // Local state for expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -380,6 +388,15 @@ export function InsightsPanel() {
       revealElements([elementId1, elementId2]);
     },
     [highlightSimilarPair, selectElements, selectedElementIds, clearSelection, clearHighlight]
+  );
+  // A name of the pair: that element alone, zoomed on, the pair still highlighted
+  const handleSimilarElementClick = useCallback(
+    (elementId: string, elementId1: string, elementId2: string) => {
+      highlightSimilarPair(elementId1, elementId2);
+      selectElement(elementId);
+      revealElement(elementId);
+    },
+    [highlightSimilarPair, selectElement]
   );
 
   // Path finding
@@ -1056,13 +1073,33 @@ export function InsightsPanel() {
                 id="similar"
                 title={t('insights.similar.title')}
                 icon={<Copy size={12} />}
-                count={similarLabels.length}
+                count={shownSimilar.length}
                 isExpanded={expandedSections.has('similar')}
                 onToggle={() => toggleSection('similar')}
                 description={t('insights.similar.description')}
               >
+                <div className="flex items-center mb-2 w-fit rounded border border-border-default overflow-hidden" data-testid="similar-mode">
+                  {(['fuzzy', 'exact'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setSimilarMode(mode)}
+                      aria-pressed={similarMode === mode}
+                      title={t(`insights.similar.mode.${mode}Desc`)}
+                      className={`px-2 py-0.5 text-[10px] ${
+                        similarMode === mode
+                          ? 'bg-bg-tertiary text-text-primary font-medium'
+                          : 'text-text-tertiary hover:text-text-primary'
+                      }`}
+                    >
+                      {t(`insights.similar.mode.${mode}`)}
+                    </button>
+                  ))}
+                </div>
+                {shownSimilar.length === 0 && (
+                  <p className="text-[10px] text-text-tertiary">{t('insights.similar.noSimilar')}</p>
+                )}
                 <ProgressiveList
-                  items={similarLabels}
+                  items={shownSimilar}
                   initialCount={10}
                   increment={10}
                   className="space-y-1"
@@ -1075,13 +1112,19 @@ export function InsightsPanel() {
                         className="flex items-center gap-1 text-xs text-text-primary cursor-pointer"
                         onClick={() => handleSimilarClick(pair.elementId1, pair.elementId2)}
                       >
-                        <span className="truncate max-w-[100px]">
-                          {getElementLabel(pair.elementId1)}
-                        </span>
-                        <span className="text-text-tertiary">≈</span>
-                        <span className="truncate max-w-[100px]">
-                          {getElementLabel(pair.elementId2)}
-                        </span>
+                        {[pair.elementId1, pair.elementId2].map((id, i) => (
+                          <Fragment key={id}>
+                            {i === 1 && <span className="text-text-tertiary">≈</span>}
+                            <span
+                              className="truncate max-w-[100px] hover:underline"
+                              title={getElementLabel(id)}
+                              onClick={(e) => { e.stopPropagation(); handleSimilarElementClick(id, pair.elementId1, pair.elementId2); }}
+                              data-testid="similar-element"
+                            >
+                              {getElementLabel(id)}
+                            </span>
+                          </Fragment>
+                        ))}
                         <span className="ml-auto text-[10px] text-text-tertiary tabular-nums">
                           {Math.round(pair.similarity * 100)}%
                         </span>

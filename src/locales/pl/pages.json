@@ -239,6 +239,7 @@
       "cancel": "Anuluj (Esc)",
       "elements": "{{count}} element(ów)",
       "success": "{{count}} element(ów) zaimportowano",
+      "attached": "Dodano zdarzenia ({{events}}) do istniejących elementów ({{count}})",
       "error": "Import nie powiódł się",
       "mediaResult": "Załączono {{ok}} mediów, {{fail}} nieudanych",
       "tabLimit": "Maksymalnie {{max}} kart: „{{name}}” trafia do otwartej karty"

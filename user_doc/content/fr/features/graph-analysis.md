@@ -108,6 +108,17 @@ Liste des éléments **sans aucune connexion**.
 
 ---
 
+## Doublons potentiels
+
+Paires d'éléments aux noms proches, qui désignent peut-être la même chose. Un clic sur la ligne sélectionne les deux éléments et cadre la vue sur eux (un second clic désélectionne) ; un clic sur un des deux noms sélectionne cet élément et centre la vue dessus, la paire restant en évidence. **Fusionner** réunit les deux.
+
+- **Large** : noms proches, fautes de frappe comprises (« Jean Dupont » / « Jean Dupond »).
+- **Strict** : même nom, à la casse et à l'écriture des numéros près (`06 39 98 33 17` = `0639983317`).
+
+Le choix est mémorisé. Dans les deux modes, deux numéros différents (`0639985018` et `0639985078`) ne sont jamais proposés : ce sont deux lignes, pas une faute de frappe.
+
+---
+
 ## Chemins
 
 Trouvez le **plus court chemin** entre deux éléments.

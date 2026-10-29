@@ -153,3 +153,73 @@ test('a placement cancelled in an existing dossier leaves the dossier alone', as
   expect((await readStore<{ id: string }>(page, 'dossiers')).map((d) => d.id)).toEqual(before.map((d) => d.id));
   expect(await readStore(page, 'elements')).toHaveLength(1);
 });
+
+test('a second file adds to the numbers already in the dossier; one undo takes it back', async ({ page }) => {
+  await setupCleanEnvironment(page);
+  await page.click('[data-testid="import-button"]');
+  await page.locator('[data-testid="import-file-input"]').setInputFiles({
+    name: 'fadette.csv', mimeType: 'text/csv', buffer: Buffer.from(FADETTE, 'utf-8'),
+  });
+  let modal = page.locator('[data-testid="json-mapping-modal"]');
+  const asEvents = async () => {
+    await modal.locator('[data-testid="json-mapping-record-as"]').selectOption('event');
+    await modal.locator('[data-testid="json-mapping-hostField"]').selectOption('appelant');
+    await modal.locator('[data-testid="json-mapping-dateField"]').selectOption('date');
+    await modal.locator('[data-testid="json-mapping-target-appele"]').selectOption('pivot');
+  };
+  await expect(modal).toBeVisible({ timeout: 15000 });
+  await asEvents();
+  await modal.locator('[data-testid="json-mapping-import"]').click();
+  await page.locator('.react-flow__pane').click({ position: { x: 400, y: 300 } });
+  await expect(page.locator('.react-flow__node')).toHaveCount(3, { timeout: 10000 });
+
+  // Second file: two numbers of the dossier, and a new one
+  const second = [
+    'appelant;appele;date;duree;lat;lng',
+    '0601010101;0602020202;17/03/2020 10:00;30;48.85;2.35',
+    '0601010101;0604040404;18/03/2020 10:00;30;48.85;2.35',
+  ].join('\n');
+  await page.evaluate((text) => window.dispatchEvent(new CustomEvent('zn:json-mapping-paste', { detail: { text } })), second);
+  modal = page.locator('[data-testid="json-mapping-modal"]');
+  await expect(modal).toBeVisible({ timeout: 10000 });
+  await asEvents();
+  await modal.locator('[data-testid="json-mapping-attach-existing"]').check();
+  await modal.locator('[data-testid="json-mapping-import"]').click();
+  await page.locator('.react-flow__pane').click({ position: { x: 200, y: 200 } });
+
+  const counts = async () => {
+    const els = await readStore<{ label: string; events?: unknown[] }>(page, 'elements');
+    return els.map((e) => [e.label, e.events?.length ?? 0]).sort();
+  };
+  await expect.poll(counts, { timeout: 10000 }).toEqual([
+    ['0601010101', 6], ['0602020202', 4], ['0603030303', 1], ['0604040404', 1],
+  ]);
+  expect(await readStore(page, 'links')).toHaveLength(3);
+
+  // One undo: the new number goes, the added events too
+  await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
+  await page.keyboard.press('Control+z');
+  await expect.poll(counts, { timeout: 10000 }).toEqual([
+    ['0601010101', 4], ['0602020202', 3], ['0603030303', 1],
+  ]);
+});
+
+test('two writings of a number stay two elements (Insights offers to merge them)', async ({ page }) => {
+  await setupCleanEnvironment(page);
+  const text = [
+    'appelant;appele;date',
+    '06 01 01 01 01;0602020202;17/03/2020 10:00',
+    '0601010101;06 02 02 02 02;18/03/2020 10:00',
+  ].join('\n');
+  await page.click('[data-testid="import-button"]');
+  await page.locator('[data-testid="import-file-input"]').setInputFiles({ name: 'ecritures.csv', mimeType: 'text/csv', buffer: Buffer.from(text, 'utf-8') });
+  const modal = page.locator('[data-testid="json-mapping-modal"]');
+  await expect(modal).toBeVisible({ timeout: 15000 });
+  await modal.locator('[data-testid="json-mapping-record-as"]').selectOption('event');
+  await modal.locator('[data-testid="json-mapping-hostField"]').selectOption('appelant');
+  await modal.locator('[data-testid="json-mapping-dateField"]').selectOption('date');
+  await modal.locator('[data-testid="json-mapping-target-appele"]').selectOption('pivot');
+  await modal.locator('[data-testid="json-mapping-import"]').click();
+  await page.locator('.react-flow__pane').click({ position: { x: 400, y: 300 } });
+  await expect.poll(async () => (await readStore(page, 'elements')).length, { timeout: 10000 }).toBe(4);
+});

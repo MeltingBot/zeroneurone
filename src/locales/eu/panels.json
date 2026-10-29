@@ -549,6 +549,12 @@
     },
     "similar": {
       "title": "Bikoiztu potentzialak",
+      "mode": {
+        "fuzzy": "Zabala",
+        "exact": "Zorrotza",
+        "fuzzyDesc": "Izen antzekoak, idazketa-akatsak barne",
+        "exactDesc": "Izen bera, maiuskulak eta zenbakien idazkera alde batera"
+      },
       "description": "Izen antzekodun elementuak",
       "count": "{{count}} bikote antzeko",
       "noSimilar": "Ez dago etiketa antzekorik",

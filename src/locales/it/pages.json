@@ -239,6 +239,7 @@
       "cancel": "Annulla (Esc)",
       "elements": "{{count}} elemento/i",
       "success": "{{count}} elemento/i importato/i",
+      "attached": "{{events}} evento/i aggiunto/i a {{count}} elemento/i esistente/i",
       "error": "Importazione fallita",
       "mediaResult": "{{ok}} media allegati, {{fail}} falliti",
       "tabLimit": "Al massimo {{max}} schede: «{{name}}» va nella scheda aperta"

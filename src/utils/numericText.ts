@@ -47,3 +47,16 @@ export function isNumericColumn(values: Iterable<unknown>): boolean {
   if (commas > 0 && (points > 0 || thousandsLike === commas)) return false;
   return seen;
 }
+
+/**
+ * Key two labels are compared by to suggest duplicates. With `numbers`, a
+ * phone number in any writing is reduced to its digits: spaces, dots, dashes,
+ * slashes and brackets dropped ("06 39 98 33 17" = "06.39.98.33.17" =
+ * "0639983317"). Any other value is kept as written (trimmed).
+ */
+export function matchKey(value: string, numbers: boolean): string {
+  const v = value.trim();
+  if (!numbers) return v;
+  const compact = v.replace(/[\s.\-/()\u00a0]/g, '');
+  return /^\+?\d{6,15}$/.test(compact) ? compact : v;
+}

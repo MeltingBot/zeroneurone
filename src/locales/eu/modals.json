@@ -814,6 +814,7 @@
     "childAsEvents": "Elementuaren gertaera gisa",
     "importSource": "Iturria",
     "importSourcePlaceholder": "Fitxategiaren izena edo testua",
+    "attachExisting": "Gehitu dauden elementuei",
     "eventOnPivots": "Gertaera elementu pibotetan ere",
     "previewLabel": "aurrebista:",
     "noLabel": "Izenik gabe",

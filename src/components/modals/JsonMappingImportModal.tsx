@@ -153,6 +153,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const [fromCsv, setFromCsv] = useState(false);
   // Source of what the import creates: the file name, or free text
   const [importSource, setImportSource] = useState('');
+  // Elements of the dossier named like a value take its events and links
+  const [attachExisting, setAttachExisting] = useState(false);
   const [srcKey, setSrcKey] = useState('');
   // Several tables: each keeps its own config, the checked ones are imported together
   const [configs, setConfigs] = useState<Record<string, SourceConfig>>({});
@@ -186,7 +188,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   useEffect(() => { if (isOpen) loadTemplates(); }, [isOpen, loadTemplates]);
 
   const reset = useCallback(() => {
-    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setContentFile(undefined); setFromCsv(false); setImportSource(''); setSrcKey(''); setConfigs({}); setIncluded(new Set());
+    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setContentFile(undefined); setFromCsv(false); setImportSource(''); setAttachExisting(false); setSrcKey(''); setConfigs({}); setIncluded(new Set());
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setMergeField(undefined); setEventMapping(undefined); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
     setFilters([]); setFilterMode('all'); setMaxImport(2000);
@@ -376,6 +378,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     // its name, so that the template works on the next file of the same kind
     const own = cfg.tables?.[activeKey] ?? (!cfg.tables || tableSources.length === 1 ? cfg : null);
     setIgnoreEmpty(cfg.ignoreEmpty);
+    setAttachExisting(cfg.attachExisting ?? false);
     setLayout((LAYOUTS.includes(cfg.layout as LayoutType) ? cfg.layout : 'force') as LayoutType);
     if (own) {
       setLabelTemplate(own.labelTemplate);
@@ -440,6 +443,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings,
       filters, filterMode, maxImport, mergeField, events: eventMapping,
       format: fromCsv ? 'csv' : 'json',
+      attachExisting,
       tables: { ...Object.fromEntries(kept), ...tables }, included: [...included],
     };
     try {
@@ -461,6 +465,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings, signature, saveTemplate, t,
     configs, activeKey, included, autoConfigFor, fieldSig, filters, filterMode, maxImport, mergeField, eventMapping, fromCsv,
+    attachExisting,
     templates, selectedTemplateId, sources, updateTemplate]);
 
   const parse = useCallback((raw: string, name?: string) => {
@@ -700,6 +705,33 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       const pivotByKey = new Map<string, Element>();
       let pivotIdx = 0;
       const pivotLinked = new Set<string>();
+      // Values are matched as written (two writings of one number are two
+      // elements: Insights offers to merge them)
+      const keyOf = (v: string) => v.trim();
+      // Elements of the dossier a value may name: they take the events and
+      // links instead of a copy. A stand-in collects what they receive; the
+      // placement adds it to the element itself.
+      const existingByKey = new Map<string, Element>();
+      if (attachExisting) {
+        for (const el of useDossierStore.getState().elements) {
+          if (el.isGroup || el.isAnnotation) continue;
+          const k = keyOf(el.label);
+          if (k && !existingByKey.has(k)) existingByKey.set(k, el);
+        }
+        // Two elements of the dossier already linked: no second link between them
+        for (const l of useDossierStore.getState().links) pivotLinked.add([l.fromId, l.toId].sort().join('|'));
+      }
+      const attached = new Map<string, Element>();
+      const existingFor = (key: string): Element | undefined => {
+        const el = existingByKey.get(key);
+        if (!el) return undefined;
+        let standIn = attached.get(el.id);
+        if (!standIn) {
+          standIn = { ...el, tags: [...el.tags], events: [] };
+          attached.set(el.id, standIn);
+        }
+        return standIn;
+      };
 
       const buildProps = (flat: Record<string, unknown>, fieldList: FieldInfo[], getMap: (k: string) => FieldMapping | undefined) => {
         const properties: Property[] = [];
@@ -815,9 +847,14 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
             for (const v of vals) {
               const val = valueToString(v).trim();
               if (!val) continue;
-              const key = `${tag}\u0000${val}`;
-              let pivot = ev ? byValue.get(val) : pivotByKey.get(key);
-              if (pivot) withTag(pivot, tag);
+              const valKey = keyOf(val);
+              const key = `${tag}\u0000${valKey}`;
+              let pivot = (ev ? byValue.get(valKey) : pivotByKey.get(key)) ?? existingFor(valKey);
+              if (pivot) {
+                withTag(pivot, tag);
+                pivotByKey.set(key, pivot);
+                if (ev) byValue.set(valKey, pivot);
+              }
               if (!pivot) {
                 pivot = mkElement({
                   label: val,
@@ -827,7 +864,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 });
                 elements.push(pivot);
                 pivotByKey.set(key, pivot);
-                if (ev) byValue.set(val, pivot);
+                if (ev) byValue.set(valKey, pivot);
               }
               if (pivot.id === parent.id) continue;
               touched.push(pivot);
@@ -917,8 +954,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
             if (!event) { skippedEvents++; return; }
             let eventHost = hostRefIds ? elementById.get(hostRefIds.get(idKey(flat[ev.hostField])) ?? '') : undefined;
             if (!eventHost) {
-              eventHost = byValue.get(hostVal);
-              if (eventHost) withTag(eventHost, tn);
+              const hostKey = keyOf(hostVal);
+              eventHost = byValue.get(hostKey) ?? existingFor(hostKey);
+              if (eventHost) { withTag(eventHost, tn); byValue.set(hostKey, eventHost); }
               if (!eventHost) {
                 const n = byValue.size;
                 eventHost = mkElement({
@@ -927,7 +965,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 });
                 elements.push(eventHost);
                 elementById.set(eventHost.id, eventHost);
-                byValue.set(hostVal, eventHost);
+                byValue.set(hostKey, eventHost);
               }
             }
             eventHost.events.push(event);
@@ -1035,7 +1073,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       if (elements.length > 1 && elements.length <= LAYOUT_CAP) {
         // One ring of that many elements cannot be seen whole: grid instead
         const applied = layout === 'circular' && elements.length > CIRCULAR_MAX_ELEMENTS ? 'grid' : layout;
-        const { positions } = layoutService.applyLayout(applied, elements, links);
+        // Links to elements of the dossier do not move them: laid out among the new ones only
+        const created = new Set(elements.map((el) => el.id));
+        const { positions } = layoutService.applyLayout(applied, elements, links.filter((l) => created.has(l.fromId) && created.has(l.toId)));
         for (const el of elements) {
           const p = positions.get(el.id);
           if (p) el.position = p;
@@ -1050,6 +1090,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           for (const ev of el.events) if (!ev.source) ev.source = src;
         }
         for (const l of links) if (!l.source) l.source = src;
+        for (const standIn of attached.values()) for (const ev of standIn.events) if (!ev.source) ev.source = src;
       }
 
       // Hand the built elements/links to placement mode: the user clicks on the
@@ -1061,9 +1102,14 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         if (x < minX) minX = x; if (y < minY) minY = y;
         if (x > maxX) maxX = x; if (y > maxY) maxY = y;
       }
+      // Everything went to elements of the dossier: nothing to place, a point
+      if (elements.length === 0) { minX = minY = maxX = maxY = 0; }
       useUIStore.getState().enterImportPlacementMode({
         boundingBox: { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, elementCount: elements.length },
-        prebuilt: { elements, links, assets: assetDownloads },
+        prebuilt: {
+          elements, links, assets: assetDownloads,
+          attached: [...attached.values()].filter((el) => el.events.length > 0).map((el) => ({ elementId: el.id, events: el.events })),
+        },
         dossierId: dossier.id,
       });
       if (skippedEvents > 0) toast.warning(t('importJsonMapping.eventsSkipped', { count: skippedEvents }));
@@ -1076,7 +1122,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     // snapshot() reads the edited state listed here
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalImportCount, activeKey, configs, sources, included, autoConfigFor, planFor, parsed, ignoreEmpty, layout, t, handleClose,
-    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField, eventMapping, importSource]);
+    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField, eventMapping, importSource,
+    attachExisting]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -1366,6 +1413,10 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                   <input type="checkbox" checked={ignoreEmpty} onChange={(e) => setIgnoreEmpty(e.target.checked)} className="rounded border-border-default" />
                   {t('importJsonMapping.ignoreEmpty')}
                 </label>
+                <label className="flex items-center gap-1.5 text-xs text-text-secondary">
+                  <input type="checkbox" checked={attachExisting} onChange={(e) => setAttachExisting(e.target.checked)} data-testid="json-mapping-attach-existing" className="rounded border-border-default" />
+                  {t('importJsonMapping.attachExisting')}
+                </label>
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.layout')}</label>
                   <select
@@ -1478,6 +1529,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                             <option key={tg} value={tg} disabled={!!eventMapping && ['id', 'ref', 'asset'].includes(tg)}>{t(`importJsonMapping.targets.${tg}`)}</option>
                           ))}
                         </select>
+                        <div className="flex flex-col gap-1 min-w-0">
                         {m.enabled && m.target === 'polygon' ? (
                           <select
                             value={m.coordOrder ?? 'latlng'}
@@ -1515,6 +1567,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                             />
                           </div>
                         ) : <span />}
+                        </div>
                       </div>
                     );
                   })}

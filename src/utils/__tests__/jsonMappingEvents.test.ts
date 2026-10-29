@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { autoFieldMappings, buildEvent, collectFields, guessEventFields, recordDate } from '../jsonMapping';
+import { matchKey } from '../numericText';
 
 describe('recordDate', () => {
   it('keeps the precision of partial dates', () => {
@@ -83,5 +84,21 @@ describe('guessEventFields', () => {
   it('has an empty label without a category column', () => {
     const plain = recs.map(({ ligne, date_heure_debut }) => ({ ligne, date_heure_debut }));
     expect(guessEventFields(plain, collectFields(plain), isDate).labelTemplate).toBe('');
+  });
+});
+
+describe('matchKey', () => {
+  it('matches a phone number whatever its writing', () => {
+    const k = matchKey('0639983317', true);
+    for (const v of ['06 39 98 33 17', '06.39.98.33.17', '06-39-98-33-17', ' (06) 39983317 ']) {
+      expect(matchKey(v, true)).toBe(k);
+    }
+  });
+
+
+  it('leaves other values, and every value without the option, as written', () => {
+    expect(matchKey('Jean Dupont', true)).toBe('Jean Dupont');
+    expect(matchKey('A-12', true)).toBe('A-12');
+    expect(matchKey('06 39 98 33 17', false)).toBe('06 39 98 33 17');
   });
 });

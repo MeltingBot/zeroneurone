@@ -814,6 +814,7 @@
     "childAsEvents": "Como eventos do elemento",
     "importSource": "Fonte",
     "importSourcePlaceholder": "Nome do ficheiro ou texto",
+    "attachExisting": "Adicionar aos elementos existentes",
     "eventOnPivots": "Evento também nos elementos pivô",
     "previewLabel": "pré-visualização:",
     "noLabel": "Sem nome",

@@ -239,6 +239,7 @@
       "cancel": "Cancel (Esc)",
       "elements": "{{count}} element(s)",
       "success": "{{count}} element(s) imported",
+      "attached": "{{events}} event(s) added to {{count}} existing element(s)",
       "error": "Import failed",
       "mediaResult": "{{ok}} media attached, {{fail}} failed",
       "tabLimit": "{{max}} tabs at most: \"{{name}}\" goes to the open tab"

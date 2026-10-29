@@ -239,6 +239,7 @@
       "cancel": "Annuler (Esc)",
       "elements": "{{count}} élément(s)",
       "success": "{{count}} élément(s) importé(s)",
+      "attached": "{{events}} événement(s) ajouté(s) à {{count}} élément(s) existant(s)",
       "error": "Échec de l'import",
       "mediaResult": "{{ok}} média(s) attaché(s), {{fail}} échec(s)",
       "tabLimit": "Limite de {{max}} onglets : « {{name}} » va dans l'onglet ouvert"

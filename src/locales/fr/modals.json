@@ -823,6 +823,7 @@
     "childAsEvents": "En événements de l'élément",
     "importSource": "Source",
     "importSourcePlaceholder": "Nom du fichier ou texte",
+    "attachExisting": "Ajouter aux éléments existants",
     "eventOnPivots": "Événement aussi sur les éléments pivots",
     "previewLabel": "aperçu :",
     "noLabel": "Sans nom",

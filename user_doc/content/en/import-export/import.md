@@ -140,6 +140,9 @@ As soon as two arrays are ticked, a **diagram** shows the arrays and their links
 
 **Source:** the **Source** field (next to the tag) gives the source of what the import creates: elements, events and links. It takes the file name, and can be replaced by free text ("Operator reply of 12/09"). It only applies to what has no source: a column mapped to *Source* wins, row by row. It is not saved in templates.
 
+**Existing elements:**
+- **Add to existing elements** (unticked by default): an element holding events or a pivot named like an element of the dossier is not created again; its events and links go on the existing element, without doubling a link that already exists. A single **Ctrl+Z** removes the created elements and the added events. Values are compared as written: `06 39 98 33 17` and `0639983317` make two elements. **Insights → Potential duplicates** pairs them (one number whatever its writing) and offers to merge them.
+
 **Rows as events:** the **Each row creates** setting switches from *an element* to *an event*. Each row then becomes a dated event (shown on the timeline and, when it has a place, on the map):
 - **Element**: the column naming the element that holds the event. One element is created per distinct value; when the column refers to another imported table, the event goes on that table's element;
 - **Date** and **End** (optional): the start and end columns. Partial dates (`2020`, `2020-03`) keep their precision; rows without a valid date are skipped and counted in a message;

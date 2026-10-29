@@ -814,6 +814,7 @@
     "childAsEvents": "Com a esdeveniments de l'element",
     "importSource": "Font",
     "importSourcePlaceholder": "Nom del fitxer o text",
+    "attachExisting": "Afegeix als elements existents",
     "eventOnPivots": "Esdeveniment també als elements pivot",
     "previewLabel": "vista prèvia:",
     "noLabel": "Sense nom",

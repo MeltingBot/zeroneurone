@@ -563,6 +563,12 @@
     },
     "similar": {
       "title": "Potential duplicates",
+      "mode": {
+        "fuzzy": "Broad",
+        "exact": "Strict",
+        "fuzzyDesc": "Close names, typos included",
+        "exactDesc": "Same name, case and number writing aside"
+      },
       "description": "Elements with similar names",
       "count": "{{count}} similar pair(s)",
       "noSimilar": "No similar labels",

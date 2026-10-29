@@ -104,6 +104,8 @@ export interface MappingConfig extends TableConfig {
   included?: string[];
   /** Data the template was made on: offered for that format only (absent = JSON) */
   format?: 'json' | 'csv';
+  /** Elements named like one of the dossier take its events and links instead of a copy */
+  attachExisting?: boolean;
 }
 
 /** A saved, named mapping template, matched to incoming JSON by field signature. */

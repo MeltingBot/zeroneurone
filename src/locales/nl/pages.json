@@ -239,6 +239,7 @@
       "cancel": "Annuleren (Esc)",
       "elements": "{{count}} element(en)",
       "success": "{{count}} element(en) geïmporteerd",
+      "attached": "{{events}} gebeurtenis(sen) toegevoegd aan {{count}} bestaand(e) element(en)",
       "error": "Import mislukt",
       "mediaResult": "{{ok}} media bijgevoegd, {{fail}} mislukt",
       "tabLimit": "Maximaal {{max}} tabbladen: „{{name}}” gaat naar het open tabblad"

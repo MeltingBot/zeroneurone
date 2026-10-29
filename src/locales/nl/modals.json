@@ -814,6 +814,7 @@
     "childAsEvents": "Als gebeurtenissen van het element",
     "importSource": "Bron",
     "importSourcePlaceholder": "Bestandsnaam of tekst",
+    "attachExisting": "Toevoegen aan bestaande elementen",
     "eventOnPivots": "Gebeurtenis ook op de pivot-elementen",
     "previewLabel": "voorbeeld:",
     "noLabel": "Naamloos",

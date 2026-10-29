@@ -564,6 +564,12 @@
     },
     "similar": {
       "title": "Doublons potentiels",
+      "mode": {
+        "fuzzy": "Large",
+        "exact": "Strict",
+        "fuzzyDesc": "Noms proches, fautes de frappe comprises",
+        "exactDesc": "Même nom, à la casse et à l'écriture des numéros près"
+      },
       "description": "Éléments avec des noms similaires",
       "count": "{{count}} paire(s) similaire(s)",
       "noSimilar": "Aucun label similaire",

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.86.1
+
+### Import par mapping
+
+- **Ajouter aux éléments existants** — option de l'assistant : un élément
+  porteur ou pivot dont le nom correspond à un élément du dossier n'est pas
+  recréé ; ses événements et ses liens vont sur l'élément existant, sans
+  doubler un lien. Un seul Ctrl+Z retire les éléments créés et les
+  événements ajoutés.
+
+### Analyses
+
+- **Doublons potentiels : Large / Strict** — Large tolère les fautes de
+  frappe ; Strict ne garde que le même nom, à la casse et à l'écriture des
+  numéros près (`06 39 98 33 17` = `0639983317`). Choix mémorisé.
+- Deux numéros différents (`0639985018` / `0639985078`) ne sont plus
+  proposés comme doublons.
+- Clic sur la ligne : les deux éléments cadrés ; clic sur un nom : cet
+  élément sélectionné et centré.
+
 ## 2.86.0
 
 ### Import CSV par mapping

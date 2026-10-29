@@ -239,6 +239,7 @@
       "cancel": "Cancelar (Esc)",
       "elements": "{{count}} elemento(s)",
       "success": "{{count}} elemento(s) importado(s)",
+      "attached": "{{events}} evento(s) añadido(s) a {{count}} elemento(s) existente(s)",
       "error": "Error de importación",
       "mediaResult": "{{ok}} medios adjuntados, {{fail}} fallidos",
       "tabLimit": "Máximo {{max}} pestañas: «{{name}}» va a la pestaña abierta"

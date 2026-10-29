@@ -69,6 +69,12 @@ describe('findArticulationPoints', () => {
 });
 
 describe('detectSimilarLabels', () => {
+  it('pairs one phone number written two ways, however many numbers sit between', () => {
+    const numbers = Array.from({ length: 30 }, (_, i) => ({ id: `n${i}`, label: `06 39 98 ${String(10 + i)} 00` }));
+    const pairs = detectSimilarLabels([...numbers, { id: 'a', label: '06 39 98 33 17' }, { id: 'b', label: '0639983317' }]);
+    expect(pairs.some((p) => [p.elementId1, p.elementId2].sort().join() === 'a,b' && p.similarity === 1)).toBe(true);
+  });
+
   it('pairs near-identical labels', () => {
     const pairs = detectSimilarLabels([
       { id: '1', label: 'Jean Dupont' },
@@ -113,5 +119,17 @@ describe('labelSimilarity', () => {
     expect(labelSimilarity('dupont', 'dupond')).toBeGreaterThan(0.8);
     expect(labelSimilarity('dupont', 'zzzzzz')).toBeLessThan(0.3);
     expect(labelSimilarity('', '')).toBe(1);
+  });
+});
+
+describe('detectSimilarLabels — numbers', () => {
+  it('does not pair two different numbers, however close', () => {
+    const pairs = detectSimilarLabels([
+      { id: 'a', label: '0639985018' },
+      { id: 'b', label: '0639985078' },
+      { id: 'c', label: '06 39 98 50 18' },
+    ]);
+    expect(pairs).toEqual([{ elementId1: expect.any(String), elementId2: expect.any(String), similarity: 1 }]);
+    expect([pairs[0].elementId1, pairs[0].elementId2].sort()).toEqual(['a', 'c']);
   });
 });

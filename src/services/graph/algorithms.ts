@@ -1,3 +1,4 @@
+import { matchKey } from '../../utils/numericText';
 import type Graph from 'graphology';
 
 /**
@@ -108,7 +109,8 @@ export function detectSimilarLabels(
 ): SimilarPair[] {
   const labeled = elements
     .filter((el) => el.label && el.label.trim().length > 0 && !el.isGroup)
-    .map((el) => ({ id: el.id, normalized: el.label.toLowerCase().trim() }));
+    // A phone number is compared whatever its writing ("06 39 98 33 17" = "0639983317")
+    .map((el) => ({ id: el.id, normalized: matchKey(el.label, true).toLowerCase() }));
 
   if (labeled.length < 2) return [];
 
@@ -118,6 +120,9 @@ export function detectSimilarLabels(
   for (let i = 0; i < labeled.length; i++) {
     const limit = Math.min(i + windowSize + 1, labeled.length);
     for (let j = i + 1; j < limit; j++) {
+      // Two different numbers (phones, ids) are two things, not a typo
+      if (labeled[i].normalized !== labeled[j].normalized
+        && /^\+?\d+$/.test(labeled[i].normalized) && /^\+?\d+$/.test(labeled[j].normalized)) continue;
       const similarity = labelSimilarity(labeled[i].normalized, labeled[j].normalized);
       if (similarity >= threshold) {
         pairs.push({ elementId1: labeled[i].id, elementId2: labeled[j].id, similarity });

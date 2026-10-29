@@ -190,6 +190,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         if (action.redo.linkIds) {
           await store.deleteLinks(action.redo.linkIds);
         }
+        // Elements of the dossier the action added to (events of an import)
+        for (const { id, changes } of action.undo.bulkElements || []) {
+          await store.updateElement(id, changes);
+        }
         // Tabs the action created (an import): kept for redo, then removed
         if (action.undo.createdTabIds?.length) {
           const { useTabStore } = await import('./tabStore');
@@ -453,6 +457,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       case 'create-element':
         // Re-create elements in a single batch (one Y.Doc transaction)
         store.pasteElements(action.redo.elements || [], action.redo.links || []);
+        // Again what the action added to elements of the dossier
+        for (const call of action.redo.bulkCalls || []) {
+          if (call.kind === 'elements') await store.updateElements(call.ids, call.changes as Parameters<typeof store.updateElements>[1]);
+        }
         // Tabs the action had created, back before their members
         if (action.redo.createdTabs?.length) {
           const { useTabStore } = await import('./tabStore');

@@ -549,6 +549,12 @@
     },
     "similar": {
       "title": "Duplicats potencials",
+      "mode": {
+        "fuzzy": "Ampli",
+        "exact": "Estricte",
+        "fuzzyDesc": "Noms propers, errors tipogràfics inclosos",
+        "exactDesc": "Mateix nom, llevat de majúscules i escriptura dels números"
+      },
       "description": "Elements amb noms similars",
       "count": "{{count}} parella(es) similar(s)",
       "noSimilar": "Cap etiqueta similar",

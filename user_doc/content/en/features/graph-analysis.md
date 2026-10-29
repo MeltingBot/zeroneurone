@@ -108,6 +108,17 @@ List of elements **without any connection**.
 
 ---
 
+## Potential duplicates
+
+Pairs of elements with close names, which may be the same thing. Clicking the row selects both elements and frames the view on them (a second click deselects); clicking one of the two names selects that element and centres the view on it, the pair staying highlighted. **Merge** joins them.
+
+- **Broad**: close names, typos included ("Jean Dupont" / "Jean Dupond").
+- **Strict**: the same name, case and the writing of numbers aside (`06 39 98 33 17` = `0639983317`).
+
+The choice is remembered. In both modes, two different numbers (`0639985018` and `0639985078`) are never offered: they are two lines, not a typo.
+
+---
+
 ## Paths
 
 Find the **shortest path** between two elements.
