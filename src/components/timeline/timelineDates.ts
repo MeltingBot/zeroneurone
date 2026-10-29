@@ -26,3 +26,9 @@ export function formatItemDates(item: DatedItem, language: string): string {
   const endStr = fmt(end);
   return endStr === startStr ? startStr : `${startStr} → ${endStr}`;
 }
+
+/** Hover text of an item: its dates, then its details (event properties) one per line. */
+export function itemTooltip(item: DatedItem & { sublabel?: string }, language: string): string {
+  const dates = formatItemDates(item, language);
+  return item.sublabel ? `${dates}\n${item.sublabel}` : dates;
+}

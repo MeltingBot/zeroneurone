@@ -78,6 +78,8 @@ Par défaut, les éléments hors filtre sont **atténués**. Le bouton **Masquer
 
 Clic-droit sur un élément → **Masquer** pour le retirer temporairement du canvas sans le supprimer.
 
+Clic-droit → **Afficher uniquement la sélection** (ou **Afficher uniquement** sur le fond du canvas) masque tout le reste. Les groupes qui contiennent la sélection restent visibles, ainsi que les membres d'un groupe sélectionné.
+
 
 Retrouvez les éléments masqués dans **Filtres** → **Éléments masqués**.
 

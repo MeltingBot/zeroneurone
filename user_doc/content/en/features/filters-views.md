@@ -78,6 +78,8 @@ By default, elements outside the filters are **dimmed**. The **Hide** button of 
 
 Right-click on an element → **Hide** to temporarily remove it from the canvas without deleting it.
 
+Right-click → **Show only selection** (or **Show only** on the canvas background) hides everything else. The groups holding the selection stay visible, as do the members of a selected group.
+
 
 Find hidden elements in **Filters** → **Hidden elements**.
 

@@ -964,6 +964,7 @@ export function Canvas() {
   const hideElement = useViewStore((s) => s.hideElement);
   const hideElements = useViewStore((s) => s.hideElements);
   const showElement = useViewStore((s) => s.showElement);
+  const showElements = useViewStore((s) => s.showElements);
   const requestFitView = useViewStore((s) => s.requestFitView);
   const requestViewportChange = useViewStore((s) => s.requestViewportChange);
   // Hidden by hand, or outside the filters when the user chose to hide them
@@ -3428,6 +3429,47 @@ export function Canvas() {
     pushTabMembership({ changes: [{ tabId, added, removed: [] }], activeBefore: activeTabId, activeAfter: activeTabId });
   }, [activeTabId, addTabMembers, tabMembers, pushTabMembership]);
 
+  // Show only `ids`: everything else is hidden, except the groups holding
+  // them (a hidden group would take them along) and the members of a group
+  // among them
+  const showOnly = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    const all = useDossierStore.getState().elements;
+    const byId = new Map(all.map((el) => [el.id, el]));
+    // The chosen ones and, through nested groups, everything inside them
+    const chosen = new Set(ids);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const el of all) {
+        if (el.parentGroupId && chosen.has(el.parentGroupId) && !chosen.has(el.id)) {
+          chosen.add(el.id);
+          grew = true;
+        }
+      }
+    }
+    const keep = new Set(chosen);
+    for (const id of ids) {
+      let parent = byId.get(id)?.parentGroupId ?? null;
+      while (parent && !keep.has(parent)) {
+        keep.add(parent);
+        parent = byId.get(parent)?.parentGroupId ?? null;
+      }
+    }
+    showElements([...keep]);
+    hideElements(all.filter((el) => !keep.has(el.id)).map((el) => el.id));
+  }, [showElements, hideElements]);
+
+  const handleSelectionShowOnly = useCallback(() => {
+    showOnly(getSelectedElementIds());
+  }, [getSelectedElementIds, showOnly]);
+
+  const handleContextMenuShowOnly = useCallback(() => {
+    if (!contextMenu) return;
+    const selectedEls = getSelectedElementIds();
+    showOnly(selectedEls.length > 1 && selectedEls.includes(contextMenu.elementId) ? selectedEls : [contextMenu.elementId]);
+  }, [contextMenu, getSelectedElementIds, showOnly]);
+
   const handleSelectionHide = useCallback(() => {
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length === 0) return;
@@ -5759,6 +5801,7 @@ export function Canvas() {
               otherSelectedLabel={otherSelectedElement?.label || t('empty.unnamed')}
               onFocus={handleContextMenuFocus}
               onHide={handleContextMenuHide}
+              onShowOnly={handleContextMenuShowOnly}
               onShow={handleContextMenuShow}
               onDelete={handleContextMenuDelete}
               onCopy={handleContextMenuCopy}
@@ -5839,6 +5882,7 @@ export function Canvas() {
               onDuplicateSelection={handleSelectionDuplicate}
               onDeleteSelection={handleSelectionDelete}
               onHideSelection={handleSelectionHide}
+              onShowOnlySelection={handleSelectionShowOnly}
               selectionLocked={selectionLocked}
               onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}

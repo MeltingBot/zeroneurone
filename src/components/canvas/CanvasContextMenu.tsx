@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Search, ScanSearch, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -23,6 +23,7 @@ interface CanvasContextMenuProps {
   onDuplicateSelection?: () => void;
   onDeleteSelection?: () => void;
   onHideSelection?: () => void;
+  onShowOnlySelection?: () => void;
   // Position lock: "unlock" when every selected element is already locked
   selectionLocked?: boolean;
   onToggleLockSelection?: () => void;
@@ -65,6 +66,7 @@ function CanvasContextMenuComponent({
   onDuplicateSelection,
   onDeleteSelection,
   onHideSelection,
+  onShowOnlySelection,
   selectionLocked = false,
   onToggleLockSelection,
   onGroupSelection,
@@ -147,6 +149,7 @@ function CanvasContextMenuComponent({
             },
           ]),
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
+          onShowOnlySelection && { id: 'show-only', label: cm('showOnly'), icon: Eye, onSelect: onShowOnlySelection },
           onToggleLockSelection && {
             id: 'lock',
             label: selectionLocked ? cm('unlockPosition') : cm('lockPosition'),

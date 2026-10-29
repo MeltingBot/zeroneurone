@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.86.2
+
+### Carte
+
+- **Trace des événements passés** — un seul point par position, au lieu
+  d'un point par événement : les événements répétés au même endroit (appels
+  sur une même antenne) ne s'étalent plus en grandes spirales. La taille du
+  point croît avec le nombre d'événements à cet endroit, indiqué au survol.
+- Halo de la couleur de l'élément autour des points de trace.
+- Le curseur temporel ne compte plus que les dates des éléments affichés et
+  retenus par les filtres (plus ceux masqués, hors onglet ou filtrés).
+
+### Timeline
+
+- Les propriétés d'un événement ne s'affichent plus à côté de son libellé :
+  elles sont dans l'info-bulle, une par ligne (masquées en mode anonyme).
+
+### Canvas
+
+- **Afficher uniquement la sélection** — clic droit : masque tout le reste,
+  sauf les groupes qui contiennent la sélection et les membres d'un groupe
+  sélectionné.
+
 ## 2.86.1
 
 ### Import par mapping

@@ -18,7 +18,7 @@ import { histogramBucket, type HistogramMode } from './activityHistogram';
 import { computeCausalConnections } from './causality';
 import type { DatePrecision, Element as ZNElement } from '../../types';
 import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue } from '../../utils/dates';
-import { formatItemDates } from './timelineDates';
+import { formatItemDates, itemTooltip } from './timelineDates';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { emitExport } from '../../plugins/pluginEventBus';
 
@@ -436,13 +436,14 @@ export function TimelineView() {
         const eventLabel = event.label || '';
         const isDefaultName = element.label === t('timeline.newElement') || !element.label;
 
-        // Format event properties as sublabel
+        // Event properties: one per line, shown on hover only (inline they
+        // drown the labels as soon as an import brings many of them)
         let eventSublabel: string | undefined;
         if (event.properties && event.properties.length > 0) {
           eventSublabel = event.properties
             .filter((p) => p.value !== null && p.value !== undefined && p.value !== '')
             .map((p) => `${p.key}: ${formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)}`)
-            .join(' | ');
+            .join('\n') || undefined;
         }
 
         // Build label: prefer event label alone if element has default name
@@ -1602,7 +1603,7 @@ export function TimelineView() {
                     opacity: dimmed ? 0.3 : 1,
                   }}
                   onClick={(e) => handleItemClick(item, e)}
-                  title={formatItemDates(item, i18n.language)}
+                  title={anonymousMode ? formatItemDates(item, i18n.language) : itemTooltip(item, i18n.language)}
                 >
                   {hasThumbImage ? (
                     // Show image thumbnail for property items
@@ -1632,7 +1633,6 @@ export function TimelineView() {
                     ) : (
                       <span className="text-xs text-text-primary font-medium">
                         {item.label}
-                        {item.sublabel && <span className="ml-1.5 text-[10px] font-normal text-text-tertiary">{item.sublabel}</span>}
                       </span>
                     )}
                   </div>
@@ -1668,7 +1668,7 @@ export function TimelineView() {
                   opacity: dimmed ? 0.3 : 1,
                 }}
                 onClick={(e) => handleItemClick(item, e)}
-                title={formatItemDates(item, i18n.language)}
+                title={anonymousMode ? formatItemDates(item, i18n.language) : itemTooltip(item, i18n.language)}
               >
                 {/* Period bar with clear border frame */}
                 <div
@@ -1708,7 +1708,6 @@ export function TimelineView() {
                     ) : (
                       <span className="text-xs text-text-primary font-medium">
                         {item.label}
-                        {item.sublabel && <span className="ml-1.5 text-[10px] font-normal text-text-tertiary">{item.sublabel}</span>}
                       </span>
                     )}
                   </div>
@@ -1739,11 +1738,6 @@ export function TimelineView() {
                         <span className="text-xs text-text-primary truncate font-medium">
                           {item.label}
                         </span>
-                        {item.sublabel && (
-                          <span className="text-[10px] text-text-tertiary truncate">
-                            {item.sublabel}
-                          </span>
-                        )}
                       </div>
                     )}
                     {/* Destination thumbnail for links */}
@@ -2029,7 +2023,7 @@ function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
     item.end ? formatDate(item.end) : '',
     typeLabels[item.type] || item.type,
     escapeCSV(item.label),
-    escapeCSV(item.sublabel || ''),
+    escapeCSV((item.sublabel || '').replace(/\n/g, ' | ')),
     item.color,
   ].join(','));
 

@@ -38,6 +38,8 @@ interface ResolvedGeoElement {
   eventId?: string;
   /** Rendered as a light breadcrumb (past event in trace mode) rather than the active marker */
   isBreadcrumb?: boolean;
+  /** Breadcrumb: how many past events happened at its position */
+  traceCount?: number;
   /** Extra marker beyond the element's primary one (breadcrumb or co-temporal sibling event).
       Excluded from clustering so trajectories/bursts don't collapse, while the primary
       marker of each element still clusters normally. */
@@ -370,6 +372,38 @@ function add3DBuildingsLayer(map: maplibregl.Map) {
 // not distort with latitude. (A previous version perturbed lng/lat in degrees, which made
 // co-located markers drift away from their true position during zoom and only snap back on
 // zoomend, and corrupted the saved position when such a marker was dragged.)
+// Trace mode: one breadcrumb per distinct position (the latest event there,
+// with the number of events there), none where the element currently stands.
+// Repeated events at one spot (calls on the same cell) would otherwise be
+// fanned out by the spiderfy into huge spirals of dots.
+function traceBreadcrumbs<E extends { id: string; date: Date | string; geo?: GeoData }>(
+  events: E[],
+  current: { geo: { lat: number; lng: number }; eventId?: string },
+): { event: E; count: number }[] {
+  const spot = (g: { lat: number; lng: number }) => `${g.lat.toFixed(5)},${g.lng.toFixed(5)}`;
+  const currentSpot = spot(current.geo);
+  const latest = new Map<string, { event: E; count: number }>();
+  for (const ev of events) {
+    if (!ev.geo || ev.id === current.eventId) continue;
+    const key = spot(getGeoCenter(ev.geo));
+    if (key === currentSpot) continue;
+    const kept = latest.get(key);
+    if (!kept) latest.set(key, { event: ev, count: 1 });
+    else {
+      kept.count++;
+      if (new Date(ev.date).getTime() >= new Date(kept.event.date).getTime()) kept.event = ev;
+    }
+  }
+  return [...latest.values()];
+}
+
+// Breadcrumb diameter: 8px for one event, growing with the log of the count
+// (about 14px at 10, 20px at 100), so frequent spots stand out without
+// covering the map
+function breadcrumbSize(count: number): number {
+  return Math.round(Math.min(22, 8 + 6 * Math.log10(Math.max(1, count))));
+}
+
 function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number }[]): Map<string, [number, number]> {
   const offsets = new Map<string, [number, number]>();
   const groups = new Map<string, string[]>();
@@ -578,9 +612,18 @@ export function MapView() {
   }, [elements, includedDateProperties, excludedDateProperties, dateRangeProperties]);
 
   // Calculate time range and collect all unique event dates
+  // Only what the map shows and the filters keep: hidden, out-of-tab or
+  // filtered-out elements do not add steps (falls back to everything shown
+  // when the filters keep nothing)
   const { timeRange, eventDates } = useMemo(() => {
     const allDates: Date[] = [];
-    elements.forEach((el) => {
+    const shown = elements.filter(
+      (el) => !viewHiddenIds.has(el.id) && (activeTabId === null || tabMemberSet.has(el.id) || tabGhostIds.has(el.id)),
+    );
+    const kept = shown.filter((el) => !effectiveDimmedIds.has(el.id));
+    const stepElements = kept.length > 0 ? kept : shown;
+    const stepIds = new Set(stepElements.map((el) => el.id));
+    stepElements.forEach((el) => {
       const hasBaseGeo = !!el.geo;
       const hasEventGeo = el.events?.some((e) => e.geo);
       if (hasBaseGeo || hasEventGeo) {
@@ -602,6 +645,7 @@ export function MapView() {
       }
     });
     links.forEach((link) => {
+      if (!stepIds.has(link.fromId) || !stepIds.has(link.toId)) return;
       if (link.date) allDates.push(new Date(link.date));
       if (link.dateRange?.start) allDates.push(new Date(link.dateRange.start));
       if (link.dateRange?.end) allDates.push(new Date(link.dateRange.end));
@@ -613,7 +657,7 @@ export function MapView() {
       timeRange: { min: sortedDates[0], max: sortedDates[sortedDates.length - 1] },
       eventDates: sortedDates,
     };
-  }, [elements, links, propertyIntervals]);
+  }, [elements, links, propertyIntervals, viewHiddenIds, activeTabId, tabMemberSet, tabGhostIds, effectiveDimmedIds]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
@@ -815,9 +859,9 @@ export function MapView() {
         if (!position) return;
         result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
         if (temporalTrace) {
-          for (const ev of geoEventsInPeriod) {
-            if (ev.id === position.eventId) continue;
+          for (const { event: ev, count } of traceBreadcrumbs(geoEventsInPeriod, position)) {
             result.push({
+              traceCount: count,
               element: el,
               geo: getGeoCenter(ev.geo!),
               geoData: ev.geo!,
@@ -859,16 +903,17 @@ export function MapView() {
           result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
 
           if (temporalTrace) {
-            // Trace mode: every past event carrying its own geo persists as a lightweight breadcrumb,
+            // Trace mode: each past position persists as a lightweight breadcrumb,
             // drawing the movement path up to targetTime.
-            for (const past of el.events || []) {
-              if (past.id === position.eventId) continue;
-              if (!past.geo || !past.date) continue;
-              if (toMinuteStart(past.date).getTime() > targetTime) continue;
+            const pastEvents = (el.events || []).filter(
+              (past) => past.geo && past.date && toMinuteStart(past.date).getTime() <= targetTime,
+            );
+            for (const { event: past, count } of traceBreadcrumbs(pastEvents, position)) {
               result.push({
+                traceCount: count,
                 element: el,
-                geo: getGeoCenter(past.geo),
-                geoData: past.geo,
+                geo: getGeoCenter(past.geo!),
+                geoData: past.geo!,
                 fromEvent: true,
                 eventLabel: past.label,
                 eventId: past.id,
@@ -916,6 +961,7 @@ export function MapView() {
       _markerKey: r.eventId ? `${r.element.id}::${r.eventId}` : r.element.id,
       _eventId: r.eventId,
       _isBreadcrumb: !!r.isBreadcrumb,
+      _traceCount: r.traceCount,
       // Only secondary markers (breadcrumbs / co-temporal siblings) bypass clustering.
       // The primary marker of an element clusters normally even when its position is
       // derived from an event (e.g. "latest known point" in static mode).
@@ -1051,8 +1097,14 @@ export function MapView() {
     // Breadcrumb markers (past events in trace mode): a small coloured dot, no label/card.
     // Cheap to render for hundreds/thousands of them.
     if (isBreadcrumb) {
-      const dimmedStyle = isDimmed ? 'opacity:0.25;' : 'opacity:0.6;';
-      return `<div class="map-breadcrumb" style="width:8px;height:8px;border-radius:50%;background:${color};border:1.5px solid ${borderColor};${dimmedStyle}cursor:pointer;"></div>`;
+      // Glow in the element's colour: the path stands out over a busy basemap
+      // (none when dimmed, so filtered-out traces stay in the background)
+      const glow = isDimmed
+        ? ''
+        : `box-shadow:0 0 4px 1px color-mix(in srgb, ${color} 85%, transparent),0 0 10px 4px color-mix(in srgb, ${color} 45%, transparent);`;
+      const dimmedStyle = isDimmed ? 'opacity:0.25;' : 'opacity:0.9;';
+      const size = breadcrumbSize((element as { _traceCount?: number })._traceCount ?? 1);
+      return `<div class="map-breadcrumb" style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:1.5px solid ${borderColor};${glow}${dimmedStyle}cursor:pointer;"></div>`;
     }
     const thumbnail = safeDataImageUrl(getThumbnail(element));
     const label = element.label || t('map.unnamed');
@@ -1545,7 +1597,15 @@ export function MapView() {
       const center = getGeoCenter(element.geo);
       // Keep the marker at its true geographic position; the spiderfy spread is a pixel
       // offset combined with the base anchor offset ([0, -8]) so it stays constant on zoom.
-      const markerOffset: [number, number] = offset ? [offset[0], offset[1] - 8] : [0, -8];
+      // Breadcrumbs are centred on their position whatever their size
+      const traceCount = (element as { _traceCount?: number })._traceCount;
+      const baseY = element._isBreadcrumb ? -breadcrumbSize(traceCount ?? 1) / 2 : -8;
+      const markerOffset: [number, number] = offset ? [offset[0], offset[1] + baseY] : [0, baseY];
+      const markerTitle = anonymousMode
+        ? ''
+        : element._isBreadcrumb && (traceCount ?? 1) > 1
+          ? `${element.label || ''} · ${t('map.traceEvents', { count: traceCount })}`
+          : (element.label || '');
       if (offMap) markerOffsetsRef.current.set(element.id, offset ?? [0, 0]);
 
       if (existingMarker) {
@@ -1559,13 +1619,13 @@ export function MapView() {
         const isBeingEdited = editingZoneId === element.id;
         el.style.display = (isClustered || isBeingEdited) ? 'none' : '';
         el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary, offMap);
-        el.setAttribute('title', anonymousMode ? '' : (element.label || ''));
+        el.setAttribute('title', markerTitle);
       } else {
         // Create new marker
         const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary, offMap);
         const isBeingEdited = editingZoneId === element.id;
         markerEl.style.display = (isClustered || isBeingEdited) ? 'none' : '';
-        markerEl.setAttribute('title', anonymousMode ? '' : (element.label || ''));
+        markerEl.setAttribute('title', markerTitle);
 
         // Event-sourced markers are not draggable: dragging them would ambiguously move the element
         // vs. the event, so we only allow drag on the primary (base-geo) marker.
@@ -1764,7 +1824,7 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the

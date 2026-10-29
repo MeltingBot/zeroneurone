@@ -23,6 +23,7 @@ interface ContextMenuProps {
   otherSelectedLabel?: string;
   onFocus: (depth: number) => void;
   onHide: () => void;
+  onShowOnly: () => void;
   onShow: () => void;
   onDelete: () => void;
   onCopy: () => void;
@@ -96,6 +97,7 @@ function ContextMenuComponent({
   otherSelectedLabel,
   onFocus,
   onHide,
+  onShowOnly,
   onShow,
   onDelete,
   onCopy,
@@ -282,6 +284,7 @@ function ContextMenuComponent({
           isHidden
             ? { id: 'show', label: cm('showElement'), icon: Eye, onSelect: onShow }
             : { id: 'hide', label: hasMultipleSelected ? cm('hideSelection') : cm('hideElement'), icon: EyeOff, onSelect: onHide },
+          { id: 'show-only', label: hasMultipleSelected ? cm('showOnlySelection') : cm('showOnlyElement'), icon: Eye, onSelect: onShowOnly },
         ],
         pluginItems,
         [{ id: 'delete', label: cm('delete'), icon: Trash2, danger: true, onSelect: onDelete }],
