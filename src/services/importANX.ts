@@ -17,6 +17,7 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
+import { ImportedRows } from './importedRows';
 import { parseDateValue } from '../utils/dates';
 import { darkenColor } from './importGephi';
 import { stripBom } from '../utils/csv';
@@ -252,6 +253,7 @@ export async function importANX(
   };
 
   try {
+    const rows = new ImportedRows();
     const parser = new DOMParser();
     const sanitized = sanitizeANXContent(content);
     const doc = parser.parseFromString(sanitized, 'application/xml');
@@ -473,7 +475,7 @@ export async function importANX(
         updatedAt: new Date(),
       };
 
-      await db.elements.add(element);
+      rows.addElement(element);
       result.elementsImported++;
     }
 
@@ -604,9 +606,11 @@ export async function importANX(
         updatedAt: new Date(),
       };
 
-      await db.links.add(link);
+      rows.addLink(link);
       result.linksImported++;
     }
+
+    await rows.write();
 
     // ── Dossier metadata ──
     const defaultDate = chart.getAttribute('DefaultDate');
