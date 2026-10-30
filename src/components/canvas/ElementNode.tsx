@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { Handle, Position, NodeResizer, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
 import { LOW_DETAIL_HANDLE_ID, requestHandleMeasure, takeEstimatedHandles } from './lowDetailHandles';
-import { Loader2, Gauge } from 'lucide-react';
+import { Loader2, Gauge, Lock } from 'lucide-react';
 import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element, EvaluationModel } from '../../types';
 import { formatEvaluation, getEvaluationBadge } from '../../utils/evaluation';
@@ -454,6 +454,18 @@ function FullElementNode({ data }: NodeProps) {
         </div>
       )}
 
+      {/* Position lock: the element cannot be dragged */}
+      {element.isPositionLocked && (
+        <div
+          className="absolute -bottom-1.5 -left-1.5 w-4 h-4 rounded-full bg-bg-primary border border-border-default text-text-tertiary flex items-center justify-center shadow-sm z-10"
+          title={t('panels:detail.appearance.positionLock')}
+          aria-label={t('panels:detail.appearance.positionLock')}
+          data-testid="position-lock-badge"
+        >
+          <Lock size={9} />
+        </div>
+      )}
+
       {/* Confidence / grading indicator */}
       {confidenceBadge && (
         <div
@@ -852,6 +864,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.id !== nextEl.id) return false;
   if (prevEl.label !== nextEl.label) return false;
   if (prevEl.confidence !== nextEl.confidence) return false;
+  if (prevEl.isPositionLocked !== nextEl.isPositionLocked) return false;
   if (formatEvaluation(prevEl.evaluation) !== formatEvaluation(nextEl.evaluation)
     || prevEl.evaluation?.scale !== nextEl.evaluation?.scale) return false;
   if (prevEl.visual.color !== nextEl.visual.color) return false;

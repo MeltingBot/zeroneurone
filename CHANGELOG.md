@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.86.6
+
+### Canvas
+
+- **Indicateur de verrouillage** — un élément, un groupe ou une note dont la
+  position est verrouillée affiche un cadenas dans son coin inférieur
+  gauche (« Position verrouillée » au survol).
+- Un élément verrouillé est redessiné dès le changement : il ne laisse plus
+  le canvas se déplacer quand on le fait glisser juste après le verrouillage.
+
 ## 2.86.5
 
 ### Sécurité et données

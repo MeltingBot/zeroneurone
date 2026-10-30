@@ -1,6 +1,7 @@
 import { memo, useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
-import { StickyNote } from 'lucide-react';
+import { StickyNote, Lock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Element } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import { useUIStore } from '../../stores';
@@ -99,6 +100,7 @@ function formatInline(text: string): React.ReactNode {
 function AnnotationNodeComponent({ data }: NodeProps) {
   const nodeData = data as AnnotationNodeData;
   const { element, isSelected, isDimmed, onLabelChange, onStopEditing, onResize } = nodeData;
+  const { t } = useTranslation('panels');
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const contentFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -259,6 +261,19 @@ function AnnotationNodeComponent({ data }: NodeProps) {
           className="absolute top-1 right-1 opacity-60"
           style={{ color: textColor }}
         />
+
+        {/* Position lock: the note cannot be dragged */}
+        {element.isPositionLocked && (
+          <span
+            className="absolute bottom-1 left-1 opacity-60"
+            style={{ color: textColor }}
+            title={t('detail.appearance.positionLock')}
+            aria-label={t('detail.appearance.positionLock')}
+            data-testid="position-lock-badge"
+          >
+            <Lock size={11} />
+          </span>
+        )}
 
         {isEditing ? (
           <textarea

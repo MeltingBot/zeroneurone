@@ -1,7 +1,7 @@
 import { memo, useRef, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
-import { Gauge } from 'lucide-react';
+import { Gauge, Lock } from 'lucide-react';
 import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element, EvaluationModel } from '../../types';
 import { getEvaluationBadge } from '../../utils/evaluation';
@@ -192,6 +192,18 @@ function GroupNodeComponent({ data }: NodeProps) {
           >
             <Gauge size={10} className="text-text-tertiary" />
             <span className={`font-medium text-[10px] ${confidenceBadge.muted ? 'text-text-tertiary' : 'text-text-secondary'}`}>{confidenceBadge.text}</span>
+          </div>
+        )}
+
+        {/* Position lock - bottom left */}
+        {element.isPositionLocked && (
+          <div
+            className="absolute bottom-1.5 left-1.5 w-4 h-4 rounded-full bg-bg-primary border border-border-default text-text-tertiary flex items-center justify-center z-10"
+            title={t('panels:detail.appearance.positionLock')}
+            aria-label={t('panels:detail.appearance.positionLock')}
+            data-testid="position-lock-badge"
+          >
+            <Lock size={9} />
           </div>
         )}
 
