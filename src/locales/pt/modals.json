@@ -442,7 +442,12 @@
       "freed": "Espaço libertado: {{size}}",
       "skipped": "Ignorados: {{count}} (partilhados ou abertos)",
       "failed": "Não processados: {{count}} (conteúdo ilegível ou não verificável, nada foi alterado)",
-      "error": "Erro ao limpar"
+      "error": "Erro ao limpar",
+      "unreadable": "{{name}}: alterações ilegíveis {{count}}/{{total}}",
+      "unreadableAll": "nenhuma legível (chave errada?), nada será eliminado",
+      "drop": "Eliminar ilegíveis",
+      "dropConfirm": "Apagar definitivamente as alterações ilegíveis ({{count}})? O resto do conteúdo é mantido.",
+      "dropped": "Ilegíveis eliminadas: {{count}}"
     }
   },
   "localStorage": {

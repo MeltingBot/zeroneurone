@@ -347,7 +347,10 @@
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Vai alla scheda {{name}}",
       "combine": "Combina",
-      "uncombine": "Non combinare"
+      "uncombine": "Non combinare",
+      "list": "Tutte le schede",
+      "scrollLeft": "Schede precedenti",
+      "scrollRight": "Schede successive"
     },
     "retentionExpiredBanner": "Conservazione scaduta da {{days}} giorno/i",
     "retentionDeleteConfirm": "Questa fascicolo verrà eliminata definitivamente, senza possibilità di annullamento.",
@@ -361,7 +364,8 @@
     "mermaidCopied": "Selezione copiata come Mermaid",
     "mermaidCopyFailed": "Impossibile copiare negli appunti",
     "dotCopied": "Selezione copiata come DOT",
-    "closedBanner": "Chiuso il {{date}} — sola lettura"
+    "closedBanner": "Chiuso il {{date}} — sola lettura",
+    "undecryptableUpdates": "Modifiche illeggibili: {{count}}. Sono conservate; vedi Archiviazione > Manutenzione."
   },
   "map": {
     "noGeoElements": "Nessun elemento geolocalizzato",
@@ -427,7 +431,8 @@
     "ofmLiberty": "Dettagliato",
     "ofmDark": "Scuro",
     "ofmFiord": "Alto contrasto",
-    "timeZoneHint": "Fuso orario"
+    "timeZoneHint": "Fuso orario",
+    "exportCSV": "Esporta in CSV"
   },
   "timeline": {
     "noEvents": "Nessun evento datato",

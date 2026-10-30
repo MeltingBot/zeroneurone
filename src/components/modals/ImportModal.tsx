@@ -73,89 +73,6 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     navigate(`/dossier/${targetDossierId}`);
   }, [targetDossierId, setPendingDossierImport, onClose, navigate]);
 
-  const handleDecryptAndImport = useCallback(async (encFile: File, password: string) => {
-    setZnzipError(null);
-    setIsProcessing(true);
-    try {
-      const decryptedFile = await decryptZipFile(encFile, password);
-      setPendingEncryptedFile(null);
-      setZnzipPassword('');
-      // Simuler un FileList pour réutiliser handleFileSelect
-      await withImportProgress(() => processFile(decryptedFile));
-    } catch (err) {
-      setZnzipError(err instanceof Error ? err.message : 'Mot de passe incorrect');
-    } finally {
-      setIsProcessing(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetDossierId]);
-
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Détection .znzip avant tout traitement
-    if (file.name.endsWith('.znzip') || await isEncryptedZipFile(file)) {
-      setPendingEncryptedFile(file);
-      setZnzipPassword('');
-      setZnzipError(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    if (targetDossierId !== 'new') {
-      importIntoExistingDossier(file);
-      return;
-    }
-
-    // Détection FEC (par contenu — .txt est trop générique) : ouvre l'étape
-    // d'options au lieu d'importer directement. Le dossier n'est créé qu'à la
-    // confirmation, pour ne rien laisser derrière en cas d'annulation.
-    if (/\.(txt|fec)$/i.test(file.name)) {
-      const content = await importService.readFileAsText(file);
-      if (isFECFormat(content)) {
-        setIsProcessing(true);
-        try {
-          const aggregate = analyzeFEC(content);
-          setPendingFEC({ fileName: file.name, content, aggregate });
-          const base = {
-            ...DEFAULT_FEC_OPTIONS,
-            dateFrom: aggregate.dateMin,
-            dateTo: aggregate.dateMax,
-          };
-          // Seuil adaptatif : viser ~300 liens quel que soit le volume du FEC.
-          setFecOptions({ ...base, minLinkAmount: suggestMinLinkAmount(aggregate, base) });
-          setImportResult(null);
-        } finally {
-          setIsProcessing(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-        return;
-      }
-    }
-
-    // GeoJSON avec propriétés : l'utilisateur choisit le champ de libellé
-    if (/\.(geo)?json$/i.test(file.name)) {
-      const content = await importService.readFileAsText(file);
-      const analysis = importService.analyzeGeoJSONFields(content);
-      if (analysis && analysis.fields.length > 0) {
-        setPendingGeoJSON({ fileName: file.name, content, featureCount: analysis.featureCount, fields: analysis.fields });
-        setGeoJSONLabelField(analysis.suggested ?? analysis.fields[0].key);
-        setGeoJSONFields(new Set(analysis.fields.map((f) => f.key)));
-        setImportResult(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-    }
-
-    setIsProcessing(true);
-    setImportResult(null);
-    await withImportProgress(() => processFile(file));
-    setIsProcessing(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetDossierId, importIntoExistingDossier]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const processFile = useCallback(async (file: File) => {
     setIsProcessing(true);
     setImportResult(null);
@@ -314,6 +231,86 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       }
     }
   }, [targetDossierId, createDossier, deleteDossier, navigate, onClose, t, requestFitView, importIntoExistingDossier, setPendingDossierImport]);
+
+  const handleDecryptAndImport = useCallback(async (encFile: File, password: string) => {
+    setZnzipError(null);
+    setIsProcessing(true);
+    try {
+      const decryptedFile = await decryptZipFile(encFile, password);
+      setPendingEncryptedFile(null);
+      setZnzipPassword('');
+      // Simuler un FileList pour réutiliser handleFileSelect
+      await withImportProgress(() => processFile(decryptedFile));
+    } catch (err) {
+      setZnzipError(err instanceof Error ? err.message : 'Mot de passe incorrect');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [processFile]);
+
+  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Détection .znzip avant tout traitement
+    if (file.name.endsWith('.znzip') || await isEncryptedZipFile(file)) {
+      setPendingEncryptedFile(file);
+      setZnzipPassword('');
+      setZnzipError(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    if (targetDossierId !== 'new') {
+      importIntoExistingDossier(file);
+      return;
+    }
+
+    // Détection FEC (par contenu — .txt est trop générique) : ouvre l'étape
+    // d'options au lieu d'importer directement. Le dossier n'est créé qu'à la
+    // confirmation, pour ne rien laisser derrière en cas d'annulation.
+    if (/\.(txt|fec)$/i.test(file.name)) {
+      const content = await importService.readFileAsText(file);
+      if (isFECFormat(content)) {
+        setIsProcessing(true);
+        try {
+          const aggregate = analyzeFEC(content);
+          setPendingFEC({ fileName: file.name, content, aggregate });
+          const base = {
+            ...DEFAULT_FEC_OPTIONS,
+            dateFrom: aggregate.dateMin,
+            dateTo: aggregate.dateMax,
+          };
+          // Seuil adaptatif : viser ~300 liens quel que soit le volume du FEC.
+          setFecOptions({ ...base, minLinkAmount: suggestMinLinkAmount(aggregate, base) });
+          setImportResult(null);
+        } finally {
+          setIsProcessing(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+        return;
+      }
+    }
+
+    // GeoJSON avec propriétés : l'utilisateur choisit le champ de libellé
+    if (/\.(geo)?json$/i.test(file.name)) {
+      const content = await importService.readFileAsText(file);
+      const analysis = importService.analyzeGeoJSONFields(content);
+      if (analysis && analysis.fields.length > 0) {
+        setPendingGeoJSON({ fileName: file.name, content, featureCount: analysis.featureCount, fields: analysis.fields });
+        setGeoJSONLabelField(analysis.suggested ?? analysis.fields[0].key);
+        setGeoJSONFields(new Set(analysis.fields.map((f) => f.key)));
+        setImportResult(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+    }
+
+    setIsProcessing(true);
+    setImportResult(null);
+    await withImportProgress(() => processFile(file));
+    setIsProcessing(false);
+  }, [processFile, targetDossierId, importIntoExistingDossier]);
 
   // Confirmation d'une étape d'options (FEC, GeoJSON) : le dossier est créé
   // ici seulement, et supprimé si l'import échoue.

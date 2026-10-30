@@ -1,5 +1,6 @@
 import type { Table } from 'dexie';
 import JSZip from 'jszip';
+import { ZIP_LIMITS, ZipEntryTooLargeError, readZipEntryBuffer, readZipEntryText } from './zipLimits';
 import { selectZipTabs, zipTabsOverview, type ImportedTabPlan, type ZipTabSelection, type ZipTabsOverview } from './zipTabSelection';
 import { db } from '../db/database';
 import { getPlugins } from '../plugins/pluginRegistry';
@@ -111,34 +112,6 @@ function importedPrecision(value: string | undefined): { precision?: DatePrecisi
     ...(parsed.approximate ? { approximate: true } : {}),
   };
 }
-
-// ============================================================================
-// SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
-// ============================================================================
-const ZIP_LIMITS = {
-  // Maximum ZIP file size: 500 MB
-  MAX_ZIP_SIZE: 500 * 1024 * 1024,
-
-  // Maximum total decompressed size: 2 GB (ZIP bomb protection)
-  MAX_DECOMPRESSED_SIZE: 2 * 1024 * 1024 * 1024,
-
-  // Maximum number of files in ZIP
-  MAX_FILES_IN_ZIP: 10000,
-
-  // Maximum single file size inside ZIP: 100 MB (matches file upload limit)
-  MAX_FILE_SIZE_IN_ZIP: 100 * 1024 * 1024,
-
-  // Maximum JSON content size: 50 MB
-  MAX_JSON_SIZE: 50 * 1024 * 1024,
-
-  // Maximum elements/links in a single import
-  MAX_ELEMENTS: 50000,
-  MAX_LINKS: 100000,
-  MAX_ASSETS: 5000,
-
-  // Compression ratio threshold for ZIP bomb detection
-  MAX_COMPRESSION_RATIO: 100, // If decompressed/compressed > 100, suspicious
-};
 
 export class ImportValidationError extends Error {
   constructor(message: string) {
@@ -267,6 +240,9 @@ class ImportService {
 
       const arrayBuffer = await file.arrayBuffer();
       const zip = await JSZip.loadAsync(arrayBuffer);
+      if (Object.keys(zip.files).length > ZIP_LIMITS.MAX_FILES_IN_ZIP) {
+        return { boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 }, success: false, error: 'Trop de fichiers dans l\'archive' };
+      }
 
       // Read dossier.json (or legacy investigation.json)
       const jsonFile = zip.file('dossier.json') || zip.file('investigation.json');
@@ -274,7 +250,7 @@ class ImportService {
         return { boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 }, success: false, error: 'Pas de fichier dossier.json' };
       }
 
-      const content = await jsonFile.async('string');
+      const content = await readZipEntryText(jsonFile, ZIP_LIMITS.MAX_JSON_SIZE);
       const data = JSON.parse(content) as ExportData;
       const boundingBox = this.calculateBoundingBox(selection ? selectZipTabs(data, selection) : data);
 
@@ -283,7 +259,9 @@ class ImportService {
       return {
         boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 },
         success: false,
-        error: error instanceof Error ? error.message : 'Erreur de lecture'
+        error: error instanceof ZipEntryTooLargeError
+          ? 'Fichier dossier.json trop volumineux'
+          : error instanceof Error ? error.message : 'Erreur de lecture'
       };
     }
   }
@@ -329,16 +307,6 @@ class ImportService {
         return result;
       }
 
-      // ========== SECURITY CHECK: Estimate decompressed size ==========
-      let estimatedDecompressedSize = 0;
-      for (const [, zipEntry] of Object.entries(zip.files)) {
-        if (!zipEntry.dir) {
-          // JSZip stores _data with uncompressed size in some versions
-          // We'll track actual size as we decompress files
-          estimatedDecompressedSize += (zipEntry as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize || 0;
-        }
-      }
-
       // Read the JSON metadata (or legacy investigation.json)
       const jsonFile = zip.file('dossier.json') || zip.file('investigation.json');
       if (!jsonFile) {
@@ -346,10 +314,12 @@ class ImportService {
         return result;
       }
 
-      const jsonContent = await jsonFile.async('string');
-
-      // ========== SECURITY CHECK: JSON size ==========
-      if (jsonContent.length > ZIP_LIMITS.MAX_JSON_SIZE) {
+      // ========== SECURITY CHECK: JSON size, enforced while decompressing ==========
+      let jsonContent: string;
+      try {
+        jsonContent = await readZipEntryText(jsonFile, ZIP_LIMITS.MAX_JSON_SIZE);
+      } catch (error) {
+        if (!(error instanceof ZipEntryTooLargeError)) throw error;
         const maxMB = (ZIP_LIMITS.MAX_JSON_SIZE / 1024 / 1024).toFixed(0);
         result.errors.push(`Fichier JSON trop volumineux. Taille max: ${maxMB} Mo`);
         return result;
@@ -426,10 +396,12 @@ class ImportService {
               continue;
             }
 
-            const arrayBuffer = await assetFile.async('arraybuffer');
-
-            // ========== SECURITY CHECK: Individual file size ==========
-            if (arrayBuffer.byteLength > ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP) {
+            // ========== SECURITY CHECK: Individual file size, enforced while decompressing ==========
+            let arrayBuffer: ArrayBuffer;
+            try {
+              arrayBuffer = await readZipEntryBuffer(assetFile, ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP);
+            } catch (error) {
+              if (!(error instanceof ZipEntryTooLargeError)) throw error;
               const maxMB = (ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP / 1024 / 1024).toFixed(0);
               result.warnings.push(`Asset ignore (trop volumineux, max ${maxMB} Mo): ${assetMeta.filename}`);
               continue;

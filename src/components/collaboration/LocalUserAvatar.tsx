@@ -18,6 +18,16 @@ export function LocalUserAvatar() {
     }
   }, [isEditing]);
 
+  const handleSave = () => {
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== localUser.name) {
+      updateLocalUserName(trimmed);
+    } else {
+      setEditValue(localUser.name);
+    }
+    setIsEditing(false);
+  };
+
   // Close on click outside
   useEffect(() => {
     if (!isEditing) return;
@@ -31,16 +41,6 @@ export function LocalUserAvatar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isEditing, editValue]);
-
-  const handleSave = () => {
-    const trimmed = editValue.trim();
-    if (trimmed && trimmed !== localUser.name) {
-      updateLocalUserName(trimmed);
-    } else {
-      setEditValue(localUser.name);
-    }
-    setIsEditing(false);
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

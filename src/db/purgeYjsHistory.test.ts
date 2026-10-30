@@ -92,7 +92,38 @@ describe('purgeYjsHistory', () => {
 
   it('leaves an encrypted database alone without the key', async () => {
     const { dbName, fingerprint } = await seed(DEK);
-    expect(await purgeYjsHistory(dbName)).toEqual({ status: 'failed', reason: 'undecryptable' });
+    expect(await purgeYjsHistory(dbName)).toMatchObject({ status: 'failed', reason: 'undecryptable' });
+    expect(await load(dbName, DEK)).toBe(fingerprint);
+  });
+
+  it('erases unreadable updates only on request, keeping the readable content', async () => {
+    useEncryptionStore.setState({ dek: DEK });
+    const { dbName, fingerprint } = await seed(DEK);
+    // One update written with another key: damaged or foreign data
+    const OTHER = new Uint8Array(32).fill(7);
+    const foreign = new EncryptedIndexeddbPersistence(dbName, new Y.Doc(), OTHER);
+    await foreign.whenSynced;
+    await foreign.destroy();
+
+    const refused = await purgeYjsHistory(dbName);
+    expect(refused).toMatchObject({ status: 'failed', reason: 'undecryptable' });
+    if (refused.status !== 'failed' || refused.reason !== 'undecryptable') return;
+    expect(refused.undecryptable).toBeGreaterThan(0);
+    expect(refused.undecryptable).toBeLessThan(refused.total);
+
+    const result = await purgeYjsHistory(dbName, { dropUndecryptable: true });
+    expect(result.status).toBe('done');
+    if (result.status !== 'done') return;
+    expect(result.dropped).toBe(refused.undecryptable);
+    expect(await load(dbName, DEK)).toBe(fingerprint);
+    expect(await purgeYjsHistory(dbName)).toMatchObject({ status: 'done', dropped: 0 });
+  });
+
+  it('never erases a database that cannot be read at all', async () => {
+    const { dbName, fingerprint } = await seed(DEK);
+    useEncryptionStore.setState({ dek: new Uint8Array(32).fill(7) });
+    expect(await purgeYjsHistory(dbName)).toMatchObject({ status: 'failed', reason: 'undecryptable' });
+    expect(await purgeYjsHistory(dbName, { dropUndecryptable: true })).toEqual({ status: 'failed', reason: 'error' });
     expect(await load(dbName, DEK)).toBe(fingerprint);
   });
 

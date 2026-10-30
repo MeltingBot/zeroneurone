@@ -442,7 +442,12 @@
       "freed": "Espacio liberado: {{size}}",
       "skipped": "Omitidos: {{count}} (compartidos o abiertos)",
       "failed": "No procesados: {{count}} (contenido ilegible o no verificable, no se ha modificado nada)",
-      "error": "Error al purgar"
+      "error": "Error al purgar",
+      "unreadable": "{{name}}: cambios ilegibles {{count}}/{{total}}",
+      "unreadableAll": "ninguno legible (¿clave incorrecta?), no se eliminará nada",
+      "drop": "Eliminar ilegibles",
+      "dropConfirm": "¿Borrar definitivamente los cambios ilegibles ({{count}})? El resto del contenido se conserva.",
+      "dropped": "Ilegibles eliminados: {{count}}"
     }
   },
   "localStorage": {

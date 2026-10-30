@@ -54,10 +54,11 @@ export function GeoPicker({ initialLat, initialLng, initialQuery, onConfirm, onC
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    const defaultCenter: [number, number] = initialLat && initialLng
+    // 0 is a valid coordinate (equator, Greenwich meridian)
+    const defaultCenter: [number, number] = initialLat != null && initialLng != null
       ? [initialLng, initialLat]
       : [1.888334, 46.603354];
-    const defaultZoom = initialLat && initialLng ? 12 : 6;
+    const defaultZoom = initialLat != null && initialLng != null ? 12 : 6;
 
     mapRef.current = new maplibregl.Map({
       container: mapContainerRef.current,
@@ -85,7 +86,7 @@ export function GeoPicker({ initialLat, initialLng, initialQuery, onConfirm, onC
     });
 
     // Add initial marker if coordinates provided
-    if (initialLat && initialLng) {
+    if (initialLat != null && initialLng != null) {
       updateMarker(initialLat, initialLng);
     }
 

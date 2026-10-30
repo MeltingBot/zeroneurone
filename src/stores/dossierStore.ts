@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { create } from 'zustand';
 import * as Y from 'yjs';
 import type {
@@ -842,6 +843,14 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           // Open Y.Doc in local mode (creates or loads from IndexedDB)
           ydoc = await syncService.openLocal(id);
         }
+      }
+
+      // Kept rather than compacted away (see EncryptedIndexeddbPersistence):
+      // the user decides in Storage > Maintenance
+      const undecryptable = syncService.getUndecryptableCount();
+      if (undecryptable > 0) {
+        const { toast } = await import('./toastStore');
+        toast.warning(i18next.t('pages:dossier.undecryptableUpdates', { count: undecryptable }), 10000);
       }
 
       // If in shared mode, wait for initial WebSocket sync before reading Y.Doc.

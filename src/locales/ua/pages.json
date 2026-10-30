@@ -349,7 +349,10 @@
       "ghostBadge": "У {{tabs}}",
       "navigateTo": "Перейти до вкладки {{name}}",
       "combine": "Поєднати",
-      "uncombine": "Не поєднувати"
+      "uncombine": "Не поєднувати",
+      "list": "Усі вкладки",
+      "scrollLeft": "Попередні вкладки",
+      "scrollRight": "Наступні вкладки"
     },
     "retentionExpiredBanner": "Зберігання закінчилось {{days}} днів тому",
     "retentionDeleteConfirm": "Це справа буде остаточно видалено. Цю дію неможливо скасувати.",
@@ -363,7 +366,8 @@
     "mermaidCopied": "Виділення скопійовано як Mermaid",
     "mermaidCopyFailed": "Не вдалося скопіювати в буфер обміну",
     "dotCopied": "Виділення скопійовано як DOT",
-    "closedBanner": "Закрито {{date}} — лише для читання"
+    "closedBanner": "Закрито {{date}} — лише для читання",
+    "undecryptableUpdates": "Нечитабельні зміни: {{count}}. Їх збережено; див. Сховище > Обслуговування."
   },
   "map": {
     "noGeoElements": "Немає геолокалізованих елементів",
@@ -431,7 +435,8 @@
     "ofmLiberty": "Детальна",
     "ofmDark": "Темна",
     "ofmFiord": "Висока контрастність",
-    "timeZoneHint": "Часовий пояс"
+    "timeZoneHint": "Часовий пояс",
+    "exportCSV": "Експортувати в CSV"
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

@@ -674,6 +674,8 @@ Structure attendue : objet avec `nodes` et `edges`, où les noeuds ont un `data.
 }
 ```
 
+Les photos de profil distantes (`pfp_image`) ne sont pas téléchargées : leur adresse est conservée dans la propriété lien `image_url`.
+
 ---
 
 ### OSINTracker

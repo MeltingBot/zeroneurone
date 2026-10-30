@@ -444,7 +444,12 @@
       "freed": "Zwolnione miejsce: {{size}}",
       "skipped": "Pominięte: {{count}} (udostępnione lub otwarte)",
       "failed": "Nieprzetworzone: {{count}} (nieczytelna lub niemożliwa do sprawdzenia zawartość, nic nie zmieniono)",
-      "error": "Błąd podczas czyszczenia"
+      "error": "Błąd podczas czyszczenia",
+      "unreadable": "{{name}}: nieczytelne zmiany {{count}}/{{total}}",
+      "unreadableAll": "żadna nie jest czytelna (zły klucz?), nic nie zostanie usunięte",
+      "drop": "Usuń nieczytelne",
+      "dropConfirm": "Trwale usunąć nieczytelne zmiany ({{count}})? Pozostała zawartość zostanie zachowana.",
+      "dropped": "Usunięte nieczytelne: {{count}}"
     }
   },
   "localStorage": {

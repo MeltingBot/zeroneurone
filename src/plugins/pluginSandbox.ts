@@ -53,7 +53,8 @@ function makeReadOnly<T extends object>(state: T): T {
 }
 
 function buildReadOnlyStore(useStore: any): any {
-  const wrapper = (selector?: (state: any) => any, equalityFn?: any) => {
+  // A hook itself: plugin components call it like the store they asked for
+  const useReadOnlyStore = (selector?: (state: any) => any, equalityFn?: any) => {
     const wrappedSelector = selector
       ? (state: any) => selector(makeReadOnly(state))
       : (state: any) => makeReadOnly(state);
@@ -62,13 +63,13 @@ function buildReadOnlyStore(useStore: any): any {
 
   // Copy static methods (getState, subscribe, etc.)
   if (useStore.getState) {
-    wrapper.getState = () => makeReadOnly(useStore.getState());
+    useReadOnlyStore.getState = () => makeReadOnly(useStore.getState());
   }
   if (useStore.subscribe) {
-    wrapper.subscribe = useStore.subscribe;
+    useReadOnlyStore.subscribe = useStore.subscribe;
   }
 
-  return wrapper;
+  return useReadOnlyStore;
 }
 
 // ─── Read-only repositories ─────────────────────────────────

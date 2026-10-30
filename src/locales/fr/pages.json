@@ -348,7 +348,10 @@
       "ghostBadge": "Sur {{tabs}}",
       "navigateTo": "Aller à l'onglet {{name}}",
       "combine": "Combiner",
-      "uncombine": "Ne plus combiner"
+      "uncombine": "Ne plus combiner",
+      "list": "Tous les onglets",
+      "scrollLeft": "Onglets précédents",
+      "scrollRight": "Onglets suivants"
     },
     "retentionExpiredBanner": "Rétention expirée depuis {{days}} jour(s)",
     "retentionDeleteConfirm": "Ce dossier sera définitivement supprimé, sans annulation possible.",
@@ -362,7 +365,8 @@
     "mermaidCopied": "Sélection copiée en Mermaid",
     "mermaidCopyFailed": "Impossible de copier dans le presse-papiers",
     "dotCopied": "Sélection copiée en DOT",
-    "closedBanner": "Clôturé le {{date}} — lecture seule"
+    "closedBanner": "Clôturé le {{date}} — lecture seule",
+    "undecryptableUpdates": "Modifications illisibles : {{count}}. Elles sont conservées ; voir Stockage > Maintenance."
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

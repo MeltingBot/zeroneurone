@@ -442,7 +442,12 @@
       "freed": "Spazio liberato: {{size}}",
       "skipped": "Ignorati: {{count}} (condivisi o aperti)",
       "failed": "Non elaborati: {{count}} (contenuto illeggibile o non verificabile, nulla è stato modificato)",
-      "error": "Errore durante l'eliminazione"
+      "error": "Errore durante l'eliminazione",
+      "unreadable": "{{name}}: modifiche illeggibili {{count}}/{{total}}",
+      "unreadableAll": "nessuna leggibile (chiave errata?), non verrà eliminato nulla",
+      "drop": "Elimina illeggibili",
+      "dropConfirm": "Cancellare definitivamente le modifiche illeggibili ({{count}})? Il resto del contenuto è conservato.",
+      "dropped": "Illeggibili eliminate: {{count}}"
     }
   },
   "localStorage": {

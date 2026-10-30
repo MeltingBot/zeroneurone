@@ -347,7 +347,10 @@
       "ghostBadge": "En {{tabs}}",
       "navigateTo": "Ir a pestaña {{name}}",
       "combine": "Combinar",
-      "uncombine": "Dejar de combinar"
+      "uncombine": "Dejar de combinar",
+      "list": "Todas las pestañas",
+      "scrollLeft": "Pestañas anteriores",
+      "scrollRight": "Pestañas siguientes"
     },
     "retentionExpiredBanner": "Retención vencida hace {{days}} día(s)",
     "retentionDeleteConfirm": "Esta expediente se eliminará permanentemente, sin posibilidad de anulación.",
@@ -361,7 +364,8 @@
     "mermaidCopied": "Selección copiada como Mermaid",
     "mermaidCopyFailed": "No se pudo copiar al portapapeles",
     "dotCopied": "Selección copiada como DOT",
-    "closedBanner": "Cerrado el {{date}} — solo lectura"
+    "closedBanner": "Cerrado el {{date}} — solo lectura",
+    "undecryptableUpdates": "Cambios ilegibles: {{count}}. Se conservan; ver Almacenamiento > Mantenimiento."
   },
   "map": {
     "noGeoElements": "Ningún elemento geolocalizado",
@@ -427,7 +431,8 @@
     "ofmLiberty": "Detallado",
     "ofmDark": "Oscuro",
     "ofmFiord": "Alto contraste",
-    "timeZoneHint": "Zona horaria"
+    "timeZoneHint": "Zona horaria",
+    "exportCSV": "Exportar a CSV"
   },
   "timeline": {
     "noEvents": "Ningún evento fechado",

@@ -8,6 +8,7 @@ import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { canvasPosition } from '../../utils/revealElement';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -134,8 +135,9 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               : sizeMap[element.visual?.size ?? 'medium'] ?? 56;
             const elementWidth = element.visual?.customWidth ?? baseSize;
             const elementHeight = element.visual?.customHeight ?? baseSize;
-            const centerX = element.position.x + elementWidth / 2;
-            const centerY = element.position.y + elementHeight / 2;
+            const position = canvasPosition(element, elementsMap);
+            const centerX = position.x + elementWidth / 2;
+            const centerY = position.y + elementHeight / 2;
             // Center viewport on element
             requestViewportChange({
               x: -centerX * targetZoom + canvasWidth / 2,
@@ -152,17 +154,20 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
           const fromElement = elementsMap.get(link.fromId);
           const toElement = elementsMap.get(link.toId);
           if (fromElement && toElement) {
-            const midX = (fromElement.position.x + toElement.position.x) / 2;
-            const midY = (fromElement.position.y + toElement.position.y) / 2;
+            const from = canvasPosition(fromElement, elementsMap);
+            const to = canvasPosition(toElement, elementsMap);
+            const midX = (from.x + to.x) / 2;
+            const midY = (from.y + to.y) / 2;
             requestViewportChange({
               x: -midX * targetZoom + canvasWidth / 2,
               y: -midY * targetZoom + canvasHeight / 2,
               zoom: targetZoom,
             });
           } else if (fromElement) {
+            const from = canvasPosition(fromElement, elementsMap);
             requestViewportChange({
-              x: -fromElement.position.x * targetZoom + canvasWidth / 2,
-              y: -fromElement.position.y * targetZoom + canvasHeight / 2,
+              x: -from.x * targetZoom + canvasWidth / 2,
+              y: -from.y * targetZoom + canvasHeight / 2,
               zoom: targetZoom,
             });
           }

@@ -347,7 +347,10 @@
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Ga naar tabblad {{name}}",
       "combine": "Combineren",
-      "uncombine": "Niet meer combineren"
+      "uncombine": "Niet meer combineren",
+      "list": "Alle tabbladen",
+      "scrollLeft": "Vorige tabbladen",
+      "scrollRight": "Volgende tabbladen"
     },
     "retentionExpiredBanner": "Bewaring verlopen sinds {{days}} dag(en)",
     "retentionDeleteConfirm": "Dit dossier wordt definitief verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
@@ -361,7 +364,8 @@
     "mermaidCopied": "Selectie gekopieerd als Mermaid",
     "mermaidCopyFailed": "Kopiëren naar het klembord mislukt",
     "dotCopied": "Selectie gekopieerd als DOT",
-    "closedBanner": "Afgesloten op {{date}} — alleen-lezen"
+    "closedBanner": "Afgesloten op {{date}} — alleen-lezen",
+    "undecryptableUpdates": "Onleesbare wijzigingen: {{count}}. Ze blijven bewaard; zie Opslag > Onderhoud."
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",
@@ -427,7 +431,8 @@
     "ofmLiberty": "Gedetailleerd",
     "ofmDark": "Donker",
     "ofmFiord": "Hoog contrast",
-    "timeZoneHint": "Tijdzone"
+    "timeZoneHint": "Tijdzone",
+    "exportCSV": "Exporteren naar CSV"
   },
   "timeline": {
     "noEvents": "Geen gedateerde gebeurtenissen",

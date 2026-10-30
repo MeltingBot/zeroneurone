@@ -347,7 +347,10 @@
       "ghostBadge": "A {{tabs}}",
       "navigateTo": "Anar a pestanya {{name}}",
       "combine": "Combinar",
-      "uncombine": "Deixar de combinar"
+      "uncombine": "Deixar de combinar",
+      "list": "Totes les pestanyes",
+      "scrollLeft": "Pestanyes anteriors",
+      "scrollRight": "Pestanyes següents"
     },
     "retentionExpiredBanner": "Retenció expirada des de fa {{days}} dia/es",
     "retentionDeleteConfirm": "Aquesta expedient s'eliminarà definitivament, sense possibilitat d'anul·lació.",
@@ -361,7 +364,8 @@
     "mermaidCopied": "Selecció copiada com a Mermaid",
     "mermaidCopyFailed": "No s'ha pogut copiar al porta-retalls",
     "dotCopied": "Selecció copiada com a DOT",
-    "closedBanner": "Tancat el {{date}} — només lectura"
+    "closedBanner": "Tancat el {{date}} — només lectura",
+    "undecryptableUpdates": "Canvis il·legibles: {{count}}. Es conserven; vegeu Emmagatzematge > Manteniment."
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",
@@ -416,7 +420,8 @@
     "ofmLiberty": "Detallat",
     "ofmDark": "Fosc",
     "ofmFiord": "Alt contrast",
-    "timeZoneHint": "Fus horari"
+    "timeZoneHint": "Fus horari",
+    "exportCSV": "Exporta a CSV"
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

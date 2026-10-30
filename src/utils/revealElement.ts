@@ -1,4 +1,29 @@
 import { useDossierStore, useTabStore, useViewStore } from '../stores';
+import type { Element, Position } from '../types';
+
+/**
+ * Canvas position of an element. A member of a group stores its position
+ * relative to the group (groups can be nested), so the parents' positions
+ * are added up.
+ */
+export function canvasPosition(
+  element: Element,
+  elements: readonly Element[] | ReadonlyMap<string, Element>,
+): Position {
+  const byId = (id: string) => ('get' in elements ? elements.get(id) : elements.find((el) => el.id === id));
+  let { x, y } = element.position;
+  const seen = new Set<string>([element.id]);
+  let parentId = element.parentGroupId;
+  while (parentId && !seen.has(parentId)) {
+    seen.add(parentId);
+    const parent = byId(parentId);
+    if (!parent) break;
+    x += parent.position.x;
+    y += parent.position.y;
+    parentId = parent.parentGroupId;
+  }
+  return { x, y };
+}
 
 /**
  * Bring an element on screen in the current view, without touching the
@@ -7,7 +32,8 @@ import { useDossierStore, useTabStore, useViewStore } from '../stores';
  * does not).
  */
 export function revealElement(elementId: string): void {
-  const target = useDossierStore.getState().elements.find((el) => el.id === elementId);
+  const { elements } = useDossierStore.getState();
+  const target = elements.find((el) => el.id === elementId);
   if (!target) return;
 
   const { activeTabId, memberSet, tabs, setActiveTab } = useTabStore.getState();
@@ -26,8 +52,9 @@ export function revealElement(elementId: string): void {
     const baseSize = typeof target.visual?.size === 'number'
       ? target.visual.size
       : sizeMap[target.visual?.size ?? 'medium'] ?? 56;
-    const centerX = target.position.x + (target.visual?.customWidth ?? baseSize) / 2;
-    const centerY = target.position.y + (target.visual?.customHeight ?? baseSize) / 2;
+    const position = canvasPosition(target, elements);
+    const centerX = position.x + (target.visual?.customWidth ?? baseSize) / 2;
+    const centerY = position.y + (target.visual?.customHeight ?? baseSize) / 2;
     const zoom = 1.0;
     useViewStore.getState().requestViewportChange({
       x: -centerX * zoom + (window.innerWidth - 350) / 2,
@@ -48,7 +75,8 @@ export function revealElements(ids: Iterable<string>): void {
     for (const id of wanted) revealElement(id);
     return;
   }
-  const targets = useDossierStore.getState().elements.filter((el) => wanted.has(el.id));
+  const { elements } = useDossierStore.getState();
+  const targets = elements.filter((el) => wanted.has(el.id));
   if (targets.length === 0) return;
 
   const mode = useViewStore.getState().displayMode;
@@ -65,8 +93,9 @@ export function revealElements(ids: Iterable<string>): void {
   for (const el of targets) {
     const w = el.visual?.customWidth ?? 120;
     const h = el.visual?.customHeight ?? 56;
-    minX = Math.min(minX, el.position.x); minY = Math.min(minY, el.position.y);
-    maxX = Math.max(maxX, el.position.x + w); maxY = Math.max(maxY, el.position.y + h);
+    const { x, y } = canvasPosition(el, elements);
+    minX = Math.min(minX, x); minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h);
   }
   const width = window.innerWidth - 350;
   const height = window.innerHeight - 120;

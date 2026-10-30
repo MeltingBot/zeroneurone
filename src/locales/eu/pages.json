@@ -347,7 +347,10 @@
       "ghostBadge": "{{tabs}}(e)n",
       "navigateTo": "{{name}} fitxara joan",
       "combine": "Konbinatu",
-      "uncombine": "Ez konbinatu"
+      "uncombine": "Ez konbinatu",
+      "list": "Fitxa guztiak",
+      "scrollLeft": "Aurreko fitxak",
+      "scrollRight": "Hurrengo fitxak"
     },
     "retentionExpiredBanner": "Atxikipena iraungita duela {{days}} egun",
     "retentionDeleteConfirm": "Espediente hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",
@@ -361,7 +364,8 @@
     "mermaidCopied": "Hautapena Mermaid gisa kopiatu da",
     "mermaidCopyFailed": "Ezin izan da arbelera kopiatu",
     "dotCopied": "Hautapena DOT gisa kopiatu da",
-    "closedBanner": "{{date}}(e)an itxita — irakurtzeko soilik"
+    "closedBanner": "{{date}}(e)an itxita — irakurtzeko soilik",
+    "undecryptableUpdates": "Aldaketa irakurtezinak: {{count}}. Gorde egin dira; ikus Biltegiratzea > Mantentzea."
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",
@@ -416,7 +420,8 @@
     "ofmLiberty": "Xehetua",
     "ofmDark": "Iluna",
     "ofmFiord": "Kontraste handia",
-    "timeZoneHint": "Ordu-eremua"
+    "timeZoneHint": "Ordu-eremua",
+    "exportCSV": "CSV-ra esportatu"
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

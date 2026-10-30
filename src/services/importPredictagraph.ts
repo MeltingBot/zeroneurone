@@ -7,10 +7,8 @@ import type {
   Link,
   Position,
   Property,
-  AssetId,
 } from '../types';
 import { db } from '../db/database';
-import { fileService } from './fileService';
 import type { ImportResult } from './importService';
 
 // ============================================================================
@@ -135,26 +133,6 @@ export async function importPredicaGraph(
 
     // Create ID mapping (PredicaGraph ID -> new UUID)
     const nodeIdMap = new Map<string, ElementId>();
-    let downloadedImageCount = 0;
-    let failedImageCount = 0;
-
-    // Count nodes with images for the warning
-    const nodesWithImages = data.nodes.filter(n => {
-      if (!n.data?.pfp_image) return false;
-      let url: string | undefined;
-      if (typeof n.data.pfp_image === 'string') url = n.data.pfp_image;
-      else if (Array.isArray(n.data.pfp_image)) {
-        const first = n.data.pfp_image.find(item => item?.url);
-        if (first) url = first.url;
-      } else if (typeof n.data.pfp_image === 'object' && n.data.pfp_image.url) url = n.data.pfp_image.url;
-      return url && url.startsWith('http');
-    });
-
-    if (nodesWithImages.length > 0) {
-      result.warnings.push(
-        `Tentative de téléchargement de ${nodesWithImages.length} image(s) depuis PredicaGraph (peut échouer si CORS bloqué)...`
-      );
-    }
 
     // Import nodes
     for (const node of data.nodes) {
@@ -182,10 +160,8 @@ export async function importPredicaGraph(
         }
       }
 
-      // Handle pfp_image: download from URL and save as asset
-      const assetIds: AssetId[] = [];
-      let visualImageId: AssetId | null = null;
-
+      // pfp_image is a remote URL: kept as a link, never fetched, since
+      // nothing leaves the machine without an explicit user action.
       if (node.data?.pfp_image) {
         let imageUrl: string | undefined;
         if (typeof node.data.pfp_image === 'string') {
@@ -199,26 +175,7 @@ export async function importPredicaGraph(
         }
 
         if (imageUrl && isSafeExternalUrl(imageUrl)) {
-          try {
-            const response = await fetch(imageUrl);
-            if (response.ok) {
-              const blob = await response.blob();
-              const ext = blob.type.split('/')[1] || 'png';
-              const filename = `${String(label).replace(/[^a-zA-Z0-9]/g, '_')}_pfp.${ext}`;
-              const file = new File([blob], filename, { type: blob.type });
-              const asset = await fileService.saveAsset(targetDossierId, file);
-              assetIds.push(asset.id);
-              visualImageId = asset.id;
-              downloadedImageCount++;
-              result.assetsImported++;
-            } else {
-              failedImageCount++;
-              properties.push({ key: 'image_url', value: imageUrl, type: 'link' });
-            }
-          } catch {
-            failedImageCount++;
-            properties.push({ key: 'image_url', value: imageUrl, type: 'link' });
-          }
+          properties.push({ key: 'image_url', value: imageUrl, type: 'link' });
         }
       }
 
@@ -273,8 +230,8 @@ export async function importPredicaGraph(
         position,
         isPositionLocked: false,
         geo,
-        visual: { ...DEFAULT_ELEMENT_VISUAL, image: visualImageId },
-        assetIds,
+        visual: { ...DEFAULT_ELEMENT_VISUAL },
+        assetIds: [],
         parentGroupId: null,
         isGroup: false,
         isAnnotation: false,
@@ -286,18 +243,6 @@ export async function importPredicaGraph(
 
       await db.elements.add(element);
       result.elementsImported++;
-    }
-
-    // Report download results
-    if (downloadedImageCount > 0) {
-      result.warnings.push(
-        `${downloadedImageCount} image(s) téléchargée(s) depuis PredicaGraph`
-      );
-    }
-    if (failedImageCount > 0) {
-      result.warnings.push(
-        `${failedImageCount} image(s) non téléchargée(s) (CORS bloqué): URLs stockées en propriétés`
-      );
     }
 
     // Import edges
