@@ -5,10 +5,14 @@ import { Modal, Button, IconButton, ResolvedIcon, iconNameResolves } from '../co
 import { useTagSetStore, useUIStore, useCustomIconStore } from '../../stores';
 import { CUSTOM_ICON_PREFIX, isCustomIconName, customIconIdFromName } from '../../types';
 import { sanitizeSvgIcon } from '../../utils/svgIcon';
-import { splitCSVRecords } from '../../utils/csv';
 import { TagSetEditorModal } from './TagSetEditorModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
+import { downloadBlob } from '../../utils/download';
+import { escapeCsvField, parseCSVLine as parseCSVRow, splitCSVRecords, unescapeCsvField } from '../../utils/csv';
+
+// This app's own CSV export: its formula guard is dropped on the way back
+const parseCSVLine = (line: string): string[] => parseCSVRow(line, ',').map(unescapeCsvField);
 
 interface TagSetManagerModalProps {
   isOpen: boolean;
@@ -149,26 +153,15 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: 'application/json',
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.json`);
 
     showToast('success', t('tagSets.tagsExportedJson', { count: tagSets.length }));
   }, [tagSets, showToast, t]);
 
   // Export all TagSets to CSV file
   const handleExportCSV = useCallback(() => {
-    const escapeCSV = (value: string) => {
-      if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes(';')) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    };
+    // Properties are joined with ';': quoted too
+    const escapeCSV = (value: string) => escapeCsvField(value, ';');
 
     const headers = ['nom', 'description', 'couleur', 'forme', 'proprietes'];
     const rows = tagSets.map((ts) => {
@@ -187,14 +180,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
 
     const csv = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.csv`);
 
     showToast('success', t('tagSets.tagsExportedCsv', { count: tagSets.length }));
   }, [tagSets, showToast, t]);
@@ -208,14 +194,7 @@ Vehicule,Un vehicule,#f97316,diamond,immatriculation:text;marque:text;modele:tex
 Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:text`;
 
     const blob = new Blob([template], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'modele-tagsets.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, 'modele-tagsets.csv');
   }, []);
 
   // Trigger file input for import
@@ -224,30 +203,6 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
   }, []);
 
   // Parse CSV line handling quoted values
-  const parseCSVLine = useCallback((line: string): string[] => {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    result.push(current);
-    return result;
-  }, []);
 
   // Handle file selection for import (JSON or CSV)
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -396,7 +351,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
       console.error('Import error:', err);
       showToast('error', t('tagSets.importError'));
     }
-  }, [create, nameExists, showToast, parseCSVLine, t]);
+  }, [create, nameExists, showToast, t]);
 
   return (
     <>

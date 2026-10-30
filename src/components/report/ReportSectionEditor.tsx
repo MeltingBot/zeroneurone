@@ -6,16 +6,7 @@ import { ReportMarkdownEditor } from './ReportMarkdownEditor';
 import { usePlugins } from '../../plugins/usePlugins';
 import { useDossierStore } from '../../stores';
 import { Input, IconButton } from '../common';
-
-// Debounce hook (inline implementation)
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debouncedValue;
-}
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface ReportSectionEditorProps {
   section: ReportSection;

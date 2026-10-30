@@ -5,7 +5,11 @@
  * Provides async methods for insights, layout, and path computations.
  */
 
-import type { Element, ElementShape, ElementSize, Link } from '../types';
+import type { Element, Link } from '../types';
+import { toLayoutEdges, toLayoutNodes } from './graph/layouts';
+
+export type { LayoutType, LayoutOptions } from './graph/layouts';
+import type { LayoutOptions } from './graph/layouts';
 
 /**
  * A request was replaced by a newer one before the worker answered. Not a
@@ -22,26 +26,6 @@ export class SupersededError extends Error {
 // TYPES
 // ============================================================================
 
-interface SerializedElement {
-  id: string;
-  label: string;
-  isGroup?: boolean;
-  position: { x: number; y: number };
-  shape?: ElementShape;
-  size?: ElementSize;
-  customWidth?: number;
-  customHeight?: number;
-  hasImage?: boolean;
-}
-
-interface SerializedLink {
-  id: string;
-  fromId: string;
-  toId: string;
-  label?: string;
-  direction?: string;
-}
-
 export interface WorkerInsightsData {
   clusters: { id: number; elementIds: string[]; size: number }[];
   centrality: { elementId: string; degree: number; betweenness: number; score: number }[];
@@ -50,22 +34,13 @@ export interface WorkerInsightsData {
   similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
 }
 
-export type LayoutType = 'force' | 'clusters' | 'circular' | 'grid' | 'random' | 'hierarchy';
-
-export interface LayoutOptions {
-  layoutType: LayoutType;
-  center?: { x: number; y: number };
-  /** Locked elements as discs (canvas centre + radius): clusters are packed around them */
-  obstacles?: { x: number; y: number; r: number }[];
-}
-
 type ProgressCallback = (percent: number, phase: string) => void;
 
 // ============================================================================
 // SERVICE
 // ============================================================================
 
-type RequestKind = 'insights' | 'layout' | 'paths';
+type RequestKind = 'insights' | 'layout';
 
 interface PendingRequest {
   id: number;
@@ -77,13 +52,12 @@ interface PendingRequest {
 const RESULT_KIND: Record<string, RequestKind> = {
   insightsResult: 'insights',
   layoutResult: 'layout',
-  pathResult: 'paths',
 };
 
 class GraphWorkerService {
   private worker: Worker | null = null;
   // One pending request per kind: a new insights request replaces the previous
-  // insights request, never a layout or a path search. The worker handles
+  // insights request, never a layout. The worker handles
   // messages in order, so each answer is matched to its request by id; an
   // answer to a replaced request is dropped.
   private pending = new Map<RequestKind, PendingRequest>();
@@ -132,11 +106,7 @@ class GraphWorkerService {
     if (!kind) return;
     const request = this.takeMatching(response.requestId, kind);
     if (!request) return; // Stale: its request was replaced
-    request.resolve(
-      response.type === 'insightsResult' ? response.data
-        : response.type === 'layoutResult' ? response.positions
-        : response.paths,
-    );
+    request.resolve(response.type === 'insightsResult' ? response.data : response.positions);
   }
 
   /** Send a request, replacing (and settling) the previous one of the same kind */
@@ -154,31 +124,6 @@ class GraphWorkerService {
     });
   }
 
-  private serializeElements(elements: Element[]): SerializedElement[] {
-    return elements.map(el => ({
-      id: el.id,
-      label: el.label,
-      isGroup: el.isGroup,
-      position: el.position,
-      // Visual props so the worker can compute real footprints for layout
-      shape: el.visual?.shape,
-      size: el.visual?.size,
-      customWidth: el.visual?.customWidth,
-      customHeight: el.visual?.customHeight,
-      hasImage: Boolean(el.visual?.image),
-    }));
-  }
-
-  private serializeLinks(links: Link[]): SerializedLink[] {
-    return links.map(l => ({
-      id: l.id,
-      fromId: l.fromId,
-      toId: l.toId,
-      label: l.label,
-      direction: l.direction,
-    }));
-  }
-
   /**
    * Compute all graph insights in the worker thread.
    */
@@ -189,8 +134,8 @@ class GraphWorkerService {
   ): Promise<WorkerInsightsData> {
     return this.send('insights', {
       type: 'computeInsights',
-      elements: this.serializeElements(elements),
-      links: this.serializeLinks(links),
+      elements: toLayoutNodes(elements),
+      links: toLayoutEdges(links),
     }, onProgress ?? null);
   }
 
@@ -205,40 +150,10 @@ class GraphWorkerService {
   ): Promise<Record<string, { x: number; y: number }>> {
     return this.send('layout', {
       type: 'computeLayout',
-      elements: this.serializeElements(elements),
-      links: this.serializeLinks(links),
+      elements: toLayoutNodes(elements),
+      links: toLayoutEdges(links),
       options,
     }, onProgress ?? null);
-  }
-
-  /**
-   * Find paths between two elements in the worker thread.
-   */
-  findPaths(
-    elements: Element[],
-    links: Link[],
-    fromId: string,
-    toId: string
-  ): Promise<{ path: string[]; length: number }[]> {
-    return this.send('paths', {
-      type: 'findPaths',
-      elements: this.serializeElements(elements),
-      links: this.serializeLinks(links),
-      fromId,
-      toId,
-    }, null);
-  }
-
-  /**
-   * Terminate the worker.
-   */
-  terminate() {
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
-    }
-    for (const request of this.pending.values()) request.reject(new SupersededError('worker terminated'));
-    this.pending.clear();
   }
 }
 

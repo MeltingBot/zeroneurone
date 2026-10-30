@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { db } from '../db/database';
 import type { ImportResult } from './importService';
+import { ImportedRows } from './importedRows';
 
 // ============================================================================
 // PredicaGraph Format Types
@@ -107,7 +108,7 @@ const PROPERTY_FIELDS = [
 // ============================================================================
 
 /**
- * Import a PredicaGraph JSON export into an dossier
+ * Import a PredicaGraph JSON export into a dossier
  */
 export async function importPredicaGraph(
   content: string,
@@ -124,6 +125,7 @@ export async function importPredicaGraph(
   };
 
   try {
+    const rows = new ImportedRows();
     const data = JSON.parse(content) as PredicaGraphData;
 
     if (!data.nodes || !Array.isArray(data.nodes)) {
@@ -241,7 +243,7 @@ export async function importPredicaGraph(
         updatedAt: new Date(),
       };
 
-      await db.elements.add(element);
+      rows.addElement(element);
       result.elementsImported++;
     }
 
@@ -292,10 +294,12 @@ export async function importPredicaGraph(
           updatedAt: new Date(),
         };
 
-        await db.links.add(link);
+        rows.addLink(link);
         result.linksImported++;
       }
     }
+
+    await rows.write();
 
     // Update dossier viewport if available
     if (data.viewport) {

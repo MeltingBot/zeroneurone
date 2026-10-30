@@ -297,12 +297,6 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
     }, () => undefined);
   }
 
-  clearData(): Promise<void> {
-    return this.destroy().then(() => {
-      idb.deleteDB(this.name);
-    });
-  }
-
   get(key: string | number | ArrayBuffer | Date): Promise<unknown> {
     return this._db.then(db => {
       const [custom] = idb.transact(db, [CUSTOM_STORE_NAME], 'readonly');

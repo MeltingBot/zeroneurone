@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getExtension, parseFlexibleDate, stripLocalOnlyDossierFields } from './index';
+import { formatRelativeTime, getExtension, parseFlexibleDate, stripLocalOnlyDossierFields } from './index';
 import type { Dossier } from '../types';
 
 describe('getExtension', () => {
@@ -65,5 +65,22 @@ describe('parseFlexibleDate', () => {
 
   it('rejects impossible dates', () => {
     expect(parseFlexibleDate('31/02/2024')).toBeNull();
+  });
+});
+
+describe('formatRelativeTime', () => {
+  const ago = (ms: number) => new Date(Date.now() - ms);
+  const plain = (s: string) => s.replace(/\u00a0|\u202f/g, ' ');
+
+  it('speaks the UI language, not only French and English', () => {
+    expect(plain(formatRelativeTime(ago(5 * 60_000), 'fr'))).toBe('il y a 5 min');
+    expect(plain(formatRelativeTime(ago(5 * 60_000), 'de'))).toBe('vor 5 Min.');
+    expect(plain(formatRelativeTime(ago(3 * 3_600_000), 'ua'))).toBe('3 год тому');
+  });
+
+  it('says now under a minute, and gives the date beyond a week', () => {
+    expect(formatRelativeTime(ago(10_000), 'en')).toBe('now');
+    const old = new Date(2026, 0, 15);
+    expect(formatRelativeTime(old, 'fr')).toBe(old.toLocaleDateString('fr', { day: 'numeric', month: 'short' }));
   });
 });

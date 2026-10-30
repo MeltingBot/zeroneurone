@@ -197,7 +197,6 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
               onBlur={handleDescriptionBlur}
               placeholder={t('detail.placeholders.markdown')}
               minRows={3}
-              maxRows={10}
             />
           </div>
 

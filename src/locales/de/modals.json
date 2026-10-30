@@ -101,7 +101,11 @@
       "fields": "Zu importierende Eigenschaften",
       "all": "Alle",
       "none": "Keine"
-    }
+    },
+    "encryptedPrompt": "Verschlüsselte Datei: Passwort eingeben, um sie zu importieren.",
+    "decrypting": "Entschlüsselung…",
+    "wrongPassword": "Falsches Passwort",
+    "invalidEncryptedFile": "Ungültige oder beschädigte verschlüsselte Datei"
   },
   "export": {
     "progress": {
@@ -448,6 +452,15 @@
       "drop": "Unlesbare löschen",
       "dropConfirm": "Unlesbare Änderungen ({{count}}) endgültig löschen? Der übrige Inhalt bleibt erhalten.",
       "dropped": "Unlesbare gelöscht: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Alle Dossiers löschen",
+      "description": "Löscht alle Dossiers, Elemente, Verbindungen, Dateien und den Verlauf. Tag-Sets und Verschlüsselung bleiben erhalten. Nicht umkehrbar.",
+      "button": "Alle löschen",
+      "confirm": "ALLE Dossiers und ihre Daten löschen?\n\nDiese Aktion ist nicht umkehrbar.",
+      "confirmAgain": "Letzte Bestätigung: Alle Daten gehen verloren. Fortfahren?",
+      "success": "Alle Dossiers wurden gelöscht.",
+      "error": "Fehler beim Löschen"
     }
   },
   "localStorage": {

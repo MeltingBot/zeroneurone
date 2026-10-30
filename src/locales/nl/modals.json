@@ -101,7 +101,11 @@
       "fields": "Te importeren eigenschappen",
       "all": "Alle",
       "none": "Geen"
-    }
+    },
+    "encryptedPrompt": "Versleuteld bestand: voer het wachtwoord in om het te importeren.",
+    "decrypting": "Ontsleutelen…",
+    "wrongPassword": "Onjuist wachtwoord",
+    "invalidEncryptedFile": "Ongeldig of beschadigd versleuteld bestand"
   },
   "export": {
     "progress": {
@@ -448,6 +452,15 @@
       "drop": "Onleesbare verwijderen",
       "dropConfirm": "Onleesbare wijzigingen ({{count}}) definitief wissen? De rest van de inhoud blijft behouden.",
       "dropped": "Onleesbare verwijderd: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Alle dossiers verwijderen",
+      "description": "Verwijdert alle dossiers, elementen, koppelingen, bestanden en geschiedenis. Tagsets en versleuteling blijven behouden. Onomkeerbaar.",
+      "button": "Alles verwijderen",
+      "confirm": "ALLE dossiers en hun gegevens verwijderen?\n\nDeze actie is onomkeerbaar.",
+      "confirmAgain": "Laatste bevestiging: alle gegevens gaan verloren. Doorgaan?",
+      "success": "Alle dossiers zijn verwijderd.",
+      "error": "Fout bij verwijderen"
     }
   },
   "localStorage": {

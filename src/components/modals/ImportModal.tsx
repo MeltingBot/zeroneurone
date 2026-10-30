@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, AlertCircle, CheckCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
+import { InvalidEncryptedZipError, WrongZipPasswordError } from '../../services/encryption/zipEncryption';
 import { importGEXF } from '../../services/importGephi';
 import { importANX, isANXFormat } from '../../services/importANX';
 import { importANB, isANBFormat } from '../../services/importANB';
@@ -242,11 +243,15 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       // Simuler un FileList pour réutiliser handleFileSelect
       await withImportProgress(() => processFile(decryptedFile));
     } catch (err) {
-      setZnzipError(err instanceof Error ? err.message : 'Mot de passe incorrect');
+      setZnzipError(
+        err instanceof WrongZipPasswordError ? t('import.wrongPassword')
+          : err instanceof InvalidEncryptedZipError ? t('import.invalidEncryptedFile')
+          : err instanceof Error ? err.message : String(err),
+      );
     } finally {
       setIsProcessing(false);
     }
-  }, [processFile]);
+  }, [processFile, t]);
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -561,7 +566,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           {pendingEncryptedFile && (
             <div className="p-3 border border-border-default rounded bg-bg-secondary space-y-2">
               <p className="text-xs text-text-secondary">
-                <span className="font-mono">{pendingEncryptedFile.name}</span> est chiffré. Entrez le mot de passe pour importer.
+                <span className="font-mono block truncate">{pendingEncryptedFile.name}</span>
+                {t('import.encryptedPrompt')}
               </p>
               <div className="relative">
                 <input
@@ -573,7 +579,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                       handleDecryptAndImport(pendingEncryptedFile, znzipPassword);
                     }
                   }}
-                  placeholder="Mot de passe"
+                  placeholder={t('passwordModal.passwordLabel')}
                   autoFocus
                   className="w-full text-sm border border-border-default rounded px-3 py-1.5 pr-8 focus:outline-none focus:border-accent bg-bg-primary"
                   autoComplete="current-password"
@@ -582,6 +588,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                   type="button"
                   onClick={() => setShowZnzipPassword(v => !v)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
+                  aria-label={showZnzipPassword ? t('passwordModal.hidePassword') : t('passwordModal.showPassword')}
+                  title={showZnzipPassword ? t('passwordModal.hidePassword') : t('passwordModal.showPassword')}
                 >
                   {showZnzipPassword ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
@@ -594,14 +602,14 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                   onClick={() => { setPendingEncryptedFile(null); setZnzipPassword(''); setZnzipError(null); }}
                   className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
                 >
-                  Annuler
+                  {t('common:actions.cancel')}
                 </button>
                 <button
                   onClick={() => pendingEncryptedFile && handleDecryptAndImport(pendingEncryptedFile, znzipPassword)}
                   disabled={!znzipPassword || isProcessing}
-                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-blue-700 disabled:opacity-40"
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-accent-hover disabled:opacity-40"
                 >
-                  {isProcessing ? 'Déchiffrement…' : 'Importer'}
+                  {isProcessing ? t('import.decrypting') : t('common:actions.import')}
                 </button>
               </div>
             </div>
@@ -609,7 +617,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
           {/* Import running: zone replaced by status and Annuler */}
           {importRunning && (
-            <div className="w-full flex flex-col items-center gap-2 p-6 rounded-lg border-2 border-dashed border-border-default bg-bg-secondary" data-testid="import-running">
+            <div className="w-full flex flex-col items-center gap-2 p-6 rounded border-2 border-dashed border-border-default bg-bg-secondary" data-testid="import-running">
               <Loader2 size={24} className="animate-spin text-text-tertiary" />
               <div className="text-sm font-medium text-text-primary">{t('import.importing')}</div>
               <ImportProgressLine className="text-xs text-text-secondary" />
@@ -636,21 +644,21 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           {/* Import result */}
           {importResult && (
             <div
-              className={`p-3 rounded-lg ${
+              className={`p-3 rounded ${
                 importResult.success
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
+                  ? 'bg-success/10 border border-success/30'
+                  : 'bg-error/10 border border-error/30'
               }`}
             >
               <div className="flex items-center gap-2 mb-2">
                 {importResult.success ? (
-                  <CheckCircle size={16} className="text-green-600" />
+                  <CheckCircle size={16} className="text-success" />
                 ) : (
-                  <AlertCircle size={16} className="text-red-600" />
+                  <AlertCircle size={16} className="text-error" />
                 )}
                 <span
                   className={`text-sm font-medium ${
-                    importResult.success ? 'text-green-800' : 'text-red-800'
+                    importResult.success ? 'text-success' : 'text-error'
                   }`}
                 >
                   {importResult.success ? t('import.success') : t('import.error')}
@@ -658,7 +666,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               </div>
 
               {importResult.success && (
-                <div className="text-xs text-green-700 space-y-1">
+                <div className="text-xs text-success space-y-1">
                   {importResult.elementsImported > 0 && (
                     <p>{t('import.successElements', { count: importResult.elementsImported })}</p>
                   )}
@@ -675,7 +683,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               )}
 
               {importResult.errors.length > 0 && (
-                <div className="text-xs text-red-700 mt-2">
+                <div className="text-xs text-error mt-2">
                   {importResult.errors.map((err, i) => (
                     <p key={i}>{err}</p>
                   ))}
@@ -683,7 +691,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               )}
 
               {importResult.warnings.length > 0 && (
-                <div className="text-xs text-yellow-700 mt-2">
+                <div className="text-xs text-warning mt-2">
                   <p className="font-medium">{t('import.warnings')}</p>
                   {importResult.warnings.slice(0, 5).map((warn, i) => (
                     <p key={i}>{warn}</p>

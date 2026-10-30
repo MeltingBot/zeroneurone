@@ -189,7 +189,7 @@ export function LandingSection({
                               aria-checked={!disabled}
                               onClick={() => handleTogglePlugin(card.id)}
                               className="ml-auto shrink-0 relative w-7 h-4 rounded-full transition-colors"
-                              style={{ backgroundColor: disabled ? '#d1d5db' : '#2563eb' }}
+                              style={{ backgroundColor: disabled ? 'var(--color-border-strong)' : 'var(--color-accent)' }}
                               title={disabled ? t('home.landing.enablePlugin') : t('home.landing.disablePlugin')}
                             >
                               <span

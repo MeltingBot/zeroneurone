@@ -54,7 +54,7 @@ function SimpleEdgeComponent(props: EdgeProps) {
         <path
           d={path}
           fill="none"
-          stroke="#2563eb"
+          style={{ stroke: 'var(--color-accent)' }}
           strokeWidth={thickness + 6}
           strokeLinecap="round"
           opacity={0.25}

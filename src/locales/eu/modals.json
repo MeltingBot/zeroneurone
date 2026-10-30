@@ -101,7 +101,11 @@
       "fields": "Inportatu beharreko propietateak",
       "all": "Denak",
       "none": "Bat ere ez"
-    }
+    },
+    "encryptedPrompt": "Fitxategi zifratua: idatzi pasahitza inportatzeko.",
+    "decrypting": "Deszifratzen…",
+    "wrongPassword": "Pasahitz okerra",
+    "invalidEncryptedFile": "Fitxategi zifratu baliogabea edo hondatua"
   },
   "export": {
     "progress": {
@@ -448,6 +452,15 @@
       "drop": "Ezabatu irakurtezinak",
       "dropConfirm": "Aldaketa irakurtezinak ({{count}}) behin betiko ezabatu? Gainerako edukia gorde egiten da.",
       "dropped": "Ezabatutako irakurtezinak: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Ezabatu dosier guztiak",
+      "description": "Dosier, elementu, lotura, fitxategi eta historia guztiak ezabatzen ditu. Etiketa-multzoak eta zifratzea gorde egiten dira. Atzeraezina.",
+      "button": "Ezabatu dena",
+      "confirm": "Dosier GUZTIAK eta haien datuak ezabatu?\n\nEkintza hau atzeraezina da.",
+      "confirmAgain": "Azken berrespena: datu guztiak galduko dira. Jarraitu?",
+      "success": "Dosier guztiak ezabatu dira.",
+      "error": "Errorea ezabatzean"
     }
   },
   "localStorage": {

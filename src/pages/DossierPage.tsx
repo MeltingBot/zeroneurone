@@ -44,6 +44,7 @@ import type { DisplayMode } from '../types';
 import { useEvaluationModel } from '../hooks/useEvaluationModel';
 import { usePlugins } from '../plugins/usePlugins';
 import { getPlugins } from '../plugins/pluginRegistry';
+import { useShallow } from 'zustand/react/shallow';
 
 const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; labelKey: string; shortcut: string }[] = [
   { mode: 'canvas', icon: LayoutGrid, labelKey: 'canvas', shortcut: '1' },
@@ -80,9 +81,9 @@ export function DossierPage() {
     error,
     loadDossier,
     unloadDossier,
-  } = useDossierStore();
+  } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, assets: s.assets, comments: s.comments, isLoading: s.isLoading, loadingPhase: s.loadingPhase, loadingDetail: s.loadingDetail, loadingProgress: s.loadingProgress, error: s.error, loadDossier: s.loadDossier, unloadDossier: s.unloadDossier })));
 
-  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide } = useUIStore();
+  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide } = useUIStore(useShallow((s) => ({ searchOpen: s.searchOpen, toggleSearch: s.toggleSearch, closeSearch: s.closeSearch, resetDossierState: s.resetDossierState, themeMode: s.themeMode, toggleThemeMode: s.toggleThemeMode, showToast: s.showToast, panelSide: s.panelSide })));
   // One selector per field: the viewport changes on every frame of a pan, and
   // subscribing to the whole store would re-render the page each time
   const displayMode = useViewStore((s) => s.displayMode);
@@ -266,8 +267,6 @@ export function DossierPage() {
     if (!hasMedia) return;
     opfsWarnedRef.current = id;
     fileService.isOpfsWritable().then((writable) => {
-      // Use toastStore.toast (the one actually rendered by ToastContainer);
-      // uiStore.showToast writes to a different, unrendered store.
       if (!writable) toast.warning(t('dossier.opfsUnavailable'), 8000);
     });
   }, [id, isLoading, elements, t]);

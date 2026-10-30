@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { LaneGroup } from './useSwimlaneGrouping';
-import type { TimelineItem } from './TimelineView';
+import type { TimelineItem } from './timelineItems';
 
 export const SWIMLANE_ITEM_HEIGHT = 28;
 export const SWIMLANE_LINK_HEIGHT_COMPACT = 8;

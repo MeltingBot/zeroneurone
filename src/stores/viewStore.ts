@@ -489,7 +489,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
     );
   },
 
-  // Reset dossier-specific state (called when closing an dossier)
+  // Reset dossier-specific state (called when closing a dossier)
   resetDossierState: () => {
     set({
       viewport: { x: 0, y: 0, zoom: 1 },

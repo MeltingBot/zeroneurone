@@ -101,7 +101,11 @@
       "fields": "Propietats a importar",
       "all": "Totes",
       "none": "Cap"
-    }
+    },
+    "encryptedPrompt": "Fitxer xifrat: introduïu-ne la contrasenya per importar-lo.",
+    "decrypting": "S'està desxifrant…",
+    "wrongPassword": "Contrasenya incorrecta",
+    "invalidEncryptedFile": "Fitxer xifrat no vàlid o malmès"
   },
   "export": {
     "progress": {
@@ -448,6 +452,15 @@
       "drop": "Eliminar il·legibles",
       "dropConfirm": "Esborrar definitivament els canvis il·legibles ({{count}})? La resta del contingut es conserva.",
       "dropped": "Il·legibles eliminats: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Suprimeix tots els dossiers",
+      "description": "Suprimeix tots els dossiers, elements, enllaços, fitxers i historial. Els conjunts d'etiquetes i el xifratge es conserven. Irreversible.",
+      "button": "Suprimeix-ho tot",
+      "confirm": "Voleu suprimir TOTS els dossiers i les seves dades?\n\nAquesta acció és irreversible.",
+      "confirmAgain": "Última confirmació: es perdran totes les dades. Voleu continuar?",
+      "success": "S'han suprimit tots els dossiers.",
+      "error": "Error en suprimir"
     }
   },
   "localStorage": {

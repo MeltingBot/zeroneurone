@@ -17,7 +17,10 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
+import { ImportedRows } from './importedRows';
 import { parseDateValue } from '../utils/dates';
+import { darkenColor } from './importGephi';
+import { stripBom } from '../utils/csv';
 
 // ============================================================================
 // i18n
@@ -42,7 +45,7 @@ export function isANXFormat(content: string): boolean {
 /** Fix common malformed XML in i2 ANX exports */
 function sanitizeANXContent(content: string): string {
   // Remove BOM
-  let s = content.replace(/^\uFEFF/, '');
+  let s = stripBom(content);
   // Strip XML declaration (browser already decoded the string, avoids encoding mismatch)
   s = s.replace(/<\?xml[^?]*\?>\s*/, '');
   // Fix double-double-quotes in attributes: attr="value"" → attr="value"
@@ -60,18 +63,6 @@ function colorrefToHex(colorref: number): string {
   const g = (colorref >> 8) & 0xFF;
   const b = (colorref >> 16) & 0xFF;
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-function darkenColor(hex: string): string {
-  if (!hex.startsWith('#') || hex.length < 7) return '#737373';
-  try {
-    const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 60);
-    const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - 60);
-    const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - 60);
-    return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
-  } catch {
-    return '#737373';
-  }
 }
 
 function mapEnlargementToSize(enlargement: string | null): ElementSize {
@@ -262,6 +253,7 @@ export async function importANX(
   };
 
   try {
+    const rows = new ImportedRows();
     const parser = new DOMParser();
     const sanitized = sanitizeANXContent(content);
     const doc = parser.parseFromString(sanitized, 'application/xml');
@@ -483,7 +475,7 @@ export async function importANX(
         updatedAt: new Date(),
       };
 
-      await db.elements.add(element);
+      rows.addElement(element);
       result.elementsImported++;
     }
 
@@ -614,9 +606,11 @@ export async function importANX(
         updatedAt: new Date(),
       };
 
-      await db.links.add(link);
+      rows.addLink(link);
       result.linksImported++;
     }
+
+    await rows.write();
 
     // ── Dossier metadata ──
     const defaultDate = chart.getAttribute('DefaultDate');

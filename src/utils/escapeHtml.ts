@@ -17,6 +17,16 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** Escape text for an XML text node or quoted attribute (SVG, GraphML, GEXF). */
+export function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 /**
  * Serialise a value for embedding inside an inline <script> block.
  *

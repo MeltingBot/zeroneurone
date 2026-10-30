@@ -301,11 +301,6 @@ export function rawRecordsForSource(data: unknown, source: RecordSource | undefi
   return arr.filter((it): it is Record<string, unknown> => it != null && typeof it === 'object');
 }
 
-/** Extract the flattened records for a chosen source. */
-export function recordsForSource(data: unknown, source: RecordSource | undefined): Record<string, unknown>[] {
-  return rawRecordsForSource(data, source).map((it) => flattenRecord(it));
-}
-
 /**
  * Flatten one record to dot-path → value. Scalars and arrays (of scalars) are
  * kept as-is; nested plain objects are recursed. Arrays are NOT recursed into.

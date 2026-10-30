@@ -4,7 +4,6 @@ import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsigh
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds } from '../../utils/filterUtils';
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
-import { datePropertyRules, propertyDateSpans } from '../../utils/temporalUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, ChartColumnBig, Upload, Clock } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -16,43 +15,13 @@ import { useSwimlaneGrouping } from './useSwimlaneGrouping';
 import { ActivityHistogramBar } from './ActivityHistogramBar';
 import { histogramBucket, type HistogramMode } from './activityHistogram';
 import { computeCausalConnections } from './causality';
-import type { DatePrecision, Element as ZNElement } from '../../types';
-import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue } from '../../utils/dates';
+import type { Element as ZNElement } from '../../types';
+import { toLocalDateKey, dateLocale } from '../../utils/dates';
 import { formatItemDates, itemTooltip } from './timelineDates';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
-import { emitExport } from '../../plugins/pluginEventBus';
-
-export interface TimelineItem {
-  id: string;
-  label: string;
-  sublabel?: string;
-  start: Date;
-  end?: Date;
-  /** End as entered, for labels (`end` extends to the end of its period, or to now) */
-  displayEnd?: Date;
-  /** Precision of start/end ("2019", "mars 2019"…); inferred when absent */
-  precision?: DatePrecision;
-  approximate?: boolean;
-  /** Source zone of the hours (shown in parentheses) */
-  timeZone?: string;
-  color: string;
-  type: 'link' | 'event' | 'property' | 'created';
-  sourceId?: string; // For selection
-  eventId?: string; // For type === 'event': the ElementEvent.id, used to focus the event in the side panel
-  parentElementIds?: string[]; // Element IDs this item belongs to (for swimlane grouping)
-  isDimmed?: boolean; // For filter dimming
-  unresolvedCommentCount?: number; // Number of unresolved comments
-  // Thumbnail info from source element
-  thumbLetter: string;
-  thumbColor: string;
-  thumbShape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon' | 'hexagon';
-  thumbImageId?: string; // AssetId for image thumbnail
-  // Destination thumbnail info (for links)
-  destThumbLetter?: string;
-  destThumbColor?: string;
-  destThumbShape?: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
-  destThumbImageId?: string;
-}
+import { buildTimelineItems, type TimelineItem } from './timelineItems';
+import { ItemThumbnail } from './ItemThumbnail';
+import { exportTimelineToCSV, CAUSAL_COLORS, getDensityColor } from './timelineOutput';
 
 // Constants
 const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
@@ -220,328 +189,10 @@ export function TimelineView() {
   const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
 
   // Build timeline items from links and element events
-  const { items, timeBounds } = useMemo(() => {
-    const itemsList: TimelineItem[] = [];
-    const now = new Date();
-    let minTime = Infinity;
-    let maxTime = -Infinity;
-
-    // Helper to count unresolved comments for a target
-    const getUnresolvedCommentCount = (targetId: string, targetType: 'element' | 'link'): number => {
-      return comments.filter(
-        c => c.targetId === targetId && c.targetType === targetType && !c.resolved
-      ).length;
-    };
-
-    // === Mode "Investigation chronology": show elements & links by createdAt ===
-    if (showCreatedAt) {
-      // Elements by createdAt
-      elements.forEach((element) => {
-        if (viewHiddenIds.has(element.id)) return;
-        if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
-
-        const createdDate = new Date(element.createdAt);
-        if (isNaN(createdDate.getTime())) return;
-
-        const createdTime = createdDate.getTime();
-        if (createdTime < minTime) minTime = createdTime;
-        if (createdTime > maxTime) maxTime = createdTime;
-
-        const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
-        const elementLabel = element.label || t('timeline.unnamed');
-
-        itemsList.push({
-          id: `created-el-${element.id}`,
-          label: elementLabel,
-          start: createdDate,
-          end: undefined,
-          color: element.visual.color,
-          type: 'created',
-          sourceId: element.id,
-          isDimmed: isElementDimmed,
-          unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
-          thumbLetter: elementLabel.charAt(0).toUpperCase(),
-          thumbColor: element.visual.color,
-          thumbShape: element.visual.shape || 'circle',
-          thumbImageId: element.assetIds?.[0] || undefined,
-        });
-      });
-
-      // Links by createdAt
-      links.forEach((link) => {
-        const fromElement = elements.find(el => el.id === link.fromId);
-        const toElement = elements.find(el => el.id === link.toId);
-        if (!fromElement || !toElement) return;
-        if (viewHiddenIds.has(fromElement.id) || viewHiddenIds.has(toElement.id)) return;
-        if (activeTabId !== null) {
-          const fromVisible = tabMemberSet.has(fromElement.id) || tabGhostIds.has(fromElement.id);
-          const toVisible = tabMemberSet.has(toElement.id) || tabGhostIds.has(toElement.id);
-          if (!fromVisible || !toVisible) return;
-        }
-
-        const createdDate = new Date(link.createdAt);
-        if (isNaN(createdDate.getTime())) return;
-
-        const createdTime = createdDate.getTime();
-        if (createdTime < minTime) minTime = createdTime;
-        if (createdTime > maxTime) maxTime = createdTime;
-
-        const fromLabel = fromElement.label || t('timeline.unnamed');
-        const toLabel = toElement.label || t('timeline.unnamed');
-        const linkLabel = link.label || t('timeline.relation');
-
-        const endpointDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id)
-          || (activeTabId !== null && (tabGhostIds.has(fromElement.id) || tabGhostIds.has(toElement.id)));
-        const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
-
-        itemsList.push({
-          id: `created-lk-${link.id}`,
-          label: `${fromLabel} → ${linkLabel} → ${toLabel}`,
-          start: createdDate,
-          end: undefined,
-          color: link.visual.color || '#6b7280',
-          type: 'created',
-          sourceId: link.id,
-          parentElementIds: [fromElement.id, toElement.id],
-          isDimmed: isLinkDimmed,
-          unresolvedCommentCount: getUnresolvedCommentCount(link.id, 'link'),
-          thumbLetter: fromLabel.charAt(0).toUpperCase(),
-          thumbColor: fromElement.visual.color,
-          thumbShape: fromElement.visual.shape || 'circle',
-          thumbImageId: fromElement.assetIds?.[0] || undefined,
-          destThumbLetter: toLabel.charAt(0).toUpperCase(),
-          destThumbColor: toElement.visual.color,
-          destThumbShape: toElement.visual.shape || 'circle',
-          destThumbImageId: toElement.assetIds?.[0] || undefined,
-        });
-      });
-
-      // Sort, bounds and return
-      itemsList.sort((a, b) => a.start.getTime() - b.start.getTime());
-      if (minTime === Infinity) {
-        const nowMs = Date.now();
-        minTime = nowMs - 365 * 24 * 60 * 60 * 1000;
-        maxTime = nowMs + 30 * 24 * 60 * 60 * 1000;
-      }
-      const range = maxTime - minTime || 365 * 24 * 60 * 60 * 1000;
-      const padding = range * 0.1;
-      return {
-        items: itemsList,
-        timeBounds: { min: new Date(minTime - padding), max: new Date(maxTime + padding) },
-      };
-    }
-
-    // === Normal mode: links dateRange, element events, date properties ===
-
-    // 1. Process links with dateRange
-    links.forEach((link) => {
-      if (!link.dateRange?.start) return;
-
-      const fromElement = elements.find(el => el.id === link.fromId);
-      const toElement = elements.find(el => el.id === link.toId);
-      if (!fromElement || !toElement) return;
-
-      // Skip if either element is hidden
-      if (viewHiddenIds.has(fromElement.id) || viewHiddenIds.has(toElement.id)) return;
-      // Skip if either element is not visible in active tab
-      if (activeTabId !== null) {
-        const fromVisible = tabMemberSet.has(fromElement.id) || tabGhostIds.has(fromElement.id);
-        const toVisible = tabMemberSet.has(toElement.id) || tabGhostIds.has(toElement.id);
-        if (!fromVisible || !toVisible) return;
-      }
-
-      const startDate = new Date(link.dateRange.start);
-      const enteredEnd = link.dateRange.end ? new Date(link.dateRange.end) : null;
-      // A bound covers its whole period: an end "2021" lasts until 31 Dec 2021
-      const endDate = enteredEnd
-        ? new Date(endOfPrecision(enteredEnd, effectivePrecision(enteredEnd, link.dateRange.precision)))
-        : now;
-
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
-
-      const startTime = startDate.getTime();
-      const endTime = endDate.getTime();
-      if (startTime < minTime) minTime = startTime;
-      if (endTime > maxTime) maxTime = endTime;
-
-      const fromLabel = fromElement.label || t('timeline.unnamed');
-      const toLabel = toElement.label || t('timeline.unnamed');
-      const linkLabel = link.label || t('timeline.relation');
-
-      // Check if link should be dimmed (either connected element is dimmed, or ghost in active tab)
-      // Exception: if the link itself matches the active query, keep it visible
-      const endpointDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id)
-        || (activeTabId !== null && (tabGhostIds.has(fromElement.id) || tabGhostIds.has(toElement.id)));
-      const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
-
-      itemsList.push({
-        id: `link-${link.id}`,
-        label: `${fromLabel} → ${linkLabel} → ${toLabel}`,
-        sublabel: undefined,
-        start: startDate,
-        end: endDate,
-        displayEnd: enteredEnd ?? undefined,
-        precision: link.dateRange.precision,
-        approximate: link.dateRange.approximate,
-        timeZone: link.dateRange.timeZone,
-        color: link.visual.color || '#6b7280',
-        type: 'link',
-        sourceId: link.id,
-        parentElementIds: [fromElement.id, toElement.id],
-        isDimmed: isLinkDimmed,
-        unresolvedCommentCount: getUnresolvedCommentCount(link.id, 'link'),
-        thumbLetter: fromLabel.charAt(0).toUpperCase(),
-        thumbColor: fromElement.visual.color,
-        thumbShape: fromElement.visual.shape || 'circle',
-        thumbImageId: fromElement.assetIds?.[0] || undefined,
-        // Destination element thumbnail
-        destThumbLetter: toLabel.charAt(0).toUpperCase(),
-        destThumbColor: toElement.visual.color,
-        destThumbShape: toElement.visual.shape || 'circle',
-        destThumbImageId: toElement.assetIds?.[0] || undefined,
-      });
-    });
-
-    // 2. Process element events
-    elements.forEach((element) => {
-      // Skip hidden elements or elements not in active tab
-      if (viewHiddenIds.has(element.id)) return;
-      if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
-      if (!element.events || element.events.length === 0) return;
-
-      const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
-
-      element.events.forEach((event, index) => {
-        if (!event.date) return;
-
-        const eventDate = new Date(event.date);
-        if (isNaN(eventDate.getTime())) return;
-
-        const eventTime = eventDate.getTime();
-        if (eventTime < minTime) minTime = eventTime;
-        if (eventTime > maxTime) maxTime = eventTime;
-
-        const hasEnd = event.dateEnd && !isNaN(new Date(event.dateEnd).getTime());
-        const enteredEnd = hasEnd ? new Date(event.dateEnd!) : null;
-        // If no end date, extend to today (ongoing event); an end covers its
-        // whole period ("2021" lasts until 31 Dec 2021)
-        const endDate = enteredEnd
-          ? new Date(endOfPrecision(enteredEnd, effectivePrecision(enteredEnd, event.precision)))
-          : now;
-
-        const endTime = endDate.getTime();
-        if (endTime > maxTime) maxTime = endTime;
-
-        const elementLabel = element.label || t('timeline.unnamed');
-        const eventLabel = event.label || '';
-        const isDefaultName = element.label === t('timeline.newElement') || !element.label;
-
-        // Event properties: one per line, shown on hover only (inline they
-        // drown the labels as soon as an import brings many of them)
-        let eventSublabel: string | undefined;
-        if (event.properties && event.properties.length > 0) {
-          eventSublabel = event.properties
-            .filter((p) => p.value !== null && p.value !== undefined && p.value !== '')
-            .map((p) => `${p.key}: ${formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)}`)
-            .join('\n') || undefined;
-        }
-
-        // Build label: prefer event label alone if element has default name
-        let itemLabel: string;
-        if (eventLabel && isDefaultName) {
-          itemLabel = eventLabel;
-        } else if (eventLabel) {
-          itemLabel = `${elementLabel}: ${eventLabel}`;
-        } else {
-          itemLabel = elementLabel;
-        }
-
-        itemsList.push({
-          id: `ev-${element.id}-${index}`,
-          label: itemLabel,
-          sublabel: eventSublabel,
-          start: eventDate,
-          end: endDate,
-          displayEnd: enteredEnd ?? undefined,
-          precision: event.precision,
-          approximate: event.approximate,
-          timeZone: event.timeZone,
-          color: element.visual.color,
-          type: 'event',
-          sourceId: element.id,
-          eventId: event.id,
-          isDimmed: isElementDimmed,
-          unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
-          thumbLetter: elementLabel.charAt(0).toUpperCase(),
-          thumbColor: element.visual.color,
-          thumbShape: element.visual.shape || 'circle',
-          thumbImageId: element.assetIds?.[0] || undefined,
-        });
-      });
-    });
-
-    // 3. Process element properties with type "date" or "datetime", as chosen
-    // in the filters panel; a pair declared as a period gives one bar
-    const dateRules = datePropertyRules({ includedDateProperties, excludedDateProperties, dateRangeProperties });
-    elements.forEach((element) => {
-      // Skip hidden elements or elements not in active tab
-      if (viewHiddenIds.has(element.id)) return;
-      if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
-      if (!element.properties || element.properties.length === 0) return;
-
-      const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
-
-      // Imported text is read like everywhere else (UTC midnight = a local day)
-      for (const span of propertyDateSpans(element, dateRules)) {
-        const startTime = span.start.getTime();
-        const endTime = (span.end ?? span.start).getTime();
-        if (startTime < minTime) minTime = startTime;
-        if (endTime > maxTime) maxTime = endTime;
-
-        const elementLabel = element.label || t('timeline.unnamed');
-
-        itemsList.push({
-          id: `prop-${element.id}-${span.index}`,
-          label: span.endKey
-            ? `${elementLabel}: ${span.key} → ${span.endKey}`
-            : `${elementLabel}: ${span.key}`,
-          start: span.start,
-          end: span.end, // A point unless a pair is declared as a period
-          precision: span.datetime ? 'minute' : 'day',
-          ...(span.datetime && span.timeZone ? { timeZone: span.timeZone } : {}),
-          color: element.visual.color,
-          type: 'property',
-          sourceId: element.id,
-          isDimmed: isElementDimmed,
-          unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
-          thumbLetter: elementLabel.charAt(0).toUpperCase(),
-          thumbColor: element.visual.color,
-          thumbShape: element.visual.shape || 'circle',
-          thumbImageId: element.assetIds?.[0] || undefined,
-        });
-      }
-    });
-
-    // Sort by start date (oldest first by default, will be reversed in itemsWithRows if newestFirst)
-    itemsList.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-    // Calculate bounds with padding
-    if (minTime === Infinity) {
-      const now = Date.now();
-      minTime = now - 365 * 24 * 60 * 60 * 1000;
-      maxTime = now + 30 * 24 * 60 * 60 * 1000;
-    }
-    const range = maxTime - minTime || 365 * 24 * 60 * 60 * 1000;
-    const padding = range * 0.1;
-
-    return {
-      items: itemsList,
-      timeBounds: {
-        min: new Date(minTime - padding),
-        max: new Date(maxTime + padding),
-      },
-    };
-  }, [elements, links, comments, viewHiddenIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language, includedDateProperties, excludedDateProperties, dateRangeProperties]);
+  const { items, timeBounds } = useMemo(
+    () => buildTimelineItems({ elements, links, comments, viewHiddenIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, includedDateProperties, excludedDateProperties, dateRangeProperties, t, language: i18n.language }),
+    [elements, links, comments, viewHiddenIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language, includedDateProperties, excludedDateProperties, dateRangeProperties, t],
+  );
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -565,7 +216,7 @@ export function TimelineView() {
           if (asset?.thumbnailDataUrl) {
             newThumbnails[assetId] = asset.thumbnailDataUrl;
           }
-        } catch (e) {
+        } catch {
           console.warn('Failed to load thumbnail:', assetId);
         }
       }
@@ -1553,10 +1204,10 @@ export function TimelineView() {
         >
           {/* Today marker */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 will-change-transform"
+            className="absolute top-0 bottom-0 w-0.5 bg-error z-20 will-change-transform"
             style={{ transform: `translate3d(${todayX}px, 0, 0)` }}
           >
-            <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-red-500 rounded-full" />
+            <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-error rounded-full" />
           </div>
 
           {/* Items - virtualized, only renders visible items */}
@@ -1640,7 +1291,7 @@ export function TimelineView() {
                   {/* Comment indicator */}
                   {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                     <div
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-warning text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
                       title={t('timeline.unresolvedComments', { count: item.unresolvedCommentCount })}
                     >
                       {item.unresolvedCommentCount}
@@ -1685,7 +1336,7 @@ export function TimelineView() {
                 {/* Comment indicator */}
                 {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                   <div
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-warning text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
                     title={t('timeline.unresolvedComments', { count: item.unresolvedCommentCount })}
                   >
                     {item.unresolvedCommentCount}
@@ -1763,28 +1414,15 @@ export function TimelineView() {
               style={{ overflow: 'visible' }}
             >
               <defs>
-                {/* Gradient definitions for different time gaps */}
-                <linearGradient id="causal-gradient-short" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.7" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.5" />
-                </linearGradient>
-                <linearGradient id="causal-gradient-medium" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.7" />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.5" />
-                </linearGradient>
-                <linearGradient id="causal-gradient-long" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.4" />
-                </linearGradient>
                 {/* Arrow markers for each color */}
                 <marker id="causal-arrow-short" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#10b981" fillOpacity="0.8" />
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" style={{ fill: CAUSAL_COLORS.short }} fillOpacity="0.8" />
                 </marker>
                 <marker id="causal-arrow-medium" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#f59e0b" fillOpacity="0.8" />
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" style={{ fill: CAUSAL_COLORS.medium }} fillOpacity="0.8" />
                 </marker>
                 <marker id="causal-arrow-long" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#ef4444" fillOpacity="0.7" />
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" style={{ fill: CAUSAL_COLORS.long }} fillOpacity="0.7" />
                 </marker>
                 {/* Glow filter */}
                 <filter id="causal-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -1880,7 +1518,7 @@ export function TimelineView() {
                     <path
                       d={path}
                       fill="none"
-                      stroke={`url(#causal-gradient-${colorCategory})`}
+                      style={{ stroke: CAUSAL_COLORS[colorCategory] }}
                       strokeWidth="4"
                       strokeOpacity="0.2"
                       filter="url(#causal-glow)"
@@ -1889,7 +1527,8 @@ export function TimelineView() {
                     <path
                       d={path}
                       fill="none"
-                      stroke={`url(#causal-gradient-${colorCategory})`}
+                      style={{ stroke: CAUSAL_COLORS[colorCategory] }}
+                      strokeOpacity="0.6"
                       strokeWidth="2"
                       strokeDasharray="6 4"
                       markerEnd={`url(#causal-arrow-${colorCategory})`}
@@ -1906,9 +1545,8 @@ export function TimelineView() {
                         width="28"
                         height="16"
                         rx="3"
-                        style={{ fill: 'var(--color-bg-primary)' }}
+                        style={{ fill: 'var(--color-bg-primary)', stroke: CAUSAL_COLORS[colorCategory] }}
                         fillOpacity="0.9"
-                        stroke={colorCategory === 'short' ? '#10b981' : colorCategory === 'medium' ? '#f59e0b' : '#ef4444'}
                         strokeWidth="1"
                         strokeOpacity="0.5"
                       />
@@ -1918,8 +1556,7 @@ export function TimelineView() {
                         textAnchor="middle"
                         fontSize="10"
                         fontWeight="500"
-                        fill={colorCategory === 'short' ? '#059669' : colorCategory === 'medium' ? '#d97706' : '#dc2626'}
-                        style={{ pointerEvents: 'none' }}
+                        style={{ fill: CAUSAL_COLORS[colorCategory], pointerEvents: 'none' }}
                       >
                         {durationLabel}
                       </text>
@@ -1951,101 +1588,3 @@ export function TimelineView() {
   );
 }
 
-// Thumbnail component showing element image or shape with color
-function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
-  imageUrl?: string;
-  shape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
-  color: string;
-  letter: string;
-  blur?: boolean;
-  size?: number; // Custom size in pixels
-}) {
-  const sizeStyle = size ? { width: size, height: size } : undefined;
-
-  // If we have an image, show it (blurred if hideMedia)
-  if (imageUrl) {
-    return (
-      <div
-        className={`${size ? '' : 'w-7 h-7'} rounded shrink-0 bg-cover bg-center border border-border-default overflow-hidden`}
-        style={{
-          ...sizeStyle,
-          backgroundImage: `url(${imageUrl})`,
-          filter: blur ? 'blur(8px)' : undefined,
-        }}
-      />
-    );
-  }
-
-  // Otherwise show shape with letter
-  const baseClasses = `${size ? '' : 'w-6 h-6'} flex items-center justify-center font-bold text-white shrink-0 border border-white/30`;
-  const fontSize = size ? Math.max(10, size * 0.35) : 10;
-
-  const shapeClasses: Record<string, string> = {
-    circle: 'rounded-full',
-    square: 'rounded-sm',
-    diamond: 'rounded-sm rotate-45',
-    rectangle: 'rounded-sm',
-    hexagon: 'sketchy-hexagon',
-  };
-
-  return (
-    <div
-      className={`${baseClasses} ${shapeClasses[shape] || 'rounded-full'}`}
-      style={{
-        ...sizeStyle,
-        backgroundColor: color,
-        fontSize: `${fontSize}px`,
-      }}
-    >
-      <span className={shape === 'diamond' ? '-rotate-45' : ''}>
-        {letter}
-      </span>
-    </div>
-  );
-}
-
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
-  const typeLabels: Record<string, string> = { link: 'lien', event: 'evenement', property: 'propriete', created: 'ajout' };
-  const formatDate = (d: Date) => toLocalDateKey(d);
-
-  const sorted = [...items].sort((a, b) => a.start.getTime() - b.start.getTime());
-
-  const header = 'date_debut,date_fin,type,label,sublabel,couleur';
-  const rows = sorted.map(item => [
-    formatDate(item.start),
-    item.end ? formatDate(item.end) : '',
-    typeLabels[item.type] || item.type,
-    escapeCSV(item.label),
-    escapeCSV((item.sublabel || '').replace(/\n/g, ' | ')),
-    item.color,
-  ].join(','));
-
-  const csv = [header, ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  emitExport('timeline-csv');
-}
-
-function getDensityColor(count: number, max: number): string {
-  if (count === 0) return 'rgba(37, 99, 235, 0.04)';
-  const ratio = count / max;
-  if (ratio < 0.2) return 'rgba(37, 99, 235, 0.15)';
-  if (ratio < 0.4) return 'rgba(37, 99, 235, 0.3)';
-  if (ratio < 0.6) return 'rgba(37, 99, 235, 0.5)';
-  if (ratio < 0.8) return 'rgba(37, 99, 235, 0.7)';
-  return 'rgba(37, 99, 235, 0.9)';
-}

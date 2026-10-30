@@ -15,6 +15,7 @@ import type {
 import { db } from '../db/database';
 import { fileService } from './fileService';
 import type { ImportResult } from './importService';
+import { dataUrlMimeType, dataUrlToFile } from '../utils/dataUrl';
 
 // ============================================================================
 // Excalidraw Format Types
@@ -309,20 +310,11 @@ export async function importExcalidraw(
 
       try {
         // Convert dataURL to File
-        const [header, base64] = fileData.dataURL.split(',');
-        if (base64) {
-          const mimeMatch = header.match(/data:([^;]+)/);
-          const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+        if (fileData.dataURL.includes(',')) {
+          const mimeType = dataUrlMimeType(fileData.dataURL, 'image/png');
           const ext = mimeType.split('/')[1] || 'png';
-
-          const binaryString = atob(base64);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          const blob = new Blob([bytes], { type: mimeType });
           const filename = `excalidraw_image_${imageDownloadCount + 1}.${ext}`;
-          const file = new File([blob], filename, { type: mimeType });
+          const file = dataUrlToFile(fileData.dataURL, filename, 'image/png');
 
           const asset = await fileService.saveAsset(targetDossierId, file);
           assetIds.push(asset.id);

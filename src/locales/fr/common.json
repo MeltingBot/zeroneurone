@@ -130,7 +130,8 @@
     "circle": "Cercle",
     "square": "Carré",
     "diamond": "Losange",
-    "rectangle": "Rectangle"
+    "rectangle": "Rectangle",
+    "hexagon": "Hexagone"
   },
   "linkStyles": {
     "solid": "Continu",
@@ -318,5 +319,17 @@
       "invalid": "format invalide",
       "error": "erreur au chargement"
     }
+  },
+  "errorBoundary": {
+    "title": "Une erreur est survenue",
+    "titleIn": "Erreur dans {{scope}}",
+    "message": "Ce composant a rencontré un problème et ne peut pas s'afficher.",
+    "details": "Détails techniques",
+    "retry": "Réessayer",
+    "reload": "Recharger la page",
+    "home": "Accueil"
+  },
+  "presence": {
+    "moving": "{{name}} déplace"
   }
 }

@@ -5,6 +5,7 @@ import type { Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { PdfPreview } from '../common/PdfPreview';
 import { ImagePreview } from '../common/ImagePreview';
+import { isEmlFile } from '../../utils/fileTypes';
 
 interface AssetPreviewModalProps {
   asset: Asset;
@@ -23,7 +24,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
 
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
-  const isEml = asset.mimeType === 'message/rfc822' || /\.eml$/i.test(asset.filename);
+  const isEml = isEmlFile(asset.filename, asset.mimeType);
   const isText = !isEml && (asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename));
   const isDoc = /\.(docx|odt)$/i.test(asset.filename);
   const hasPreview = isImage || isPdf || isText || isDoc || isEml;
@@ -160,7 +161,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           ) : isDoc && textContent === null ? (
             <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
               <FileText size={48} />
-              <p className="text-sm">Extraire le texte pour afficher l'apercu</p>
+              <p className="text-sm">{tPanels('detail.files.extractForPreview')}</p>
             </div>
           ) : isImage && fileUrl ? (
             <ImagePreview key={fileUrl} url={fileUrl} alt={asset.filename} />
@@ -175,7 +176,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           ) : (
             <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
               <FileText size={48} />
-              <p className="text-sm">Aperçu non disponible</p>
+              <p className="text-sm">{tPanels('detail.files.previewUnavailable')}</p>
             </div>
           )}
         </div>

@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db } from '../db/database';
 import type { DossierId } from '../types';
-import { importGEXF } from './importGephi';
+import { darkenColor, importGEXF } from './importGephi';
 
 const D = 'dossier-gexf' as DossierId;
 
@@ -93,5 +93,17 @@ describe('importGEXF positions', () => {
     await importGEXF(positioned(500), D);
     const els = await byLabel();
     expect(els.get('B')!.position.x - els.get('A')!.position.x).toBeCloseTo(500);
+  });
+});
+
+describe('darkenColor', () => {
+  it('darkens each channel by 60, floored at 0', () => {
+    expect(darkenColor('#ff8030')).toBe('#c34400');
+  });
+
+  it('falls back on a colour it cannot read, instead of #NaNNaNNaN', () => {
+    expect(darkenColor('#zzzzzz')).toBe('#737373');
+    expect(darkenColor('red')).toBe('#737373');
+    expect(darkenColor('#fff')).toBe('#737373');
   });
 });

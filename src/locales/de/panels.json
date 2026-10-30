@@ -172,7 +172,17 @@
       "locationOptional": "Standort (optional)",
       "clearLocation": "Löschen",
       "pickOnMap": "Karte",
-      "extractToElement": "Als Element extrahieren"
+      "extractToElement": "Als Element extrahieren",
+      "hasZone": "Hat Zone",
+      "zoneOptional": "Zone (optional)",
+      "zoneInfo": "{{points}} Punkte, ~{{area}} km²",
+      "inheritZone": "Zone übernehmen",
+      "drawZone": "Zeichnen",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Anwenden",
+      "geoJsonParseError": "Ungültiges JSON",
+      "geoJsonInvalidType": "Erwarteter Typ: Polygon",
+      "geoJsonMinPoints": "Mindestens 3 Punkte"
     },
     "location": {
       "title": "Standort",
@@ -188,7 +198,10 @@
       "saveLocation": "Speichern",
       "noLocation": "Keine Position definiert",
       "copyCoordinates": "Koordinaten kopieren",
-      "coordinatesCopied": "Koordinaten kopiert"
+      "coordinatesCopied": "Koordinaten kopiert",
+      "altitude": "Höhe",
+      "altUnit": "Meter",
+      "extrude": "3D-Extrusion"
     },
     "properties": {
       "title": "Eigenschaften",
@@ -238,7 +251,8 @@
       "savedToTag_one": "{{count}} Eigenschaft im Tag \"{{name}}\" gespeichert",
       "savedToTag_other": "{{count}} Eigenschaften im Tag \"{{name}}\" gespeichert",
       "savedToTag": "{{count}} Eigenschaften im Tag \"{{name}}\" gespeichert",
-      "saveToTagError": "Speichern im Tag fehlgeschlagen"
+      "saveToTagError": "Speichern im Tag fehlgeschlagen",
+      "editChoices": "Optionen bearbeiten"
     },
     "appearance": {
       "title": "Darstellung",
@@ -252,7 +266,11 @@
       "thickness": "Stärke",
       "textSize": "Textgröße",
       "positionLock": "Position gesperrt",
-      "positionUnlocked": "Position entsperrt"
+      "positionUnlocked": "Position entsperrt",
+      "backgroundColor": "Hintergrundfarbe",
+      "white": "Weiß",
+      "customBorder": "Benutzerdefinierter Rahmen",
+      "borderStyle": "Rahmenstil"
     },
     "files": {
       "title": "Dateien",
@@ -277,7 +295,9 @@
       "emlCc": "Cc",
       "emlDate": "Datum",
       "emlSubject": "Betreff",
-      "emlAttachments": "Anhänge"
+      "emlAttachments": "Anhänge",
+      "extractForPreview": "Text extrahieren, um eine Vorschau anzuzeigen",
+      "previewUnavailable": "Keine Vorschau verfügbar"
     },
     "timestamps": {
       "createdAt": "Erstellt am",
@@ -638,7 +658,10 @@
     "deleteConfirm": "Diese Datei löschen?",
     "usedBy": "Verwendet von {{count}} Element(en)",
     "hideMediaOnNode": "Medien am Knoten ausblenden",
-    "showMediaOnNode": "Medien am Knoten anzeigen"
+    "showMediaOnNode": "Medien am Knoten anzeigen",
+    "uploading": "Wird hochgeladen…",
+    "dropOrPaste": "Dateien ablegen oder mit Strg+V einfügen",
+    "browse": "oder durchsuchen"
   },
   "history": {
     "title": "Verlauf",

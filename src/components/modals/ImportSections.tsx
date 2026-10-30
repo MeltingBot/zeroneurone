@@ -16,7 +16,7 @@ export function ImportDropZone({ onClick, busy }: { onClick: () => void; busy: b
       onClick={onClick}
       disabled={busy}
       data-testid="import-drop-zone"
-      className="w-full flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-dashed border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+      className="w-full flex flex-col items-center gap-3 p-6 rounded border-2 border-dashed border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
     >
       <Download size={32} className="text-text-tertiary" />
       <div className="text-center">
@@ -39,7 +39,7 @@ export function ImportMappingEntry({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       data-testid="import-open-mapping"
-      className="w-full flex items-center gap-2 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors text-left"
+      className="w-full flex items-center gap-2 p-3 rounded border border-border-default hover:border-accent hover:bg-accent/5 transition-colors text-left"
     >
       <FileJson size={16} className="text-text-secondary shrink-0" />
       <div>
@@ -54,7 +54,7 @@ export function ImportMappingEntry({ onClick }: { onClick: () => void }) {
 export function CsvTemplateCard({ onDownload }: { onDownload: () => void }) {
   const { t } = useTranslation('modals');
   return (
-    <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
+    <div className="p-3 bg-bg-secondary rounded border border-border-default">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileSpreadsheet size={14} className="text-text-secondary" />

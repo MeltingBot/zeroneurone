@@ -24,6 +24,7 @@ import { usePlugins } from '../plugins/usePlugins';
 import { importService } from '../services/importService';
 import { buildSampleZipFile } from '../components/onboarding/sampleDossier';
 import { WriteLockBanner } from '../components/common/WriteLockBanner';
+import { useShallow } from 'zustand/react/shallow';
 
 type ViewMode = 'landing' | 'list';
 type SortMode = 'updated' | 'created' | 'name';
@@ -42,9 +43,9 @@ export function HomePage() {
     createDossier,
     updateDossier,
     deleteDossier,
-  } = useDossierStore();
+  } = useDossierStore(useShallow((s) => ({ dossiers: s.dossiers, isLoading: s.isLoading, loadDossiers: s.loadDossiers, createDossier: s.createDossier, updateDossier: s.updateDossier, deleteDossier: s.deleteDossier })));
 
-  const { themeMode, toggleThemeMode } = useUIStore();
+  const { themeMode, toggleThemeMode } = useUIStore(useShallow((s) => ({ themeMode: s.themeMode, toggleThemeMode: s.toggleThemeMode })));
   const tutorialActive = useTutorialStore((s) => s.active);
   const suggestedTutorialName = useTutorialStore((s) => s.suggestedDossierName);
   const homePlugins = usePlugins('home:actions');
@@ -57,7 +58,7 @@ export function HomePage() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [isEncryptionModalOpen, setIsEncryptionModalOpen] = useState(false);
-  const { isEnabled: isEncryptionEnabled } = useEncryptionStore();
+  const { isEnabled: isEncryptionEnabled } = useEncryptionStore(useShallow((s) => ({ isEnabled: s.isEnabled })));
   const [isDisclaimerModalOpen, setIsDisclaimerModalOpen] = useState(false);
   const [creatingExample, setCreatingExample] = useState(false);
   const [pendingExample, setPendingExample] = useState(false);

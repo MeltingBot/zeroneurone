@@ -90,8 +90,6 @@ interface HistoryState {
    *  handlers that popped it themselves and don't handle its type) */
   applyUndo: (action: HistoryAction) => Promise<void>;
   applyRedo: (action: HistoryAction) => Promise<void>;
-  popUndo: () => HistoryAction | null;
-  popRedo: () => HistoryAction | null;
   canUndo: () => boolean;
   canRedo: () => boolean;
   clear: () => void;
@@ -109,32 +107,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }));
   },
 
-  // Pop action from past without executing (for external handlers)
-  popUndo: () => {
-    const { past } = get();
-    if (past.length === 0) return null;
-
-    const action = past[past.length - 1];
-    set((state) => ({
-      past: state.past.slice(0, -1),
-      future: [action, ...state.future],
-    }));
-    return action;
-  },
-
-  // Pop action from future without executing (for external handlers)
-  popRedo: () => {
-    const { future } = get();
-    if (future.length === 0) return null;
-
-    const action = future[0];
-    set((state) => ({
-      past: [...state.past, action],
-      future: state.future.slice(1),
-    }));
-    return action;
-  },
-
   // Execute undo operation
   undo: async () => {
     const { past } = get();
@@ -145,6 +117,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       past: state.past.slice(0, -1),
       future: [action, ...state.future],
     }));
+    // A deletion still finishing would undo part of this replay
+    const { whenDeletionsSettled } = await import('./dossierStore');
+    await whenDeletionsSettled();
     await asUndo(() => get().applyUndo(action));
   },
 
@@ -433,6 +408,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       past: [...state.past, action],
       future: state.future.slice(1),
     }));
+    // A deletion still finishing would undo part of this replay
+    const { whenDeletionsSettled } = await import('./dossierStore');
+    await whenDeletionsSettled();
     await asUndo(() => get().applyRedo(action));
   },
 

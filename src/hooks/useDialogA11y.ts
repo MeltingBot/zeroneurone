@@ -59,6 +59,9 @@ export function useDialogA11y(
     const handleKeyDown = (event: KeyboardEvent) => {
       if (dialogStack[dialogStack.length - 1] !== token) return;
       if (event.key === 'Escape') {
+        // Listened on document: the page's own shortcuts on window (Escape
+        // deselects on the canvas) must not also act on this key
+        event.stopPropagation();
         onCloseRef.current();
         return;
       }

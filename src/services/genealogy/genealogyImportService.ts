@@ -39,13 +39,6 @@ export function detectGenealogyFormatFromName(
 }
 
 /**
- * Check if a file is a genealogy file
- */
-export function isGenealogyFile(fileName: string): boolean {
-  return detectGenealogyFormatFromName(fileName) !== null;
-}
-
-/**
  * Parse a genealogy file (GEDCOM or GeneWeb)
  */
 export async function parseGenealogyFile(
@@ -65,7 +58,7 @@ export async function parseGenealogyFile(
 }
 
 /**
- * Import a genealogy file into an dossier
+ * Import a genealogy file into a dossier
  * Returns elements and links ready to be added to the dossier
  */
 export async function importGenealogyFile(

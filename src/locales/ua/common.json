@@ -34,7 +34,8 @@
     "fitView": "Підігнати вид",
     "center": "Центрувати",
     "protect": "Захистити",
-    "purge": "Очистити"
+    "purge": "Очистити",
+    "continue": "Продовжити"
   },
   "labels": {
     "name": "Назва",
@@ -129,7 +130,8 @@
     "circle": "Коло",
     "square": "Квадрат",
     "diamond": "Ромб",
-    "rectangle": "Прямокутник"
+    "rectangle": "Прямокутник",
+    "hexagon": "Шестикутник"
   },
   "linkStyles": {
     "solid": "Суцільна",
@@ -182,18 +184,7 @@
     "svgTooLarge": "Файл SVG завеликий (макс. 64 КБ)"
   },
   "language": {
-    "switch": "Змінити мову",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch",
-    "eu": "Euskara",
-    "ca": "Català",
-    "it": "Italiano",
-    "pt": "Português",
-    "pl": "Polski",
-    "uk": "Українська",
-    "nl": "Nederlands"
+    "switch": "Змінити мову"
   },
   "accessibility": {
     "skipToContent": "Перейти до основного вмісту"
@@ -328,5 +319,17 @@
       "invalid": "недійсний формат",
       "error": "помилка завантаження"
     }
+  },
+  "errorBoundary": {
+    "title": "Сталася помилка",
+    "titleIn": "Помилка в {{scope}}",
+    "message": "Цей компонент зіткнувся з проблемою і не може бути показаний.",
+    "details": "Технічні подробиці",
+    "retry": "Повторити",
+    "reload": "Перезавантажити сторінку",
+    "home": "Головна"
+  },
+  "presence": {
+    "moving": "{{name}} переміщує"
   }
 }

@@ -16,7 +16,7 @@ export { MinResolutionGuard } from './MinResolutionGuard';
 export { IconPicker, IconPickerCompact } from './IconPicker';
 export { ResolvedIcon, iconNameResolves } from './ResolvedIcon';
 export { LanguageSwitcher } from './LanguageSwitcher';
-export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
+export { ErrorBoundary } from './ErrorBoundary';
 export { ProgressiveList } from './ProgressiveList';
 export { PdfPreview } from './PdfPreview';
 export { SafeHtml } from './SafeHtml';

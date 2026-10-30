@@ -1,5 +1,5 @@
 /**
- * ShareModal - Modal to share or stop sharing an dossier
+ * ShareModal - Modal to share or stop sharing a dossier
  */
 
 import { useState, useEffect } from 'react';

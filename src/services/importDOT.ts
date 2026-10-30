@@ -32,6 +32,7 @@ import type { ImportResult } from './importService';
 import { darkenColor, inferPropertyType } from './importGephi';
 import { layoutMermaid, type MermaidDirection } from './importMermaid';
 import { parseDotColor } from './dotColors';
+import { stripBom } from '../utils/csv';
 
 // ============================================================================
 // Lexer
@@ -431,8 +432,7 @@ export function parseDOT(content: string): ParsedDot {
  */
 export function isDotGraph(text: string): boolean {
   if (!text || text.length > 5_000_000) return false;
-  const head = text
-    .replace(/^\uFEFF/, '')
+  const head = stripBom(text)
     .replace(/^(\s*(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*))*/, '')
     .trimStart();
   return /^(strict\s+)?(di)?graph(\s+("[^"]*"|[A-Za-z_\u0080-￿][\w\u0080-￿]*|-?[\d.]+))?\s*\{/i.test(head);

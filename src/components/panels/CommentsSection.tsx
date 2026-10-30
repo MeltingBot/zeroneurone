@@ -144,7 +144,7 @@ export function CommentsSection({ targetId, targetType }: CommentsSectionProps) 
                     <button
                       onClick={() => handleResolve(comment)}
                       className={`p-1 rounded hover:bg-[var(--color-bg-tertiary)] ${
-                        comment.resolved ? 'text-green-600' : 'text-[var(--color-text-tertiary)]'
+                        comment.resolved ? 'text-success' : 'text-[var(--color-text-tertiary)]'
                       }`}
                       title={comment.resolved ? t('detail.comments.markUnresolved') : t('detail.comments.markResolved')}
                     >
@@ -152,7 +152,7 @@ export function CommentsSection({ targetId, targetType }: CommentsSectionProps) 
                     </button>
                     <button
                       onClick={() => handleDelete(comment.id)}
-                      className="p-1 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] hover:text-red-600"
+                      className="p-1 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] hover:text-error"
                       title={t('detail.comments.delete')}
                     >
                       <Trash2 size={14} />

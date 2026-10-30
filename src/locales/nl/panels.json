@@ -172,7 +172,17 @@
       "locationOptional": "Locatie (optioneel)",
       "clearLocation": "Wissen",
       "pickOnMap": "Kaart",
-      "extractToElement": "Extraheren als element"
+      "extractToElement": "Extraheren als element",
+      "hasZone": "Heeft zone",
+      "zoneOptional": "Zone (optioneel)",
+      "zoneInfo": "{{points}} punten, ~{{area}} km²",
+      "inheritZone": "Zone overnemen",
+      "drawZone": "Tekenen",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Toepassen",
+      "geoJsonParseError": "Ongeldige JSON",
+      "geoJsonInvalidType": "Verwacht type: Polygon",
+      "geoJsonMinPoints": "Minimaal 3 punten"
     },
     "location": {
       "title": "Locatie",
@@ -188,7 +198,10 @@
       "saveLocation": "Opslaan",
       "noLocation": "Geen positie gedefinieerd",
       "copyCoordinates": "Coördinaten kopiëren",
-      "coordinatesCopied": "Coördinaten gekopieerd"
+      "coordinatesCopied": "Coördinaten gekopieerd",
+      "altitude": "Hoogte",
+      "altUnit": "meter",
+      "extrude": "3D-extrusie"
     },
     "properties": {
       "title": "Eigenschappen",
@@ -238,7 +251,8 @@
       "savedToTag_one": "{{count}} eigenschap opgeslagen in tag \"{{name}}\"",
       "savedToTag_other": "{{count}} eigenschappen opgeslagen in tag \"{{name}}\"",
       "savedToTag": "{{count}} eigenschappen opgeslagen in tag \"{{name}}\"",
-      "saveToTagError": "Opslaan in tag mislukt"
+      "saveToTagError": "Opslaan in tag mislukt",
+      "editChoices": "Opties bewerken"
     },
     "appearance": {
       "title": "Weergave",
@@ -252,7 +266,11 @@
       "thickness": "Dikte",
       "textSize": "Tekstgrootte",
       "positionLock": "Positie vergrendeld",
-      "positionUnlocked": "Positie ontgrendeld"
+      "positionUnlocked": "Positie ontgrendeld",
+      "backgroundColor": "Achtergrondkleur",
+      "white": "Wit",
+      "customBorder": "Aangepaste rand",
+      "borderStyle": "Randstijl"
     },
     "files": {
       "title": "Bestanden",
@@ -277,7 +295,9 @@
       "emlCc": "Cc",
       "emlDate": "Datum",
       "emlSubject": "Onderwerp",
-      "emlAttachments": "Bijlagen"
+      "emlAttachments": "Bijlagen",
+      "extractForPreview": "Tekst extraheren om een voorbeeld te tonen",
+      "previewUnavailable": "Geen voorbeeld beschikbaar"
     },
     "timestamps": {
       "createdAt": "Aangemaakt op",
@@ -638,7 +658,10 @@
     "deleteConfirm": "Dit bestand verwijderen?",
     "usedBy": "Gebruikt door {{count}} element(en)",
     "hideMediaOnNode": "Media op knooppunt verbergen",
-    "showMediaOnNode": "Media op knooppunt tonen"
+    "showMediaOnNode": "Media op knooppunt tonen",
+    "uploading": "Uploaden…",
+    "dropOrPaste": "Sleep bestanden of druk op Ctrl+V om te plakken",
+    "browse": "of bladeren"
   },
   "history": {
     "title": "Geschiedenis",

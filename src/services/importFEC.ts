@@ -23,6 +23,7 @@ import { generateUUID } from '../utils';
 import type { DossierId, Element, Link, Property } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
+import { stripBom } from '../utils/csv';
 
 // ── Types ──
 
@@ -123,10 +124,6 @@ function t(key: string, fallback: string, options?: Record<string, unknown>): st
 }
 
 // ── Format detection ──
-
-function stripBom(s: string): string {
-  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
-}
 
 function detectSeparator(headerLine: string): '|' | '\t' | null {
   if (headerLine.includes('|')) return '|';

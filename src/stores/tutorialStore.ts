@@ -27,7 +27,6 @@ interface TutorialState {
   exit: () => void;
   complete: () => void;
   setTutorialDossierId: (id: string) => void;
-  captureBaseline: () => void;
 }
 
 function randomSuffix(): string {
@@ -109,8 +108,6 @@ export const useTutorialStore = create<TutorialState>()(
         .elements.filter((e) => !e.isGroup)
         .map((e) => e.id),
     }),
-
-  captureBaseline: () => set({ baseline: snapshotBaseline() }),
     }),
     {
       // Persistance de la progression : un rechargement de page reprend le

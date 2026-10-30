@@ -34,7 +34,8 @@
     "fitView": "Ajustar vista",
     "center": "Centrar",
     "protect": "Proteger",
-    "purge": "Limpar"
+    "purge": "Limpar",
+    "continue": "Continuar"
   },
   "labels": {
     "name": "Nome",
@@ -129,7 +130,8 @@
     "circle": "Círculo",
     "square": "Quadrado",
     "diamond": "Losango",
-    "rectangle": "Retângulo"
+    "rectangle": "Retângulo",
+    "hexagon": "Hexágono"
   },
   "linkStyles": {
     "solid": "Contínuo",
@@ -182,15 +184,7 @@
     "svgTooLarge": "Ficheiro SVG demasiado grande (máx. 64 KB)"
   },
   "language": {
-    "switch": "Mudar idioma",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch",
-    "eu": "Euskara",
-    "ca": "Català",
-    "it": "Italiano",
-    "pt": "Português"
+    "switch": "Mudar idioma"
   },
   "accessibility": {
     "skipToContent": "Ir para o conteúdo principal"
@@ -325,5 +319,17 @@
       "invalid": "formato inválido",
       "error": "erro de carregamento"
     }
+  },
+  "errorBoundary": {
+    "title": "Ocorreu um erro",
+    "titleIn": "Erro em {{scope}}",
+    "message": "Este componente encontrou um problema e não pode ser apresentado.",
+    "details": "Detalhes técnicos",
+    "retry": "Tentar novamente",
+    "reload": "Recarregar a página",
+    "home": "Início"
+  },
+  "presence": {
+    "moving": "{{name}} está a mover"
   }
 }

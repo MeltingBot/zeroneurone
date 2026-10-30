@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
+import { ImportedRows } from './importedRows';
 
 // ============================================================================
 // STIX 2.1 Type Definitions
@@ -301,6 +302,7 @@ export async function importSTIX2(
   };
 
   try {
+    const rows = new ImportedRows();
     const data = JSON.parse(content) as STIXBundle;
 
     if (!data.objects || !Array.isArray(data.objects)) {
@@ -577,7 +579,7 @@ export async function importSTIX2(
         updatedAt: sdo.modified ? new Date(sdo.modified) : new Date(),
       };
 
-      await db.elements.add(element);
+      rows.addElement(element);
       result.elementsImported++;
     }
 
@@ -652,7 +654,7 @@ export async function importSTIX2(
         updatedAt: sro.modified ? new Date(sro.modified) : new Date(),
       };
 
-      await db.links.add(link);
+      rows.addLink(link);
       result.linksImported++;
 
       // Sighting: create additional "observe chez" link to where_sighted_refs
@@ -664,7 +666,7 @@ export async function importSTIX2(
           const sightingLink = buildRefLink(
             targetDossierId, fromId, wsId, t('stix.labels.observedAt'), 'stix:where-sighted'
           );
-          await db.links.add(sightingLink);
+          rows.addLink(sightingLink);
           result.linksImported++;
         }
       }
@@ -683,7 +685,7 @@ export async function importSTIX2(
         continue;
       }
 
-      const refElement = await db.elements.get(refId);
+      const refElement = rows.element(refId);
       const position = refElement
         ? { x: refElement.position.x + 150, y: refElement.position.y - 50 }
         : nextPosition();
@@ -726,7 +728,7 @@ export async function importSTIX2(
         updatedAt: note.modified ? new Date(note.modified) : new Date(),
       };
 
-      await db.elements.add(annotation);
+      rows.addElement(annotation);
       result.elementsImported++;
 
       // Create links from annotation to referenced objects
@@ -738,7 +740,7 @@ export async function importSTIX2(
           targetDossierId, newId, targetId, t('stix.labels.concerns'), 'stix:note-ref'
         );
         refLink.visual.color = '#d97706';
-        await db.links.add(refLink);
+        rows.addLink(refLink);
         result.linksImported++;
       }
     }
@@ -758,7 +760,7 @@ export async function importSTIX2(
         const refLink = buildRefLink(
           targetDossierId, opId, targetId, t('stix.labels.opinionOn'), 'stix:opinion-ref'
         );
-        await db.links.add(refLink);
+        rows.addLink(refLink);
         result.linksImported++;
       }
     }
@@ -778,10 +780,12 @@ export async function importSTIX2(
           targetDossierId, reportId, targetId, t('stix.labels.mentions'), 'stix:report-ref'
         );
         refLink.visual.color = '#2563eb';
-        await db.links.add(refLink);
+        rows.addLink(refLink);
         result.linksImported++;
       }
     }
+
+    await rows.write();
 
     // Update dossier with bundle info
     const bundleDate = data.created ? new Date(data.created) : new Date();

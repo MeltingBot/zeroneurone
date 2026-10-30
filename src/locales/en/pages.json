@@ -308,7 +308,9 @@
       "pasted": "{{count}} element(s) pasted",
       "saved": "Saved",
       "exportSuccess": "Export complete",
-      "exportError": "Export error"
+      "exportError": "Export error",
+      "assetTooLargeToShare": "File too large to synchronize ({{size}}, maximum {{max}}). It stays available locally but is not shared.",
+      "assetLargeToShare": "Large file ({{size}}): synchronization may be slow."
     },
     "notFound": "Dossier not found",
     "header": {
@@ -365,7 +367,8 @@
     "mermaidCopyFailed": "Could not copy to the clipboard",
     "dotCopied": "Selection copied as DOT",
     "closedBanner": "Closed on {{date}} — read-only",
-    "undecryptableUpdates": "Unreadable changes: {{count}}. They are kept; see Storage > Maintenance."
+    "undecryptableUpdates": "Unreadable changes: {{count}}. They are kept; see Storage > Maintenance.",
+    "popupBlocked": "Popup blocked by the browser"
   },
   "map": {
     "noGeoElements": "No geolocated elements",

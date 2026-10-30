@@ -8,9 +8,12 @@ import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { generateUUID } from '../../utils';
+import { formatBytes } from '../../utils/formatBytes';
+import { downloadBlob } from '../../utils/download';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { isEmlFile } from '../../utils/fileTypes';
 
 interface AssetsPanelProps {
   element: Element;
@@ -315,15 +318,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       // Get file from OPFS using fileService (handles directory navigation)
       const file = await fileService.getAssetFile(asset);
 
-      // Create download link
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = asset.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(file, asset.filename);
       emitExport('asset', { assetId: asset.id }, asset.dossierId);
     } catch (error) {
       console.error('Error downloading file:', error);
@@ -349,13 +344,10 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         <div className="flex flex-col items-center gap-2 text-center">
           <Download size={20} className="text-text-tertiary" />
           <p className="text-xs text-text-secondary">
-            {isUploading
-              ? 'Téléchargement...'
-              : 'Glisser des fichiers ou Ctrl+V pour coller'
-            }
+            {isUploading ? t('assets.uploading') : t('assets.dropOrPaste')}
           </p>
           <label className="text-xs text-accent hover:underline cursor-pointer">
-            ou parcourir
+            {t('assets.browse')}
             <input
               type="file"
               multiple
@@ -380,7 +372,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
               onExtractText={
                 (asset.mimeType === 'application/pdf' || asset.mimeType.startsWith('text/')
                   || asset.filename.toLowerCase().endsWith('.docx') || asset.filename.toLowerCase().endsWith('.odt')
-                  || asset.mimeType === 'message/rfc822' || asset.filename.toLowerCase().endsWith('.eml'))
+                  || isEmlFile(asset.filename, asset.mimeType))
                   ? () => handleExtractText(asset.id)
                   : undefined
               }
@@ -482,14 +474,14 @@ function AssetItem({
   onDrop,
   onDragEnd,
 }: AssetItemProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { t: tPanels } = useTranslation('panels');
   const [showText, setShowText] = useState(false);
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
   const isText = asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename);
   const isDoc = /\.(docx|odt)$/i.test(asset.filename);
-  const isEml = asset.mimeType === 'message/rfc822' || /\.eml$/i.test(asset.filename);
+  const isEml = isEmlFile(asset.filename, asset.mimeType);
   const hasText = !!asset.extractedText;
 
   const Icon = isImage ? Image : (isPdf || isDoc) ? FileText : File;
@@ -551,7 +543,7 @@ function AssetItem({
             {asset.filename}
           </p>
           <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
-            <span>{formatFileSize(asset.size)}</span>
+            <span>{formatBytes(asset.size, i18n.language)}</span>
             {hasText && (
               <button
                 onClick={() => setShowText(!showText)}
@@ -637,12 +629,6 @@ function AssetItem({
       )}
     </div>
   );
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
 function formatCharCount(count: number): string {

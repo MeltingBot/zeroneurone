@@ -21,6 +21,8 @@ import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { downloadBlob } from '../../utils/download';
+import { escapeCsvField } from '../../utils/csv';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -394,7 +396,6 @@ export function MatrixView() {
   }, [draggingCol]);
 
   // Column resize
-  const resizingColRef = useRef<string | null>(null);
   const resizeStartXRef = useRef(0);
   const resizeStartWidthRef = useRef(0);
   const [resizingCol, setResizingCol] = useState<string | null>(null);
@@ -402,7 +403,6 @@ export function MatrixView() {
   const handleResizeMouseDown = useCallback((e: React.MouseEvent, col: ColumnDef) => {
     e.preventDefault();
     e.stopPropagation();
-    resizingColRef.current = col.key;
     resizeStartXRef.current = e.clientX;
     resizeStartWidthRef.current = columnWidths[col.key] ?? col.width;
     setResizingCol(col.key);
@@ -416,7 +416,6 @@ export function MatrixView() {
       setColumnWidths((prev) => ({ ...prev, [resizingCol]: newWidth }));
     };
     const handleMouseUp = () => {
-      resizingColRef.current = null;
       setResizingCol(null);
     };
     document.addEventListener('mousemove', handleMouseMove);
@@ -775,10 +774,7 @@ export function MatrixView() {
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
-    const escape = (v: string) => {
-      if (v.includes(',') || v.includes('"') || v.includes('\n')) return `"${v.replace(/"/g, '""')}"`;
-      return v;
-    };
+    const escape = (v: string) => escapeCsvField(v);
     const headers = visibleCols.map((c) => escape(c.label)).join(',');
     const rows = sortedElements.map((el) =>
       visibleCols.map((col) => {
@@ -788,16 +784,11 @@ export function MatrixView() {
     );
     const csv = [headers, ...rows].join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
     const slug = dossierName.replace(/[^a-zA-Z0-9À-ÿ_-]/g, '_').replace(/_+/g, '_');
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const ts = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-    a.download = `${slug}_matrice_${ts}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${slug}_matrice_${ts}.csv`);
     emitExport('matrix-csv');
   }, [sortedElements, visibleCols, evaluationModel]);
 

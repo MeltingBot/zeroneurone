@@ -29,6 +29,7 @@ import { dossierRepository } from '../db/repositories';
 import type { Dossier } from '../types';
 import { dateLocale } from '../utils/dates';
 import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
+import { useShallow } from 'zustand/react/shallow';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
@@ -42,8 +43,8 @@ export function JoinPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { createDossierWithId } = useDossierStore();
-  const { localUser, updateLocalUserName } = useSyncStore();
+  const { createDossierWithId } = useDossierStore(useShallow((s) => ({ createDossierWithId: s.createDossierWithId })));
+  const { localUser, updateLocalUserName } = useSyncStore(useShallow((s) => ({ localUser: s.localUser, updateLocalUserName: s.updateLocalUserName })));
 
   const [state, setState] = useState<JoinState>('input');
   const [error, setError] = useState<string | null>(null);

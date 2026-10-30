@@ -27,7 +27,6 @@ interface CustomEdgeData {
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
-  onStartEditing?: () => void;
   // For parallel edge offset
   parallelIndex?: number;  // 0, 1, 2, ... for edges between same nodes
   parallelCount?: number;  // Total number of edges between same nodes
@@ -88,7 +87,6 @@ function CustomEdgeComponent(props: EdgeProps) {
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
-  // const onStartEditing = edgeData?.onStartEditing; // Currently unused
   const parallelIndex = edgeData?.parallelIndex ?? 0;
   const parallelCount = edgeData?.parallelCount ?? 1;
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };
@@ -207,7 +205,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const currentOffset = dragOffset;
 
   // Selection halo settings
-  const haloColor = '#e07a5f';
+  const haloColor = 'var(--color-accent)';
   const haloThickness = thickness + 6;
 
   // Route shared with the SVG export (utils/edgeRouting)
@@ -256,7 +254,7 @@ function CustomEdgeComponent(props: EdgeProps) {
         <path
           d={edgePath}
           fill="none"
-          stroke={haloColor}
+          style={{ stroke: haloColor }}
           strokeWidth={haloThickness}
           strokeLinecap="round"
         />
@@ -496,16 +494,14 @@ function CustomEdgeComponent(props: EdgeProps) {
             cx={sourceX}
             cy={sourceY}
             r={5}
-            fill="#ffffff"
-            stroke="#2563eb"
+            style={{ fill: 'var(--color-bg-primary)', stroke: 'var(--color-accent)' }}
             strokeWidth={2}
           />
           <circle
             cx={targetX}
             cy={targetY}
             r={5}
-            fill="#ffffff"
-            stroke="#2563eb"
+            style={{ fill: 'var(--color-bg-primary)', stroke: 'var(--color-accent)' }}
             strokeWidth={2}
           />
         </g>
@@ -532,8 +528,10 @@ function CustomEdgeComponent(props: EdgeProps) {
             cx={controlHandleX}
             cy={controlHandleY}
             r={isSelected ? 8 : 5}
-            fill={isSelected ? '#ffffff' : 'transparent'}
-            stroke={isSelected ? '#2563eb' : '#9ca3af'}
+            style={{
+              fill: isSelected ? 'var(--color-bg-primary)' : 'transparent',
+              stroke: isSelected ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
+            }}
             strokeWidth={isSelected ? 3 : 1}
             strokeDasharray={isSelected ? undefined : '2,2'}
             opacity={isSelected ? 1 : 0.5}

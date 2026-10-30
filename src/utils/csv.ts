@@ -1,3 +1,8 @@
+/** Text without its leading UTF-8 byte order mark, if any */
+export function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
 /**
  * Split CSV text into records, keeping line breaks that sit inside quotes.
  *
@@ -102,7 +107,7 @@ export function parseCSVLine(line: string, delimiter: string): string[] {
  * numbered name so that no column is lost.
  */
 export function csvToRecords(content: string): { headers: string[]; records: Record<string, string>[] } {
-  const text = content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
+  const text = stripBom(content);
   const lines = splitCSVRecords(text);
   if (lines.length === 0) return { headers: [], records: [] };
   const delimiter = detectCSVDelimiter(text);
@@ -146,4 +151,24 @@ export function isNativeCSV(content: string): boolean {
   const any = (names: string[]) => names.some((n) => h.has(n));
   if (any(['label', 'nom', 'name'])) return true;
   return any(['de', 'from', 'source']) && any(['vers', 'to', 'target']);
+}
+
+// A plain number (-1250, +3,5, -0.75) cannot run as a formula: left as is,
+// so a spreadsheet still sums and sorts it
+const PLAIN_NUMBER = /^[+-]?(\d+([.,]\d+)?|[.,]\d+)$/;
+
+/**
+ * One CSV field, quoted when needed. A cell starting with = + - @ (or a tab
+ * or a carriage return) is a formula to a spreadsheet: it gets a leading '
+ * so it opens as text, plain numbers excepted. Labels and values come from
+ * imports and collaborators, so none of them can be trusted.
+ */
+export function escapeCsvField(value: string, delimiter = ','): string {
+  const text = /^[=+\-@\t\r]/.test(value) && !PLAIN_NUMBER.test(value) ? `'${value}` : value;
+  return text.includes(delimiter) || /[",'\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/** Undo escapeCsvField's formula guard, when reading back a CSV this app wrote */
+export function unescapeCsvField(value: string): string {
+  return /^'[=+\-@\t\r]/.test(value) ? value.slice(1) : value;
 }

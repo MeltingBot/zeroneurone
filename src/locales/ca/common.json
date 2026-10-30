@@ -34,7 +34,8 @@
     "fitView": "Ajustar vista",
     "center": "Centrar",
     "protect": "Protegir",
-    "purge": "Purgar"
+    "purge": "Purgar",
+    "continue": "Continua"
   },
   "labels": {
     "name": "Nom",
@@ -129,7 +130,8 @@
     "circle": "Cercle",
     "square": "Quadrat",
     "diamond": "Rombe",
-    "rectangle": "Rectangle"
+    "rectangle": "Rectangle",
+    "hexagon": "Hexàgon"
   },
   "linkStyles": {
     "solid": "Continu",
@@ -182,13 +184,7 @@
     "svgTooLarge": "Fitxer SVG massa gran (màx. 64 KB)"
   },
   "language": {
-    "switch": "Canviar d'idioma",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch",
-    "eu": "Euskara",
-    "ca": "Català"
+    "switch": "Canviar d'idioma"
   },
   "accessibility": {
     "skipToContent": "Anar al contingut principal"
@@ -323,5 +319,17 @@
       "invalid": "format no vàlid",
       "error": "error de càrrega"
     }
+  },
+  "errorBoundary": {
+    "title": "S'ha produït un error",
+    "titleIn": "Error a {{scope}}",
+    "message": "Aquest component ha tingut un problema i no es pot mostrar.",
+    "details": "Detalls tècnics",
+    "retry": "Torna-ho a provar",
+    "reload": "Torna a carregar la pàgina",
+    "home": "Inici"
+  },
+  "presence": {
+    "moving": "{{name}} està movent"
   }
 }

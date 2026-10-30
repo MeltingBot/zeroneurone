@@ -308,7 +308,9 @@
       "pasted": "{{count}} élément(s) collé(s)",
       "saved": "Enregistré",
       "exportSuccess": "Export terminé",
-      "exportError": "Erreur lors de l'export"
+      "exportError": "Erreur lors de l'export",
+      "assetTooLargeToShare": "Fichier trop volumineux pour la synchronisation ({{size}}, maximum {{max}}). Il reste accessible localement mais n'est pas partagé.",
+      "assetLargeToShare": "Fichier volumineux ({{size}}) : la synchronisation peut être lente."
     },
     "notFound": "Dossier non trouvé",
     "header": {
@@ -365,7 +367,8 @@
     "mermaidCopyFailed": "Impossible de copier dans le presse-papiers",
     "dotCopied": "Sélection copiée en DOT",
     "closedBanner": "Clôturé le {{date}} — lecture seule",
-    "undecryptableUpdates": "Modifications illisibles : {{count}}. Elles sont conservées ; voir Stockage > Maintenance."
+    "undecryptableUpdates": "Modifications illisibles : {{count}}. Elles sont conservées ; voir Stockage > Maintenance.",
+    "popupBlocked": "Fenêtre bloquée par le navigateur"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

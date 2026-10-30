@@ -60,6 +60,8 @@ import {
 } from '../services/yjs/tabMapper';
 import { useSyncStore } from './syncStore';
 import { useTabStore } from './tabStore';
+import { toast } from './toastStore';
+import { formatBytes } from '../utils/formatBytes';
 import { useTagSetStore } from './tagSetStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
@@ -749,6 +751,29 @@ function makeLink(dossierId: DossierId, fromId: ElementId, toId: ElementId, opti
   };
 }
 
+// Deletions still finishing: the state drops the elements at once, their
+// removal from the tabs follows. An undo started in between would have its
+// tab restore undone by that removal, so undo/redo wait for them.
+const pendingDeletions = new Set<Promise<unknown>>();
+function trackDeletion<T>(run: Promise<T>): Promise<T> {
+  pendingDeletions.add(run);
+  run.then(() => pendingDeletions.delete(run), () => pendingDeletions.delete(run));
+  return run;
+}
+export function whenDeletionsSettled(): Promise<void> {
+  return Promise.allSettled([...pendingDeletions]).then(() => undefined);
+}
+
+// A Y.Doc entry that cannot be read (malformed, or sent by a newer or broken
+// peer) is skipped by the sync below. Said once per entry, not on every sync.
+const warnedSkippedEntries = new Set<string>();
+function warnSkippedEntry(kind: string, id: string, err: unknown): void {
+  const key = `${kind}:${id}`;
+  if (warnedSkippedEntries.has(key)) return;
+  warnedSkippedEntries.add(key);
+  console.warn(`[_syncFromYDoc] Unreadable ${kind} skipped:`, id, err);
+}
+
 export const useDossierStore = create<DossierState>((set, get) => ({
   currentDossier: null,
   elements: [],
@@ -771,8 +796,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   loadDossiers: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Recovery: migrate data from legacy 'investigations' table if needed
-      await db.runRecoveryMigration();
       const dossiers = await dossierRepository.getAll();
       set({ dossiers, isLoading: false });
     } catch (error) {
@@ -849,7 +872,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       // the user decides in Storage > Maintenance
       const undecryptable = syncService.getUndecryptableCount();
       if (undecryptable > 0) {
-        const { toast } = await import('./toastStore');
         toast.warning(i18next.t('pages:dossier.undecryptableUpdates', { count: undecryptable }), 10000);
       }
 
@@ -1070,11 +1092,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         const joinerTabsMap = getYMaps(ydoc).tabs;
         if (joinerTabsMap.size > 0) {
           const remoteTabs: import('../types').CanvasTab[] = [];
-          joinerTabsMap.forEach((ymap) => {
+          joinerTabsMap.forEach((ymap, key) => {
             try {
               const tab = yMapToTab(ymap as Y.Map<any>);
               if (tab.id) remoteTabs.push(tab);
-            } catch {}
+            } catch (err) { warnSkippedEntry('tab', key, err); }
           });
           if (remoteTabs.length > 0) {
             await tabRepository.bulkUpsert(remoteTabs);
@@ -1471,12 +1493,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Auto-assign to active tab (if any)
-    import('./tabStore').then(({ useTabStore }) => {
-      const { activeTabId, addMembers } = useTabStore.getState();
-      if (activeTabId) {
-        addMembers(activeTabId, [element.id]);
-      }
-    });
+    const { activeTabId, addMembers } = useTabStore.getState();
+    if (activeTabId) {
+      addMembers(activeTabId, [element.id]);
+    }
 
     emitPluginEvent('element:created', currentDossier.id, element.id);
     return element;
@@ -1551,52 +1571,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
   },
 
-  deleteElement: async (id: ElementId) => {
-    const ydoc = syncService.getYDoc();
-    assertWritable(get);
-    if (!ydoc) {
-      throw new Error('Y.Doc not available');
-    }
+  // One element is a deletion of one: same tab cleanup, same undo safety
+  deleteElement: (id: ElementId) => get().deleteElements([id]),
 
-    const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
-
-    // Find connected links
-    const linksToDelete: string[] = [];
-    linksMap.forEach((ymap, linkId) => {
-      const map = ymap as Y.Map<any>;
-      if (map.get('fromId') === id || map.get('toId') === id) {
-        linksToDelete.push(linkId);
-      }
-    });
-
-    // Update Zustand FIRST (synchronous) for instant UI response
-    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
-    localOpPending = true;
-    const linksToDeleteSet = new Set(linksToDelete);
-    set((state) => ({
-      elements: state.elements.filter(el => el.id !== id),
-      links: state.links.filter(lk => !linksToDeleteSet.has(lk.id)),
-    }));
-
-    ydoc.transact(() => {
-      linksToDelete.forEach(linkId => linksMap.delete(linkId));
-      elementsMap.delete(id);
-    });
-
-    // Also delete from Dexie for backwards compatibility
-    await elementRepository.delete(id).catch((err) => onPersistFailure(err, 'element.delete'));
-
-    // Cascade: remove from all canvas tabs
-    const invId = get().currentDossier?.id;
-    if (invId) {
-      import('./tabStore').then(({ useTabStore }) => {
-        useTabStore.getState().removeElementFromAllTabs(invId, id);
-      });
-      emitPluginEvent('element:deleted', invId, id);
-    }
-  },
-
-  deleteElements: async (ids: ElementId[]) => {
+  deleteElements: (ids: ElementId[]) => trackDeletion((async () => {
     const ydoc = syncService.getYDoc();
     assertWritable(get);
     if (!ydoc) {
@@ -1642,7 +1620,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         .catch((err) => onPersistFailure(err, 'tab.removeElements'));
       ids.forEach(id => emitPluginEvent('element:deleted', invId, id));
     }
-  },
+  })()),
 
   updateElementPosition: async (id: ElementId, position: Position) => {
     const ydoc = syncService.getYDoc();
@@ -2223,7 +2201,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const mergedGeo = target.geo ?? source.geo;
 
     // Date range: expand to cover both
-    let mergedDate = target.date ?? source.date;
+    const mergedDate = target.date ?? source.date;
     let mergedDateRange = target.dateRange;
     if (target.dateRange && source.dateRange) {
       const start = target.dateRange.start && source.dateRange.start
@@ -2467,7 +2445,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // leaves them
     const invId = get().currentDossier?.id;
     if (invId) {
-      const { useTabStore } = await import('./tabStore');
       const tabs = useTabStore.getState();
       const sourceTabIds = tabs.getTabsForElement(sourceId).map((t) => t.id);
       const targetTabIds = new Set(tabs.getTabsForElement(targetId).map((t) => t.id));
@@ -2500,15 +2477,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const isShared = syncState.mode === 'shared';
     const exceedsSharedCap = isShared && file.size > MAX_SHARED_ASSET_SIZE;
     if (exceedsSharedCap) {
-      const { toast } = await import('./toastStore');
       toast.warning(
-        `Fichier trop volumineux pour la synchronisation (${Math.round(file.size / 1024 / 1024)} Mo > 50 Mo). Il reste accessible localement mais ne sera pas partagé avec les pairs.`,
+        i18next.t('pages:dossier.toast.assetTooLargeToShare', {
+          size: formatBytes(file.size, i18next.language),
+          max: formatBytes(MAX_SHARED_ASSET_SIZE, i18next.language),
+        }),
         10000,
       );
     } else if (isShared && file.size > 10 * 1024 * 1024) {
-      const { toast } = await import('./toastStore');
       toast.warning(
-        `Fichier volumineux (${Math.round(file.size / 1024 / 1024)} Mo). La synchronisation peut être lente.`,
+        i18next.t('pages:dossier.toast.assetLargeToShare', { size: formatBytes(file.size, i18next.language) }),
         6000,
       );
     }
@@ -3331,15 +3309,15 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             stateMap.set(updated.id, updated);
             changed = true;
           }
-        } catch {}
+        } catch (err) { warnSkippedEntry('link', id, err); }
       }
       if (structuralLkChange && stateMap.size !== linksMap.size) {
         stateMap.clear();
-        linksMap.forEach((ymap) => {
+        linksMap.forEach((ymap, key) => {
           try {
             const link = yMapToLink(ymap as Y.Map<any>);
             if (link.id) stateMap.set(link.id, link);
-          } catch {}
+          } catch (err) { warnSkippedEntry('link', key, err); }
         });
         changed = true;
       }
@@ -3355,11 +3333,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     if (commentsNeedSync) {
       const commentsById = new Map<string, Comment>();
-      commentsMap.forEach((ymap) => {
+      commentsMap.forEach((ymap, key) => {
         try {
           const comment = yMapToComment(ymap as Y.Map<any>);
           if (comment.id) commentsById.set(comment.id, comment);
-        } catch {}
+        } catch (err) { warnSkippedEntry('comment', key, err); }
       });
       const newComments = Array.from(commentsById.values());
       commentsDidChange = newComments.length !== stateComments.length ||
@@ -3378,11 +3356,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const remoteTabs: import('../types').CanvasTab[] = [];
       if (structuralTbChange) {
         // Structural change (tab added/removed) → full rebuild
-        tabsMap.forEach((ymap) => {
+        tabsMap.forEach((ymap, key) => {
           try {
             const tab = yMapToTab(ymap as Y.Map<any>);
             if (tab.id) remoteTabs.push(tab);
-          } catch {}
+          } catch (err) { warnSkippedEntry('tab', key, err); }
         });
       } else if (tabIdsChanged.size > 0) {
         // Incremental: re-parse only changed tabs, merge with existing
@@ -3394,7 +3372,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             try {
               const updated = yMapToTab(ymap);
               if (updated.id) tabMap.set(updated.id, updated);
-            } catch {}
+            } catch (err) { warnSkippedEntry('tab', id, err); }
           }
         }
         remoteTabs.push(...tabMap.values());
@@ -3418,7 +3396,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // registered here.
     if (assetsNeedSync) {
       const currentAssetIds = new Set(currentAssets.map((a) => a.id));
-      assetsMap.forEach((ymap) => {
+      assetsMap.forEach((ymap, key) => {
         try {
           const map = ymap as Y.Map<any>;
           const assetId = map.get('id') as string;
@@ -3430,7 +3408,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
                 : [...state.assets, saved],
             }));
           }).catch((err) => onPersistFailure(err, 'asset.process'));
-        } catch {}
+        } catch (err) { warnSkippedEntry('asset', key, err); }
       });
     }
 

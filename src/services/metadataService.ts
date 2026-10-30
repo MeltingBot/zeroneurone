@@ -1,5 +1,6 @@
 import type { Property, GeoCoordinates } from '../types';
 import { loadPdfjs } from './pdfjsLoader';
+import { isEmlFile } from '../utils/fileTypes';
 
 export interface ExtractedMetadata {
   properties: Property[];
@@ -335,7 +336,7 @@ async function extractMetadata(file: File, arrayBuffer: ArrayBuffer): Promise<Ex
       return await extractOfficeMetadata(arrayBuffer);
     }
 
-    if (file.type === 'message/rfc822' || ext === 'eml') {
+    if (isEmlFile(file.name, file.type)) {
       return await extractEmlMetadata(arrayBuffer);
     }
 

@@ -17,21 +17,10 @@ import { CopyableId } from './CopyableId';
 import { dateFromInputKeys, dateInputKeys } from '../../utils/dates';
 import { TimeZoneButton } from '../common/TimeZoneButton';
 import { SourceField } from '../common/SourceField';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface LinkDetailProps {
   link: Link;
-}
-
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
 }
 
 const STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
@@ -502,7 +491,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
         title={t('detail.sections.metadata')}
         icon={<Calendar size={12} />}
         badge={hasPeriod ? (
-          <span className="text-[10px] bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
+          <span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded-full">
             {tCommon('labels.date')}
           </span>
         ) : null}

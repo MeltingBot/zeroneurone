@@ -1,7 +1,8 @@
 import type { Element, Link, Position, ElementSize } from '../types';
-import { safeColor } from '../utils/escapeHtml';
+import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
+import { isLightColor } from '../utils/themeColors';
 
 // ============================================================================
 // TYPES
@@ -25,6 +26,7 @@ interface NodeDimensions {
 // CSS VARIABLE RESOLUTION
 // ============================================================================
 
+/** Theme colours as literal values, for files that leave the app (SVG, HTML) */
 const CSS_VAR_MAP: Record<string, string> = {
   '--color-bg-canvas': '#faf8f5',
   '--color-bg-primary': '#fffdf9',
@@ -37,6 +39,12 @@ const CSS_VAR_MAP: Record<string, string> = {
   '--color-border-strong': '#d4cec4',
   '--color-border-sketchy': '#b8b0a4',
   '--color-accent': '#e07a5f',
+  '--color-accent-hover': '#c96a52',
+  '--color-accent-light': '#fdf0ed',
+  '--color-success': '#4a8c59',
+  '--color-warning': '#c9952c',
+  '--color-error': '#c75d5d',
+  '--color-highlight': '#fef3c7',
   '--color-node-yellow': '#fcd34d',
   '--color-node-pink': '#f9a8d4',
   '--color-node-blue': '#93c5fd',
@@ -48,36 +56,21 @@ const CSS_VAR_MAP: Record<string, string> = {
   '--color-node-lime': '#bef264',
 };
 
-function resolveColor(color: string): string {
-  if (!color) return '#9a948d';
+/**
+ * A colour as a literal value for an exported file: theme variables resolved,
+ * anything else checked. Colours reach us from imported archives and
+ * collaboration peers, so they cannot go straight into fill=/stroke= or style.
+ */
+export function resolveExportColor(color: string | undefined, fallback = '#9a948d'): string {
+  if (!color) return fallback;
   if (color.startsWith('var(')) {
     const varName = color.match(/var\((--[^)]+)\)/)?.[1];
-    if (varName && CSS_VAR_MAP[varName]) return CSS_VAR_MAP[varName];
-    return '#9a948d';
+    return (varName && CSS_VAR_MAP[varName]) || fallback;
   }
-  // Colours reach us from imported archives and collaboration peers, so they
-  // cannot go straight into fill=/stroke= attributes of the exported SVG.
-  return safeColor(color, '#9a948d');
+  return safeColor(color, fallback);
 }
 
-function isLightColor(color: string): boolean {
-  const hex = resolveColor(color).replace('#', '');
-  if (hex.length !== 6) return true;
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 128;
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
+const resolveColor = (color: string) => resolveExportColor(color);
 
 // ============================================================================
 // NODE DIMENSIONS (replicates ElementNode.tsx logic)
@@ -189,7 +182,7 @@ function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions, ima
   const borderWidth = element.visual.borderWidth ?? 2;
   const borderStyle = element.visual.borderStyle ?? 'solid';
   const label = element.label || 'Sans nom';
-  const textColor = isLightColor(color) ? '#111827' : '#ffffff';
+  const textColor = isLightColor(resolveColor(color)) ? '#111827' : '#ffffff';
 
   let dashArray = '';
   if (borderStyle === 'dashed') dashArray = ` stroke-dasharray="${borderWidth * 4} ${borderWidth * 2}"`;
@@ -371,7 +364,7 @@ function buildEdgeSVG(
   const thickness = link.visual.thickness ?? 2;
   const dashArray = getStrokeDasharray(link.visual.style, thickness);
 
-  let parts: string[] = [];
+  const parts: string[] = [];
 
   // Path
   let pathAttrs = `d="${geometry.path}" fill="none" stroke="${color}" stroke-width="${thickness}" stroke-linecap="round"`;

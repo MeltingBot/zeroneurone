@@ -101,7 +101,11 @@
       "fields": "Propriétés à importer",
       "all": "Tout",
       "none": "Aucune"
-    }
+    },
+    "encryptedPrompt": "Fichier chiffré : entrez son mot de passe pour l'importer.",
+    "decrypting": "Déchiffrement…",
+    "wrongPassword": "Mot de passe incorrect",
+    "invalidEncryptedFile": "Fichier chiffré invalide ou endommagé"
   },
   "export": {
     "progress": {

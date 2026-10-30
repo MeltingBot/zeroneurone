@@ -10,7 +10,7 @@ import type {
 } from '../types';
 import { db } from '../db/database';
 import { fileService } from './fileService';
-import { dataUrlToFile } from './importOsintracker';
+import { dataUrlToFile } from '../utils/dataUrl';
 import type { ImportResult } from './importService';
 
 // ============================================================================
@@ -85,7 +85,7 @@ const SKIP_KEYS = new Set(['registered', 'platform_variables']);
 // ============================================================================
 
 /**
- * Import OSINT Industries JSON results into an dossier
+ * Import OSINT Industries JSON results into a dossier
  * Creates a central query element connected to found modules
  */
 export async function importOsintIndustries(

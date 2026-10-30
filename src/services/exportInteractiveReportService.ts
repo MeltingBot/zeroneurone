@@ -10,37 +10,16 @@
 
 import type { Element, Link, Asset, Dossier, Report } from '../types';
 import { fileService } from './fileService';
-import { computeLinkRoutes, computeNodeLayout } from './svgExportService';
+import { computeLinkRoutes, computeNodeLayout, resolveExportColor } from './svgExportService';
 import { arrowPolygon } from '../utils/edgeRouting';
-import { escapeJsonForScript, safeColor, sanitizeUrl } from '../utils/escapeHtml';
+import { escapeJsonForScript, sanitizeUrl, escapeXml } from '../utils/escapeHtml';
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
+import { replaceReportRefs, stripReportRefs } from '../utils/reportRefs';
+import { createSlugger } from '../utils/slugify';
 
-// CSS variable to hex color map (same as svgExportService)
-const CSS_VAR_MAP: Record<string, string> = {
-  '--color-bg-canvas': '#faf8f5',
-  '--color-bg-primary': '#fffdf9',
-  '--color-bg-secondary': '#f7f4ef',
-  '--color-bg-tertiary': '#f0ece4',
-  '--color-text-primary': '#3d3833',
-  '--color-text-secondary': '#6b6560',
-  '--color-text-tertiary': '#9a948d',
-  '--color-border-default': '#e8e3db',
-  '--color-border-strong': '#d4cec4',
-  '--color-border-sketchy': '#b8b0a4',
-  '--color-accent': '#e07a5f',
-  '--color-node-yellow': '#fcd34d',
-  '--color-node-pink': '#f9a8d4',
-  '--color-node-blue': '#93c5fd',
-  '--color-node-green': '#86efac',
-  '--color-node-orange': '#fdba74',
-  '--color-node-purple': '#c4b5fd',
-  '--color-node-red': '#fca5a5',
-  '--color-node-cyan': '#67e8f9',
-  '--color-node-lime': '#bef264',
-};
 
 // Allowed HTML tags in markdown output (whitelist for sanitisation)
 const ALLOWED_TAGS = [
@@ -58,7 +37,7 @@ function sanitiseHtml(html: string): string {
   }) as string;
 }
 
-// Simple Markdown to HTML converter (no external dependency)
+// Simple Markdown to HTML converter; its output goes through sanitiseHtml
 function markdownToHtml(md: string): string {
   let html = md
     // Escape HTML
@@ -95,7 +74,7 @@ function markdownToHtml(md: string): string {
       return `<a href="${escapeXml(safeUrl)}" target="_blank" rel="noopener">${text}</a>`;
     })
     // Line breaks (two spaces or explicit)
-    .replace(/  \n/g, '<br>\n')
+    .replace(/ {2}\n/g, '<br>\n')
     // Paragraphs
     .replace(/\n\n/g, '</p><p>')
     // Wrap lists
@@ -119,33 +98,15 @@ function markdownToHtml(md: string): string {
 
 // Convert element references [[Label|uuid]] to clickable links
 function parseElementReferences(html: string): string {
-  return html.replace(
-    /\[\[([^\]|]+)\|([a-f0-9-]+)\]\]/g,
-    (_: string, label: string, id: string) => {
+  return replaceReportRefs(
+    html,
+    (label: string, id: string) => {
       const safeLabel = label.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       return `<a href="#" class="element-ref" data-element-id="${id}" title="${safeLabel}">${safeLabel}</a>`;
     }
   );
 }
 
-// Resolve CSS variable colors to hex.
-// The result lands in quoted SVG attributes, and colours can come from an
-// imported file or a peer, so anything unrecognised falls back.
-function resolveColor(color: string | undefined, defaultColor: string): string {
-  if (!color) return defaultColor;
-  // Handle CSS variables
-  if (color.startsWith('var(')) {
-    const varName = color.match(/var\((--[^)]+)\)/)?.[1];
-    if (varName && CSS_VAR_MAP[varName]) return CSS_VAR_MAP[varName];
-    // Fallback for common patterns
-    if (color.includes('text-tertiary') || color.includes('gray')) return '#9ca3af';
-    if (color.includes('text-secondary')) return '#6b7280';
-    if (color.includes('text-primary')) return '#111827';
-    if (color.includes('accent') || color.includes('blue')) return '#2563eb';
-    return defaultColor;
-  }
-  return safeColor(color, defaultColor);
-}
 
 // Generate SVG for the graph: same layout and link routing as the canvas and the SVG export
 function generateGraphSVG(
@@ -184,8 +145,8 @@ function generateGraphSVG(
   for (const group of groups) {
     const pos = layout.positions.get(group.id)!;
     const dims = layout.dimensions.get(group.id)!;
-    const color = resolveColor(group.visual?.color, '#e5e7eb');
-    const borderColor = resolveColor(group.visual?.borderColor, '#d1d5db');
+    const color = resolveExportColor(group.visual?.color, '#f0ece4');
+    const borderColor = resolveExportColor(group.visual?.borderColor, '#d4cec4');
 
     const groupCenterX = pos.x + dims.width / 2;
     const groupCenterY = pos.y + dims.height / 2;
@@ -206,7 +167,7 @@ function generateGraphSVG(
 
   // Draw links
   for (const { link, route, hasStartArrow, hasEndArrow } of computeLinkRoutes(links, layout, routeSettings)) {
-    const color = resolveColor(link.visual?.color, '#9ca3af');
+    const color = resolveExportColor(link.visual?.color, '#9a948d');
     const thickness = link.visual?.thickness ?? 2;
     const style = link.visual?.style || 'solid';
     const strokeDasharray = style === 'dashed' ? '8,4' : style === 'dotted' ? '2,4' : 'none';
@@ -236,8 +197,8 @@ function generateGraphSVG(
     // Centre of the element (positions are top-left corners, as on the canvas)
     const x = pos.x + dims.width / 2;
     const y = pos.y + dims.height / 2;
-    const color = resolveColor(el.visual?.color, '#3b82f6');
-    const borderColor = resolveColor(el.visual?.borderColor, color);
+    const color = resolveExportColor(el.visual?.color, '#9a948d');
+    const borderColor = resolveExportColor(el.visual?.borderColor, color);
     const shape = el.visual?.shape || 'rectangle';
 
     // Find thumbnail for this element
@@ -319,14 +280,6 @@ function generateGraphSVG(
   return svg;
 }
 
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
 
 // Generate thumbnail from image blob
 async function generateThumbnail(blob: Blob, maxSize = 200, quality = 0.7): Promise<string> {
@@ -478,13 +431,10 @@ export async function exportInteractiveReport(
   // Build TOC and report HTML
   const tocItems: { id: string; title: string }[] = [];
   let reportHtml = `<h1>${escapeXml(report.title)}</h1>`;
+  // Unique anchors: two sections of the same title each get their own
+  const slugFor = createSlugger();
   for (const section of report.sections) {
-    const slug = section.title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    const slug = slugFor(section.title);
     tocItems.push({ id: slug, title: section.title });
     reportHtml += `<h2 id="${slug}">${escapeXml(section.title)}</h2>`;
     reportHtml += parseElementReferences(markdownToHtml(section.content));
@@ -495,7 +445,7 @@ export async function exportInteractiveReport(
   for (const section of report.sections) {
     reportMarkdown += `## ${section.title}\n\n`;
     // Replace [[Label|uuid]] with just Label
-    reportMarkdown += section.content.replace(/\[\[([^\]|]+)\|[^\]]+\]\]/g, '$1') + '\n\n';
+    reportMarkdown += stripReportRefs(section.content) + '\n\n';
   }
 
   // Element details for tooltips
@@ -742,7 +692,6 @@ function gpc(ts){return{x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1]
 container.addEventListener('touchstart',function(e){if(e.touches.length===2){panning=false;ipd=gpd(e.touches);ipvb={width:vb.width,height:vb.height,x:vb.x,y:vb.y}}},{passive:true});
 container.addEventListener('touchmove',function(e){if(e.touches.length===2&&ipd>0){e.preventDefault();var cd=gpd(e.touches),sc=ipd/cd,ctr=gpc(e.touches),r=container.getBoundingClientRect();var sx=ipvb.x+(ctr.x-r.left)/r.width*ipvb.width,sy=ipvb.y+(ctr.y-r.top)/r.height*ipvb.height;var nw=ipvb.width*sc,nh=ipvb.height*sc;vb.width=nw;vb.height=nh;vb.x=sx-(ctr.x-r.left)/r.width*nw;vb.y=sy-(ctr.y-r.top)/r.height*nh}},{passive:false});
 container.addEventListener('touchend',function(e){if(e.touches.length<2)ipd=0},{passive:true});
-function zoomAt(f,cx,cy){var nw=vb.width/f,nh=vb.height/f;vb.x=cx-(cx-vb.x)/f-(nw-vb.width)/2*(f>1?0:1);vb.y=cy-(cy-vb.y)/f-(nh-vb.height)/2*(f>1?0:1);vb.width=nw;vb.height=nh}
 function zoom(f){var cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;vb.width/=f;vb.height/=f;vb.x=cx-vb.width/2;vb.y=cy-vb.height/2}
 function focusOnPoint(cx,cy,zl){var tw=ivb.width/zl,th=ivb.height/zl;vb.width=tw;vb.height=th;vb.x=cx-tw/2;vb.y=cy-th/2}
 container.addEventListener('wheel',function(e){e.preventDefault();zoom(e.deltaY<0?1.1:0.9)});

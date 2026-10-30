@@ -42,7 +42,6 @@ const useDossierStore = Object.assign(
     },
     setState: _useDossierStore.setState,
     subscribe: _useDossierStore.subscribe,
-    destroy: (_useDossierStore as any).destroy,
   }
 ) as any;
 import { useSelectionStore } from '../stores/selectionStore';

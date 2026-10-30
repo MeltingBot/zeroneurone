@@ -130,7 +130,8 @@
     "circle": "Circle",
     "square": "Square",
     "diamond": "Diamond",
-    "rectangle": "Rectangle"
+    "rectangle": "Rectangle",
+    "hexagon": "Hexagon"
   },
   "linkStyles": {
     "solid": "Solid",
@@ -318,5 +319,17 @@
       "invalid": "invalid format",
       "error": "loading error"
     }
+  },
+  "errorBoundary": {
+    "title": "An error occurred",
+    "titleIn": "Error in {{scope}}",
+    "message": "This component ran into a problem and cannot be displayed.",
+    "details": "Technical details",
+    "retry": "Retry",
+    "reload": "Reload page",
+    "home": "Home"
+  },
+  "presence": {
+    "moving": "{{name}} is moving"
   }
 }

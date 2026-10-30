@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Search, Check } from 'lucide-react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface GeoPickerProps {
   initialLat?: number;
@@ -18,6 +19,8 @@ export function GeoPicker({ initialLat, initialLng, initialQuery, onConfirm, onC
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(true, dialogRef, onCancel);
 
   const [selectedLat, setSelectedLat] = useState<number | null>(initialLat ?? null);
   const [selectedLng, setSelectedLng] = useState<number | null>(initialLng ?? null);
@@ -158,10 +161,15 @@ export function GeoPicker({ initialLat, initialLng, initialQuery, onConfirm, onC
 
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
-      <div className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[90vw] max-w-2xl h-[80vh] max-h-[600px] flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="geo-picker-title"
+        className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[90vw] max-w-2xl h-[80vh] max-h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
-          <h2 className="text-sm font-semibold text-text-primary">
+          <h2 id="geo-picker-title" className="text-sm font-semibold text-text-primary">
             {t('panels:detail.geoPicker.title')}
           </h2>
           <button

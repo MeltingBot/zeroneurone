@@ -74,7 +74,7 @@ export function ImportPlacementOverlay() {
 
       {/* Instructions bar - pointer-events: auto for cancel button */}
       <div
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-[102] flex items-center gap-3 px-4 py-2 bg-bg-primary border border-border-default rounded-lg shadow-lg pointer-events-auto"
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-[102] flex items-center gap-3 px-4 py-2 bg-bg-primary border border-border-default rounded shadow-lg pointer-events-auto"
       >
         <Download size={16} className="text-accent" />
         <span className="text-sm text-text-primary">

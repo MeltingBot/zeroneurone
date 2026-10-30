@@ -734,16 +734,3 @@ export const DEFAULT_COLORS = [
   'var(--color-node-cyan)',
   'var(--color-node-lime)',
 ];
-
-// Fallback colors for when CSS variables aren't available (e.g., exports)
-export const FALLBACK_NODE_COLORS = [
-  '#fcd34d', // yellow
-  '#f9a8d4', // pink
-  '#93c5fd', // blue
-  '#86efac', // green
-  '#fdba74', // orange
-  '#c4b5fd', // purple
-  '#fca5a5', // red
-  '#67e8f9', // cyan
-  '#bef264', // lime
-];

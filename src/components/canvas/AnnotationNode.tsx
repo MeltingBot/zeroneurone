@@ -5,18 +5,8 @@ import { useTranslation } from 'react-i18next';
 import type { Element } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import { useUIStore } from '../../stores';
+import { isLightColor } from '../../utils/themeColors';
 
-// Helper to determine if a color is light (for text contrast)
-function isLightColor(color: string): boolean {
-  if (color.startsWith('var(')) return true; // CSS variables assumed light
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return true;
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 128;
-}
 
 export interface AnnotationNodeData extends Record<string, unknown> {
   element: Element;
@@ -214,7 +204,8 @@ function AnnotationNodeComponent({ data }: NodeProps) {
 
   const renderedContent = useMemo(() => {
     const text = element.notes || '';
-    if (!text || text === 'Note...') return <span className="text-text-tertiary italic text-[13px]">Note...</span>;
+    // 'Note...' was stored as text by older versions: shown as empty
+    if (!text || text === 'Note...') return <span className="text-text-tertiary italic text-[13px]">{t('detail.placeholders.notes')}</span>;
     if (anonymousMode) {
       // Show redacted blocks for each line
       const lines = text.split('\n').filter(l => l.trim());
@@ -228,7 +219,7 @@ function AnnotationNodeComponent({ data }: NodeProps) {
       ));
     }
     return renderMarkdown(text);
-  }, [element.notes, anonymousMode]);
+  }, [element.notes, anonymousMode, t]);
 
   return (
     <div
@@ -245,7 +236,7 @@ function AnnotationNodeComponent({ data }: NodeProps) {
           minHeight={MIN_HEIGHT}
           onResizeEnd={handleResizeEnd}
           lineClassName="!border-transparent hover:!border-accent/30 !border-2"
-          handleClassName="!w-2.5 !h-2.5 !bg-gray-700 !border !border-white !rounded-sm"
+          handleClassName="!w-2.5 !h-2.5 !bg-text-secondary !border !border-white !rounded-sm"
         />
       )}
 

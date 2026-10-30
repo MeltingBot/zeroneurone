@@ -6,6 +6,7 @@ import { useEncryptionStore } from '../stores/encryptionStore';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
 
 import { loadPdfjs } from './pdfjsLoader';
+import { isEmlFile } from '../utils/fileTypes';
 
 // ============================================================================
 // SECURITY LIMITS FOR FILE UPLOADS
@@ -155,36 +156,7 @@ class FileService {
    * @throws FileValidationError if file is invalid
    */
   validateFile(file: File): void {
-    // Check file size
-    if (file.size > FILE_LIMITS.MAX_FILE_SIZE) {
-      const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
-      throw new FileValidationError(`Fichier trop volumineux. Taille max: ${maxMB} Mo`);
-    }
-
-    // Check MIME type
-    const mimeAllowed = FILE_LIMITS.ALLOWED_MIME_TYPES.has(file.type);
-
-    // Check extension as fallback (for empty or application/octet-stream MIME)
-    const ext = '.' + getExtension(file.name).toLowerCase();
-    const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
-
-    // The extension decides. On the ZIP import path the MIME type is supplied by
-    // the archive itself (importService builds the File from assetMeta.mimeType),
-    // so an OR let an attacker satisfy whichever side was convenient.
-    if (!extAllowed) {
-      throw new FileValidationError(
-        `Type de fichier non autorise: ${file.type || 'inconnu'} (${ext})`
-      );
-    }
-
-    // An empty or generic type is the browser saying it does not know, not a
-    // claim. Any other declared type has to be one we recognise.
-    const mimeDeclared = file.type && file.type !== 'application/octet-stream';
-    if (mimeDeclared && !mimeAllowed) {
-      throw new FileValidationError(
-        `Type de fichier non autorise: ${file.type} (${ext})`
-      );
-    }
+    this.validateSizeAndType(file.size, file.type, file.name);
   }
 
   /**
@@ -197,30 +169,29 @@ class FileService {
     filename: string,
     declaredSize: number,
   ): void {
-    if (binarySize > FILE_LIMITS.MAX_FILE_SIZE) {
-      const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
-      throw new FileValidationError(`Fichier synchronisé trop volumineux. Taille max: ${maxMB} Mo`);
-    }
-    if (declaredSize > FILE_LIMITS.MAX_FILE_SIZE) {
+    // The size a peer announces counts as much as the bytes that arrived
+    this.validateSizeAndType(Math.max(binarySize, declaredSize), mimeType, filename);
+  }
+
+  private validateSizeAndType(size: number, mimeType: string, filename: string): void {
+    if (size > FILE_LIMITS.MAX_FILE_SIZE) {
       const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
       throw new FileValidationError(`Fichier trop volumineux. Taille max: ${maxMB} Mo`);
     }
 
-    const mimeAllowed = FILE_LIMITS.ALLOWED_MIME_TYPES.has(mimeType);
     const ext = '.' + getExtension(filename).toLowerCase();
-    const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
-
-    if (!extAllowed) {
-      throw new FileValidationError(
-        `Type de fichier non autorisé: ${mimeType || 'inconnu'} (${ext})`,
-      );
+    // The extension decides. On the ZIP import path the MIME type is supplied by
+    // the archive itself (importService builds the File from assetMeta.mimeType),
+    // so an OR let an attacker satisfy whichever side was convenient.
+    if (!FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext)) {
+      throw new FileValidationError(`Type de fichier non autorisé: ${mimeType || 'inconnu'} (${ext})`);
     }
 
+    // An empty or generic type is the browser saying it does not know, not a
+    // claim. Any other declared type has to be one we recognise.
     const mimeDeclared = mimeType && mimeType !== 'application/octet-stream';
-    if (mimeDeclared && !mimeAllowed) {
-      throw new FileValidationError(
-        `Type de fichier non autorisé: ${mimeType} (${ext})`,
-      );
+    if (mimeDeclared && !FILE_LIMITS.ALLOWED_MIME_TYPES.has(mimeType)) {
+      throw new FileValidationError(`Type de fichier non autorisé: ${mimeType} (${ext})`);
     }
   }
 
@@ -562,7 +533,7 @@ class FileService {
     }
 
     // Extract text from EML emails (headers + text body)
-    if (file.type === 'message/rfc822' || nameLower.endsWith('.eml')) {
+    if (isEmlFile(file.name, file.type)) {
       return this.extractEmlText(arrayBuffer);
     }
 
@@ -673,6 +644,7 @@ class FileService {
   private normalizeExtractedText(text: string): string | null {
     let result = text;
     // Remove control characters (keep newlines and tabs)
+    // eslint-disable-next-line no-control-regex -- matching control characters is the point
     result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
     // Normalize common ligatures
     result = result.replace(/\uFB01/g, 'fi').replace(/\uFB02/g, 'fl');

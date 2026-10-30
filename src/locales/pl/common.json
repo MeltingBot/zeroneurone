@@ -34,7 +34,8 @@
     "fitView": "Dopasuj widok",
     "center": "Wyśrodkuj",
     "protect": "Chroń",
-    "purge": "Wyczyść"
+    "purge": "Wyczyść",
+    "continue": "Kontynuuj"
   },
   "labels": {
     "name": "Nazwa",
@@ -129,7 +130,8 @@
     "circle": "Koło",
     "square": "Kwadrat",
     "diamond": "Romb",
-    "rectangle": "Prostokąt"
+    "rectangle": "Prostokąt",
+    "hexagon": "Sześciokąt"
   },
   "linkStyles": {
     "solid": "Ciągła",
@@ -182,18 +184,7 @@
     "svgTooLarge": "Plik SVG jest za duży (maks. 64 KB)"
   },
   "language": {
-    "switch": "Zmień język",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch",
-    "eu": "Euskara",
-    "ca": "Català",
-    "it": "Italiano",
-    "pt": "Português",
-    "pl": "Polski",
-    "uk": "Українська",
-    "nl": "Nederlands"
+    "switch": "Zmień język"
   },
   "accessibility": {
     "skipToContent": "Przejdź do treści głównej"
@@ -328,5 +319,17 @@
       "invalid": "nieprawidłowy format",
       "error": "błąd ładowania"
     }
+  },
+  "errorBoundary": {
+    "title": "Wystąpił błąd",
+    "titleIn": "Błąd w: {{scope}}",
+    "message": "Ten komponent napotkał problem i nie może zostać wyświetlony.",
+    "details": "Szczegóły techniczne",
+    "retry": "Spróbuj ponownie",
+    "reload": "Odśwież stronę",
+    "home": "Strona główna"
+  },
+  "presence": {
+    "moving": "{{name}} przesuwa"
   }
 }

@@ -8,7 +8,6 @@ import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
 interface LinkContextMenuProps {
   x: number;
   y: number;
-  linkId: string;
   linkLabel: string;
   onEditLabel: () => void;
   /** Present only when the link has a manual route offset in the current route style */

@@ -266,7 +266,11 @@
       "thickness": "Thickness",
       "textSize": "Text size",
       "positionLock": "Position locked",
-      "positionUnlocked": "Position unlocked"
+      "positionUnlocked": "Position unlocked",
+      "backgroundColor": "Background color",
+      "white": "White",
+      "customBorder": "Custom border",
+      "borderStyle": "Border style"
     },
     "files": {
       "title": "Files",
@@ -291,7 +295,9 @@
       "emlCc": "Cc",
       "emlDate": "Date",
       "emlSubject": "Subject",
-      "emlAttachments": "Attachments"
+      "emlAttachments": "Attachments",
+      "extractForPreview": "Extract the text to show a preview",
+      "previewUnavailable": "Preview unavailable"
     },
     "timestamps": {
       "createdAt": "Created",
@@ -652,7 +658,10 @@
     "deleteConfirm": "Delete this file?",
     "usedBy": "Used by {{count}} element(s)",
     "hideMediaOnNode": "Hide media on node",
-    "showMediaOnNode": "Show media on node"
+    "showMediaOnNode": "Show media on node",
+    "uploading": "Uploading…",
+    "dropOrPaste": "Drop files or press Ctrl+V to paste",
+    "browse": "or browse"
   },
   "history": {
     "title": "History",

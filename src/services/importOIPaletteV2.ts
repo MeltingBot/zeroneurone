@@ -12,7 +12,7 @@ import type {
 } from '../types';
 import { db } from '../db/database';
 import { fileService } from './fileService';
-import { dataUrlToFile } from './importOsintracker';
+import { dataUrlToFile } from '../utils/dataUrl';
 import type { ImportResult } from './importService';
 
 // ============================================================================

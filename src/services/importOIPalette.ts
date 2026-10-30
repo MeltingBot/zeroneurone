@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { db } from '../db/database';
 import { fileService } from './fileService';
-import { dataUrlToFile } from './importOsintracker';
+import { dataUrlToFile } from '../utils/dataUrl';
 import type { ImportResult } from './importService';
 import { importOIPaletteV2, isOIPaletteV2Format } from './importOIPaletteV2';
 
@@ -134,7 +134,7 @@ const SKIP_KEYS = new Set(['registered', 'platform_variables']);
 // ============================================================================
 
 /**
- * Import a Graph Palette (OSINT Industries visual export) into an dossier
+ * Import a Graph Palette (OSINT Industries visual export) into a dossier
  */
 export async function importOIPalette(
   content: string,

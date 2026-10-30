@@ -16,7 +16,7 @@ function rehydrateTab(tab: CanvasTab): CanvasTab {
 
 export const tabRepository = {
   /**
-   * Get all tabs for an dossier, sorted by order
+   * Get all tabs for a dossier, sorted by order
    */
   async getByDossier(dossierId: DossierId): Promise<CanvasTab[]> {
     const tabs = await db.canvasTabs.where({ dossierId }).sortBy('order');
@@ -76,7 +76,7 @@ export const tabRepository = {
   },
 
   /**
-   * Delete all tabs for an dossier
+   * Delete all tabs for a dossier
    */
   async deleteByDossier(dossierId: DossierId): Promise<void> {
     await db.canvasTabs.where({ dossierId }).delete();
@@ -90,7 +90,7 @@ export const tabRepository = {
   },
 
   /**
-   * Remove an element from all tabs of an dossier
+   * Remove an element from all tabs of a dossier
    * (called when an element is deleted)
    */
   async removeElementFromAllTabs(

@@ -214,15 +214,3 @@ export function getLocalizedCountries(locale: string = navigator.language): Loca
 export function getCountryByCode(code: string): Country | undefined {
   return COUNTRIES.find(c => c.code === code);
 }
-
-/** Format country for display: "🇫🇷 France" */
-export function formatCountry(code: string, locale: string = navigator.language): string {
-  const country = getCountryByCode(code);
-  if (!country) return code;
-  return `${country.flag} ${getCountryName(code, locale)}`;
-}
-
-/** Format country value for storage: ISO code */
-export function formatCountryValue(country: Country): string {
-  return country.code;
-}

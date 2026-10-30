@@ -161,10 +161,10 @@ export function QueryBuilderText() {
               onMouseEnter={() => setSelectedIdx(i)}
             >
               <span className={`shrink-0 w-12 text-[10px] font-medium uppercase ${
-                s.type === 'field' ? 'text-blue-500' :
-                s.type === 'operator' ? 'text-orange-500' :
-                s.type === 'value' ? 'text-green-600' :
-                s.type === 'tag' ? 'text-purple-500' :
+                s.type === 'field' ? 'text-accent' :
+                s.type === 'operator' ? 'text-warning' :
+                s.type === 'value' ? 'text-success' :
+                s.type === 'tag' ? 'text-text-secondary' :
                 'text-text-tertiary'
               }`}>
                 {s.type}

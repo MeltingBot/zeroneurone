@@ -8,7 +8,7 @@ import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element, EvaluationModel } from '../../types';
 import { formatEvaluation, getEvaluationBadge } from '../../utils/evaluation';
 import { FONT_SIZE_PX } from '../../types';
-import { getThemeAwareColor } from '../../utils/themeColors';
+import { getThemeAwareColor, isLightColor } from '../../utils/themeColors';
 import { useUIStore, useTagSetStore, useSyncStore, useCustomIconStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
 import { computeElementDimensions, getBaseSize } from '../../utils/elementDimensions';
@@ -355,7 +355,7 @@ function FullElementNode({ data }: NodeProps) {
                 key={idx}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md ${user.isDragging ? 'animate-pulse' : ''}`}
                 style={{ backgroundColor: user.color }}
-                title={user.isDragging ? `${user.name} déplace` : user.name}
+                title={user.isDragging ? t('presence.moving', { name: user.name }) : user.name}
               >
                 {initials}
               </div>
@@ -447,8 +447,8 @@ function FullElementNode({ data }: NodeProps) {
       {/* Comment indicator - shows when element has unresolved comments */}
       {showCommentBadges && unresolvedCommentCount !== undefined && unresolvedCommentCount > 0 && (
         <div
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center shadow-sm z-10"
-          title={`${unresolvedCommentCount} commentaire${unresolvedCommentCount > 1 ? 's' : ''} non résolu${unresolvedCommentCount > 1 ? 's' : ''}`}
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-warning text-white text-[9px] font-bold flex items-center justify-center shadow-sm z-10"
+          title={t('pages:timeline.unresolvedComments', { count: unresolvedCommentCount })}
         >
           {unresolvedCommentCount > 9 ? '9+' : unresolvedCommentCount}
         </div>
@@ -801,17 +801,6 @@ function FullElementNode({ data }: NodeProps) {
   );
 }
 
-// Helper to determine if a color is light
-function isLightColor(color: string): boolean {
-  if (color.startsWith('var(')) return true; // CSS variables assumed light
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return true;
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 128;
-}
 
 // Custom comparison for React.memo - only re-render when data actually changes
 function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {

@@ -13,6 +13,7 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
+import { ImportedRows } from './importedRows';
 import {
   findEventEnd,
   parseANBContents,
@@ -277,6 +278,7 @@ export async function importANB(
   let linksImported = 0;
 
   try {
+    const rows = new ImportedRows();
     // Dynamic import of cfb (OLE2/CFB parser)
     const cfbModule = await import('cfb');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -309,7 +311,7 @@ export async function importANB(
     const elementIds: ElementId[] = [];
     for (let i = 0; i < chart.items.length; i++) {
       const element = buildElement(chart.items[i], targetDossierId, positions[i]);
-      await db.elements.add(element);
+      rows.addElement(element);
       elementIds.push(element.id);
       elementsImported++;
     }
@@ -346,9 +348,11 @@ export async function importANB(
         createdAt: now,
         updatedAt: now,
       };
-      await db.links.add(link);
+      rows.addLink(link);
       linksImported++;
     }
+
+    await rows.write();
 
     await db.dossiers.update(targetDossierId, { updatedAt: new Date() });
 

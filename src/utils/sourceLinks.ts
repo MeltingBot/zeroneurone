@@ -15,8 +15,6 @@
  * input back unchanged.
  */
 
-export type SourceLinkScheme = 'http' | 'https' | 'asset';
-
 /** Scheme names of plugin links (lowercase) */
 export type PluginSchemes = ReadonlySet<string>;
 

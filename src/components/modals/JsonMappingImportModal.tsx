@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../utils/formatBytes';
 import { X, FileJson, AlertCircle, Save, FolderOpen, Check } from 'lucide-react';
 import { useDossierStore, useTagSetStore, useJsonMappingStore, toast } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
@@ -53,7 +54,6 @@ import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { csvToRecords } from '../../utils/csv';
 
 const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
-const layoutLabel = (l: LayoutType): string => (l === 'hierarchy' ? 'Hiérarchie' : layoutService.getLayoutName(l));
 
 interface JsonMappingImportModalProps {
   isOpen: boolean;
@@ -140,7 +140,7 @@ function evalCond(raw: Record<string, unknown>, c: FilterCond): boolean {
 }
 
 export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialName }: JsonMappingImportModalProps) {
-  const { t } = useTranslation('modals');
+  const { t, i18n } = useTranslation('modals');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [text, setText] = useState('');
@@ -502,7 +502,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const loadContent = useCallback((content: string, label: string | null, name?: string) => {
     if (content.length > LARGE_TEXT) {
       setText('');
-      setLoadedInfo(label ?? `${(content.length / 1048576).toFixed(1)} Mo`);
+      setLoadedInfo(label ?? formatBytes(content.length, i18n.language));
     } else {
       setText(content);
       setLoadedInfo(null);
@@ -510,18 +510,18 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     setContentFile(name);
     setImportSource(name ?? '');
     parse(content, name);
-  }, [parse]);
+  }, [parse, i18n.language]);
 
   const handleFile = useCallback(async (file: File) => {
     const content = await file.text();
-    loadContent(content, `${file.name} — ${(file.size / 1048576).toFixed(1)} Mo`, file.name);
-  }, [loadContent]);
+    loadContent(content, `${file.name} — ${formatBytes(file.size, i18n.language)}`, file.name);
+  }, [loadContent, i18n.language]);
 
   // Pre-fill from a paste when the modal opens
   useEffect(() => {
     if (isOpen && initialJson) {
       // A file shows its name rather than its content
-      loadContent(initialJson, initialName ? `${initialName} — ${(initialJson.length / 1048576).toFixed(1)} Mo` : null, initialName);
+      loadContent(initialJson, initialName ? `${initialName} — ${formatBytes(initialJson.length, i18n.language)}` : null, initialName);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialJson, initialName]);
@@ -1425,7 +1425,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                     className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
                   >
                     {LAYOUTS.map((l) => (
-                      <option key={l} value={l}>{layoutLabel(l)}</option>
+                      <option key={l} value={l}>{t(`pages:dossier.layout.types.${l}.name`)}</option>
                     ))}
                   </select>
                 </div>

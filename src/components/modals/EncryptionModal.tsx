@@ -505,7 +505,7 @@ function EnableView({
           data-testid="enable-confirm-button"
           onClick={() => onConfirm(password)}
           disabled={!canSubmit}
-          className="flex-1 text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
+          className="flex-1 text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-accent-hover disabled:opacity-50"
         >
           {isBusy ? t('encryption.enable.busy') : t('encryption.enable.submit')}
         </button>
@@ -608,7 +608,7 @@ function DisableView({
               data-testid="disable-accept-loss-button"
               onClick={onAcceptLoss}
               disabled={isBusy}
-              className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-red-700 disabled:opacity-50"
+              className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-error/90 disabled:opacity-50"
             >
               {isBusy ? t('encryption.disable.busy') : t('encryption.disable.dataLossConfirm')}
             </button>
@@ -627,7 +627,7 @@ function DisableView({
             data-testid="disable-confirm-button"
             onClick={() => onConfirm(password)}
             disabled={!password || isBusy}
-            className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-red-700 disabled:opacity-50"
+            className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-error/90 disabled:opacity-50"
           >
             {isBusy ? t('encryption.disable.busy') : t('encryption.disable.submit')}
           </button>
@@ -744,7 +744,7 @@ function WebAuthnView({
                   </button>
                   <button
                     onClick={() => handleRemove(i)}
-                    className="px-2 py-0.5 text-xs text-white bg-error hover:bg-red-700 rounded"
+                    className="px-2 py-0.5 text-xs text-white bg-error hover:bg-error/90 rounded"
                   >
                     {t('common:actions.delete')}
                   </button>
@@ -915,7 +915,7 @@ function ChangePasswordView({
           data-testid="change-password-confirm-button"
           onClick={() => onConfirm(oldPassword, newPassword)}
           disabled={!canSubmit}
-          className="flex-1 text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
+          className="flex-1 text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-accent-hover disabled:opacity-50"
         >
           {isBusy ? t('encryption.changePassword.busy') : t('encryption.changePassword.submit')}
         </button>
