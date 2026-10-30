@@ -780,6 +780,8 @@
     "sortLabel": "Trier",
     "sortRelevance": "Pertinence",
     "sortDistance": "Distance",
+    "sortDate": "Date",
+    "sortReverse": "Inverser l'ordre",
     "and": "et",
     "placesHint": "Positions des éléments sur la carte, sans tenir compte des dates",
     "meetingsHint": "Éléments ou événements datés au même endroit, au même moment",

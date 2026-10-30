@@ -765,6 +765,8 @@
     "sortLabel": "Ordena",
     "sortRelevance": "Rellevància",
     "sortDistance": "Distància",
+    "sortDate": "Data",
+    "sortReverse": "Inverteix l'ordre",
     "and": "i",
     "placesHint": "Posicions dels elements al mapa, sense tenir en compte les dates",
     "meetingsHint": "Elements o esdeveniments datats al mateix lloc i al mateix moment",

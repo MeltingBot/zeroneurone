@@ -765,6 +765,8 @@
     "sortLabel": "Sortieren",
     "sortRelevance": "Relevanz",
     "sortDistance": "Entfernung",
+    "sortDate": "Datum",
+    "sortReverse": "Reihenfolge umkehren",
     "and": "und",
     "placesHint": "Positionen der Elemente auf der Karte, ohne Daten",
     "meetingsHint": "Datierte Elemente oder Ereignisse am selben Ort zur selben Zeit",

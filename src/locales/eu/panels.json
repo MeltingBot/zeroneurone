@@ -765,6 +765,8 @@
     "sortLabel": "Ordenatu",
     "sortRelevance": "Garrantzia",
     "sortDistance": "Distantzia",
+    "sortDate": "Data",
+    "sortReverse": "Ordena alderantzikatu",
     "and": "eta",
     "placesHint": "Elementuen kokapenak mapan, datak kontuan hartu gabe",
     "meetingsHint": "Data duten elementuak edo gertaerak leku berean eta une berean",

@@ -108,7 +108,7 @@ Examples: offences near sites imported from GeoJSON; offences close in space and
 - **Click** the suggestion: selects its elements
 - **Click "Create and link N elements"** (or "Link N elements") on a pivot: unfolds the list of its elements, each name clickable as below
 - **Click an element's name**: it is selected alone and centered in the current view (canvas, map or timeline), and a summary shows under the row (tags, first 6 properties, **Open details** link to the Detail tab). Click the name again to hide it. Each element is on its own line; a long name wraps (2 lines at most)
-- **Relevance / Distance**, next to the count (shown when suggestions have distances): sorted by distance, places, meetings and zones come first, nearest first (a point in a zone counts as 0 m); the others follow in their order
+- **Relevance / Distance / Date**, next to the count (shown when suggestions have distances or dates): sorted by distance, places, meetings and zones come first, nearest first (a point in a zone counts as 0 m); sorted by date, meetings come first, latest first (date of the first meeting); the others follow in their order. The button next to it reverses the order, whatever the sort; suggestions without a distance or a date stay at the end
 - **✓** accepts, **✕** dismisses
 - **Ticking a row** frames the canvas on its elements and keeps the proposed link dashed, even on another tab of the panel, until it is unticked, accepted or dismissed. This link is not created in the dossier
 - **Ticking several rows** (or the header box to tick all) shows **Accept (N)** and **Dismiss (N)**

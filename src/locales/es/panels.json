@@ -765,6 +765,8 @@
     "sortLabel": "Ordenar",
     "sortRelevance": "Relevancia",
     "sortDistance": "Distancia",
+    "sortDate": "Fecha",
+    "sortReverse": "Invertir el orden",
     "and": "y",
     "placesHint": "Posiciones de los elementos en el mapa, sin tener en cuenta las fechas",
     "meetingsHint": "Elementos o eventos fechados en el mismo lugar y al mismo tiempo",

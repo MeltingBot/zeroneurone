@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagCombobox } from '../modals/TagCombobox';
 import { revealElement } from '../../utils/revealElement';
-import { Check, ChevronDown, ChevronUp, Loader2, RotateCcw, Search, X } from 'lucide-react';
+import { ArrowDownUp, Check, ChevronDown, ChevronUp, Loader2, RotateCcw, Search, X } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
 import { MAX_STAYS } from '../../stores/suggestionsStore';
 import { foldKey, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
@@ -48,6 +48,16 @@ function involvedIds(s: Suggestion): string[] {
 
 /** Distance a suggestion is about, in metres: nearest place or meeting, 0 for
  *  a point in a zone; Infinity when it has none (values, sources, pivots) */
+// Time of a meeting (its first one), or Infinity for an undated suggestion
+function dateOf(sg: Suggestion): number {
+  if (sg.kind !== 'link') return Infinity;
+  let d = Infinity;
+  for (const r of sg.reasons) {
+    if (r.rule === 'meeting' && r.date) d = Math.min(d, new Date(r.date).getTime());
+  }
+  return d;
+}
+
 function distanceOf(sg: Suggestion): number {
   if (sg.kind !== 'link') return Infinity;
   let d = Infinity;
@@ -335,13 +345,27 @@ export function SuggestionsPanel() {
   }, [visible, search, searchIndex]);
 
   // Sorted by distance: places, meetings and zones first, nearest first (a
-  // point in a zone is at 0 m); the others keep their order after them
-  const [sortBy, setSortBy] = useState<'relevance' | 'distance'>('relevance');
-  const sorted = useMemo(
-    () => (searched && sortBy === 'distance' ? [...searched].sort((a, b) => distanceOf(a) - distanceOf(b)) : searched),
-    [searched, sortBy],
-  );
+  // point in a zone is at 0 m). By date: dated meetings first, latest first.
+  // The others keep their order after them. The reverse button flips the
+  // order of the sorted ones (or of the whole list by relevance).
+  const [sortBy, setSortBy] = useState<'relevance' | 'distance' | 'date'>('relevance');
+  const [reversed, setReversed] = useState(false);
   const hasDistances = !!searched?.some((sg) => distanceOf(sg) !== Infinity);
+  const hasDates = !!searched?.some((sg) => dateOf(sg) !== Infinity);
+  const sortKey = (sortBy === 'distance' && hasDistances) ? distanceOf : (sortBy === 'date' && hasDates) ? dateOf : null;
+  const sorted = useMemo(() => {
+    if (!searched) return searched;
+    if (!sortKey) return reversed ? [...searched].reverse() : searched;
+    const descending = (sortKey === dateOf) !== reversed;
+    return [...searched].sort((a, b) => {
+      const ka = sortKey(a);
+      const kb = sortKey(b);
+      if (ka === kb) return 0;
+      if (ka === Infinity) return 1;
+      if (kb === Infinity) return -1;
+      return descending ? kb - ka : ka - kb;
+    });
+  }, [searched, sortKey, reversed]);
   const rowLimit = rowsShown.list === sorted ? rowsShown.limit : ROWS_STEP;
 
   // An element name in a row: selects it alone, brings it on screen and shows
@@ -685,19 +709,30 @@ export function SuggestionsPanel() {
             {t('suggestions.count', { count: searched.length })}
             {shownCount !== null && ` · ${t('suggestions.shownShort', { count: shownCount })}`}
           </span>
-          {hasDistances && (
+          {(hasDistances || hasDates) && (
             <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'relevance' | 'distance')}
+              value={sortKey ? sortBy : 'relevance'}
+              onChange={(e) => { setSortBy(e.target.value as 'relevance' | 'distance' | 'date'); setReversed(false); }}
               aria-label={t('suggestions.sortLabel')}
               title={t('suggestions.sortLabel')}
               data-testid="suggestions-sort"
               className={SELECT_CLASS}
             >
               <option value="relevance">{t('suggestions.sortRelevance')}</option>
-              <option value="distance">{t('suggestions.sortDistance')}</option>
+              {hasDistances && <option value="distance">{t('suggestions.sortDistance')}</option>}
+              {hasDates && <option value="date">{t('suggestions.sortDate')}</option>}
             </select>
           )}
+          <button
+            onClick={() => setReversed((r) => !r)}
+            aria-pressed={reversed}
+            aria-label={t('suggestions.sortReverse')}
+            title={t('suggestions.sortReverse')}
+            data-testid="suggestions-sort-reverse"
+            className={`p-1 rounded ${reversed ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+          >
+            <ArrowDownUp size={14} />
+          </button>
           {bulk && reviewDismissed && (
             <button
               onClick={() => handleRestore(checkedIds)}

@@ -765,6 +765,8 @@
     "sortLabel": "Sorteren",
     "sortRelevance": "Relevantie",
     "sortDistance": "Afstand",
+    "sortDate": "Datum",
+    "sortReverse": "Volgorde omkeren",
     "and": "en",
     "placesHint": "Posities van de elementen op de kaart, zonder data",
     "meetingsHint": "Gedateerde elementen of gebeurtenissen op dezelfde plaats, op hetzelfde moment",

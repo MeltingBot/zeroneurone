@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.86.4
+
+### Suggestions de liens
+
+- Tri par date : les rencontres datées passent en tête, de la plus récente
+  à la plus ancienne ; les autres suivent dans leur ordre.
+- Bouton d'inversion de l'ordre à côté du tri, valable pour Pertinence,
+  Distance et Date ; les suggestions sans distance ou sans date restent en
+  fin de liste.
+
 ## 2.86.3
 
 ### Carte (mode Temporel, date unique)
