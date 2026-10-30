@@ -17,6 +17,7 @@ import { setPluginNavigate } from './plugins/pluginAPI';
 import { PluginUiHost } from './components/plugins/PluginUiHost';
 import { ExportProgressModal } from './components/modals/ExportProgressModal';
 import { appPath } from './utils/basePath';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * Lit _encryptionMeta directement via l'API IndexedDB native, sans passer par
@@ -113,7 +114,7 @@ function GlobalErrorFallback() {
  * Si non, laisse passer directement.
  */
 function EncryptionGate({ children }: { children: React.ReactNode }) {
-  const { isLocked, setDek, setEnabled, setError, setReady, error, isEnabled, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore();
+  const { isLocked, setDek, setEnabled, setError, setReady, error, isEnabled, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore(useShallow((s) => ({ isLocked: s.isLocked, setDek: s.setDek, setEnabled: s.setEnabled, setError: s.setError, setReady: s.setReady, error: s.error, isEnabled: s.isEnabled, autoLockMinutes: s.autoLockMinutes, setAutoLockMinutes: s.setAutoLockMinutes })));
   const [isVerifying, setIsVerifying] = useState(false);
   const [encryptionChecked, setEncryptionChecked] = useState(false);
   // Conserve les métadonnées lues en raw IDB pour le déverrouillage

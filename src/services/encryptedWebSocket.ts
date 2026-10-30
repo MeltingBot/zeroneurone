@@ -329,9 +329,14 @@ export class EncryptedWebSocket {
 }
 
 /**
- * Create an EncryptedWebSocket factory for use with y-websocket
+ * Create an EncryptedWebSocket factory for use with y-websocket.
+ * `onKeyError` runs when the key cannot be imported: the same key would fail
+ * on every reconnection, so the caller should stop reconnecting.
  */
-export function createEncryptedWebSocketClass(encryptionKey: string | null): typeof WebSocket {
+export function createEncryptedWebSocketClass(
+  encryptionKey: string | null,
+  onKeyError?: (err: unknown) => void,
+): typeof WebSocket {
   if (!encryptionKey) {
     // No encryption, return native WebSocket
     return WebSocket;
@@ -344,7 +349,10 @@ export function createEncryptedWebSocketClass(encryptionKey: string | null): typ
   return class extends EncryptedWebSocket {
     constructor(url: string | URL, protocols?: string | string[]) {
       super(url, protocols);
-      this.setEncryptionKey(key).catch((err: unknown) => this.failEncryption(err));
+      this.setEncryptionKey(key).catch((err: unknown) => {
+        this.failEncryption(err);
+        onKeyError?.(err);
+      });
     }
   } as unknown as typeof WebSocket;
 }

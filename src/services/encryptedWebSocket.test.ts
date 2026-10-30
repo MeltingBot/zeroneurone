@@ -45,11 +45,14 @@ describe('EncryptedWebSocket', () => {
   it('closes the connection when the key cannot be imported', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const Socket = createEncryptedWebSocketClass('not-a-key');
+    const onKeyError = vi.fn();
+    const Socket = createEncryptedWebSocketClass('not-a-key', onKeyError);
     const ws = new Socket('ws://relay') as unknown as EncryptedWebSocket;
     ws.send(new Uint8Array([1, 2, 3]));
     await vi.waitFor(() => expect(FakeSocket.last!.close).toHaveBeenCalled());
     expect(FakeSocket.last!.closedWith).toBe(4001);
+    // The caller is told, so it can stop reconnecting with the same key
+    expect(onKeyError).toHaveBeenCalledTimes(1);
     expect(error).toHaveBeenCalled();
 
     ws.send(new Uint8Array([4]));

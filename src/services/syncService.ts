@@ -42,6 +42,8 @@ class SyncService {
 
   // Guards to suppress event handlers during teardown / page unload
   private isClosing = false;
+  /** The share key could not be imported: reconnecting would fail the same way */
+  private keyFailed = false;
 
   private state: SyncState = { ...DEFAULT_SYNC_STATE };
   private stateListeners: Set<StateListener> = new Set();
@@ -77,7 +79,7 @@ class SyncService {
   /** Reconnect proactively when tab becomes visible again */
   private handleVisibilityChange(): void {
     if (document.visibilityState !== 'visible') return;
-    if (!this.websocketProvider || this.isClosing) return;
+    if (!this.websocketProvider || this.isClosing || this.keyFailed) return;
     if (this.state.mode !== 'shared') return;
 
     // If disconnected, force reconnect instead of waiting for backoff timer
@@ -440,7 +442,19 @@ class SyncService {
     }
 
     // Create encrypted WebSocket class if encryption key is provided
-    const WebSocketClass = createEncryptedWebSocketClass(encryptionKey || null);
+    this.keyFailed = false;
+    const WebSocketClass = createEncryptedWebSocketClass(encryptionKey || null, () => {
+      if (this.isClosing) return;
+      // y-websocket would reconnect forever with a key that never works
+      this.keyFailed = true;
+      this.websocketProvider?.disconnect();
+      this.setState({
+        connected: false,
+        reconnecting: false,
+        syncing: false,
+        error: 'Clé de chiffrement invalide : vérifier le lien de partage',
+      });
+    });
 
     // Build query params for async mode and token
     const urlParams: string[] = [];
@@ -486,7 +500,8 @@ class SyncService {
 
     // Listen to connection status
     this.websocketProvider.on('status', (event: { status: string }) => {
-      if (this.isClosing) return;
+      // After a key error the socket's own close must not overwrite that error
+      if (this.isClosing || this.keyFailed) return;
       const connected = event.status === 'connected';
 
       if (connected) {
@@ -582,7 +597,8 @@ class SyncService {
 
     // Handle connection errors
     this.websocketProvider.on('connection-error', (event: Event | { message?: string }) => {
-      if (this.isClosing) return;
+      // After a key error the socket's own close must not overwrite that error
+      if (this.isClosing || this.keyFailed) return;
       // During initial grace period or reconnection, suppress errors — y-websocket retries automatically
       if (initialGrace || this.state.reconnecting) return;
       const message = (event && typeof event === 'object' && 'message' in event)
@@ -593,7 +609,8 @@ class SyncService {
 
     // Handle connection close
     this.websocketProvider.on('connection-close', () => {
-      if (this.isClosing) return;
+      // After a key error the socket's own close must not overwrite that error
+      if (this.isClosing || this.keyFailed) return;
       if (wasConnected && this.state.mode === 'shared') {
         this.setState({
           connected: false,

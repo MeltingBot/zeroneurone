@@ -207,162 +207,160 @@ class BackupService {
       const linkIdMap = new Map<LinkId, LinkId>();
       const assetIdMap = new Map<AssetId, AssetId>();
 
-      // Import dossiers
-      onProgress?.('Import des dossiers...');
-      for (const inv of data.dossiers) {
-        const newId = generateUUID();
-        dossierIdMap.set(inv.id, newId);
+      // Every row is prepared first and written in one transaction: a failure
+      // leaves no half-restored dossier. Files go to OPFS beforehand (outside
+      // any transaction) and are removed again if the write fails.
+      for (const inv of data.dossiers) dossierIdMap.set(inv.id, generateUUID());
 
-        await db.dossiers.add({
+      onProgress?.('Import des fichiers...');
+      try {
+        for (const assetMeta of data.assets) {
+          try {
+            const assetFile = zip.file(assetMeta.archivePath);
+            if (!assetFile) continue;
+
+            const arrayBuffer = await readZipEntryBuffer(assetFile, ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP);
+            const srcDossierId = assetMeta.dossierId || (assetMeta as any).investigationId;
+            const newDossierId = dossierIdMap.get(srcDossierId);
+            if (!newDossierId) continue;
+
+            const fileObj = new File([arrayBuffer], assetMeta.filename, {
+              type: assetMeta.mimeType,
+            });
+            const savedAsset = await fileService.saveAsset(newDossierId, fileObj);
+            assetIdMap.set(assetMeta.id, savedAsset.id);
+            result.assets++;
+          } catch (error) {
+            console.warn(`Failed to import asset:`, error);
+          }
+        }
+
+        onProgress?.('Import des éléments...');
+        const dossierRows = data.dossiers.map((inv) => ({
           ...inv,
-          id: newId,
+          id: dossierIdMap.get(inv.id)!,
           createdAt: new Date(inv.createdAt),
           updatedAt: new Date(inv.updatedAt),
-        });
-        result.dossiers++;
-      }
-
-      // Import assets
-      onProgress?.('Import des fichiers...');
-      for (const assetMeta of data.assets) {
-        try {
-          const assetFile = zip.file(assetMeta.archivePath);
-          if (!assetFile) continue;
-
-          const arrayBuffer = await readZipEntryBuffer(assetFile, ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP);
-          const srcDossierId = assetMeta.dossierId || (assetMeta as any).investigationId;
-          const newDossierId = dossierIdMap.get(srcDossierId);
-          if (!newDossierId) continue;
-
-          // Create File object and save via fileService
-          const fileObj = new File([arrayBuffer], assetMeta.filename, {
-            type: assetMeta.mimeType,
-          });
-          const savedAsset = await fileService.saveAsset(newDossierId, fileObj);
-          assetIdMap.set(assetMeta.id, savedAsset.id);
-          result.assets++;
-        } catch (error) {
-          console.warn(`Failed to import asset:`, error);
-        }
-      }
-
-      // Import elements
-      onProgress?.('Import des éléments...');
-      for (const element of data.elements) {
-        const newId = generateUUID();
-        // Legacy compat: old backups use investigationId instead of dossierId
-        const srcDossierId = element.dossierId || (element as any).investigationId;
-        const newDossierId = dossierIdMap.get(srcDossierId);
-        if (!newDossierId) continue;
-
-        elementIdMap.set(element.id, newId);
-
-        // Map asset IDs
-        const newAssetIds = (element.assetIds || [])
-          .map((oldId: AssetId) => assetIdMap.get(oldId))
-          .filter((id): id is AssetId => id !== undefined);
-
-        await db.elements.add({
-          ...element,
-          id: newId,
-          dossierId: newDossierId,
-          assetIds: newAssetIds,
-          parentGroupId: null, // Reset group relations
-          childIds: [],
-          date: element.date ? new Date(element.date) : null,
-          createdAt: new Date(element.createdAt),
-          updatedAt: new Date(element.updatedAt),
-        });
-        result.elements++;
-      }
-
-      // Import links
-      onProgress?.('Import des liens...');
-      for (const link of data.links) {
-        const srcDossierId = link.dossierId || (link as any).investigationId;
-        const newDossierId = dossierIdMap.get(srcDossierId);
-        const newFromId = elementIdMap.get(link.fromId);
-        const newToId = elementIdMap.get(link.toId);
-
-        if (!newDossierId || !newFromId || !newToId) continue;
-
-        const newLinkId = generateUUID();
-        linkIdMap.set(link.id, newLinkId);
-        await db.links.add({
-          ...link,
-          id: newLinkId,
-          dossierId: newDossierId,
-          fromId: newFromId,
-          toId: newToId,
-          date: link.date ? new Date(link.date) : null,
-          createdAt: new Date(link.createdAt),
-          updatedAt: new Date(link.updatedAt),
-        });
-        result.links++;
-      }
-
-      // Import views
-      onProgress?.('Import des vues...');
-      for (const view of data.views || []) {
-        const srcDossierId = view.dossierId || (view as any).investigationId;
-        const newDossierId = dossierIdMap.get(srcDossierId);
-        if (!newDossierId) continue;
-
-        await db.views.add({
-          ...view,
-          id: generateUUID(),
-          dossierId: newDossierId,
-          hiddenElementIds: (view.hiddenElementIds || [])
-            .map((eid: ElementId) => elementIdMap.get(eid))
-            .filter(Boolean) as ElementId[],
-          elementPositions: (view.elementPositions || [])
-            .map((ep: { id: ElementId; position: { x: number; y: number } }) => {
-              const newId = elementIdMap.get(ep.id);
-              return newId ? { ...ep, id: newId } : null;
-            })
-            .filter((ep): ep is NonNullable<typeof ep> => ep !== null),
-          createdAt: new Date(view.createdAt),
-        });
-      }
-
-      // Import reports
-      for (const report of data.reports || []) {
-        const srcDossierId = report.dossierId || (report as any).investigationId;
-        const newDossierId = dossierIdMap.get(srcDossierId);
-        if (!newDossierId) continue;
-
-        // Remap element/link references in report sections
-        const remappedSections = (report.sections || []).map((section: any) => ({
-          ...section,
-          id: generateUUID(),
-          content: this._remapReportContent(section.content || '', elementIdMap, linkIdMap),
-          elementIds: (section.elementIds || [])
-            .map((eid: ElementId) => elementIdMap.get(eid))
-            .filter(Boolean),
         }));
 
-        await db.reports.add({
-          ...report,
-          id: generateUUID(),
-          dossierId: newDossierId,
-          sections: remappedSections,
-          createdAt: new Date(report.createdAt),
-          updatedAt: new Date(report.updatedAt),
-        });
-      }
-
-      // Import tag sets (global, no dossier ID mapping needed)
-      onProgress?.('Import des tags...');
-      for (const tagSet of data.tagSets || []) {
-        // Check if tag set with same name already exists ('name' is not indexed, use filter)
-        const allTagSets = await db.tagSets.toArray();
-        const existing = allTagSets.find(ts => ts.name === tagSet.name);
-        if (!existing) {
-          await db.tagSets.add({
-            ...tagSet,
-            id: generateUUID(),
+        const elementRows: Element[] = [];
+        for (const element of data.elements) {
+          // Legacy compat: old backups use investigationId instead of dossierId
+          const srcDossierId = element.dossierId || (element as any).investigationId;
+          const newDossierId = dossierIdMap.get(srcDossierId);
+          if (!newDossierId) continue;
+          const newId = generateUUID();
+          elementIdMap.set(element.id, newId);
+          elementRows.push({
+            ...element,
+            id: newId,
+            dossierId: newDossierId,
+            assetIds: (element.assetIds || [])
+              .map((oldId: AssetId) => assetIdMap.get(oldId))
+              .filter((id): id is AssetId => id !== undefined),
+            parentGroupId: null, // Reset group relations
+            childIds: [],
+            date: element.date ? new Date(element.date) : null,
+            createdAt: new Date(element.createdAt),
+            updatedAt: new Date(element.updatedAt),
           });
         }
+
+        const linkRows: Link[] = [];
+        for (const link of data.links) {
+          const srcDossierId = link.dossierId || (link as any).investigationId;
+          const newDossierId = dossierIdMap.get(srcDossierId);
+          const newFromId = elementIdMap.get(link.fromId);
+          const newToId = elementIdMap.get(link.toId);
+          if (!newDossierId || !newFromId || !newToId) continue;
+          const newLinkId = generateUUID();
+          linkIdMap.set(link.id, newLinkId);
+          linkRows.push({
+            ...link,
+            id: newLinkId,
+            dossierId: newDossierId,
+            fromId: newFromId,
+            toId: newToId,
+            date: link.date ? new Date(link.date) : null,
+            createdAt: new Date(link.createdAt),
+            updatedAt: new Date(link.updatedAt),
+          });
+        }
+
+        const viewRows: View[] = [];
+        for (const view of data.views || []) {
+          const srcDossierId = view.dossierId || (view as any).investigationId;
+          const newDossierId = dossierIdMap.get(srcDossierId);
+          if (!newDossierId) continue;
+          viewRows.push({
+            ...view,
+            id: generateUUID(),
+            dossierId: newDossierId,
+            hiddenElementIds: (view.hiddenElementIds || [])
+              .map((eid: ElementId) => elementIdMap.get(eid))
+              .filter(Boolean) as ElementId[],
+            elementPositions: (view.elementPositions || [])
+              .map((ep: { id: ElementId; position: { x: number; y: number } }) => {
+                const newId = elementIdMap.get(ep.id);
+                return newId ? { ...ep, id: newId } : null;
+              })
+              .filter((ep): ep is NonNullable<typeof ep> => ep !== null),
+            createdAt: new Date(view.createdAt),
+          });
+        }
+
+        const reportRows: Report[] = [];
+        for (const report of data.reports || []) {
+          const srcDossierId = report.dossierId || (report as any).investigationId;
+          const newDossierId = dossierIdMap.get(srcDossierId);
+          if (!newDossierId) continue;
+          // Remap element/link references in report sections
+          const remappedSections = (report.sections || []).map((section: any) => ({
+            ...section,
+            id: generateUUID(),
+            content: this._remapReportContent(section.content || '', elementIdMap, linkIdMap),
+            elementIds: (section.elementIds || [])
+              .map((eid: ElementId) => elementIdMap.get(eid))
+              .filter(Boolean),
+          }));
+          reportRows.push({
+            ...report,
+            id: generateUUID(),
+            dossierId: newDossierId,
+            sections: remappedSections,
+            createdAt: new Date(report.createdAt),
+            updatedAt: new Date(report.updatedAt),
+          });
+        }
+
+        // Tag sets are global: only the names not already there
+        const knownTagSetNames = new Set((await db.tagSets.toArray()).map((ts) => ts.name));
+        const tagSetRows: TagSet[] = [];
+        for (const tagSet of data.tagSets || []) {
+          if (knownTagSetNames.has(tagSet.name)) continue;
+          knownTagSetNames.add(tagSet.name);
+          tagSetRows.push({ ...tagSet, id: generateUUID() });
+        }
+
+        onProgress?.('Écriture des données...');
+        await db.transaction('rw', [db.dossiers, db.elements, db.links, db.views, db.reports, db.tagSets], async () => {
+          await db.dossiers.bulkAdd(dossierRows);
+          await db.elements.bulkAdd(elementRows);
+          await db.links.bulkAdd(linkRows);
+          await db.views.bulkAdd(viewRows);
+          await db.reports.bulkAdd(reportRows);
+          await db.tagSets.bulkAdd(tagSetRows);
+        });
+        result.dossiers = dossierRows.length;
+        result.elements = elementRows.length;
+        result.links = linkRows.length;
+      } catch (error) {
+        // Nothing was written to the tables: take the files back out of OPFS
+        for (const newDossierId of dossierIdMap.values()) {
+          await fileService.deleteDossierAssets(newDossierId).catch(() => {});
+        }
+        result.assets = 0;
+        throw error;
       }
 
       result.success = true;

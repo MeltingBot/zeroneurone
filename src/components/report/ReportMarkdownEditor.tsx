@@ -9,6 +9,7 @@ import { useDossierStore, useSelectionStore, useViewStore, useSyncStore } from '
 import { useShallow } from 'zustand/react/shallow';
 import { canvasPosition } from '../../utils/revealElement';
 import { reportRefRegex } from '../../utils/reportRefs';
+import { previewOnValue } from './previewSync';
 
 interface ReportMarkdownEditorProps {
   value: string;
@@ -358,10 +359,10 @@ export function ReportMarkdownEditor({
   minRows = 6,
 }: ReportMarkdownEditorProps) {
   const { t } = useTranslation('panels');
-  const { elements, links } = useDossierStore();
-  const { selectElement, selectLink, clearSelection } = useSelectionStore();
+  const { elements, links } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links })));
+  const { selectElement, selectLink, clearSelection } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectLink: s.selectLink, clearSelection: s.clearSelection })));
   const { requestViewportChange, setDisplayMode, displayMode } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange, setDisplayMode: s.setDisplayMode, displayMode: s.displayMode })));
-  const { remoteUsers, updateEditingReportSection } = useSyncStore();
+  const { remoteUsers, updateEditingReportSection } = useSyncStore(useShallow((s) => ({ remoteUsers: s.remoteUsers, updateEditingReportSection: s.updateEditingReportSection })));
 
   // Check if another user is editing this section
   const lockingUser = useMemo(() => {
@@ -394,8 +395,10 @@ export function ReportMarkdownEditor({
   const pendingCursorPositionRef = useRef<number | null>(null);
   // Flag to allow one DOM build when entering write mode
   const justEnteredWriteModeRef = useRef(false);
-  // Track the content we sent to parent to detect our own echoes vs remote updates
+  // Content sent to the parent on leaving write mode, and the value it replaced:
+  // until `value` moves off that stale one, the preview keeps what was sent
   const lastSentContentRef = useRef<string | null>(null);
+  const valueBeforeSendRef = useRef<string | null>(null);
   // Track localContent in a ref to avoid effect dependencies causing re-triggers
   const localContentRef = useRef(localContent);
   localContentRef.current = localContent;
@@ -407,15 +410,16 @@ export function ReportMarkdownEditor({
     // In write mode, don't sync from value (user is editing)
     if (isWriteMode) return;
 
-    // If we have pending sent content, wait for value to match it before accepting updates
-    // This prevents flash when exiting write mode before parent has updated
-    if (lastSentContentRef.current !== null) {
-      if (value === lastSentContentRef.current) {
-        // Our sent content has arrived - sync localContent and clear the flag
-        setLocalContent(value);
-        lastSentContentRef.current = null;
-      }
-      // Don't accept other updates while waiting for our content to sync
+    // Content just sent: while `value` is still the one it replaced, keep showing
+    // what was sent (no flash of the old text). Any other value is taken, our
+    // echo or not: waiting for an exact echo froze the preview whenever a
+    // collaborator's edit merged in before it.
+    if (lastSentContentRef.current !== null && valueBeforeSendRef.current !== null) {
+      const next = previewOnValue(value, { sent: lastSentContentRef.current, before: valueBeforeSendRef.current });
+      if (next.pending) return;
+      lastSentContentRef.current = null;
+      valueBeforeSendRef.current = null;
+      setLocalContent(next.show);
       return;
     }
 
@@ -660,6 +664,7 @@ export function ReportMarkdownEditor({
     updateEditingReportSection(null);
     if (currentContent !== value) {
       lastSentContentRef.current = currentContent;
+      valueBeforeSendRef.current = value;
       onChange(currentContent);
     }
     onEditingChange?.(false);
@@ -779,6 +784,7 @@ export function ReportMarkdownEditor({
       if (currentContent !== value) {
         // Track what we sent so we can detect our echo vs remote updates
         lastSentContentRef.current = currentContent;
+        valueBeforeSendRef.current = value;
         onChange(currentContent);
       }
       // Notify parent we're no longer editing (after content is sent)
