@@ -373,8 +373,7 @@
       "text": "Este software se distribuye bajo licencia MIT.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
       "thirdParty": "Licencias de terceros"
-    },
-    "footer": "Hecho con amor para los investigadores del mundo entero"
+    }
   },
   "storage": {
     "title": "Almacenamiento",

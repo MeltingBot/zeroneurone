@@ -373,8 +373,7 @@
       "text": "Questo software è distribuito sotto licenza MIT.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
       "thirdParty": "Licenze di terze parti"
-    },
-    "footer": "Fatto con amore per gli investigatori di tutto il mondo"
+    }
   },
   "storage": {
     "title": "Archiviazione",

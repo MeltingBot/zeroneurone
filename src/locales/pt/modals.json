@@ -373,8 +373,7 @@
       "text": "Este software é distribuído sob licença MIT.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
       "thirdParty": "Licenças de terceiros"
-    },
-    "footer": "Feito com amor para os investigadores de todo o mundo"
+    }
   },
   "storage": {
     "title": "Armazenamento",

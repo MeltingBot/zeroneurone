@@ -373,8 +373,7 @@
       "text": "Ce logiciel est distribué sous licence MIT.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
       "thirdParty": "Licences des composants tiers"
-    },
-    "footer": "Fait avec amour pour les analystes du monde entier"
+    }
   },
   "storage": {
     "title": "Stockage",

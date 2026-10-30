@@ -373,8 +373,7 @@
       "text": "Aquest programari es distribueix sota llicència MIT.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
       "thirdParty": "Llicències de tercers"
-    },
-    "footer": "Fet amb amor per als investigadors de tot el món"
+    }
   },
   "storage": {
     "title": "Emmagatzematge",

@@ -1,4 +1,4 @@
-import { Github, Heart, ExternalLink, Coffee } from 'lucide-react';
+import { Github, ExternalLink, Coffee } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../common';
 import { appPath } from '../../utils/basePath';
@@ -144,7 +144,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
                 modify, merge, publish, distribute, sublicense, and/or sell copies.
               </p>
               <a
-                href={`${import.meta.env.BASE_URL}THIRD_PARTY_LICENSES.txt`}
+                href="https://github.com/MeltingBot/zeroneurone/blob/main/public/THIRD_PARTY_LICENSES.txt"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 mt-3 text-xs text-text-secondary hover:text-text-primary transition-colors"
@@ -155,11 +155,6 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             </div>
           </div>
 
-        {/* Credits */}
-        <div className="flex items-center justify-center gap-1 text-xs text-text-tertiary pt-2">
-          <span>{t('about.footer')}</span>
-          <Heart size={12} className="text-error" />
-        </div>
       </div>
     </Modal>
   );
