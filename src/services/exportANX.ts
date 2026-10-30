@@ -44,6 +44,7 @@ import { EVALUATION_GRIDS, getEvaluationModel, getModelScale } from '../utils/ev
 import { parseDateValue, toLocalDateKey } from '../utils/dates';
 import { sourceToPlainText } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
+import { hexToRgb } from '../utils/themeColors';
 
 // ============================================================================
 // TUNING — every unknown that only a real i2 can settle lives here, so that a
@@ -103,20 +104,6 @@ function escapeAttr(value: unknown): string {
 // ============================================================================
 // COLOUR
 // ============================================================================
-
-/** Hex (#RGB or #RRGGBB) to 0-255 components, grey on anything else. */
-function hexToRgb(hex: string | null | undefined): { r: number; g: number; b: number } {
-  const fallback = { r: 153, g: 153, b: 153 };
-  if (!hex || typeof hex !== 'string') return fallback;
-  let h = hex.trim().replace(/^#/, '');
-  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-  if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) return fallback;
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
-  };
-}
 
 /**
  * Hex to Windows COLORREF, the exact inverse of importANX's colorrefToHex.

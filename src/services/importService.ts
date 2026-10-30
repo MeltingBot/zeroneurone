@@ -45,13 +45,14 @@ import { sanitizeSvgIcon } from '../utils/svgIcon';
 import { normalizeGeo, computePolygonCenter, computePolygonAreaKm2, openRing, isGeoInRange } from '../utils/geo';
 import { isLambert93CrsName, lambert93ToWgs84 } from '../utils/lambert93';
 import { remapDismissedSuggestions } from './linkSuggestions';
-import { splitCSVRecords, detectCSVDelimiter, parseCSVLine } from '../utils/csv';
+import { splitCSVRecords, detectCSVDelimiter, parseCSVLine, stripBom } from '../utils/csv';
 import { isNumericColumn, parseNumericText } from '../utils/numericText';
 import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
 import { isDossierOptions } from '../utils/dossierOptions';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
-import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
+import { parseOsintrackerFile } from './importOsintracker';
+import { dataUrlToFile } from '../utils/dataUrl';
 import i18next from 'i18next';
 import { importPredicaGraph, isPredicaGraphFormat } from './importPredictagraph';
 import { importOsintIndustries, isOsintIndustriesFormat } from './importOsintIndustries';
@@ -3020,11 +3021,7 @@ class ImportService {
    * Normalise le contenu CSV : retire le BOM UTF-8 et harmonise les fins de ligne.
    */
   private normalizeCSVContent(content: string): string {
-    let normalized = content;
-    if (normalized.charCodeAt(0) === 0xfeff) {
-      normalized = normalized.slice(1);
-    }
-    return normalized.replace(/\r\n?/g, '\n');
+    return stripBom(content).replace(/\r\n?/g, '\n');
   }
 
   /**

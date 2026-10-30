@@ -6,6 +6,8 @@
  * (fragments are never sent to servers).
  */
 
+import { toBase64Url } from '../utils/base64url';
+
 // Key length for AES-256
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits for GCM
@@ -22,7 +24,7 @@ export async function generateEncryptionKey(): Promise<string> {
   );
 
   const rawKey = await crypto.subtle.exportKey('raw', key);
-  return arrayBufferToBase64Url(rawKey);
+  return toBase64Url(rawKey);
 }
 
 /**
@@ -133,28 +135,12 @@ export async function deriveAccessToken(encryptionKey: string, roomId: string): 
   const data = encoder.encode('access:' + roomId);
   const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
 
-  return arrayBufferToBase64Url(signature);
+  return toBase64Url(signature);
 }
 
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-/**
- * Convert ArrayBuffer to base64url string (URL-safe, no padding)
- */
-function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  // Convert to base64, then to base64url
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
 
 /**
  * Convert base64url string to ArrayBuffer

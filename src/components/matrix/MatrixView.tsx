@@ -22,6 +22,7 @@ import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { downloadBlob } from '../../utils/download';
+import { escapeCsvField } from '../../utils/csv';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -773,10 +774,7 @@ export function MatrixView() {
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
-    const escape = (v: string) => {
-      if (v.includes(',') || v.includes('"') || v.includes('\n')) return `"${v.replace(/"/g, '""')}"`;
-      return v;
-    };
+    const escape = (v: string) => escapeCsvField(v);
     const headers = visibleCols.map((c) => escape(c.label)).join(',');
     const rows = sortedElements.map((el) =>
       visibleCols.map((col) => {

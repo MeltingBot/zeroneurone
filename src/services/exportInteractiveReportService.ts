@@ -10,9 +10,9 @@
 
 import type { Element, Link, Asset, Dossier, Report } from '../types';
 import { fileService } from './fileService';
-import { computeLinkRoutes, computeNodeLayout } from './svgExportService';
+import { computeLinkRoutes, computeNodeLayout, resolveExportColor } from './svgExportService';
 import { arrowPolygon } from '../utils/edgeRouting';
-import { escapeJsonForScript, safeColor, sanitizeUrl, escapeXml } from '../utils/escapeHtml';
+import { escapeJsonForScript, sanitizeUrl, escapeXml } from '../utils/escapeHtml';
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
@@ -20,29 +20,6 @@ import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
 import { replaceReportRefs, stripReportRefs } from '../utils/reportRefs';
 import { createSlugger } from '../utils/slugify';
 
-// CSS variable to hex color map (same as svgExportService)
-const CSS_VAR_MAP: Record<string, string> = {
-  '--color-bg-canvas': '#faf8f5',
-  '--color-bg-primary': '#fffdf9',
-  '--color-bg-secondary': '#f7f4ef',
-  '--color-bg-tertiary': '#f0ece4',
-  '--color-text-primary': '#3d3833',
-  '--color-text-secondary': '#6b6560',
-  '--color-text-tertiary': '#9a948d',
-  '--color-border-default': '#e8e3db',
-  '--color-border-strong': '#d4cec4',
-  '--color-border-sketchy': '#b8b0a4',
-  '--color-accent': '#e07a5f',
-  '--color-node-yellow': '#fcd34d',
-  '--color-node-pink': '#f9a8d4',
-  '--color-node-blue': '#93c5fd',
-  '--color-node-green': '#86efac',
-  '--color-node-orange': '#fdba74',
-  '--color-node-purple': '#c4b5fd',
-  '--color-node-red': '#fca5a5',
-  '--color-node-cyan': '#67e8f9',
-  '--color-node-lime': '#bef264',
-};
 
 // Allowed HTML tags in markdown output (whitelist for sanitisation)
 const ALLOWED_TAGS = [
@@ -130,24 +107,6 @@ function parseElementReferences(html: string): string {
   );
 }
 
-// Resolve CSS variable colors to hex.
-// The result lands in quoted SVG attributes, and colours can come from an
-// imported file or a peer, so anything unrecognised falls back.
-function resolveColor(color: string | undefined, defaultColor: string): string {
-  if (!color) return defaultColor;
-  // Handle CSS variables
-  if (color.startsWith('var(')) {
-    const varName = color.match(/var\((--[^)]+)\)/)?.[1];
-    if (varName && CSS_VAR_MAP[varName]) return CSS_VAR_MAP[varName];
-    // Fallback for common patterns
-    if (color.includes('text-tertiary') || color.includes('gray')) return '#9ca3af';
-    if (color.includes('text-secondary')) return '#6b7280';
-    if (color.includes('text-primary')) return '#111827';
-    if (color.includes('accent') || color.includes('blue')) return '#2563eb';
-    return defaultColor;
-  }
-  return safeColor(color, defaultColor);
-}
 
 // Generate SVG for the graph: same layout and link routing as the canvas and the SVG export
 function generateGraphSVG(
@@ -186,8 +145,8 @@ function generateGraphSVG(
   for (const group of groups) {
     const pos = layout.positions.get(group.id)!;
     const dims = layout.dimensions.get(group.id)!;
-    const color = resolveColor(group.visual?.color, '#e5e7eb');
-    const borderColor = resolveColor(group.visual?.borderColor, '#d1d5db');
+    const color = resolveExportColor(group.visual?.color, '#f0ece4');
+    const borderColor = resolveExportColor(group.visual?.borderColor, '#d4cec4');
 
     const groupCenterX = pos.x + dims.width / 2;
     const groupCenterY = pos.y + dims.height / 2;
@@ -208,7 +167,7 @@ function generateGraphSVG(
 
   // Draw links
   for (const { link, route, hasStartArrow, hasEndArrow } of computeLinkRoutes(links, layout, routeSettings)) {
-    const color = resolveColor(link.visual?.color, '#9ca3af');
+    const color = resolveExportColor(link.visual?.color, '#9a948d');
     const thickness = link.visual?.thickness ?? 2;
     const style = link.visual?.style || 'solid';
     const strokeDasharray = style === 'dashed' ? '8,4' : style === 'dotted' ? '2,4' : 'none';
@@ -238,8 +197,8 @@ function generateGraphSVG(
     // Centre of the element (positions are top-left corners, as on the canvas)
     const x = pos.x + dims.width / 2;
     const y = pos.y + dims.height / 2;
-    const color = resolveColor(el.visual?.color, '#3b82f6');
-    const borderColor = resolveColor(el.visual?.borderColor, color);
+    const color = resolveExportColor(el.visual?.color, '#9a948d');
+    const borderColor = resolveExportColor(el.visual?.borderColor, color);
     const shape = el.visual?.shape || 'rectangle';
 
     // Find thumbnail for this element

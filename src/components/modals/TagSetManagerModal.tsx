@@ -5,11 +5,14 @@ import { Modal, Button, IconButton, ResolvedIcon, iconNameResolves } from '../co
 import { useTagSetStore, useUIStore, useCustomIconStore } from '../../stores';
 import { CUSTOM_ICON_PREFIX, isCustomIconName, customIconIdFromName } from '../../types';
 import { sanitizeSvgIcon } from '../../utils/svgIcon';
-import { splitCSVRecords } from '../../utils/csv';
 import { TagSetEditorModal } from './TagSetEditorModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
 import { downloadBlob } from '../../utils/download';
+import { escapeCsvField, parseCSVLine as parseCSVRow, splitCSVRecords, unescapeCsvField } from '../../utils/csv';
+
+// This app's own CSV export: its formula guard is dropped on the way back
+const parseCSVLine = (line: string): string[] => parseCSVRow(line, ',').map(unescapeCsvField);
 
 interface TagSetManagerModalProps {
   isOpen: boolean;
@@ -157,12 +160,8 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
 
   // Export all TagSets to CSV file
   const handleExportCSV = useCallback(() => {
-    const escapeCSV = (value: string) => {
-      if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes(';')) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    };
+    // Properties are joined with ';': quoted too
+    const escapeCSV = (value: string) => escapeCsvField(value, ';');
 
     const headers = ['nom', 'description', 'couleur', 'forme', 'proprietes'];
     const rows = tagSets.map((ts) => {
@@ -204,30 +203,6 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
   }, []);
 
   // Parse CSV line handling quoted values
-  const parseCSVLine = useCallback((line: string): string[] => {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    result.push(current);
-    return result;
-  }, []);
 
   // Handle file selection for import (JSON or CSV)
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -376,7 +351,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
       console.error('Import error:', err);
       showToast('error', t('tagSets.importError'));
     }
-  }, [create, nameExists, showToast, parseCSVLine, t]);
+  }, [create, nameExists, showToast, t]);
 
   return (
     <>

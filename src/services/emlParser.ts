@@ -345,6 +345,4 @@ export async function readFileAsLatin1(arrayBuffer: ArrayBuffer): Promise<string
   return new TextDecoder('latin1').decode(new Uint8Array(arrayBuffer));
 }
 
-export function isEmlFile(name: string, mimeType: string): boolean {
-  return mimeType === 'message/rfc822' || name.toLowerCase().endsWith('.eml');
-}
+export { isEmlFile } from '../utils/fileTypes';

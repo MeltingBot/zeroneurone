@@ -26,6 +26,7 @@ interface NodeDimensions {
 // CSS VARIABLE RESOLUTION
 // ============================================================================
 
+/** Theme colours as literal values, for files that leave the app (SVG, HTML) */
 const CSS_VAR_MAP: Record<string, string> = {
   '--color-bg-canvas': '#faf8f5',
   '--color-bg-primary': '#fffdf9',
@@ -38,6 +39,12 @@ const CSS_VAR_MAP: Record<string, string> = {
   '--color-border-strong': '#d4cec4',
   '--color-border-sketchy': '#b8b0a4',
   '--color-accent': '#e07a5f',
+  '--color-accent-hover': '#c96a52',
+  '--color-accent-light': '#fdf0ed',
+  '--color-success': '#4a8c59',
+  '--color-warning': '#c9952c',
+  '--color-error': '#c75d5d',
+  '--color-highlight': '#fef3c7',
   '--color-node-yellow': '#fcd34d',
   '--color-node-pink': '#f9a8d4',
   '--color-node-blue': '#93c5fd',
@@ -49,17 +56,21 @@ const CSS_VAR_MAP: Record<string, string> = {
   '--color-node-lime': '#bef264',
 };
 
-function resolveColor(color: string): string {
-  if (!color) return '#9a948d';
+/**
+ * A colour as a literal value for an exported file: theme variables resolved,
+ * anything else checked. Colours reach us from imported archives and
+ * collaboration peers, so they cannot go straight into fill=/stroke= or style.
+ */
+export function resolveExportColor(color: string | undefined, fallback = '#9a948d'): string {
+  if (!color) return fallback;
   if (color.startsWith('var(')) {
     const varName = color.match(/var\((--[^)]+)\)/)?.[1];
-    if (varName && CSS_VAR_MAP[varName]) return CSS_VAR_MAP[varName];
-    return '#9a948d';
+    return (varName && CSS_VAR_MAP[varName]) || fallback;
   }
-  // Colours reach us from imported archives and collaboration peers, so they
-  // cannot go straight into fill=/stroke= attributes of the exported SVG.
-  return safeColor(color, '#9a948d');
+  return safeColor(color, fallback);
 }
+
+const resolveColor = (color: string) => resolveExportColor(color);
 
 // ============================================================================
 // NODE DIMENSIONS (replicates ElementNode.tsx logic)

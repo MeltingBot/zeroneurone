@@ -11,6 +11,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Upload, Box, Link2 } from 'lucide-reac
 import { emitExport } from '../../plugins/pluginEventBus';
 import { GROUP_FIELDS, buildGroups, type GroupRow } from '../../utils/queryGroups';
 import { downloadBlob } from '../../utils/download';
+import { escapeCsvField } from '../../utils/csv';
 
 interface TableRow {
   id: string;
@@ -174,9 +175,7 @@ export function QueryResultsTable() {
 
     const escape = (v: unknown) => {
       const s = v == null ? '' : v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
-      return s.includes(',') || s.includes('"') || s.includes('\n')
-        ? `"${s.replace(/"/g, '""')}"`
-        : s;
+      return escapeCsvField(s);
     };
     const download = (lines: string[]) => {
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });

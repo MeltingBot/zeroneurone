@@ -13,6 +13,7 @@ import { downloadBlob } from '../../utils/download';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { isEmlFile } from '../../utils/fileTypes';
 
 interface AssetsPanelProps {
   element: Element;
@@ -371,7 +372,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
               onExtractText={
                 (asset.mimeType === 'application/pdf' || asset.mimeType.startsWith('text/')
                   || asset.filename.toLowerCase().endsWith('.docx') || asset.filename.toLowerCase().endsWith('.odt')
-                  || asset.mimeType === 'message/rfc822' || asset.filename.toLowerCase().endsWith('.eml'))
+                  || isEmlFile(asset.filename, asset.mimeType))
                   ? () => handleExtractText(asset.id)
                   : undefined
               }
@@ -480,7 +481,7 @@ function AssetItem({
   const isPdf = asset.mimeType === 'application/pdf';
   const isText = asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename);
   const isDoc = /\.(docx|odt)$/i.test(asset.filename);
-  const isEml = asset.mimeType === 'message/rfc822' || /\.eml$/i.test(asset.filename);
+  const isEml = isEmlFile(asset.filename, asset.mimeType);
   const hasText = !!asset.extractedText;
 
   const Icon = isImage ? Image : (isPdf || isDoc) ? FileText : File;

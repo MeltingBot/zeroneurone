@@ -5,6 +5,7 @@ import type { Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { PdfPreview } from '../common/PdfPreview';
 import { ImagePreview } from '../common/ImagePreview';
+import { isEmlFile } from '../../utils/fileTypes';
 
 interface AssetPreviewModalProps {
   asset: Asset;
@@ -23,7 +24,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
 
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
-  const isEml = asset.mimeType === 'message/rfc822' || /\.eml$/i.test(asset.filename);
+  const isEml = isEmlFile(asset.filename, asset.mimeType);
   const isText = !isEml && (asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename));
   const isDoc = /\.(docx|odt)$/i.test(asset.filename);
   const hasPreview = isImage || isPdf || isText || isDoc || isEml;

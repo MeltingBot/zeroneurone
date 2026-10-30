@@ -26,6 +26,7 @@ import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { useFocusElementEvent } from '../../hooks/useFocusElementEvent';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { downloadBlob } from '../../utils/download';
+import { escapeCsvField } from '../../utils/csv';
 
 // Element with geo coordinates (resolved for a specific time)
 interface ResolvedGeoElement {
@@ -3080,25 +3081,18 @@ export function MapView() {
   );
 }
 
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
 function exportMapToCSV(geoElements: { label: string; type?: string; geo: GeoData; visual: { color: string }; tags: string[] }[], filename: string): void {
   const sorted = [...geoElements].sort((a, b) => a.label.localeCompare(b.label));
   const header = 'label,type,latitude,longitude,couleur,tags';
   const rows = sorted.map(el => {
     const c = getGeoCenter(el.geo);
     return [
-    escapeCSV(el.label),
+    escapeCsvField(el.label),
     el.type || '',
     c.lat.toFixed(6),
     c.lng.toFixed(6),
     el.visual.color,
-    escapeCSV(el.tags.join('; ')),
+    escapeCsvField(el.tags.join('; ')),
   ].join(',');
   });
   const csv = [header, ...rows].join('\n');

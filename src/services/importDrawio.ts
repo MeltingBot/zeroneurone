@@ -15,6 +15,8 @@ import type {
 import { db } from '../db/database';
 import { fileService } from './fileService';
 import type { ImportResult } from './importService';
+import { stripBom } from '../utils/csv';
+import { dataUrlMimeType, dataUrlToFile } from '../utils/dataUrl';
 
 // ============================================================================
 // draw.io (diagrams.net) format
@@ -88,7 +90,7 @@ const IGNORED_OBJECT_ATTRS = new Set(['id', 'label', 'placeholders', 'tooltip'])
 // ============================================================================
 
 export function isDrawioFormat(content: string): boolean {
-  const head = content.slice(0, 2000).replace(/^\uFEFF/, '').trimStart();
+  const head = stripBom(content.slice(0, 2000)).trimStart();
   return /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(mxfile|mxGraphModel)[\s>]/.test(head);
 }
 
@@ -369,13 +371,9 @@ export async function parseDrawio(content: string): Promise<ParsedDrawio> {
 // ============================================================================
 
 async function saveImage(dataUrl: string, index: number, dossierId: DossierId): Promise<AssetId> {
-  const [header, base64] = dataUrl.split(',');
-  const mimeType = header.match(/data:([^;]+)/)?.[1] ?? 'image/png';
+  const mimeType = dataUrlMimeType(dataUrl, 'image/png');
   const ext = mimeType.split('/')[1]?.replace(/\+.*$/, '') || 'png';
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  const file = new File([bytes], `drawio_image_${index}.${ext}`, { type: mimeType });
+  const file = dataUrlToFile(dataUrl, `drawio_image_${index}.${ext}`, 'image/png');
   const asset = await fileService.saveAsset(dossierId, file);
   return asset.id;
 }

@@ -16,6 +16,8 @@ import { emitExport } from '../plugins/pluginEventBus';
 import { replaceReportRefs } from '../utils/reportRefs';
 import { downloadBlob } from '../utils/download';
 import { escapeXml } from '../utils/escapeHtml';
+import { escapeCsvField } from '../utils/csv';
+import { hexToRgb } from '../utils/themeColors';
 
 /** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
 function propertyValueToCSV(prop: Property): string {
@@ -370,7 +372,7 @@ class ExportService {
   exportToCSV(elements: Element[], links: Link[], options: CSVExportOptions = {}): string {
     const delimiter = options.delimiter ?? ',';
     const content = options.content ?? 'all';
-    const esc = (value: string): string => this.escapeCSV(value, delimiter);
+    const esc = (value: string): string => escapeCsvField(value, delimiter);
     // Elements carry their events; links alone keep the element labels in de/vers
     const rowElements = content === 'links' ? [] : elements;
     const rowLinks = content === 'elements' ? [] : links;
@@ -644,7 +646,7 @@ class ExportService {
 
     const nodes = elements
       .map((el) => {
-        const rgb = this.hexToRgb(el.visual?.color);
+        const rgb = hexToRgb(el.visual?.color);
         const size = this.sizeToNumber(el.visual?.size, el.visual?.customWidth);
         const tags = Array.isArray(el.tags) ? el.tags.join(', ') : '';
         return `      <node id="${el.id}" label="${escapeXml(el.label)}">
@@ -700,20 +702,6 @@ ${edges}
   </graph>`;
 
     return [xmlHeader, gexfOpen, meta, body, '</gexf>'].join('\n');
-  }
-
-  /** Convert a hex color (#RGB or #RRGGBB) to 0-255 RGB, fallback to grey. */
-  private hexToRgb(hex: string | null | undefined): { r: number; g: number; b: number } {
-    const fallback = { r: 153, g: 153, b: 153 };
-    if (!hex || typeof hex !== 'string') return fallback;
-    let h = hex.trim().replace(/^#/, '');
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-    if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) return fallback;
-    return {
-      r: parseInt(h.slice(0, 2), 16),
-      g: parseInt(h.slice(2, 4), 16),
-      b: parseInt(h.slice(4, 6), 16),
-    };
   }
 
   /** Map an ElementSize (preset or number) to a numeric GEXF viz:size. */
@@ -948,17 +936,6 @@ ${edges}
       }
     }
     emitExport(format, undefined, dossier.id);
-  }
-
-  private escapeCSV(value: string, delimiter = ','): string {
-    // Prevent spreadsheet formula injection (=, +, -, @, tab, carriage return)
-    if (/^[=+\-@\t\r]/.test(value)) {
-      value = "'" + value;
-    }
-    if (value.includes(delimiter) || value.includes(',') || value.includes('"') || value.includes('\n') || value.includes("'")) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
   }
 }
 

@@ -22,6 +22,7 @@ import { formatItemDates, itemTooltip } from './timelineDates';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { downloadBlob } from '../../utils/download';
+import { escapeCsvField } from '../../utils/csv';
 
 export interface TimelineItem {
   id: string;
@@ -1991,13 +1992,6 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
   );
 }
 
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
 function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
   const typeLabels: Record<string, string> = { link: 'lien', event: 'evenement', property: 'propriete', created: 'ajout' };
   const formatDate = (d: Date) => toLocalDateKey(d);
@@ -2009,8 +2003,8 @@ function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
     formatDate(item.start),
     item.end ? formatDate(item.end) : '',
     typeLabels[item.type] || item.type,
-    escapeCSV(item.label),
-    escapeCSV((item.sublabel || '').replace(/\n/g, ' | ')),
+    escapeCsvField(item.label),
+    escapeCsvField((item.sublabel || '').replace(/\n/g, ' | ')),
     item.color,
   ].join(','));
 

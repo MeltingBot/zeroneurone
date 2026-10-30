@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Element, Link } from '../types';
 import { DEFAULT_LINK_VISUAL } from '../types';
-import { buildSVGExport } from './svgExportService';
+import { buildSVGExport, resolveExportColor } from './svgExportService';
 
 function makeElement(id: string, color: string): Element {
   return {
@@ -77,5 +77,18 @@ describe('svgExportService links', () => {
     const moved = buildSVGExport(nodes, [makeLink('l1', { orthogonalOffset: { x: 0, y: -60 } })], settings);
     expect(curved).toBe(plain);
     expect(moved).not.toBe(plain);
+  });
+});
+
+describe('resolveExportColor', () => {
+  it('turns theme variables into the current palette, state colours included', () => {
+    expect(resolveExportColor('var(--color-accent)')).toBe('#e07a5f');
+    expect(resolveExportColor('var(--color-success)')).toBe('#4a8c59');
+  });
+
+  it('falls back on an unknown variable, a missing or an unsafe colour', () => {
+    expect(resolveExportColor('var(--color-unknown)', '#123456')).toBe('#123456');
+    expect(resolveExportColor(undefined, '#123456')).toBe('#123456');
+    expect(resolveExportColor('red;background:url(x)', '#123456')).toBe('#123456');
   });
 });

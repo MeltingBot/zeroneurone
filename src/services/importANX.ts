@@ -19,6 +19,7 @@ import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
 import { parseDateValue } from '../utils/dates';
 import { darkenColor } from './importGephi';
+import { stripBom } from '../utils/csv';
 
 // ============================================================================
 // i18n
@@ -43,7 +44,7 @@ export function isANXFormat(content: string): boolean {
 /** Fix common malformed XML in i2 ANX exports */
 function sanitizeANXContent(content: string): string {
   // Remove BOM
-  let s = content.replace(/^\uFEFF/, '');
+  let s = stripBom(content);
   // Strip XML declaration (browser already decoded the string, avoids encoding mismatch)
   s = s.replace(/<\?xml[^?]*\?>\s*/, '');
   // Fix double-double-quotes in attributes: attr="value"" → attr="value"

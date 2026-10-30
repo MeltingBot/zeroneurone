@@ -21,6 +21,7 @@ import type { DossierId, Element, ElementId, ElementShape, Link, LinkDirection, 
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
 import { darkenColor, inferPropertyType, scaleGephiSizes } from './importGephi';
+import { stripBom } from '../utils/csv';
 
 // ============================================================================
 // Parser
@@ -57,7 +58,7 @@ export function decodeGmlString(s: string): string {
 
 /** Parses a GML document into nested lists. Throws GmlParseError on malformed input. */
 export function parseGML(content: string): GmlList {
-  const src = content.replace(/^\uFEFF/, '');
+  const src = stripBom(content);
   let pos = 0;
   let line = 1;
 

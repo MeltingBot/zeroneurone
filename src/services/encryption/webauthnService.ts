@@ -10,6 +10,7 @@
  */
 
 import type { WebAuthnCredentialEntry } from './encryptionService';
+import { toBase64Url } from '../../utils/base64url';
 
 // ============================================================================
 // CONSTANTES
@@ -99,13 +100,6 @@ async function decryptDEK(
 // ============================================================================
 // HELPERS INTERNES
 // ============================================================================
-
-function toBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let str = '';
-  for (const b of bytes) str += String.fromCharCode(b);
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
 
 function getOrCreateUserId(): Uint8Array<ArrayBuffer> {
   const KEY = 'zeroneurone:webauthn-user-id';
