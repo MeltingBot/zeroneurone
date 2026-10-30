@@ -57,7 +57,7 @@ import { linkVisualState, type LinkVisualContext } from '../../utils/linkVisualS
 import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast, MAX_TABS } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast } from '../../stores';
 import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
@@ -3340,7 +3340,7 @@ export function Canvas() {
   // New canvas tab holding `ids`, opened. Same naming as the tab bar; the
   // canvas stays where it is, the elements being on screen. Made from inside
   // a tab (or combined tabs), the elements move: they leave the tabs they came from.
-  const canCreateTab = !!currentDossier && canvasTabs.length < MAX_TABS;
+  const canCreateTab = !!currentDossier;
   const createTabFromIds = useCallback(async (ids: string[]) => {
     if (!currentDossier || ids.length === 0) return;
     const from = activeTabId;
@@ -4347,7 +4347,7 @@ export function Canvas() {
             requestFitView();
 
             // Chosen archive tabs: into the dossier's tab of the same name, or a
-            // new one; what no tab takes (and tabs beyond the limit) goes to the open tab
+            // new one; what no tab takes goes to the open tab
             const placed = new Set<string>(result.linkedOnlyIds ?? []);
             const createdTabIds: string[] = [];
             for (const plan of result.tabPlan ?? []) {
@@ -4355,13 +4355,9 @@ export function Canvas() {
               const { tabs } = useTabStore.getState();
               const key = plan.name.trim().toLowerCase();
               let target = tabs.find((tab) => tab.name.trim().toLowerCase() === key) ?? null;
-              if (!target && tabs.length < MAX_TABS) {
+              if (!target) {
                 target = await useTabStore.getState().createTab(importPlacementData.dossierId, plan.name);
                 createdTabIds.push(target.id);
-              }
-              if (!target) {
-                toast.warning(tPages('dossier.importPlacement.tabLimit', { name: plan.name, max: MAX_TABS }));
-                continue;
               }
               await addTabMembers(target.id, plan.memberIds);
               plan.memberIds.forEach((id) => placed.add(id));

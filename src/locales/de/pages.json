@@ -244,8 +244,7 @@
       "success": "{{count}} Element(e) importiert",
       "attached": "{{events}} Ereignis(se) zu {{count}} vorhandenen Element(en) hinzugefügt",
       "error": "Import fehlgeschlagen",
-      "mediaResult": "{{ok}} Medien angehängt, {{fail}} fehlgeschlagen",
-      "tabLimit": "Höchstens {{max}} Tabs: „{{name}}“ kommt in den offenen Tab"
+      "mediaResult": "{{ok}} Medien angehängt, {{fail}} fehlgeschlagen"
     },
     "layout": {
       "title": "Layout-Algorithmen",

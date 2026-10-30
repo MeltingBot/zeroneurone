@@ -10,7 +10,7 @@ export { useTagSetStore } from './tagSetStore';
 export { useCustomIconStore } from './customIconStore';
 export { useSyncStore } from './syncStore';
 export { useReportStore } from './reportStore';
-export { useTabStore, MAX_TABS } from './tabStore';
+export { useTabStore } from './tabStore';
 export { useQueryStore } from './queryStore';
 export { useJsonMappingStore } from './jsonMappingStore';
 export { useClipboardStore } from './clipboardStore';

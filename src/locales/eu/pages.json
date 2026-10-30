@@ -244,8 +244,7 @@
       "success": "{{count}} elementu inportatuta",
       "attached": "{{events}} gertaera gehitu zaizkie dauden {{count}} elementuri",
       "error": "Inportazio errorea",
-      "mediaResult": "{{ok}} media erantsita, {{fail}} huts",
-      "tabLimit": "Gehienez {{max}} fitxa: «{{name}}» fitxa irekira doa"
+      "mediaResult": "{{ok}} media erantsita, {{fail}} huts"
     },
     "layout": {
       "title": "Antolamendu algoritmoak",

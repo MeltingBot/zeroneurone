@@ -1,5 +1,49 @@
 # Changelog
 
+## 2.86.5
+
+### Sécurité et données
+
+- **DOMPurify 3.4.17** — corrige une faille critique de la bibliothèque qui
+  nettoie le HTML des rapports et des notes.
+- **Dossiers chiffrés** — une modification impossible à déchiffrer n'est
+  plus effacée à la fermeture du dossier. Un message prévient à
+  l'ouverture ; Stockage > Maintenance indique la part illisible et permet
+  de la supprimer volontairement (jamais quand rien n'est lisible : clé
+  probablement incorrecte). Ouvrir une base chiffrée sans sa clé ne bloque
+  plus le chargement.
+- **Collaboration chiffrée** — une clé invalide ferme la connexion avec une
+  erreur, au lieu d'attendre sans fin ; rien ne part jamais en clair.
+- **Import PredicaGraph** — les photos de profil distantes ne sont plus
+  téléchargées automatiquement : leur adresse est gardée dans la propriété
+  lien `image_url`.
+- **Archives ZIP** — la décompression s'arrête dès qu'un fichier dépasse sa
+  taille maximale (import, aperçu de placement, restauration de sauvegarde).
+
+### Corrections
+
+- **« Voir » sur un doublon** — passe par tous les éléments du même nom,
+  celui de départ compris, y compris un élément placé dans un groupe.
+- **Éléments dans un groupe** — centrés à leur vraie position depuis la
+  recherche (Ctrl+K), les références des rapports, l'analyse et les
+  requêtes.
+- **Onglets** — la barre défile (molette, flèches) quand elle déborde,
+  l'onglet ouvert reste visible et une liste sous « Tous » donne accès
+  direct à chaque onglet ; le bouton « + » n'est plus repoussé hors écran.
+  Le nombre d'onglets n'est plus limité à 10, y compris à l'import d'une
+  archive.
+- **Analyse** — « Plus connectés » liste bien tous les éléments reliés (la
+  liste s'arrêtait encore à 10).
+- **Requêtes** — une propriété date saisie « AAAA-MM-JJ » correspond au bon
+  jour quel que soit le fuseau horaire.
+- **Saisie** — un champ d'événement ou de propriété en cours de saisie
+  n'est plus réinitialisé quand l'élément change ailleurs (collaboration).
+- **Localisation** — l'altitude seule est enregistrée ; une coordonnée à 0
+  (équateur, méridien de Greenwich) n'est plus ignorée.
+- **Toasts** — Échap ne les ferme plus en même temps qu'une fenêtre.
+- **Langue** — un navigateur en ukrainien ouvre l'interface en ukrainien ;
+  « Exporter en CSV » de la carte traduit dans toutes les langues.
+
 ## 2.86.4
 
 ### Suggestions de liens

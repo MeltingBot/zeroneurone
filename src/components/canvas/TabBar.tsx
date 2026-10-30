@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 import { DropdownPortal } from '../common';
-import { useTabStore, useDossierStore, useHistoryStore, MAX_TABS } from '../../stores';
+import { useTabStore, useDossierStore, useHistoryStore } from '../../stores';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { useProgressStore } from '../../stores/progressStore';
 import type { TabId, DossierId } from '../../types';
@@ -128,7 +128,6 @@ export function TabBar({ dossierId }: TabBarProps) {
   };
 
   const handleCreate = async () => {
-    if (tabs.length >= MAX_TABS) return;
     const isFirst = tabs.length === 0;
     const name = isFirst
       ? t('dossier.tabs.initialName')
@@ -359,16 +358,14 @@ export function TabBar({ dossierId }: TabBarProps) {
           </button>
         )}
 
-        {/* Add tab button (hidden at max) */}
-        {tabs.length < MAX_TABS && (
-          <button
-            onClick={handleCreate}
-            className="flex items-center justify-center w-6 h-6 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary transition-colors shrink-0"
-            title={t('dossier.tabs.new')}
-          >
-            <Plus size={14} />
-          </button>
-        )}
+        {/* Add tab button */}
+        <button
+          onClick={handleCreate}
+          className="flex items-center justify-center w-6 h-6 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary transition-colors shrink-0"
+          title={t('dossier.tabs.new')}
+        >
+          <Plus size={14} />
+        </button>
       </div>
 
       {/* Context menu */}

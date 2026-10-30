@@ -132,9 +132,6 @@ function syncTabToYDoc(tabId: string, fields: Record<string, unknown>): Promise<
   });
 }
 
-/** Most canvas tabs a dossier can hold. */
-export const MAX_TABS = 10;
-
 type Viewport = { x: number; y: number; zoom: number };
 
 /**

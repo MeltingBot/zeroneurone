@@ -33,7 +33,7 @@ Quand l'archive a des onglets, la fusion propose de choisir lesquels importer (t
 
 - **Hors onglet** : les éléments rangés dans aucun onglet de l'archive.
 - **Éléments reliés** (coché par défaut) : ajoute les éléments liés directement aux éléments retenus, même rangés dans un onglet non choisi (une victime, un objet). Ils restent hors onglet et apparaissent en fantôme dans l'onglet recréé.
-- **Recréer les onglets** (par défaut) : chaque onglet choisi rejoint l'onglet **du même nom** du dossier, ou en crée un nouveau (10 onglets au plus ; au-delà, ses éléments vont dans l'onglet ouvert). Les éléments hors onglet vont dans l'onglet ouvert.
+- **Recréer les onglets** (par défaut) : chaque onglet choisi rejoint l'onglet **du même nom** du dossier, ou en crée un nouveau. Les éléments hors onglet vont dans l'onglet ouvert.
 - **Tout dans l'onglet ouvert** : les onglets de l'archive servent seulement à choisir ; tout ce qui est importé va dans l'onglet ouvert.
 - Seuls les liens entre éléments importés et les pièces jointes de ces éléments sont repris.
 - **Rapport** (coché par défaut, affiché si l'archive en a un) : ajoute ses sections ; décochez-le pour un import partiel, ses références vers des éléments non importés ne mèneraient nulle part.

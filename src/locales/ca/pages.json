@@ -244,8 +244,7 @@
       "success": "{{count}} element(s) importat(s)",
       "attached": "{{events}} esdeveniment(s) afegit(s) a {{count}} element(s) existent(s)",
       "error": "Error d'importació",
-      "mediaResult": "{{ok}} mèdia adjuntats, {{fail}} fallits",
-      "tabLimit": "Màxim {{max}} pestanyes: «{{name}}» va a la pestanya oberta"
+      "mediaResult": "{{ok}} mèdia adjuntats, {{fail}} fallits"
     },
     "layout": {
       "title": "Algoritmes de disposició",

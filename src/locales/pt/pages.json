@@ -244,8 +244,7 @@
       "success": "{{count}} elemento(s) importado(s)",
       "attached": "{{events}} evento(s) adicionado(s) a {{count}} elemento(s) existente(s)",
       "error": "Importação falhou",
-      "mediaResult": "{{ok}} média(s) anexada(s), {{fail}} falha(s)",
-      "tabLimit": "Máximo de {{max}} separadores: «{{name}}» vai para o separador aberto"
+      "mediaResult": "{{ok}} média(s) anexada(s), {{fail}} falha(s)"
     },
     "layout": {
       "title": "Algoritmos de disposição",

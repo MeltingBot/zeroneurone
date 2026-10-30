@@ -8,7 +8,8 @@ import { buildLargeDossierJson } from './fixtures/large-dossier';
 /**
  * "Show" on a duplicate name cycles through every element of that name, one
  * nested in a group included (its position is relative to the group), and a
- * tab strip wider than the window stays reachable (scroll arrows, list).
+ * tab strip wider than the window stays reachable (scroll arrows, list), with
+ * no ceiling on the number of tabs.
  * Dev server only: reaches the stores through Vite's module URLs.
  */
 
@@ -83,7 +84,7 @@ test('every tab stays reachable when the strip overflows', async ({ page }) => {
     const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
     const tabs = (await import('/src/stores/tabStore.ts')).useTabStore;
     const names: string[] = [];
-    for (let i = 1; i <= 9; i++) {
+    for (let i = 1; i <= 12; i++) {
       const name = `Onglet au nom vraiment très long ${i}`;
       await tabs.getState().createTab(d.currentDossier!.id, name);
       names.push(name);
@@ -92,7 +93,7 @@ test('every tab stays reachable when the strip overflows', async ({ page }) => {
   });
   await page.waitForTimeout(500);
 
-  const last = page.locator('[data-tab-id]', { hasText: names[8] });
+  const last = page.locator('[data-tab-id]').filter({ hasText: new RegExp(`^${names[11]}$`) });
   const next = page.getByRole('button', { name: 'Next tabs' });
   await expect(next).toBeVisible();
   await expect(page.getByTitle('New tab')).toBeInViewport();
@@ -108,11 +109,19 @@ test('every tab stays reachable when the strip overflows', async ({ page }) => {
   await expect(last).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Previous tabs' })).toBeVisible();
 
+  // No ceiling on the number of tabs: + still adds one past the old limit of 10
+  await page.getByTitle('New tab').click();
+  // The new tab opens in rename mode once created
+  await expect(page.locator('[data-tab-id] input')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.evaluate(async () =>
+    (await import('/src/stores/tabStore.ts')).useTabStore.getState().tabs.length)).toBe(13);
+
   // The list opens any tab directly, and the strip follows it
   await page.getByRole('button', { name: 'All tabs' }).click();
-  await page.getByRole('menuitem', { name: names[0] }).click();
+  await page.getByRole('menuitem', { name: names[0], exact: true }).click();
   await page.waitForTimeout(800);
-  const first = page.locator('[data-tab-id]', { hasText: names[0] });
+  const first = page.locator('[data-tab-id]').filter({ hasText: new RegExp(`^${names[0]}$`) });
   await expect(first).toBeInViewport();
   const activeName = await page.evaluate(async () => {
     const t = (await import('/src/stores/tabStore.ts')).useTabStore.getState();
