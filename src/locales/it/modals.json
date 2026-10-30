@@ -101,7 +101,11 @@
       "fields": "Proprietà da importare",
       "all": "Tutte",
       "none": "Nessuna"
-    }
+    },
+    "encryptedPrompt": "File cifrato: inserisci la password per importarlo.",
+    "decrypting": "Decifratura…",
+    "wrongPassword": "Password errata",
+    "invalidEncryptedFile": "File cifrato non valido o danneggiato"
   },
   "export": {
     "progress": {
@@ -448,6 +452,15 @@
       "drop": "Elimina illeggibili",
       "dropConfirm": "Cancellare definitivamente le modifiche illeggibili ({{count}})? Il resto del contenuto è conservato.",
       "dropped": "Illeggibili eliminate: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Elimina tutti i dossier",
+      "description": "Elimina tutti i dossier, elementi, collegamenti, file e cronologia. I set di tag e la cifratura sono conservati. Irreversibile.",
+      "button": "Elimina tutto",
+      "confirm": "Eliminare TUTTI i dossier e i loro dati?\n\nQuesta azione è irreversibile.",
+      "confirmAgain": "Ultima conferma: tutti i dati andranno persi. Continuare?",
+      "success": "Tutti i dossier sono stati eliminati.",
+      "error": "Errore durante l'eliminazione"
     }
   },
   "localStorage": {

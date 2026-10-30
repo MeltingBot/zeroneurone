@@ -1151,7 +1151,7 @@ export function MapView() {
       ? `<div class="map-offmap-badge" title="${escapeHtml(t('map.offMapLinked', { count: offMap.count }))}" style="width:fit-content;margin:2px auto 0;background:var(--color-bg-primary, #ffffff);border:1px dashed ${offMap.expanded ? 'var(--color-accent, #e07a5f)' : 'var(--color-text-tertiary, #a8a29e)'};border-radius:3px;padding:0 4px;font-size:9px;font-weight:600;line-height:13px;color:var(--color-text-secondary, #6b6560);cursor:pointer;">+${offMap.count}</div>`
       : '';
     const commentBadge = showCommentBadges && unresolvedCommentCount && unresolvedCommentCount > 0
-      ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background-color:#f59e0b;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3);z-index:10;">${unresolvedCommentCount}</div>`
+      ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background-color:var(--color-warning, #c9952c);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3);z-index:10;">${unresolvedCommentCount}</div>`
       : '';
 
     if (thumbnail) {
@@ -2638,7 +2638,7 @@ export function MapView() {
         // Add a temporary marker
         const el = document.createElement('div');
         el.className = 'place-search-marker';
-        el.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#2563eb;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);';
+        el.style.cssText = 'width:12px;height:12px;border-radius:50%;background:var(--color-accent, #e07a5f);border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);';
         const marker = new maplibregl.Marker({ element: el })
           .setLngLat([parseFloat(lon), parseFloat(lat)])
           .addTo(map);

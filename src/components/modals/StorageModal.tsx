@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../utils/formatBytes';
 import {
   HardDrive,
   Database,
@@ -38,14 +39,6 @@ interface StorageModalProps {
 }
 
 type TabId = 'storage' | 'backup' | 'maintenance';
-
-function formatBytes(bytes: number, locale: string): string {
-  if (bytes === 0) return locale === 'fr' ? '0 o' : '0 B';
-  const k = 1024;
-  const sizes = locale === 'fr' ? ['o', 'Ko', 'Mo', 'Go'] : ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
 
 export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalProps) {
   const { t, i18n } = useTranslation('modals');

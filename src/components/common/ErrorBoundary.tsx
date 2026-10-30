@@ -2,6 +2,10 @@ import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from './Button';
 import { appPath } from '../../utils/basePath';
+import i18n from '../../i18n';
+
+// A class component: no hook, the i18n instance is read directly
+const t = (key: string, options?: Record<string, unknown>) => i18n.t(`common:errorBoundary.${key}`, options);
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -74,7 +78,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <div className="flex items-center gap-3 text-text-secondary">
               <AlertTriangle size={16} className="text-error shrink-0" />
               <span className="text-sm">
-                {scope ? `Erreur ${scope.toLowerCase()}` : 'Erreur'}
+                {scope ? t('titleIn', { scope }) : t('title')}
               </span>
               <Button
                 variant="ghost"
@@ -83,7 +87,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 className="ml-2"
               >
                 <RefreshCw size={14} className="mr-1" />
-                Réessayer
+                {t('retry')}
               </Button>
             </div>
           </div>
@@ -98,18 +102,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </div>
 
             <h2 className="text-sm font-semibold text-text-primary mb-1">
-              {scope ? `Erreur dans ${scope}` : 'Une erreur est survenue'}
+              {scope ? t('titleIn', { scope }) : t('title')}
             </h2>
 
             <p className="text-xs text-text-secondary mb-4">
-              Le composant a rencontré un problème et ne peut pas s'afficher.
+              {t('message')}
             </p>
 
             {/* Error details in development */}
             {import.meta.env.DEV && (
               <details className="w-full mb-4 text-left">
                 <summary className="text-xs text-text-tertiary cursor-pointer hover:text-text-secondary">
-                  Détails techniques
+                  {t('details')}
                 </summary>
                 <pre className="mt-2 p-2 bg-bg-tertiary rounded text-xs text-text-secondary overflow-auto max-h-32">
                   {errorMessage}
@@ -124,7 +128,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 onClick={this.handleReload}
               >
                 <RefreshCw size={14} className="mr-1.5" />
-                Réessayer
+                {t('retry')}
               </Button>
 
               <Button
@@ -132,7 +136,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 size="sm"
                 onClick={this.handleFullReload}
               >
-                Recharger la page
+                {t('reload')}
               </Button>
 
               {showHomeButton && (
@@ -142,7 +146,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   onClick={this.handleGoHome}
                 >
                   <Home size={14} className="mr-1.5" />
-                  Accueil
+                  {t('home')}
                 </Button>
               )}
             </div>

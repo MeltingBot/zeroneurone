@@ -450,11 +450,6 @@ button {
    UTILITY CLASSES
    ============================================ */
 
-/* Warm card background */
-.bg-warm-card {
-  background: linear-gradient(to bottom right, var(--color-bg-primary), var(--color-bg-secondary));
-}
-
 /* Subtle texture overlay */
 .texture-paper {
   position: relative;

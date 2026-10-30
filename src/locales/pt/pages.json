@@ -308,7 +308,9 @@
       "pasted": "{{count}} elemento(s) colado(s)",
       "saved": "Guardado",
       "exportSuccess": "Exportação concluída",
-      "exportError": "Erro durante a exportação"
+      "exportError": "Erro durante a exportação",
+      "assetTooLargeToShare": "Ficheiro demasiado grande para sincronizar ({{size}}, máximo {{max}}). Continua disponível localmente, mas não é partilhado.",
+      "assetLargeToShare": "Ficheiro grande ({{size}}): a sincronização pode ser lenta."
     },
     "notFound": "Investigação não encontrada",
     "header": {
@@ -320,7 +322,8 @@
       "activeFilters": "Filtros ativos",
       "shortcuts": "Atalhos de teclado",
       "documentation": "Documentação",
-      "supportKofi": "Apoiar no Ko-fi"
+      "supportKofi": "Apoiar no Ko-fi",
+      "import": "Importar"
     },
     "collab": {
       "leaveTitle": "Abandonar a sessão colaborativa",
@@ -364,7 +367,8 @@
     "mermaidCopyFailed": "Não foi possível copiar para a área de transferência",
     "dotCopied": "Seleção copiada como DOT",
     "closedBanner": "Encerrado em {{date}} — só de leitura",
-    "undecryptableUpdates": "Alterações ilegíveis: {{count}}. São mantidas; ver Armazenamento > Manutenção."
+    "undecryptableUpdates": "Alterações ilegíveis: {{count}}. São mantidas; ver Armazenamento > Manutenção.",
+    "popupBlocked": "Janela bloqueada pelo navegador"
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",
@@ -431,7 +435,10 @@
     "ofmDark": "Escuro",
     "ofmFiord": "Alto contraste",
     "timeZoneHint": "Fuso horário",
-    "exportCSV": "Exportar para CSV"
+    "exportCSV": "Exportar para CSV",
+    "zonePolygon": "Polígono",
+    "zoneCircle": "Círculo",
+    "zoneSquare": "Quadrado"
   },
   "timeline": {
     "noEvents": "Nenhum evento datado",

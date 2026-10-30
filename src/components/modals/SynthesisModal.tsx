@@ -244,7 +244,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
               value={options.title}
               onChange={(e) => updateOption('title', e.target.value)}
               placeholder={currentDossier?.name}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded-lg bg-bg-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full px-3 py-2 text-sm border border-border-default rounded bg-bg-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
               disabled={isGenerating}
             />
           </div>
@@ -411,7 +411,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
             <button
               onClick={() => handleGenerate('html', 'download')}
               disabled={isGenerating}
-              className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+              className="flex flex-col items-center gap-1 p-3 rounded border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
             >
               <Download size={20} className="text-text-secondary" />
               <span className="text-xs font-medium text-text-primary">HTML</span>
@@ -419,7 +419,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
             <button
               onClick={() => handleGenerate('markdown', 'download')}
               disabled={isGenerating}
-              className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+              className="flex flex-col items-center gap-1 p-3 rounded border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
             >
               <FileCode size={20} className="text-text-secondary" />
               <span className="text-xs font-medium text-text-primary">Markdown</span>
@@ -427,7 +427,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
             <button
               onClick={() => handleGenerate('extended-json', 'download')}
               disabled={isGenerating}
-              className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+              className="flex flex-col items-center gap-1 p-3 rounded border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
               title={t('synthesis.jsonTooltip')}
             >
               <Braces size={20} className="text-text-secondary" />
@@ -436,7 +436,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
             <button
               onClick={() => handleGenerate('html', 'print')}
               disabled={isGenerating}
-              className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+              className="flex flex-col items-center gap-1 p-3 rounded border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
             >
               <Printer size={20} className="text-text-secondary" />
               <span className="text-xs font-medium text-text-primary">{t('synthesis.print')}</span>

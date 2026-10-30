@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
+  placeholder: string;
   minRows?: number;
   className?: string;
   /** Called when user starts editing */
@@ -17,7 +17,7 @@ interface MarkdownEditorProps {
 export function MarkdownEditor({
   value,
   onChange,
-  placeholder = 'Markdown: **gras**, *italique*, [lien](url)...',
+  placeholder,
   minRows = 4,
   className = '',
   onFocus,

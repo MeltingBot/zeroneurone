@@ -756,26 +756,6 @@ class LayoutService {
   }
 
   /**
-   * Get layout display name
-   */
-  getLayoutName(layoutType: LayoutType): string {
-    switch (layoutType) {
-      case 'force':
-        return 'Force (clusters)';
-      case 'clusters':
-        return 'Clusters (îlots)';
-      case 'circular':
-        return 'Circulaire';
-      case 'grid':
-        return 'Grille';
-      case 'random':
-        return 'Dispersion';
-      default:
-        return layoutType;
-    }
-  }
-
-  /**
    * Get all available layout types
    */
   getAvailableLayouts(): LayoutType[] {

@@ -1553,10 +1553,10 @@ export function TimelineView() {
         >
           {/* Today marker */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 will-change-transform"
+            className="absolute top-0 bottom-0 w-0.5 bg-error z-20 will-change-transform"
             style={{ transform: `translate3d(${todayX}px, 0, 0)` }}
           >
-            <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-red-500 rounded-full" />
+            <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-error rounded-full" />
           </div>
 
           {/* Items - virtualized, only renders visible items */}
@@ -1640,7 +1640,7 @@ export function TimelineView() {
                   {/* Comment indicator */}
                   {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                     <div
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-warning text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
                       title={t('timeline.unresolvedComments', { count: item.unresolvedCommentCount })}
                     >
                       {item.unresolvedCommentCount}
@@ -1685,7 +1685,7 @@ export function TimelineView() {
                 {/* Comment indicator */}
                 {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                   <div
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-warning text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
                     title={t('timeline.unresolvedComments', { count: item.unresolvedCommentCount })}
                   >
                     {item.unresolvedCommentCount}
@@ -1763,28 +1763,15 @@ export function TimelineView() {
               style={{ overflow: 'visible' }}
             >
               <defs>
-                {/* Gradient definitions for different time gaps */}
-                <linearGradient id="causal-gradient-short" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.7" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.5" />
-                </linearGradient>
-                <linearGradient id="causal-gradient-medium" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.7" />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.5" />
-                </linearGradient>
-                <linearGradient id="causal-gradient-long" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.4" />
-                </linearGradient>
                 {/* Arrow markers for each color */}
                 <marker id="causal-arrow-short" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#10b981" fillOpacity="0.8" />
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" style={{ fill: CAUSAL_COLORS.short }} fillOpacity="0.8" />
                 </marker>
                 <marker id="causal-arrow-medium" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#f59e0b" fillOpacity="0.8" />
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" style={{ fill: CAUSAL_COLORS.medium }} fillOpacity="0.8" />
                 </marker>
                 <marker id="causal-arrow-long" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#ef4444" fillOpacity="0.7" />
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" style={{ fill: CAUSAL_COLORS.long }} fillOpacity="0.7" />
                 </marker>
                 {/* Glow filter */}
                 <filter id="causal-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -1880,7 +1867,7 @@ export function TimelineView() {
                     <path
                       d={path}
                       fill="none"
-                      stroke={`url(#causal-gradient-${colorCategory})`}
+                      style={{ stroke: CAUSAL_COLORS[colorCategory] }}
                       strokeWidth="4"
                       strokeOpacity="0.2"
                       filter="url(#causal-glow)"
@@ -1889,7 +1876,8 @@ export function TimelineView() {
                     <path
                       d={path}
                       fill="none"
-                      stroke={`url(#causal-gradient-${colorCategory})`}
+                      style={{ stroke: CAUSAL_COLORS[colorCategory] }}
+                      strokeOpacity="0.6"
                       strokeWidth="2"
                       strokeDasharray="6 4"
                       markerEnd={`url(#causal-arrow-${colorCategory})`}
@@ -1906,9 +1894,8 @@ export function TimelineView() {
                         width="28"
                         height="16"
                         rx="3"
-                        style={{ fill: 'var(--color-bg-primary)' }}
+                        style={{ fill: 'var(--color-bg-primary)', stroke: CAUSAL_COLORS[colorCategory] }}
                         fillOpacity="0.9"
-                        stroke={colorCategory === 'short' ? '#10b981' : colorCategory === 'medium' ? '#f59e0b' : '#ef4444'}
                         strokeWidth="1"
                         strokeOpacity="0.5"
                       />
@@ -1918,8 +1905,7 @@ export function TimelineView() {
                         textAnchor="middle"
                         fontSize="10"
                         fontWeight="500"
-                        fill={colorCategory === 'short' ? '#059669' : colorCategory === 'medium' ? '#d97706' : '#dc2626'}
-                        style={{ pointerEvents: 'none' }}
+                        style={{ fill: CAUSAL_COLORS[colorCategory], pointerEvents: 'none' }}
                       >
                         {durationLabel}
                       </text>
@@ -2040,12 +2026,21 @@ function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
   emitExport('timeline-csv');
 }
 
+/** Gap between two causally linked events: short, medium, long */
+const CAUSAL_COLORS = {
+  short: 'var(--color-success)',
+  medium: 'var(--color-warning)',
+  long: 'var(--color-error)',
+} as const;
+
+const accentShade = (percent: number) => `color-mix(in srgb, var(--color-accent) ${percent}%, transparent)`;
+
 function getDensityColor(count: number, max: number): string {
-  if (count === 0) return 'rgba(37, 99, 235, 0.04)';
+  if (count === 0) return accentShade(4);
   const ratio = count / max;
-  if (ratio < 0.2) return 'rgba(37, 99, 235, 0.15)';
-  if (ratio < 0.4) return 'rgba(37, 99, 235, 0.3)';
-  if (ratio < 0.6) return 'rgba(37, 99, 235, 0.5)';
-  if (ratio < 0.8) return 'rgba(37, 99, 235, 0.7)';
-  return 'rgba(37, 99, 235, 0.9)';
+  if (ratio < 0.2) return accentShade(15);
+  if (ratio < 0.4) return accentShade(30);
+  if (ratio < 0.6) return accentShade(50);
+  if (ratio < 0.8) return accentShade(70);
+  return accentShade(90);
 }

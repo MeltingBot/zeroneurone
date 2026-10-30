@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ElementVisual, ElementShape, FontSize } from '../../types';
 import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
 
@@ -8,13 +9,7 @@ interface VisualEditorProps {
   hideShape?: boolean;
 }
 
-const SHAPES: { value: ElementShape; label: string }[] = [
-  { value: 'circle', label: 'Cercle' },
-  { value: 'square', label: 'Carré' },
-  { value: 'diamond', label: 'Losange' },
-  { value: 'rectangle', label: 'Rectangle' },
-  { value: 'hexagon', label: 'Hexagone' },
-];
+const SHAPES: ElementShape[] = ['circle', 'square', 'diamond', 'rectangle', 'hexagon'];
 
 const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xs', label: 'XS' },
@@ -25,13 +20,10 @@ const FONT_SIZES: { value: FontSize; label: string }[] = [
 ];
 
 const BORDER_WIDTHS = [1, 2, 3, 4, 5];
-const BORDER_STYLES: { value: 'solid' | 'dashed' | 'dotted'; label: string }[] = [
-  { value: 'solid', label: 'Continu' },
-  { value: 'dashed', label: 'Tirets' },
-  { value: 'dotted', label: 'Pointillé' },
-];
+const BORDER_STYLES = ['solid', 'dashed', 'dotted'] as const;
 
 export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps) {
+  const { t } = useTranslation('panels');
   const handleColorChange = useCallback(
     (color: string) => {
       onChange({ color });
@@ -79,7 +71,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
     <div className="space-y-4">
       {/* Color */}
       <div className="space-y-1.5">
-        <label className="text-xs text-text-tertiary">Couleur de fond</label>
+        <label className="text-xs text-text-tertiary">{t('detail.appearance.backgroundColor')}</label>
         <div className="flex flex-wrap gap-1.5">
           {/* White option */}
           <button
@@ -90,7 +82,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
                 : 'border-border-default'
             }`}
             style={{ backgroundColor: '#ffffff' }}
-            aria-label="Blanc"
+            aria-label={t('detail.appearance.white')}
           />
           {/* Color palette */}
           {DEFAULT_COLORS.map((color) => (
@@ -101,7 +93,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
                 visual.color === color ? 'border-accent' : 'border-transparent'
               }`}
               style={{ backgroundColor: color }}
-              aria-label={`Couleur ${color}`}
+              aria-label={`${t('detail.appearance.color')} ${color}`}
             />
           ))}
           {/* Custom color input */}
@@ -111,7 +103,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
               value={visual.color}
               onChange={(e) => handleColorChange(e.target.value)}
               className="w-6 h-6 rounded cursor-pointer border-0 p-0"
-              aria-label="Couleur personnalisée"
+              aria-label={t('detail.appearance.customColor')}
             />
           </div>
         </div>
@@ -119,7 +111,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
 
       {/* Border color */}
       <div className="space-y-1.5">
-        <label className="text-xs text-text-tertiary">Couleur de bordure</label>
+        <label className="text-xs text-text-tertiary">{t('detail.appearance.borderColor')}</label>
         <div className="flex flex-wrap gap-1.5">
           {/* Default gray */}
           <button
@@ -130,7 +122,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
                 : 'border-border-default'
             }`}
             style={{ backgroundColor: '#374151' }}
-            aria-label="Gris par défaut"
+            aria-label={t('detail.appearance.defaultGray')}
           />
           {/* Color palette */}
           {DEFAULT_COLORS.map((color) => (
@@ -143,7 +135,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
                   : 'border-transparent'
               }`}
               style={{ backgroundColor: color }}
-              aria-label={`Bordure ${color}`}
+              aria-label={`${t('detail.appearance.borderColor')} ${color}`}
             />
           ))}
           {/* Custom color input */}
@@ -153,7 +145,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
               value={visual.borderColor}
               onChange={(e) => handleBorderColorChange(e.target.value)}
               className="w-6 h-6 rounded cursor-pointer border-0 p-0"
-              aria-label="Bordure personnalisée"
+              aria-label={t('detail.appearance.customBorder')}
             />
           </div>
         </div>
@@ -161,19 +153,19 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
 
       {/* Border style */}
       <div className="space-y-1.5">
-        <label className="text-xs text-text-tertiary">Style de bordure</label>
+        <label className="text-xs text-text-tertiary">{t('detail.appearance.borderStyle')}</label>
         <div className="flex gap-2">
           {BORDER_STYLES.map((style) => (
             <button
-              key={style.value}
-              onClick={() => handleBorderStyleChange(style.value)}
+              key={style}
+              onClick={() => handleBorderStyleChange(style)}
               className={`flex-1 px-2 py-1.5 text-xs rounded border ${
-                (visual.borderStyle ?? 'solid') === style.value
+                (visual.borderStyle ?? 'solid') === style
                   ? 'bg-accent text-white border-accent'
                   : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
               }`}
             >
-              {style.label}
+              {t(`common:linkStyles.${style}`)}
             </button>
           ))}
         </div>
@@ -182,7 +174,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
       {/* Border width */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs text-text-tertiary">Épaisseur</label>
+          <label className="text-xs text-text-tertiary">{t('detail.appearance.thickness')}</label>
           <span className="text-xs text-text-tertiary">{visual.borderWidth ?? 2}px</span>
         </div>
         <div className="flex gap-1">
@@ -212,7 +204,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
       {/* Font size */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs text-text-tertiary">Taille du texte</label>
+          <label className="text-xs text-text-tertiary">{t('detail.appearance.textSize')}</label>
           <span className="text-xs text-text-tertiary">{FONT_SIZE_PX[visual.fontSize || 'sm']}px</span>
         </div>
         <div className="flex gap-1">
@@ -236,15 +228,15 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
       {/* Shape */}
       {!hideShape && (
       <div className="space-y-1.5">
-        <label className="text-xs text-text-tertiary">Forme</label>
+        <label className="text-xs text-text-tertiary">{t('detail.appearance.shape')}</label>
         <select
           value={visual.shape}
           onChange={(e) => handleShapeChange(e.target.value as ElementShape)}
           className="w-full px-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
         >
           {SHAPES.map((shape) => (
-            <option key={shape.value} value={shape.value}>
-              {shape.label}
+            <option key={shape} value={shape}>
+              {t(`common:shapes.${shape}`)}
             </option>
           ))}
         </select>

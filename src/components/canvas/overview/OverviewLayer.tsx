@@ -124,12 +124,12 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
   // Accent colour, read once per theme after paint: getComputedStyle forces a
   // style recalculation of the whole page, which costs most of a second while
   // React Flow is unmounting thousands of nodes (entering the overview)
-  const themeRef = useRef<OverviewTheme>({ accent: '#2563eb' });
+  const themeRef = useRef<OverviewTheme>({ accent: '#e07a5f' });
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     themeRef.current = {
-      accent: getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb',
+      accent: getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#e07a5f',
       mode: themeMode,
     };
     rendererRef.current?.setScene(visibleRef.current ? lastSceneRef.current : null, themeRef.current);

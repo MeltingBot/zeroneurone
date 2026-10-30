@@ -68,12 +68,12 @@ function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => 
     try {
       const parsed = JSON.parse(text);
       if (!Array.isArray(parsed) || parsed.length < 3) {
-        setError(tPages('map.geoJsonMinVertices') || 'Min 3 vertices');
+        setError(tPages('map.geoJsonMinVertices'));
         return;
       }
       for (const p of parsed) {
         if (!Array.isArray(p) || p.length !== 2 || typeof p[0] !== 'number' || typeof p[1] !== 'number') {
-          setError(tPages('map.geoJsonInvalidCoord') || 'Invalid coordinate: [lng, lat]');
+          setError(tPages('map.geoJsonInvalidCoord'));
           return;
         }
       }
@@ -90,7 +90,7 @@ function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => 
       });
       onClose();
     } catch {
-      setError(tPages('map.geoJsonParseError') || 'Invalid JSON');
+      setError(tPages('map.geoJsonParseError'));
     }
   };
 
@@ -109,7 +109,7 @@ function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => 
           className="flex-1 px-3 py-1.5 text-xs bg-accent text-white rounded hover:bg-accent/90 transition-colors flex items-center justify-center gap-1.5"
         >
           <Check size={12} />
-          {tPages('map.geoJsonSave') || 'Save'}
+          {tPages('map.geoJsonSave')}
         </button>
         <button
           onClick={onClose}
@@ -1294,7 +1294,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
         title={t('detail.sections.location')}
         icon={<MapPin size={12} />}
         badge={hasGeo ? (
-          <span className="text-[10px] bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
+          <span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded-full">
             Geo
           </span>
         ) : null}

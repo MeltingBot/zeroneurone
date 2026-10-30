@@ -647,10 +647,10 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
 
           {/* Error message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+            <div className="p-3 rounded bg-error/10 border border-error/30">
               <div className="flex items-center gap-2">
-                <AlertCircle size={16} className="text-red-600" />
-                <span className="text-sm text-red-800">{error}</span>
+                <AlertCircle size={16} className="text-error" />
+                <span className="text-sm text-error">{error}</span>
               </div>
             </div>
           )}

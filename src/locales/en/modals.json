@@ -101,7 +101,11 @@
       "fields": "Properties to import",
       "all": "All",
       "none": "None"
-    }
+    },
+    "encryptedPrompt": "Encrypted file: enter its password to import it.",
+    "decrypting": "Decrypting…",
+    "wrongPassword": "Wrong password",
+    "invalidEncryptedFile": "Invalid or damaged encrypted file"
   },
   "export": {
     "progress": {

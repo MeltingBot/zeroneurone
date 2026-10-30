@@ -172,7 +172,17 @@
       "locationOptional": "Lokalizacja (opcjonalnie)",
       "clearLocation": "Wyczyść",
       "pickOnMap": "Mapa",
-      "extractToElement": "Wyodrębnij jako element"
+      "extractToElement": "Wyodrębnij jako element",
+      "hasZone": "Ma strefę",
+      "zoneOptional": "Strefa (opcjonalnie)",
+      "zoneInfo": "Punkty: {{points}}, ~{{area}} km²",
+      "inheritZone": "Dziedzicz strefę",
+      "drawZone": "Rysuj",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Zastosuj",
+      "geoJsonParseError": "Nieprawidłowy JSON",
+      "geoJsonInvalidType": "Oczekiwany typ: Polygon",
+      "geoJsonMinPoints": "Minimum 3 punkty"
     },
     "location": {
       "title": "Lokalizacja",
@@ -188,7 +198,10 @@
       "saveLocation": "Zapisz",
       "noLocation": "Nie określono pozycji",
       "copyCoordinates": "Kopiuj współrzędne",
-      "coordinatesCopied": "Skopiowano współrzędne"
+      "coordinatesCopied": "Skopiowano współrzędne",
+      "altitude": "Wysokość",
+      "altUnit": "metry",
+      "extrude": "Wytłoczenie 3D"
     },
     "properties": {
       "title": "Właściwości",
@@ -238,7 +251,8 @@
       "savedToTag_one": "Zapisano {{count}} właściwość w tagu \"{{name}}\"",
       "savedToTag_other": "Zapisano {{count}} właściwości w tagu \"{{name}}\"",
       "savedToTag": "Zapisano {{count}} właściwości w tagu \"{{name}}\"",
-      "saveToTagError": "Nie udało się zapisać w tagu"
+      "saveToTagError": "Nie udało się zapisać w tagu",
+      "editChoices": "Edytuj opcje"
     },
     "appearance": {
       "title": "Wygląd",
@@ -252,7 +266,11 @@
       "thickness": "Grubość",
       "textSize": "Rozmiar tekstu",
       "positionLock": "Pozycja zablokowana",
-      "positionUnlocked": "Pozycja odblokowana"
+      "positionUnlocked": "Pozycja odblokowana",
+      "backgroundColor": "Kolor tła",
+      "white": "Biały",
+      "customBorder": "Niestandardowa ramka",
+      "borderStyle": "Styl ramki"
     },
     "files": {
       "title": "Pliki",
@@ -277,7 +295,9 @@
       "emlCc": "DW",
       "emlDate": "Data",
       "emlSubject": "Temat",
-      "emlAttachments": "Załączniki"
+      "emlAttachments": "Załączniki",
+      "extractForPreview": "Wyodrębnij tekst, aby zobaczyć podgląd",
+      "previewUnavailable": "Podgląd niedostępny"
     },
     "timestamps": {
       "createdAt": "Utworzono",
@@ -640,7 +660,10 @@
     "deleteConfirm": "Usunąć ten plik?",
     "usedBy": "Używany przez {{count}} elementów",
     "hideMediaOnNode": "Ukryj media na węźle",
-    "showMediaOnNode": "Pokaż media na węźle"
+    "showMediaOnNode": "Pokaż media na węźle",
+    "uploading": "Przesyłanie…",
+    "dropOrPaste": "Przeciągnij pliki lub wklej Ctrl+V",
+    "browse": "lub przeglądaj"
   },
   "history": {
     "title": "Historia",

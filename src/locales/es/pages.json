@@ -308,7 +308,9 @@
       "pasted": "{{count}} elemento(s) pegado(s)",
       "saved": "Guardado",
       "exportSuccess": "Exportación completada",
-      "exportError": "Error durante la exportación"
+      "exportError": "Error durante la exportación",
+      "assetTooLargeToShare": "Archivo demasiado grande para sincronizar ({{size}}, máximo {{max}}). Sigue disponible localmente pero no se comparte.",
+      "assetLargeToShare": "Archivo grande ({{size}}): la sincronización puede ser lenta."
     },
     "notFound": "Investigación no encontrada",
     "header": {
@@ -320,7 +322,8 @@
       "activeFilters": "Filtros activos",
       "shortcuts": "Atajos de teclado",
       "documentation": "Documentación",
-      "supportKofi": "Apoyar en Ko-fi"
+      "supportKofi": "Apoyar en Ko-fi",
+      "import": "Importar"
     },
     "collab": {
       "leaveTitle": "Abandonar la sesión colaborativa",
@@ -364,7 +367,8 @@
     "mermaidCopyFailed": "No se pudo copiar al portapapeles",
     "dotCopied": "Selección copiada como DOT",
     "closedBanner": "Cerrado el {{date}} — solo lectura",
-    "undecryptableUpdates": "Cambios ilegibles: {{count}}. Se conservan; ver Almacenamiento > Mantenimiento."
+    "undecryptableUpdates": "Cambios ilegibles: {{count}}. Se conservan; ver Almacenamiento > Mantenimiento.",
+    "popupBlocked": "Ventana emergente bloqueada por el navegador"
   },
   "map": {
     "noGeoElements": "Ningún elemento geolocalizado",
@@ -431,7 +435,10 @@
     "ofmDark": "Oscuro",
     "ofmFiord": "Alto contraste",
     "timeZoneHint": "Zona horaria",
-    "exportCSV": "Exportar a CSV"
+    "exportCSV": "Exportar a CSV",
+    "zonePolygon": "Polígono",
+    "zoneCircle": "Círculo",
+    "zoneSquare": "Cuadrado"
   },
   "timeline": {
     "noEvents": "Ningún evento fechado",

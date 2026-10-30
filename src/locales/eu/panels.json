@@ -172,7 +172,17 @@
       "locationOptional": "Kokapena (aukerakoa)",
       "clearLocation": "Garbitu",
       "pickOnMap": "Mapa",
-      "extractToElement": "Elementu gisa erauzi"
+      "extractToElement": "Elementu gisa erauzi",
+      "hasZone": "Eremua du",
+      "zoneOptional": "Eremua (aukerakoa)",
+      "zoneInfo": "{{points}} puntu, ~{{area}} km²",
+      "inheritZone": "Heredatu eremua",
+      "drawZone": "Marraztu",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Aplikatu",
+      "geoJsonParseError": "JSON baliogabea",
+      "geoJsonInvalidType": "Espero den mota: Polygon",
+      "geoJsonMinPoints": "Gutxienez 3 puntu"
     },
     "location": {
       "title": "Kokapena",
@@ -188,7 +198,10 @@
       "saveLocation": "Gorde",
       "noLocation": "Ez dago posiziorik definituta",
       "copyCoordinates": "Koordenatuak kopiatu",
-      "coordinatesCopied": "Koordenatuak kopiatu dira"
+      "coordinatesCopied": "Koordenatuak kopiatu dira",
+      "altitude": "Altitudea",
+      "altUnit": "metro",
+      "extrude": "3D estrusioa"
     },
     "properties": {
       "title": "Propietateak",
@@ -238,7 +251,8 @@
       "savedToTag_one": "Propietate {{count}} gorde da \"{{name}}\" etiketan",
       "savedToTag_other": "{{count}} propietate gorde dira \"{{name}}\" etiketan",
       "savedToTag": "{{count}} propietate gorde dira \"{{name}}\" etiketan",
-      "saveToTagError": "Ezin izan da etiketan gorde"
+      "saveToTagError": "Ezin izan da etiketan gorde",
+      "editChoices": "Editatu aukerak"
     },
     "appearance": {
       "title": "Itxura",
@@ -252,7 +266,11 @@
       "thickness": "Lodiera",
       "textSize": "Testuaren tamaina",
       "positionLock": "Posizioa blokeatuta",
-      "positionUnlocked": "Posizioa desblokeatuta"
+      "positionUnlocked": "Posizioa desblokeatuta",
+      "backgroundColor": "Atzeko kolorea",
+      "white": "Zuria",
+      "customBorder": "Ertz pertsonalizatua",
+      "borderStyle": "Ertzaren estiloa"
     },
     "files": {
       "title": "Fitxategiak",
@@ -277,7 +295,9 @@
       "emlCc": "Cc",
       "emlDate": "Data",
       "emlSubject": "Gaia",
-      "emlAttachments": "Eranskinak"
+      "emlAttachments": "Eranskinak",
+      "extractForPreview": "Atera testua aurrebista ikusteko",
+      "previewUnavailable": "Aurrebista ez dago erabilgarri"
     },
     "timestamps": {
       "createdAt": "Sortze data",
@@ -638,7 +658,10 @@
     "deleteConfirm": "Fitxategi hau ezabatu?",
     "usedBy": "{{count}} elementuk erabiltzen du",
     "hideMediaOnNode": "Ezkutatu multimedia nodoan",
-    "showMediaOnNode": "Erakutsi multimedia nodoan"
+    "showMediaOnNode": "Erakutsi multimedia nodoan",
+    "uploading": "Igotzen…",
+    "dropOrPaste": "Arrastatu fitxategiak edo sakatu Ctrl+V itsasteko",
+    "browse": "edo arakatu"
   },
   "history": {
     "title": "Historia",

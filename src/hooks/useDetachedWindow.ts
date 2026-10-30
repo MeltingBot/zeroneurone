@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import i18next from 'i18next';
 import { useUIStore } from '../stores';
 
 /**
@@ -48,7 +49,7 @@ export function useDetachedWindow(
       );
 
       if (!popup) {
-        useUIStore.getState().showToast('warning', 'Popup blocked by browser');
+        useUIStore.getState().showToast('warning', i18next.t('pages:dossier.popupBlocked'));
         onCloseRef.current();
         return;
       }

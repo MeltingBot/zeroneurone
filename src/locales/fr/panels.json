@@ -267,7 +267,11 @@
       "thickness": "Épaisseur",
       "textSize": "Taille du texte",
       "positionLock": "Position verrouillée",
-      "positionUnlocked": "Position déverrouillée"
+      "positionUnlocked": "Position déverrouillée",
+      "backgroundColor": "Couleur de fond",
+      "white": "Blanc",
+      "customBorder": "Bordure personnalisée",
+      "borderStyle": "Style de bordure"
     },
     "files": {
       "title": "Fichiers",
@@ -292,7 +296,9 @@
       "emlCc": "Cc",
       "emlDate": "Date",
       "emlSubject": "Sujet",
-      "emlAttachments": "Pièces jointes"
+      "emlAttachments": "Pièces jointes",
+      "extractForPreview": "Extraire le texte pour afficher l'aperçu",
+      "previewUnavailable": "Aperçu non disponible"
     },
     "timestamps": {
       "createdAt": "Créé le",
@@ -653,7 +659,10 @@
     "deleteConfirm": "Supprimer ce fichier ?",
     "usedBy": "Utilisé par {{count}} élément(s)",
     "hideMediaOnNode": "Masquer le média sur le nœud",
-    "showMediaOnNode": "Afficher le média sur le nœud"
+    "showMediaOnNode": "Afficher le média sur le nœud",
+    "uploading": "Envoi…",
+    "dropOrPaste": "Glisser des fichiers ou Ctrl+V pour coller",
+    "browse": "ou parcourir"
   },
   "history": {
     "title": "Historique",

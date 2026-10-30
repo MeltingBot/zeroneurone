@@ -93,7 +93,7 @@ export function DossierCard({
         onClick={handleFavoriteClick}
         className={`absolute top-2 right-2 p-1 rounded transition-colors z-10 ${
           dossier.isFavorite
-            ? 'text-amber-500 hover:text-amber-600'
+            ? 'text-warning hover:text-warning'
             : 'text-text-tertiary hover:text-text-secondary'
         } ${dossier.isArchived ? 'opacity-60' : ''}`}
         title={dossier.isFavorite ? t('home.card.unfavorite') : t('home.card.favorite')}

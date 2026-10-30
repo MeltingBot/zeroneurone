@@ -160,12 +160,13 @@ function CanvasContextMenuComponent({
         onSelectLinks ? [
           { id: 'select-links', label: cm(hasSelection ? 'selectLinks' : 'selectAllLinks'), icon: Spline, shortcut: hasSelection ? undefined : 'Ctrl+Shift+A', onSelect: onSelectLinks },
         ] : [],
-        [
+        // Creating or pasting has nothing to do with a multiple selection
+        selectedCount > 1 ? [] : [
           { id: 'add-element', label: cm('addElement'), icon: Plus, shortcut: 'E', onSelect: onCreateElement },
           { id: 'add-group', label: cm('addGroup'), icon: Group, shortcut: 'G', onSelect: onCreateGroup },
           { id: 'add-annotation', label: cm('addAnnotation'), icon: StickyNote, shortcut: 'N', onSelect: onCreateAnnotation },
         ],
-        [{ id: 'paste', label: cm('paste'), icon: Clipboard, shortcut: 'Ctrl+V', onSelect: onPaste }],
+        selectedCount > 1 ? [] : [{ id: 'paste', label: cm('paste'), icon: Clipboard, shortcut: 'Ctrl+V', onSelect: onPaste }],
         pluginItems,
         hasSelection && onDeleteSelection
           ? [{ id: 'delete', label: cm('delete'), icon: Trash2, danger: true, shortcut: 'Del', onSelect: onDeleteSelection }]

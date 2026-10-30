@@ -34,7 +34,8 @@
     "fitView": "Weergave aanpassen",
     "center": "Centreren",
     "protect": "Beschermen",
-    "purge": "Opruimen"
+    "purge": "Opruimen",
+    "continue": "Doorgaan"
   },
   "labels": {
     "name": "Naam",
@@ -129,7 +130,8 @@
     "circle": "Cirkel",
     "square": "Vierkant",
     "diamond": "Ruit",
-    "rectangle": "Rechthoek"
+    "rectangle": "Rechthoek",
+    "hexagon": "Zeshoek"
   },
   "linkStyles": {
     "solid": "Doorlopend",
@@ -182,18 +184,7 @@
     "svgTooLarge": "SVG-bestand te groot (max. 64 kB)"
   },
   "language": {
-    "switch": "Taal wijzigen",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch",
-    "eu": "Euskara",
-    "ca": "Català",
-    "it": "Italiano",
-    "pt": "Português",
-    "pl": "Polski",
-    "uk": "Українська",
-    "nl": "Nederlands"
+    "switch": "Taal wijzigen"
   },
   "accessibility": {
     "skipToContent": "Ga naar de hoofdinhoud"
@@ -328,5 +319,17 @@
       "invalid": "ongeldig formaat",
       "error": "laadfout"
     }
+  },
+  "errorBoundary": {
+    "title": "Er is een fout opgetreden",
+    "titleIn": "Fout in {{scope}}",
+    "message": "Dit onderdeel is op een probleem gestuit en kan niet worden weergegeven.",
+    "details": "Technische details",
+    "retry": "Opnieuw proberen",
+    "reload": "Pagina opnieuw laden",
+    "home": "Start"
+  },
+  "presence": {
+    "moving": "{{name}} verplaatst"
   }
 }

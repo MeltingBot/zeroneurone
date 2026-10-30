@@ -308,7 +308,9 @@
       "pasted": "{{count}} elementu itsatsita",
       "saved": "Gordeta",
       "exportSuccess": "Esportazioa bukatuta",
-      "exportError": "Errorea esportatzean"
+      "exportError": "Errorea esportatzean",
+      "assetTooLargeToShare": "Fitxategia handiegia da sinkronizatzeko ({{size}}, gehienez {{max}}). Lokalean erabilgarri dago, baina ez da partekatzen.",
+      "assetLargeToShare": "Fitxategi handia ({{size}}): sinkronizazioa motela izan daiteke."
     },
     "notFound": "Espediente ez da aurkitu",
     "header": {
@@ -320,7 +322,8 @@
       "activeFilters": "Iragazki aktiboak",
       "shortcuts": "Teklatuko lasterbideak",
       "documentation": "Dokumentazioa",
-      "supportKofi": "Ko-fi-n lagundu"
+      "supportKofi": "Ko-fi-n lagundu",
+      "import": "Inportatu"
     },
     "collab": {
       "leaveTitle": "Lankidetza saioa utzi",
@@ -364,7 +367,8 @@
     "mermaidCopyFailed": "Ezin izan da arbelera kopiatu",
     "dotCopied": "Hautapena DOT gisa kopiatu da",
     "closedBanner": "{{date}}(e)an itxita — irakurtzeko soilik",
-    "undecryptableUpdates": "Aldaketa irakurtezinak: {{count}}. Gorde egin dira; ikus Biltegiratzea > Mantentzea."
+    "undecryptableUpdates": "Aldaketa irakurtezinak: {{count}}. Gorde egin dira; ikus Biltegiratzea > Mantentzea.",
+    "popupBlocked": "Nabigatzaileak leihoa blokeatu du"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",
@@ -420,7 +424,21 @@
     "ofmDark": "Iluna",
     "ofmFiord": "Kontraste handia",
     "timeZoneHint": "Ordu-eremua",
-    "exportCSV": "CSV-ra esportatu"
+    "exportCSV": "CSV-ra esportatu",
+    "zonePolygon": "Poligonoa",
+    "zoneCircle": "Zirkulua",
+    "zoneSquare": "Karratua",
+    "editZone": "Editatu forma",
+    "geometry": "Geometria",
+    "vertices": "Erpinak",
+    "area": "Azalera",
+    "center": "Erdigunea",
+    "viewOnMap": "Ikusi mapan",
+    "deleteVertex": "Ezabatu erpin hau",
+    "geoJsonSave": "Aplikatu",
+    "geoJsonParseError": "JSON baliogabea",
+    "geoJsonMinVertices": "Gutxienez 3 erpin",
+    "geoJsonInvalidCoord": "Koordenatu baliogabea: [lng, lat]"
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

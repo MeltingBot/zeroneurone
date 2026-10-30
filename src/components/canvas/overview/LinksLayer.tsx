@@ -30,7 +30,7 @@ function LinksLayerComponent({ scene, themeMode }: LinksLayerProps) {
   const frameRef = useRef(0);
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
-  const themeRef = useRef<OverviewTheme>({ accent: '#2563eb' });
+  const themeRef = useRef<OverviewTheme>({ accent: '#e07a5f' });
   /** Pixel ratio drawn at: the screen's, or a PNG export's while it captures. */
   const exportRatioRef = useRef<number | null>(null);
 
@@ -90,7 +90,7 @@ function LinksLayerComponent({ scene, themeMode }: LinksLayerProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     themeRef.current = {
-      accent: getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb',
+      accent: getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#e07a5f',
       mode: themeMode,
     };
     rendererRef.current?.setScene(sceneRef.current, themeRef.current);

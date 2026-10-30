@@ -308,7 +308,9 @@
       "pasted": "{{count}} element(en) geplakt",
       "saved": "Opgeslagen",
       "exportSuccess": "Export voltooid",
-      "exportError": "Fout tijdens export"
+      "exportError": "Fout tijdens export",
+      "assetTooLargeToShare": "Bestand te groot om te synchroniseren ({{size}}, maximaal {{max}}). Het blijft lokaal beschikbaar maar wordt niet gedeeld.",
+      "assetLargeToShare": "Groot bestand ({{size}}): synchronisatie kan traag zijn."
     },
     "notFound": "Dossier niet gevonden",
     "header": {
@@ -320,7 +322,8 @@
       "activeFilters": "Actieve filters",
       "shortcuts": "Sneltoetsen",
       "documentation": "Documentatie",
-      "supportKofi": "Steun op Ko-fi"
+      "supportKofi": "Steun op Ko-fi",
+      "import": "Importeren"
     },
     "collab": {
       "leaveTitle": "Samenwerkingssessie verlaten",
@@ -364,7 +367,8 @@
     "mermaidCopyFailed": "Kopiëren naar het klembord mislukt",
     "dotCopied": "Selectie gekopieerd als DOT",
     "closedBanner": "Afgesloten op {{date}} — alleen-lezen",
-    "undecryptableUpdates": "Onleesbare wijzigingen: {{count}}. Ze blijven bewaard; zie Opslag > Onderhoud."
+    "undecryptableUpdates": "Onleesbare wijzigingen: {{count}}. Ze blijven bewaard; zie Opslag > Onderhoud.",
+    "popupBlocked": "Pop-up geblokkeerd door de browser"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",
@@ -431,7 +435,10 @@
     "ofmDark": "Donker",
     "ofmFiord": "Hoog contrast",
     "timeZoneHint": "Tijdzone",
-    "exportCSV": "Exporteren naar CSV"
+    "exportCSV": "Exporteren naar CSV",
+    "zonePolygon": "Veelhoek",
+    "zoneCircle": "Cirkel",
+    "zoneSquare": "Vierkant"
   },
   "timeline": {
     "noEvents": "Geen gedateerde gebeurtenissen",

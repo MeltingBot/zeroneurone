@@ -48,7 +48,7 @@ export function ConfirmDeleteModal({
             variant="primary"
             onClick={handleConfirm}
             disabled={isLoading}
-            className="bg-error hover:bg-red-700"
+            className="bg-error hover:bg-error/90"
             data-testid="confirm-delete"
           >
             {isLoading ? t('modals:confirmDelete.deleting') : label}

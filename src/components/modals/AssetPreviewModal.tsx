@@ -160,7 +160,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           ) : isDoc && textContent === null ? (
             <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
               <FileText size={48} />
-              <p className="text-sm">Extraire le texte pour afficher l'apercu</p>
+              <p className="text-sm">{tPanels('detail.files.extractForPreview')}</p>
             </div>
           ) : isImage && fileUrl ? (
             <ImagePreview key={fileUrl} url={fileUrl} alt={asset.filename} />
@@ -175,7 +175,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           ) : (
             <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
               <FileText size={48} />
-              <p className="text-sm">Aperçu non disponible</p>
+              <p className="text-sm">{tPanels('detail.files.previewUnavailable')}</p>
             </div>
           )}
         </div>

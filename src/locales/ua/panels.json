@@ -172,7 +172,17 @@
       "locationOptional": "Розташування (необов'язково)",
       "clearLocation": "Очистити",
       "pickOnMap": "Карта",
-      "extractToElement": "Витягнути як елемент"
+      "extractToElement": "Витягнути як елемент",
+      "hasZone": "Має зону",
+      "zoneOptional": "Зона (необов’язково)",
+      "zoneInfo": "Точок: {{points}}, ~{{area}} км²",
+      "inheritZone": "Успадкувати зону",
+      "drawZone": "Намалювати",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Застосувати",
+      "geoJsonParseError": "Недійсний JSON",
+      "geoJsonInvalidType": "Очікуваний тип: Polygon",
+      "geoJsonMinPoints": "Щонайменше 3 точки"
     },
     "location": {
       "title": "Розташування",
@@ -188,7 +198,10 @@
       "saveLocation": "Зберегти",
       "noLocation": "Позицію не визначено",
       "copyCoordinates": "Копіювати координати",
-      "coordinatesCopied": "Координати скопійовано"
+      "coordinatesCopied": "Координати скопійовано",
+      "altitude": "Висота",
+      "altUnit": "метри",
+      "extrude": "3D-видавлювання"
     },
     "properties": {
       "title": "Властивості",
@@ -238,7 +251,8 @@
       "savedToTag_one": "{{count}} властивість збережено в тезі \"{{name}}\"",
       "savedToTag_other": "Властивостей збережено в тезі \"{{name}}\": {{count}}",
       "savedToTag": "Властивостей збережено в тезі \"{{name}}\": {{count}}",
-      "saveToTagError": "Не вдалося зберегти в тезі"
+      "saveToTagError": "Не вдалося зберегти в тезі",
+      "editChoices": "Змінити варіанти"
     },
     "appearance": {
       "title": "Вигляд",
@@ -252,7 +266,11 @@
       "thickness": "Товщина",
       "textSize": "Розмір тексту",
       "positionLock": "Позиція заблокована",
-      "positionUnlocked": "Позиція розблокована"
+      "positionUnlocked": "Позиція розблокована",
+      "backgroundColor": "Колір тла",
+      "white": "Білий",
+      "customBorder": "Власна рамка",
+      "borderStyle": "Стиль рамки"
     },
     "files": {
       "title": "Файли",
@@ -277,7 +295,9 @@
       "emlCc": "Копія",
       "emlDate": "Дата",
       "emlSubject": "Тема",
-      "emlAttachments": "Вкладення"
+      "emlAttachments": "Вкладення",
+      "extractForPreview": "Видобудьте текст, щоб побачити попередній перегляд",
+      "previewUnavailable": "Попередній перегляд недоступний"
     },
     "timestamps": {
       "createdAt": "Створено",
@@ -640,7 +660,10 @@
     "deleteConfirm": "Видалити цей файл?",
     "usedBy": "Використовується {{count}} елементами",
     "hideMediaOnNode": "Сховати медіа на вузлі",
-    "showMediaOnNode": "Показати медіа на вузлі"
+    "showMediaOnNode": "Показати медіа на вузлі",
+    "uploading": "Завантаження…",
+    "dropOrPaste": "Перетягніть файли або вставте Ctrl+V",
+    "browse": "або оберіть"
   },
   "history": {
     "title": "Історія",

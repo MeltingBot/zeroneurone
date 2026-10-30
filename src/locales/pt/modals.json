@@ -101,7 +101,11 @@
       "fields": "Propriedades a importar",
       "all": "Todas",
       "none": "Nenhuma"
-    }
+    },
+    "encryptedPrompt": "Ficheiro cifrado: introduza a palavra-passe para o importar.",
+    "decrypting": "A decifrar…",
+    "wrongPassword": "Palavra-passe incorreta",
+    "invalidEncryptedFile": "Ficheiro cifrado inválido ou danificado"
   },
   "export": {
     "progress": {
@@ -448,6 +452,15 @@
       "drop": "Eliminar ilegíveis",
       "dropConfirm": "Apagar definitivamente as alterações ilegíveis ({{count}})? O resto do conteúdo é mantido.",
       "dropped": "Ilegíveis eliminadas: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Eliminar todos os dossiês",
+      "description": "Elimina todos os dossiês, elementos, ligações, ficheiros e histórico. Os conjuntos de etiquetas e a cifragem são mantidos. Irreversível.",
+      "button": "Eliminar tudo",
+      "confirm": "Eliminar TODOS os dossiês e os seus dados?\n\nEsta ação é irreversível.",
+      "confirmAgain": "Última confirmação: todos os dados serão perdidos. Continuar?",
+      "success": "Todos os dossiês foram eliminados.",
+      "error": "Erro ao eliminar"
     }
   },
   "localStorage": {

@@ -34,7 +34,8 @@
     "fitView": "Ansicht anpassen",
     "center": "Zentrieren",
     "protect": "Schützen",
-    "purge": "Bereinigen"
+    "purge": "Bereinigen",
+    "continue": "Weiter"
   },
   "labels": {
     "name": "Name",
@@ -129,7 +130,8 @@
     "circle": "Kreis",
     "square": "Quadrat",
     "diamond": "Raute",
-    "rectangle": "Rechteck"
+    "rectangle": "Rechteck",
+    "hexagon": "Sechseck"
   },
   "linkStyles": {
     "solid": "Durchgezogen",
@@ -182,11 +184,7 @@
     "svgTooLarge": "SVG-Datei zu groß (max. 64 KB)"
   },
   "language": {
-    "switch": "Sprache wechseln",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch"
+    "switch": "Sprache wechseln"
   },
   "accessibility": {
     "skipToContent": "Zum Hauptinhalt springen"
@@ -321,5 +319,17 @@
       "invalid": "ungültiges Format",
       "error": "Ladefehler"
     }
+  },
+  "errorBoundary": {
+    "title": "Ein Fehler ist aufgetreten",
+    "titleIn": "Fehler in {{scope}}",
+    "message": "Diese Komponente ist auf ein Problem gestoßen und kann nicht angezeigt werden.",
+    "details": "Technische Details",
+    "retry": "Erneut versuchen",
+    "reload": "Seite neu laden",
+    "home": "Startseite"
+  },
+  "presence": {
+    "moving": "{{name}} verschiebt"
   }
 }

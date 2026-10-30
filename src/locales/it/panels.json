@@ -173,7 +173,17 @@
       "locationOptional": "Localizzazione (opzionale)",
       "clearLocation": "Cancella",
       "pickOnMap": "Mappa",
-      "extractToElement": "Estrai come elemento"
+      "extractToElement": "Estrai come elemento",
+      "hasZone": "Ha una zona",
+      "zoneOptional": "Zona (facoltativa)",
+      "zoneInfo": "{{points}} punti, ~{{area}} km²",
+      "inheritZone": "Eredita la zona",
+      "drawZone": "Disegna",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Applica",
+      "geoJsonParseError": "JSON non valido",
+      "geoJsonInvalidType": "Tipo atteso: Polygon",
+      "geoJsonMinPoints": "Minimo 3 punti"
     },
     "location": {
       "title": "Localizzazione",
@@ -189,7 +199,10 @@
       "saveLocation": "Salva",
       "noLocation": "Nessuna posizione definita",
       "copyCoordinates": "Copia coordinate",
-      "coordinatesCopied": "Coordinate copiate"
+      "coordinatesCopied": "Coordinate copiate",
+      "altitude": "Altitudine",
+      "altUnit": "metri",
+      "extrude": "Estrusione 3D"
     },
     "properties": {
       "title": "Proprietà",
@@ -239,7 +252,8 @@
       "savedToTag_one": "{{count}} proprietà salvata nel tag \"{{name}}\"",
       "savedToTag_other": "{{count}} proprietà salvate nel tag \"{{name}}\"",
       "savedToTag": "{{count}} proprietà salvate nel tag \"{{name}}\"",
-      "saveToTagError": "Impossibile salvare nel tag"
+      "saveToTagError": "Impossibile salvare nel tag",
+      "editChoices": "Modifica le opzioni"
     },
     "appearance": {
       "title": "Aspetto",
@@ -253,7 +267,11 @@
       "thickness": "Spessore",
       "textSize": "Dimensione del testo",
       "positionLock": "Posizione bloccata",
-      "positionUnlocked": "Posizione sbloccata"
+      "positionUnlocked": "Posizione sbloccata",
+      "backgroundColor": "Colore di sfondo",
+      "white": "Bianco",
+      "customBorder": "Bordo personalizzato",
+      "borderStyle": "Stile del bordo"
     },
     "files": {
       "title": "File",
@@ -278,7 +296,9 @@
       "emlCc": "Cc",
       "emlDate": "Data",
       "emlSubject": "Oggetto",
-      "emlAttachments": "Allegati"
+      "emlAttachments": "Allegati",
+      "extractForPreview": "Estrai il testo per vedere l'anteprima",
+      "previewUnavailable": "Anteprima non disponibile"
     },
     "timestamps": {
       "createdAt": "Creato il",
@@ -639,7 +659,10 @@
     "deleteConfirm": "Eliminare questo file?",
     "usedBy": "Usato da {{count}} elemento/i",
     "hideMediaOnNode": "Nascondi il media sul nodo",
-    "showMediaOnNode": "Mostra il media sul nodo"
+    "showMediaOnNode": "Mostra il media sul nodo",
+    "uploading": "Caricamento…",
+    "dropOrPaste": "Trascina i file o premi Ctrl+V per incollare",
+    "browse": "o sfoglia"
   },
   "history": {
     "title": "Cronologia",

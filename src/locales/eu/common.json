@@ -34,7 +34,8 @@
     "fitView": "Ikuspegia doitu",
     "center": "Zentratu",
     "protect": "Babestu",
-    "purge": "Garbitu"
+    "purge": "Garbitu",
+    "continue": "Jarraitu"
   },
   "labels": {
     "name": "Izena",
@@ -129,7 +130,8 @@
     "circle": "Zirkulua",
     "square": "Karratua",
     "diamond": "Erronboa",
-    "rectangle": "Laukizuzena"
+    "rectangle": "Laukizuzena",
+    "hexagon": "Hexagonoa"
   },
   "linkStyles": {
     "solid": "Jarraitua",
@@ -182,12 +184,7 @@
     "svgTooLarge": "SVG fitxategia handiegia da (geh. 64 KB)"
   },
   "language": {
-    "switch": "Hizkuntza aldatu",
-    "fr": "Français",
-    "en": "English",
-    "es": "Español",
-    "de": "Deutsch",
-    "eu": "Euskara"
+    "switch": "Hizkuntza aldatu"
   },
   "accessibility": {
     "skipToContent": "Eduki nagusira joan"
@@ -322,5 +319,17 @@
       "invalid": "formatu baliogabea",
       "error": "kargatze-errorea"
     }
+  },
+  "errorBoundary": {
+    "title": "Errore bat gertatu da",
+    "titleIn": "Errorea: {{scope}}",
+    "message": "Osagai honek arazo bat izan du eta ezin da bistaratu.",
+    "details": "Xehetasun teknikoak",
+    "retry": "Saiatu berriro",
+    "reload": "Kargatu berriro orria",
+    "home": "Hasiera"
+  },
+  "presence": {
+    "moving": "{{name}} mugitzen ari da"
   }
 }

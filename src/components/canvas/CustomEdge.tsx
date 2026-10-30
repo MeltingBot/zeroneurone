@@ -205,7 +205,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const currentOffset = dragOffset;
 
   // Selection halo settings
-  const haloColor = '#e07a5f';
+  const haloColor = 'var(--color-accent)';
   const haloThickness = thickness + 6;
 
   // Route shared with the SVG export (utils/edgeRouting)
@@ -254,7 +254,7 @@ function CustomEdgeComponent(props: EdgeProps) {
         <path
           d={edgePath}
           fill="none"
-          stroke={haloColor}
+          style={{ stroke: haloColor }}
           strokeWidth={haloThickness}
           strokeLinecap="round"
         />
@@ -494,16 +494,14 @@ function CustomEdgeComponent(props: EdgeProps) {
             cx={sourceX}
             cy={sourceY}
             r={5}
-            fill="#ffffff"
-            stroke="#2563eb"
+            style={{ fill: 'var(--color-bg-primary)', stroke: 'var(--color-accent)' }}
             strokeWidth={2}
           />
           <circle
             cx={targetX}
             cy={targetY}
             r={5}
-            fill="#ffffff"
-            stroke="#2563eb"
+            style={{ fill: 'var(--color-bg-primary)', stroke: 'var(--color-accent)' }}
             strokeWidth={2}
           />
         </g>
@@ -530,8 +528,10 @@ function CustomEdgeComponent(props: EdgeProps) {
             cx={controlHandleX}
             cy={controlHandleY}
             r={isSelected ? 8 : 5}
-            fill={isSelected ? '#ffffff' : 'transparent'}
-            stroke={isSelected ? '#2563eb' : '#9ca3af'}
+            style={{
+              fill: isSelected ? 'var(--color-bg-primary)' : 'transparent',
+              stroke: isSelected ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
+            }}
             strokeWidth={isSelected ? 3 : 1}
             strokeDasharray={isSelected ? undefined : '2,2'}
             opacity={isSelected ? 1 : 0.5}

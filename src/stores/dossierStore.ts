@@ -61,6 +61,7 @@ import {
 import { useSyncStore } from './syncStore';
 import { useTabStore } from './tabStore';
 import { toast } from './toastStore';
+import { formatBytes } from '../utils/formatBytes';
 import { useTagSetStore } from './tagSetStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
@@ -2504,12 +2505,15 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const exceedsSharedCap = isShared && file.size > MAX_SHARED_ASSET_SIZE;
     if (exceedsSharedCap) {
       toast.warning(
-        `Fichier trop volumineux pour la synchronisation (${Math.round(file.size / 1024 / 1024)} Mo > 50 Mo). Il reste accessible localement mais ne sera pas partagé avec les pairs.`,
+        i18next.t('pages:dossier.toast.assetTooLargeToShare', {
+          size: formatBytes(file.size, i18next.language),
+          max: formatBytes(MAX_SHARED_ASSET_SIZE, i18next.language),
+        }),
         10000,
       );
     } else if (isShared && file.size > 10 * 1024 * 1024) {
       toast.warning(
-        `Fichier volumineux (${Math.round(file.size / 1024 / 1024)} Mo). La synchronisation peut être lente.`,
+        i18next.t('pages:dossier.toast.assetLargeToShare', { size: formatBytes(file.size, i18next.language) }),
         6000,
       );
     }

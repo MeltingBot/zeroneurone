@@ -8,15 +8,7 @@ import { Wifi, WifiOff, RefreshCw, AlertCircle, X, RotateCcw, Download } from 'l
 import { useSyncStore } from '../../stores';
 import type { MediaSyncProgress } from '../../stores/syncStore';
 import { Modal, Button } from '../common';
-
-/** Format bytes to human readable string */
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
+import { formatBytes } from '../../utils/formatBytes';
 
 /** Truncate filename for display */
 function truncateFilename(name: string, maxLen = 20): string {
@@ -33,7 +25,7 @@ function truncateFilename(name: string, maxLen = 20): string {
 /** Media sync progress badge - shown independently of connection status.
  *  Drives off byte-level progress (chunked transfer) for a coherent ETA. */
 function MediaSyncBadge({ progress }: { progress: MediaSyncProgress }) {
-  const { t } = useTranslation('panels');
+  const { t, i18n } = useTranslation('panels');
   // Byte-based percentage gives smooth progress while large files transfer,
   // instead of jumping from 0 to 100 when a single asset completes.
   const bytePercent = progress.totalSize > 0
@@ -65,7 +57,7 @@ function MediaSyncBadge({ progress }: { progress: MediaSyncProgress }) {
           </span>
         )}
         <span className="text-text-tertiary text-[10px]">
-          {formatBytes(progress.receivedSize)} / {formatBytes(progress.totalSize)}
+          {formatBytes(progress.receivedSize, i18n.language)} / {formatBytes(progress.totalSize, i18n.language)}
         </span>
       </div>
     </div>

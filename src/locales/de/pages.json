@@ -308,7 +308,9 @@
       "pasted": "{{count}} Element(e) eingefügt",
       "saved": "Gespeichert",
       "exportSuccess": "Export abgeschlossen",
-      "exportError": "Fehler beim Export"
+      "exportError": "Fehler beim Export",
+      "assetTooLargeToShare": "Datei zu groß für die Synchronisierung ({{size}}, maximal {{max}}). Sie bleibt lokal verfügbar, wird aber nicht geteilt.",
+      "assetLargeToShare": "Große Datei ({{size}}): Die Synchronisierung kann langsam sein."
     },
     "notFound": "Akte nicht gefunden",
     "header": {
@@ -320,7 +322,8 @@
       "activeFilters": "Aktive Filter",
       "shortcuts": "Tastenkürzel",
       "documentation": "Dokumentation",
-      "supportKofi": "Auf Ko-fi unterstützen"
+      "supportKofi": "Auf Ko-fi unterstützen",
+      "import": "Importieren"
     },
     "collab": {
       "leaveTitle": "Kollaborative Sitzung verlassen",
@@ -364,7 +367,8 @@
     "mermaidCopyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
     "dotCopied": "Auswahl als DOT kopiert",
     "closedBanner": "Abgeschlossen am {{date}} — schreibgeschützt",
-    "undecryptableUpdates": "Unlesbare Änderungen: {{count}}. Sie bleiben erhalten; siehe Speicher > Wartung."
+    "undecryptableUpdates": "Unlesbare Änderungen: {{count}}. Sie bleiben erhalten; siehe Speicher > Wartung.",
+    "popupBlocked": "Popup vom Browser blockiert"
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",
@@ -431,7 +435,10 @@
     "ofmDark": "Dunkel",
     "ofmFiord": "Kontrastreich",
     "timeZoneHint": "Zeitzone",
-    "exportCSV": "Als CSV exportieren"
+    "exportCSV": "Als CSV exportieren",
+    "zonePolygon": "Polygon",
+    "zoneCircle": "Kreis",
+    "zoneSquare": "Quadrat"
   },
   "timeline": {
     "noEvents": "Keine datierten Ereignisse",

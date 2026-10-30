@@ -8,6 +8,7 @@ import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { generateUUID } from '../../utils';
+import { formatBytes } from '../../utils/formatBytes';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { emitExport } from '../../plugins/pluginEventBus';
@@ -349,13 +350,10 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         <div className="flex flex-col items-center gap-2 text-center">
           <Download size={20} className="text-text-tertiary" />
           <p className="text-xs text-text-secondary">
-            {isUploading
-              ? 'Téléchargement...'
-              : 'Glisser des fichiers ou Ctrl+V pour coller'
-            }
+            {isUploading ? t('assets.uploading') : t('assets.dropOrPaste')}
           </p>
           <label className="text-xs text-accent hover:underline cursor-pointer">
-            ou parcourir
+            {t('assets.browse')}
             <input
               type="file"
               multiple
@@ -482,7 +480,7 @@ function AssetItem({
   onDrop,
   onDragEnd,
 }: AssetItemProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { t: tPanels } = useTranslation('panels');
   const [showText, setShowText] = useState(false);
   const isImage = asset.mimeType.startsWith('image/');
@@ -551,7 +549,7 @@ function AssetItem({
             {asset.filename}
           </p>
           <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
-            <span>{formatFileSize(asset.size)}</span>
+            <span>{formatBytes(asset.size, i18n.language)}</span>
             {hasText && (
               <button
                 onClick={() => setShowText(!showText)}
@@ -637,12 +635,6 @@ function AssetItem({
       )}
     </div>
   );
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
 function formatCharCount(count: number): string {

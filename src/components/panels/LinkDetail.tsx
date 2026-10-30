@@ -502,7 +502,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
         title={t('detail.sections.metadata')}
         icon={<Calendar size={12} />}
         badge={hasPeriod ? (
-          <span className="text-[10px] bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
+          <span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded-full">
             {tCommon('labels.date')}
           </span>
         ) : null}

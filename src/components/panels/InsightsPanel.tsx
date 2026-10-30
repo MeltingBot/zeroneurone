@@ -1343,8 +1343,8 @@ interface ElementAutocompleteProps {
   value: string | null;
   onChange: (elementId: string) => void;
   placeholder?: string;
-  noNameLabel?: string;
-  noResultsLabel?: string;
+  noNameLabel: string;
+  noResultsLabel: string;
   disabled?: boolean;
 }
 
@@ -1354,8 +1354,8 @@ function ElementAutocomplete({
   value,
   onChange,
   placeholder,
-  noNameLabel = 'Unnamed',
-  noResultsLabel = 'No results',
+  noNameLabel,
+  noResultsLabel,
   disabled = false,
 }: ElementAutocompleteProps) {
   const [query, setQuery] = useState('');

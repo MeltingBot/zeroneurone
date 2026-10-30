@@ -88,7 +88,7 @@ function GroupNodeComponent({ data }: NodeProps) {
 
   const containerStyle = useMemo(() => {
     const defaultBorderColor = element.visual.borderColor || '#e5e7eb';
-    const borderColor = isSelected ? '#2563eb' : defaultBorderColor;
+    const borderColor = isSelected ? 'var(--color-accent)' : defaultBorderColor;
     const borderStyle = element.visual.borderStyle || 'dashed';
     const borderWidth = element.visual.borderWidth ?? 1;
     const bgColor = element.visual.color && element.visual.color !== '#ffffff'
@@ -148,7 +148,7 @@ function GroupNodeComponent({ data }: NodeProps) {
           minHeight={MIN_HEIGHT}
           onResizeEnd={handleResizeEnd}
           lineClassName="!border-transparent"
-          handleClassName="!w-2 !h-2 !bg-gray-700 !border !border-white !rounded-sm"
+          handleClassName="!w-2 !h-2 !bg-text-secondary !border !border-white !rounded-sm"
         />
       )}
 
@@ -177,8 +177,8 @@ function GroupNodeComponent({ data }: NodeProps) {
         {/* Comment badge - top right */}
         {showCommentBadges && unresolvedCommentCount !== undefined && unresolvedCommentCount > 0 && (
           <div
-            className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center z-10"
-            title={`${unresolvedCommentCount} commentaire${unresolvedCommentCount > 1 ? 's' : ''} non résolu${unresolvedCommentCount > 1 ? 's' : ''}`}
+            className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-warning text-white text-[9px] font-bold flex items-center justify-center z-10"
+            title={t('pages:timeline.unresolvedComments', { count: unresolvedCommentCount })}
           >
             {unresolvedCommentCount > 9 ? '9+' : unresolvedCommentCount}
           </div>

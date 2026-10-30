@@ -1,4 +1,5 @@
 import type { Dossier } from '../types';
+import { dateLocale } from './dates';
 
 /**
  * Generate a UUID v4
@@ -120,27 +121,21 @@ export function getExtension(filename: string): string {
 }
 
 /**
- * Format relative time (e.g., "il y a 2 heures")
+ * "now", "5 min ago", "yesterday"… in the UI language, up to a week; the
+ * date beyond.
  */
-export function formatRelativeTime(date: Date, locale: string = 'fr'): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  const isFr = locale.startsWith('fr');
-
-  if (diffSec < 60) return isFr ? "à l'instant" : "just now";
-  if (diffMin < 60) return isFr ? `il y a ${diffMin} min` : `${diffMin} min ago`;
-  if (diffHour < 24) return isFr ? `il y a ${diffHour}h` : `${diffHour}h ago`;
-  if (diffDay < 7) return isFr ? `il y a ${diffDay}j` : `${diffDay}d ago`;
-
-  return date.toLocaleDateString(isFr ? 'fr-FR' : 'en-US', {
-    day: 'numeric',
-    month: 'short',
-  });
+export function formatRelativeTime(date: Date, language: string | undefined): string {
+  const locale = dateLocale(language);
+  const diffSec = Math.round((date.getTime() - Date.now()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+  if (Math.abs(diffSec) < 60) return rtf.format(0, 'second');
+  const diffMin = Math.round(diffSec / 60);
+  if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
+  const diffHour = Math.round(diffMin / 60);
+  if (Math.abs(diffHour) < 24) return rtf.format(diffHour, 'hour');
+  const diffDay = Math.round(diffHour / 24);
+  if (Math.abs(diffDay) < 7) return rtf.format(diffDay, 'day');
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 /**

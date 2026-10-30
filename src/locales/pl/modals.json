@@ -103,7 +103,11 @@
       "fields": "Właściwości do importu",
       "all": "Wszystkie",
       "none": "Żadne"
-    }
+    },
+    "encryptedPrompt": "Plik zaszyfrowany: podaj hasło, aby go zaimportować.",
+    "decrypting": "Odszyfrowywanie…",
+    "wrongPassword": "Nieprawidłowe hasło",
+    "invalidEncryptedFile": "Nieprawidłowy lub uszkodzony plik zaszyfrowany"
   },
   "export": {
     "progress": {
@@ -450,6 +454,15 @@
       "drop": "Usuń nieczytelne",
       "dropConfirm": "Trwale usunąć nieczytelne zmiany ({{count}})? Pozostała zawartość zostanie zachowana.",
       "dropped": "Usunięte nieczytelne: {{count}}"
+    },
+    "purgeAll": {
+      "title": "Usuń wszystkie dossier",
+      "description": "Usuwa wszystkie dossier, elementy, powiązania, pliki i historię. Zestawy tagów i szyfrowanie zostają zachowane. Nieodwracalne.",
+      "button": "Usuń wszystko",
+      "confirm": "Usunąć WSZYSTKIE dossier i ich dane?\n\nTej operacji nie można cofnąć.",
+      "confirmAgain": "Ostatnie potwierdzenie: wszystkie dane zostaną utracone. Kontynuować?",
+      "success": "Wszystkie dossier zostały usunięte.",
+      "error": "Błąd podczas usuwania"
     }
   },
   "localStorage": {

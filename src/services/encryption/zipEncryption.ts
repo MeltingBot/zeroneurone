@@ -59,13 +59,18 @@ export async function encryptZip(blob: Blob, password: string): Promise<ArrayBuf
   return result.buffer;
 }
 
+/** The password does not open the archive. */
+export class WrongZipPasswordError extends Error {}
+/** Not a .znzip archive, or a damaged one. */
+export class InvalidEncryptedZipError extends Error {}
+
 /**
  * Déchiffre un ArrayBuffer .znzip avec le mot de passe fourni.
  * Lance une erreur si le magic est absent ou si le déchiffrement échoue.
  */
 export async function decryptZip(buf: ArrayBuffer, password: string): Promise<ArrayBuffer> {
   if (!isEncryptedZipBuffer(buf)) {
-    throw new Error('Fichier non chiffré ou format invalide');
+    throw new InvalidEncryptedZipError('Not an encrypted archive, or an invalid one');
   }
   const salt = new Uint8Array(buf, MAGIC_LEN, SALT_LEN);
   const iv = new Uint8Array(buf, MAGIC_LEN + SALT_LEN, IV_LEN);
@@ -75,6 +80,6 @@ export async function decryptZip(buf: ArrayBuffer, password: string): Promise<Ar
   try {
     return await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
   } catch {
-    throw new Error('Mot de passe incorrect');
+    throw new WrongZipPasswordError('Wrong password');
   }
 }

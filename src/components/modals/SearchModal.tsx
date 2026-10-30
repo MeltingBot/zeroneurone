@@ -604,7 +604,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               title={t('search.showTags')}
             >
               <Tag size={12} />
-              <span>Tags</span>
+              <span>{t('common:labels.tags')}</span>
             </button>
           </div>
         )}

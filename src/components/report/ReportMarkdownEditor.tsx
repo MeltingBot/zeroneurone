@@ -14,7 +14,7 @@ interface ReportMarkdownEditorProps {
   onChange: (value: string) => void;
   onEditingChange?: (editing: boolean) => void;
   sectionId: string;
-  placeholder?: string;
+  placeholder: string;
   minRows?: number;
 }
 
@@ -353,7 +353,7 @@ export function ReportMarkdownEditor({
   onChange,
   onEditingChange,
   sectionId,
-  placeholder = 'Markdown: **bold**, *italic*, [link](url)... Type [[ to reference elements.',
+  placeholder,
   minRows = 6,
 }: ReportMarkdownEditorProps) {
   const { t } = useTranslation('panels');

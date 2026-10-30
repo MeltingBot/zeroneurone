@@ -172,7 +172,17 @@
       "locationOptional": "Localització (opcional)",
       "clearLocation": "Esborrar",
       "pickOnMap": "Mapa",
-      "extractToElement": "Extreure com a element"
+      "extractToElement": "Extreure com a element",
+      "hasZone": "Té zona",
+      "zoneOptional": "Zona (opcional)",
+      "zoneInfo": "{{points}} punts, ~{{area}} km²",
+      "inheritZone": "Hereta la zona",
+      "drawZone": "Dibuixa",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Aplica",
+      "geoJsonParseError": "JSON no vàlid",
+      "geoJsonInvalidType": "Tipus esperat: Polygon",
+      "geoJsonMinPoints": "Mínim 3 punts"
     },
     "location": {
       "title": "Localització",
@@ -188,7 +198,10 @@
       "saveLocation": "Desar",
       "noLocation": "Cap posició definida",
       "copyCoordinates": "Copiar les coordenades",
-      "coordinatesCopied": "Coordenades copiades"
+      "coordinatesCopied": "Coordenades copiades",
+      "altitude": "Altitud",
+      "altUnit": "metres",
+      "extrude": "Extrusió 3D"
     },
     "properties": {
       "title": "Propietats",
@@ -238,7 +251,8 @@
       "savedToTag_one": "{{count}} propietat desada a l'etiqueta \"{{name}}\"",
       "savedToTag_other": "{{count}} propietats desades a l'etiqueta \"{{name}}\"",
       "savedToTag": "{{count}} propietats desades a l'etiqueta \"{{name}}\"",
-      "saveToTagError": "No s'ha pogut desar a l'etiqueta"
+      "saveToTagError": "No s'ha pogut desar a l'etiqueta",
+      "editChoices": "Edita les opcions"
     },
     "appearance": {
       "title": "Aparença",
@@ -252,7 +266,11 @@
       "thickness": "Gruix",
       "textSize": "Mida del text",
       "positionLock": "Posició bloquejada",
-      "positionUnlocked": "Posició desbloquejada"
+      "positionUnlocked": "Posició desbloquejada",
+      "backgroundColor": "Color de fons",
+      "white": "Blanc",
+      "customBorder": "Vora personalitzada",
+      "borderStyle": "Estil de la vora"
     },
     "files": {
       "title": "Fitxers",
@@ -277,7 +295,9 @@
       "emlCc": "Cc",
       "emlDate": "Data",
       "emlSubject": "Assumpte",
-      "emlAttachments": "Adjunts"
+      "emlAttachments": "Adjunts",
+      "extractForPreview": "Extreu el text per veure la previsualització",
+      "previewUnavailable": "Previsualització no disponible"
     },
     "timestamps": {
       "createdAt": "Creat el",
@@ -638,7 +658,10 @@
     "deleteConfirm": "Eliminar aquest fitxer?",
     "usedBy": "Utilitzat per {{count}} element(s)",
     "hideMediaOnNode": "Amaga el mèdia al node",
-    "showMediaOnNode": "Mostra el mèdia al node"
+    "showMediaOnNode": "Mostra el mèdia al node",
+    "uploading": "S'està pujant…",
+    "dropOrPaste": "Arrossega fitxers o prem Ctrl+V per enganxar",
+    "browse": "o navega"
   },
   "history": {
     "title": "Historial",
