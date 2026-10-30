@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import { DropdownPortal } from '../common';
 import { useTabStore, useDossierStore, useHistoryStore, MAX_TABS } from '../../stores';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { useProgressStore } from '../../stores/progressStore';
@@ -34,6 +35,61 @@ export function TabBar({ dossierId }: TabBarProps) {
   const [dropTargetId, setDropTargetId] = useState<TabId | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const listButtonRef = useRef<HTMLButtonElement>(null);
+  const [isListOpen, setIsListOpen] = useState(false);
+  // Tabs hidden past either edge of the strip
+  const [overflow, setOverflow] = useState({ left: false, right: false });
+
+  const updateOverflow = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const left = el.scrollLeft > 1;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    setOverflow((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateOverflow();
+    el.addEventListener('scroll', updateOverflow, { passive: true });
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateOverflow) : null;
+    observer?.observe(el);
+    // Its content too: tabs added, renamed or removed
+    if (el.firstElementChild) observer?.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener('scroll', updateOverflow);
+      observer?.disconnect();
+    };
+  }, [updateOverflow, tabs.length]);
+
+  // The open tab stays in sight, whether chosen from the list or by any other way
+  useEffect(() => {
+    if (!activeTabId) return;
+    const target = scrollRef.current?.querySelector(`[data-tab-id="${activeTabId}"]`);
+    target?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [activeTabId]);
+
+  useEffect(() => {
+    if (!isListOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsListOpen(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isListOpen]);
+
+  const scrollTabs = (direction: -1 | 1) => {
+    const el = scrollRef.current;
+    if (el) el.scrollBy({ left: direction * Math.max(120, el.clientWidth * 0.6), behavior: 'smooth' });
+  };
+
+  // A mouse wheel scrolls vertically: turned into a horizontal scroll of the strip
+  const handleWheel = (e: React.WheelEvent) => {
+    const el = scrollRef.current;
+    if (!el || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    el.scrollLeft += e.deltaY;
+  };
 
   // Changing what the view shows can take a moment on a large dossier: show
   // the activity bar first, let it paint (two frames), then switch, and drop
@@ -187,13 +243,70 @@ export function TabBar({ dossierId }: TabBarProps) {
           {t('dossier.tabs.all')}
         </button>
 
+        {/* Direct access to every tab, however many there are */}
+        <button
+          ref={listButtonRef}
+          onClick={() => setIsListOpen((open) => !open)}
+          className={`flex items-center justify-center w-5 h-6 rounded shrink-0 transition-colors ${
+            isListOpen ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary'
+          }`}
+          title={t('dossier.tabs.list')}
+          aria-label={t('dossier.tabs.list')}
+          aria-haspopup="menu"
+          aria-expanded={isListOpen}
+        >
+          <ChevronDown size={12} />
+        </button>
+        <DropdownPortal
+          anchorRef={listButtonRef}
+          isOpen={isListOpen}
+          onClose={() => setIsListOpen(false)}
+          className="py-1 min-w-[180px] max-h-[60vh] overflow-y-auto"
+        >
+          <div role="menu">
+            {tabs.map((tab) => {
+              const isOpen = activeTabId === tab.id || extraTabIds.includes(tab.id);
+              return (
+                <button
+                  key={tab.id}
+                  role="menuitem"
+                  onClick={(e) => {
+                    setIsListOpen(false);
+                    handleTabClick(e, tab.id);
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-tertiary ${
+                    activeTabId === tab.id ? 'text-text-primary font-medium' : 'text-text-secondary'
+                  }`}
+                >
+                  <span className="w-3 shrink-0">{isOpen && <Check size={12} />}</span>
+                  <span className="truncate max-w-[240px]" title={tab.name}>{tab.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </DropdownPortal>
+
         <div className="w-px h-4 bg-border-default shrink-0" />
 
-        {/* Named tabs */}
-        <div ref={scrollRef} className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+        {overflow.left && (
+          <button
+            onClick={() => scrollTabs(-1)}
+            className="flex items-center justify-center w-5 h-6 rounded shrink-0 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary"
+            title={t('dossier.tabs.scrollLeft')}
+            aria-label={t('dossier.tabs.scrollLeft')}
+          >
+            <ChevronLeft size={14} />
+          </button>
+        )}
+
+        {/* Named tabs: min-w-0 lets the strip shrink and scroll instead of
+            pushing the tabs (and the + button) past the edge */}
+        <div ref={scrollRef} onWheel={handleWheel} className="min-w-0 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-0.5 w-max">
           {tabs.map((tab) => (
             <TabButton
               key={tab.id}
+              tabId={tab.id}
               label={tab.name}
               isActive={activeTabId === tab.id}
               isCombined={extraTabIds.includes(tab.id)}
@@ -232,7 +345,19 @@ export function TabBar({ dossierId }: TabBarProps) {
               }}
             />
           ))}
+          </div>
         </div>
+
+        {overflow.right && (
+          <button
+            onClick={() => scrollTabs(1)}
+            className="flex items-center justify-center w-5 h-6 rounded shrink-0 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary"
+            title={t('dossier.tabs.scrollRight')}
+            aria-label={t('dossier.tabs.scrollRight')}
+          >
+            <ChevronRight size={14} />
+          </button>
+        )}
 
         {/* Add tab button (hidden at max) */}
         {tabs.length < MAX_TABS && (
@@ -289,6 +414,7 @@ export function TabBar({ dossierId }: TabBarProps) {
 // ── Tab Button ─────────────────────────────────────────
 
 interface TabButtonProps {
+  tabId: string;
   label: string;
   isActive: boolean;
   /** Shown together with the open tab (Ctrl+click) */
@@ -312,6 +438,7 @@ interface TabButtonProps {
 }
 
 function TabButton({
+  tabId,
   label,
   isActive,
   isCombined,
@@ -342,6 +469,7 @@ function TabButton({
 
   return (
     <div
+      data-tab-id={tabId}
       className={`group flex items-center gap-1 px-2 h-6 text-xs rounded cursor-pointer select-none shrink-0 transition-colors ${
         isActive
           ? 'bg-bg-secondary text-text-primary font-medium border border-border-default'

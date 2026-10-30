@@ -347,7 +347,10 @@
       "ghostBadge": "En {{tabs}}",
       "navigateTo": "Ir a pestaña {{name}}",
       "combine": "Combinar",
-      "uncombine": "Dejar de combinar"
+      "uncombine": "Dejar de combinar",
+      "list": "Todas las pestañas",
+      "scrollLeft": "Pestañas anteriores",
+      "scrollRight": "Pestañas siguientes"
     },
     "retentionExpiredBanner": "Retención vencida hace {{days}} día(s)",
     "retentionDeleteConfirm": "Esta expediente se eliminará permanentemente, sin posibilidad de anulación.",

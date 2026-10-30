@@ -347,7 +347,10 @@
       "ghostBadge": "{{tabs}}(e)n",
       "navigateTo": "{{name}} fitxara joan",
       "combine": "Konbinatu",
-      "uncombine": "Ez konbinatu"
+      "uncombine": "Ez konbinatu",
+      "list": "Fitxa guztiak",
+      "scrollLeft": "Aurreko fitxak",
+      "scrollRight": "Hurrengo fitxak"
     },
     "retentionExpiredBanner": "Atxikipena iraungita duela {{days}} egun",
     "retentionDeleteConfirm": "Espediente hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",

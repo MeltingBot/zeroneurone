@@ -347,7 +347,10 @@
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Zu Tab {{name}} wechseln",
       "combine": "Kombinieren",
-      "uncombine": "Nicht mehr kombinieren"
+      "uncombine": "Nicht mehr kombinieren",
+      "list": "Alle Tabs",
+      "scrollLeft": "Vorherige Tabs",
+      "scrollRight": "Nächste Tabs"
     },
     "retentionExpiredBanner": "Aufbewahrung abgelaufen seit {{days}} Tag(en)",
     "retentionDeleteConfirm": "Diese Akte wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",

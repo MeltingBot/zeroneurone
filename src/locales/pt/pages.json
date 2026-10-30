@@ -347,7 +347,10 @@
       "ghostBadge": "Em {{tabs}}",
       "navigateTo": "Ir para aba {{name}}",
       "combine": "Combinar",
-      "uncombine": "Deixar de combinar"
+      "uncombine": "Deixar de combinar",
+      "list": "Todos os separadores",
+      "scrollLeft": "Separadores anteriores",
+      "scrollRight": "Separadores seguintes"
     },
     "retentionExpiredBanner": "Retenção expirada há {{days}} dia(s)",
     "retentionDeleteConfirm": "Esto dossiê será excluída permanentemente, sem possibilidade de anulação.",

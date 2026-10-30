@@ -347,7 +347,10 @@
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Vai alla scheda {{name}}",
       "combine": "Combina",
-      "uncombine": "Non combinare"
+      "uncombine": "Non combinare",
+      "list": "Tutte le schede",
+      "scrollLeft": "Schede precedenti",
+      "scrollRight": "Schede successive"
     },
     "retentionExpiredBanner": "Conservazione scaduta da {{days}} giorno/i",
     "retentionDeleteConfirm": "Questa fascicolo verrà eliminata definitivamente, senza possibilità di annullamento.",

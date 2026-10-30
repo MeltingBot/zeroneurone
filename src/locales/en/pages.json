@@ -348,7 +348,10 @@
       "ghostBadge": "On {{tabs}}",
       "navigateTo": "Go to tab {{name}}",
       "combine": "Combine",
-      "uncombine": "Uncombine"
+      "uncombine": "Uncombine",
+      "list": "All tabs",
+      "scrollLeft": "Previous tabs",
+      "scrollRight": "Next tabs"
     },
     "retentionExpiredBanner": "Retention expired {{days}} day(s) ago",
     "retentionDeleteConfirm": "This dossier will be permanently deleted. This action cannot be undone.",

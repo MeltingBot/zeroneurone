@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useDossierStore, useSelectionStore, useViewStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
+import { canvasPosition } from '../../utils/revealElement';
 
 interface ReportMarkdownPreviewProps {
   content: string;
@@ -197,8 +198,9 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
         const canvasHeight = window.innerHeight;
         const elementWidth = getElementSizePixels(element.visual?.size);
         const elementHeight = Math.round(elementWidth * 0.4);
-        const centerX = element.position.x + elementWidth / 2;
-        const centerY = element.position.y + elementHeight / 2;
+        const position = canvasPosition(element, elementMap);
+        const centerX = position.x + elementWidth / 2;
+        const centerY = position.y + elementHeight / 2;
 
         setTimeout(() => {
           requestViewportChange({
@@ -217,8 +219,10 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
         const fromEl = elementMap.get(link.fromId);
         const toEl = elementMap.get(link.toId);
         if (fromEl && toEl) {
-          const centerX = (fromEl.position.x + toEl.position.x) / 2;
-          const centerY = (fromEl.position.y + toEl.position.y) / 2;
+          const from = canvasPosition(fromEl, elementMap);
+          const to = canvasPosition(toEl, elementMap);
+          const centerX = (from.x + to.x) / 2;
+          const centerY = (from.y + to.y) / 2;
           const targetZoom = 0.8;
           const canvasWidth = window.innerWidth - 350;
           const canvasHeight = window.innerHeight;

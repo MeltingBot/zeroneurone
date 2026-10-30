@@ -204,15 +204,21 @@ export function ElementDetail({ element }: ElementDetailProps) {
       .join(',');
   });
   const isDuplicateName = duplicateIdsKey !== '';
-  const duplicateCursorRef = useRef(0);
+  // Position in the cycle [this element, its duplicates...]; 0 is this element.
+  // Starts over when the element or its set of duplicates changes.
+  const duplicateCursorRef = useRef({ key: '', index: 0 });
 
-  // Center the view on a duplicate without changing the selection (cycles on repeated clicks)
+  // Center the view on the next element of the same name without changing the
+  // selection; repeated clicks go through all of them, this one included
   const showDuplicate = useCallback(() => {
-    const ids = duplicateIdsKey.split(',');
-    const targetId = ids[duplicateCursorRef.current % ids.length];
-    duplicateCursorRef.current += 1;
-    revealElement(targetId);
-  }, [duplicateIdsKey]);
+    const cycle = [element.id, ...duplicateIdsKey.split(',')];
+    const key = cycle.join(',');
+    const cursor = duplicateCursorRef.current;
+    if (cursor.key !== key) duplicateCursorRef.current = { key, index: 0 };
+    const next = (duplicateCursorRef.current.index + 1) % cycle.length;
+    duplicateCursorRef.current.index = next;
+    revealElement(cycle[next]);
+  }, [element.id, duplicateIdsKey]);
 
   // Sync local state when element changes (different element selected)
   useEffect(() => {

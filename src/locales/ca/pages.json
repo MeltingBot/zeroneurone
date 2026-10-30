@@ -347,7 +347,10 @@
       "ghostBadge": "A {{tabs}}",
       "navigateTo": "Anar a pestanya {{name}}",
       "combine": "Combinar",
-      "uncombine": "Deixar de combinar"
+      "uncombine": "Deixar de combinar",
+      "list": "Totes les pestanyes",
+      "scrollLeft": "Pestanyes anteriors",
+      "scrollRight": "Pestanyes següents"
     },
     "retentionExpiredBanner": "Retenció expirada des de fa {{days}} dia/es",
     "retentionDeleteConfirm": "Aquesta expedient s'eliminarà definitivament, sense possibilitat d'anul·lació.",
