@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSwimlaneLayout, SWIMLANE_LABEL_WIDTH } from './useSwimlaneLayout';
 import { SwimlaneLane } from './SwimlaneLane';
 import type { LaneGroup } from './useSwimlaneGrouping';
-import type { TimelineItem } from './TimelineView';
+import type { TimelineItem } from './timelineItems';
 
 interface AxisLabel {
   x: number;

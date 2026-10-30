@@ -1,37 +1,16 @@
 import { useCallback, useMemo, useRef, useEffect, useState, type MutableRefObject } from 'react';
 import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { useTranslation } from 'react-i18next';
-import {
-  ReactFlow,
-  ReactFlowProvider,
-  useReactFlow,
-  useStore as useFlowStore,
-  useStoreApi as useFlowStoreApi,
-  applyNodeChanges,
-  type Connection,
-  type Node,
-  type Edge,
-  type OnNodesChange,
-  type OnEdgesChange,
-  type NodeMouseHandler,
-  type OnConnect,
-  type OnConnectStart,
-  type OnReconnect,
-  type HandleType,
-  SelectionMode,
-  ConnectionMode,
-  type NodeChange,
-} from '@xyflow/react';
+import { ReactFlow, ReactFlowProvider, useReactFlow, useStoreApi as useFlowStoreApi, applyNodeChanges, type Connection, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type NodeMouseHandler, type OnConnect, type OnConnectStart, type OnReconnect, type HandleType, SelectionMode, ConnectionMode, type NodeChange } from '@xyflow/react';
 
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X, Eye, EyeOff } from 'lucide-react';
+import { Grid3x3, Magnet, Map as MapIcon, Box, Link2, X, Eye, EyeOff } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
-
-import { ElementNode, LowDetailContext, type ElementNodeData } from './ElementNode';
+import { ElementNode, LowDetailContext } from './ElementNode';
 import { LowDetailHandleRepair } from './lowDetailHandles';
 import type { TabMembershipSnapshot } from '../../stores/historyStore';
-import { GroupNode, type GroupNodeData } from './GroupNode';
-import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
+import { GroupNode } from './GroupNode';
+import { AnnotationNode } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
 import { CanvasGrid } from './CanvasGrid';
 import { SuggestionPreviewLines } from './SuggestionPreviewLines';
@@ -48,7 +27,6 @@ import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { OverviewLayer, type OverviewHandle } from './overview/OverviewLayer';
-import { isExportedNode, withLayersAt } from './overview/exportLayers';
 import { LinksLayer } from './overview/LinksLayer';
 import { buildOverviewScene, computeAbsoluteNodePositions, linkFlagsOf, nodeFootprint } from './overview/overviewScene';
 import { hitLink, linksTouching } from './overview/overviewHitTest';
@@ -58,15 +36,13 @@ import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast } from '../../stores';
-import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
+import type { Element, Link, Position, Asset } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { sourceWebLinks } from '../../utils/sourceLinks';
-import { getEvaluationBadge } from '../../utils/evaluation';
 import { withDossierLinkDefaults } from '../../utils/dossierOptions';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
-import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
 import { getDimmedElementIds } from '../../utils/filterUtils';
@@ -92,72 +68,9 @@ import { gatherGroup, groupElements } from '../../utils/groupElements';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { elementRepository } from '../../db/repositories/elementRepository';
 import { emitExport, importFormatOf } from '../../plugins/pluginEventBus';
-
-/** Capture tab membership for undo restore (tabId → elementIds[]) */
-function captureTabMembership(elementIds: string[]): Record<string, string[]> | undefined {
-  const { getTabsForElement } = useTabStore.getState();
-  const membership: Record<string, string[]> = {};
-  let hasAny = false;
-  for (const elId of elementIds) {
-    for (const tab of getTabsForElement(elId)) {
-      if (!membership[tab.id]) membership[tab.id] = [];
-      membership[tab.id].push(elId);
-      hasAny = true;
-    }
-  }
-  return hasAny ? membership : undefined;
-}
-
-/**
- * Clone clipboard elements + links into the target dossier, anchored at (anchorX, anchorY).
- * Elements get fresh UUIDs and the target dossierId; internal links are remapped to the
- * new ids. On a cross-dossier paste, asset references are dropped (assets live per-dossier
- * in OPFS/Dexie, so keeping their ids would dangle).
- */
-function cloneClipboardForPaste(
-  clip: { elements: Element[]; links: Link[]; sourceDossierId: string | null },
-  dossierId: string,
-  anchorX: number,
-  anchorY: number,
-): { newElements: Element[]; newLinks: Link[] } {
-  const now = new Date();
-  const oldToNewIdMap = new Map<string, string>();
-  const crossDossier = clip.sourceDossierId !== dossierId;
-
-  const sumX = clip.elements.reduce((s, el) => s + el.position.x, 0);
-  const sumY = clip.elements.reduce((s, el) => s + el.position.y, 0);
-  const centerX = sumX / clip.elements.length;
-  const centerY = sumY / clip.elements.length;
-
-  const newElements: Element[] = clip.elements.map((el) => {
-    const newId = generateUUID();
-    oldToNewIdMap.set(el.id, newId);
-    return {
-      ...el,
-      id: newId,
-      dossierId: dossierId as Element['dossierId'],
-      position: { x: anchorX + (el.position.x - centerX), y: anchorY + (el.position.y - centerY) },
-      parentGroupId: null,
-      assetIds: crossDossier ? [] : el.assetIds,
-      createdAt: now,
-      updatedAt: now,
-    };
-  });
-
-  const newLinks: Link[] = clip.links
-    .map((link) => ({
-      ...link,
-      id: generateUUID(),
-      dossierId: dossierId as Link['dossierId'],
-      fromId: oldToNewIdMap.get(link.fromId)!,
-      toId: oldToNewIdMap.get(link.toId)!,
-      createdAt: now,
-      updatedAt: now,
-    }))
-    .filter((l) => l.fromId && l.toId);
-
-  return { newElements, newLinks };
-}
+import { captureTabMembership, cloneClipboardForPaste } from './canvasClipboard';
+import { CanvasCaptureHandler, CanvasZoomControls, RevealSelectionOnOpen, FitViewController } from './CanvasControllers';
+import { elementToNode, resolveLinkHandles, linkToEdge, calculateBestHandles } from './canvasConversion';
 
 interface ContextMenuState {
   x: number;
@@ -207,152 +120,6 @@ const edgeTypes = {
   simple: SimpleEdge,
 };
 
-// Capture handler for report screenshots - must be inside ReactFlowProvider
-function CanvasCaptureHandler() {
-  const { fitView } = useReactFlow();
-  const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore();
-
-  useEffect(() => {
-    const captureHandler = async (): Promise<string | null> => {
-
-      // Fit view to show all elements
-      // The overview layer hides every node: count them
-      fitView({ padding: 0.15, duration: 0, includeHiddenNodes: useUIStore.getState().canvasOverviewLayer });
-
-      // Wait for React Flow to fully render
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capture
-      const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
-      if (!element) {
-        return null;
-      }
-
-      try {
-        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
-        const { toPng } = await import('html-to-image');
-        return await withLayersAt(3, () => toPng(element, {
-          backgroundColor: '#faf8f5',
-          filter: isExportedNode,
-          pixelRatio: 3,
-          skipFonts: true,
-        }));
-      } catch (error) {
-        console.error('Canvas capture failed:', error);
-        return null;
-      }
-    };
-
-    registerCaptureHandler('canvas', captureHandler);
-    return () => unregisterCaptureHandler('canvas');
-  }, [fitView, registerCaptureHandler, unregisterCaptureHandler]);
-
-  return null;
-}
-
-// Zoom controls for the toolbar - must be inside ReactFlowProvider
-function CanvasZoomControls() {
-  const { t } = useTranslation('pages');
-  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow();
-
-  const handleZoomIn = useCallback(() => {
-    zoomIn({ duration: 200 });
-  }, [zoomIn]);
-
-  const handleZoomOut = useCallback(() => {
-    zoomOut({ duration: 200 });
-  }, [zoomOut]);
-
-  const handleFitView = useCallback(() => {
-    fitView({ padding: 0.2, duration: 300, includeHiddenNodes: useUIStore.getState().canvasOverviewLayer });
-  }, [fitView]);
-
-  const handleReset = useCallback(() => {
-    setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 300 });
-  }, [setViewport]);
-
-  return (
-    <>
-      <button
-        onClick={handleZoomOut}
-        className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('dossier.toolbar.zoomOut')}
-      >
-        <ZoomOut size={16} />
-      </button>
-      <button
-        onClick={handleZoomIn}
-        className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('dossier.toolbar.zoomIn')}
-      >
-        <ZoomIn size={16} />
-      </button>
-      <div className="w-px h-4 bg-border-default mx-1" />
-      <button
-        onClick={handleFitView}
-        data-testid="fit-view"
-        className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('dossier.toolbar.fitView')}
-      >
-        <Maximize2 size={16} />
-      </button>
-      <button
-        onClick={handleReset}
-        className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('dossier.toolbar.resetView')}
-      >
-        <RotateCcw size={16} />
-      </button>
-    </>
-  );
-}
-
-// Selection held when the canvas was last left (the store replaces the Set on
-// every change, so identity tells whether it changed in another view)
-let selectionWhenCanvasLeft: ReadonlySet<string> | null = null;
-
-// Arriving on the canvas with a selection made elsewhere (map, timeline):
-// centre it, at most at zoom 1 like the search. A selection unchanged since
-// the canvas was left keeps the restored viewport. Once per mount, when the
-// pane has its size.
-function RevealSelectionOnOpen() {
-  const { getInternalNode, setCenter } = useReactFlow();
-  const width = useFlowStore((s) => s.width);
-  const height = useFlowStore((s) => s.height);
-  const doneRef = useRef(false);
-  // Decided on the first mount only: refs survive StrictMode's remount,
-  // whose cleanup would otherwise record the selection as already seen
-  const changedRef = useRef<boolean | null>(null);
-
-  useEffect(() => {
-    changedRef.current ??= useSelectionStore.getState().selectedElementIds !== selectionWhenCanvasLeft;
-    return () => { selectionWhenCanvasLeft = useSelectionStore.getState().selectedElementIds; };
-  }, []);
-
-  useEffect(() => {
-    if (doneRef.current || width === 0 || height === 0) return;
-    doneRef.current = true;
-    const ids = useSelectionStore.getState().selectedElementIds;
-    if (ids.size === 0 || !changedRef.current) return;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const id of ids) {
-      const node = getInternalNode(id);
-      if (!node) continue; // not on this tab, or hidden
-      const { x, y } = node.internals.positionAbsolute;
-      const w = node.measured?.width ?? node.width ?? 56;
-      const h = node.measured?.height ?? node.height ?? 56;
-      minX = Math.min(minX, x); minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h);
-    }
-    if (minX === Infinity) return;
-    const pad = 1.3;
-    const zoom = Math.min(1, width / ((maxX - minX) * pad), height / ((maxY - minY) * pad));
-    setCenter((minX + maxX) / 2, (minY + maxY) / 2, { zoom, duration: 300 });
-  }, [width, height, getInternalNode, setCenter]);
-
-  return null;
-}
-
 type FlowStoreApi = ReturnType<typeof useFlowStoreApi>;
 
 /** Hands React Flow's store to the canvas, which renders the provider itself. */
@@ -377,47 +144,6 @@ function ViewportController() {
   return null;
 }
 
-// FitView controller - watches for pending fitView requests and applies them
-function FitViewController() {
-  const { fitView, getNodes } = useReactFlow();
-  const pendingFitView = useViewStore((s) => s.pendingFitView);
-  const pendingFitViewIds = useViewStore((s) => s.pendingFitViewIds);
-  const clearPendingFitView = useViewStore((s) => s.clearPendingFitView);
-
-  useEffect(() => {
-    if (!pendingFitView) return;
-
-    // Wait for nodes to be rendered and measured before fitting.
-    // After import/load, nodes may not exist yet when this effect first fires.
-    let attempts = 0;
-    const maxAttempts = 20; // 20 × 100ms = 2s max
-    const interval = setInterval(() => {
-      attempts++;
-      const nodes = getNodes();
-      // Framing given elements (a tab just opened): wait for them, not for
-      // the nodes still shown from before
-      const wanted = pendingFitViewIds ? new Set(pendingFitViewIds) : null;
-      // A node hidden by the overview layer may never have been measured: its
-      // estimated size (initialWidth) is enough to frame it
-      const hasMeasuredNodes = nodes.length > 0 && nodes.some(n => (n.measured?.width || n.initialWidth) && (!wanted || wanted.has(n.id)));
-      if (hasMeasuredNodes || attempts >= maxAttempts) {
-        clearInterval(interval);
-        fitView({
-          padding: 0.2,
-          duration: 300,
-          includeHiddenNodes: useUIStore.getState().canvasOverviewLayer,
-          ...(pendingFitViewIds ? { nodes: pendingFitViewIds.map((id) => ({ id })) } : {}),
-        });
-        clearPendingFitView();
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [pendingFitView, pendingFitViewIds, fitView, clearPendingFitView, getNodes]);
-
-  return null;
-}
-
-
 const EMPTY_ID_SET: Set<string> = new Set();
 
 // Return `prev` when both sets hold the same ids (keeps memo dependencies stable)
@@ -430,166 +156,6 @@ function reuseIfSameSet(prev: Set<string>, next: Set<string>): Set<string> {
   return prev;
 }
 
-// Convert our Element to React Flow Node
-function elementToNode(
-  element: Element,
-  isSelected: boolean,
-  isDimmed: boolean,
-  thumbnail: string | null,
-  onResize?: (width: number, height: number, position?: { x: number; y: number }) => void,
-  isEditing?: boolean,
-  remoteSelectors?: RemoteUserPresence[],
-  onLabelChange?: (newLabel: string) => void,
-  onStopEditing?: () => void,
-  unresolvedCommentCount?: number,
-  isLoadingAsset?: boolean,
-  badgeProperty?: { value: string; type: string } | null,
-  confidenceDisplay?: EvaluationModel | null,
-  displayedPropertyValues?: { key: string; value: string }[],
-  tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both',
-  tagDisplaySize?: 'small' | 'medium' | 'large',
-  themeMode?: 'light' | 'dark',
-  isGhost?: boolean,
-  isHighlighted?: boolean,
-  hasLinks?: boolean,
-  activeEvents?: TemporalEventSummary,
-  isFocused?: boolean,
-): Node {
-  // Ensure position is valid - fallback to origin if corrupted
-  const position = element.position &&
-    Number.isFinite(element.position.x) &&
-    Number.isFinite(element.position.y)
-    ? element.position
-    : { x: 0, y: 0 };
-
-  if (position !== element.position) {
-    console.warn('[elementToNode] Fixed invalid position for element:', element.id, 'original:', element.position);
-  }
-
-  if (element.isAnnotation) {
-    return {
-      id: element.id,
-      type: 'annotation',
-      position,
-      draggable: !element.isPositionLocked && !isGhost,
-      data: {
-        element,
-        isSelected: isGhost ? false : isSelected,
-        isDimmed: isGhost || isDimmed,
-        isEditing: isGhost ? false : isEditing,
-        onLabelChange: isGhost ? undefined : onLabelChange,
-        onStopEditing: isGhost ? undefined : onStopEditing,
-        onResize: isGhost ? undefined : onResize,
-      } satisfies AnnotationNodeData,
-      selected: isGhost ? false : isSelected,
-      selectable: !isGhost,
-      style: {
-        width: element.visual.customWidth || 200,
-        ...(element.visual.customHeight ? { height: element.visual.customHeight } : {}),
-      },
-    };
-  }
-
-  if (element.isGroup) {
-    return {
-      id: element.id,
-      type: 'groupFrame',
-      position,
-      draggable: !element.isPositionLocked && !isGhost,
-      data: {
-        element,
-        isSelected: isGhost ? false : isSelected,
-        isDimmed: isGhost || isDimmed,
-        isGhost,
-        onResize: isGhost ? undefined : onResize,
-        isEditing: isGhost ? false : isEditing,
-        onLabelChange: isGhost ? undefined : onLabelChange,
-        onStopEditing: isGhost ? undefined : onStopEditing,
-        themeMode,
-        unresolvedCommentCount,
-        showConfidenceIndicator: !!confidenceDisplay,
-        evaluationModel: confidenceDisplay ?? 'zeroneurone',
-        displayedPropertyValues,
-        tagDisplayMode,
-        tagDisplaySize,
-      } satisfies GroupNodeData,
-      selected: isGhost ? false : isSelected,
-      selectable: !isGhost,
-      style: {
-        width: element.visual.customWidth || 300,
-        height: element.visual.customHeight || 200,
-      },
-    };
-  }
-
-  const node: Node = {
-    id: element.id,
-    type: 'element',
-    position,
-    draggable: !element.isPositionLocked && !isGhost,
-    selectable: !isGhost,
-    data: {
-      element,
-      isSelected: isGhost ? false : isSelected,
-      // A ghost highlighted by Insights (a relay between two tabs, a path
-      // through another tab) shows with its glow instead of faded
-      isDimmed: (isGhost && !isHighlighted) || isDimmed,
-      isHighlighted: !!isHighlighted,
-      isFocused: !!isFocused,
-      isGhost,
-      thumbnail,
-      onResize: isGhost ? undefined : onResize,
-      isEditing: isGhost ? false : isEditing,
-      onLabelChange: isGhost ? undefined : onLabelChange,
-      onStopEditing: isGhost ? undefined : onStopEditing,
-      remoteSelectors,
-      unresolvedCommentCount,
-      isLoadingAsset,
-      badgeProperty,
-      showConfidenceIndicator: !!confidenceDisplay,
-      evaluationModel: confidenceDisplay ?? 'zeroneurone',
-      displayedPropertyValues,
-      tagDisplayMode,
-      tagDisplaySize,
-      themeMode,
-      hasLinks,
-      activeEvents,
-    } satisfies ElementNodeData,
-    selected: isGhost ? false : isSelected,
-  };
-
-  // Only set parentId for non-ghost nodes — ghost elements may have a parent group
-  // that isn't visible on the current tab, causing React Flow to misposition them
-  // (relative position interpreted as absolute → elements appear near top-left)
-  if (element.parentGroupId && !isGhost) {
-    (node as any).parentId = element.parentGroupId;
-  }
-
-  return node;
-}
-
-// Calculate best handles based on element positions
-function calculateBestHandles(
-  sourcePos: Position,
-  targetPos: Position
-): { sourceHandle: string; targetHandle: string } {
-  const dx = targetPos.x - sourcePos.x;
-  const dy = targetPos.y - sourcePos.y;
-  const absDx = Math.abs(dx);
-  const absDy = Math.abs(dy);
-
-  if (absDx > absDy) {
-    // Horizontal: use left/right
-    return dx > 0
-      ? { sourceHandle: 'source-right', targetHandle: 'target-left' }
-      : { sourceHandle: 'source-left', targetHandle: 'target-right' };
-  } else {
-    // Vertical: use top/bottom
-    return dy > 0
-      ? { sourceHandle: 'source-bottom', targetHandle: 'target-top' }
-      : { sourceHandle: 'source-top', targetHandle: 'target-bottom' };
-  }
-}
 
 /** Handle slots of every link, from the handles it is drawn between (see utils/edgeRouting). */
 function computeHandleSlots(
@@ -610,185 +176,6 @@ function computeHandleSlots(
   );
 }
 
-/** Handles a link is drawn between: per-link anchor override, else dossier anchor mode. */
-function resolveLinkHandles(
-  link: Link,
-  nodePositions: Map<string, Position>,
-  linkAnchorMode: 'auto' | 'manual'
-): { sourceHandle: string; targetHandle: string } {
-  // Helper to migrate old handle format and fix type mismatches
-  const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
-    if (!handle) return type === 'source' ? 'source-right' : 'target-left';
-
-    // Already in new format - check if type matches
-    if (handle.startsWith('source-') || handle.startsWith('target-')) {
-      const [prefix, position] = handle.split('-');
-      // If handle type doesn't match expected type, convert it
-      // e.g., "target-top" used as sourceHandle -> "source-top"
-      if (prefix !== type) {
-        return `${type}-${position}`;
-      }
-      return handle;
-    }
-
-    // Convert old format (top, bottom, left, right) to new format
-    return `${type}-${handle}`;
-  };
-
-  // Calculate handles based on anchor mode.
-  // A per-link override (set when the user drags an endpoint) wins over the dossier setting.
-  let sourceHandle: string;
-  let targetHandle: string;
-  const effectiveAnchorMode = link.anchorMode ?? linkAnchorMode;
-
-  if (effectiveAnchorMode === 'auto') {
-    // Auto mode: calculate optimal handles based on element positions
-    const sourcePos = nodePositions.get(link.fromId);
-    const targetPos = nodePositions.get(link.toId);
-
-    if (sourcePos && targetPos) {
-      const bestHandles = calculateBestHandles(sourcePos, targetPos);
-      sourceHandle = bestHandles.sourceHandle;
-      targetHandle = bestHandles.targetHandle;
-    } else {
-      // Fallback to stored handles if positions not available
-      sourceHandle = migrateHandle(link.sourceHandle, 'source');
-      targetHandle = migrateHandle(link.targetHandle, 'target');
-    }
-  } else {
-    // Manual mode: use stored handles from the link
-    sourceHandle = migrateHandle(link.sourceHandle, 'source');
-    targetHandle = migrateHandle(link.targetHandle, 'target');
-  }
-
-  return { sourceHandle, targetHandle };
-}
-
-// Convert link style to strokeDasharray
-function getStrokeDasharray(style: string, thickness: number): string | undefined {
-  switch (style) {
-    case 'dashed':
-      return `${thickness * 4} ${thickness * 2}`;
-    case 'dotted':
-      return `${thickness} ${thickness * 2}`;
-    default:
-      return undefined;
-  }
-}
-
-// Convert our Link to React Flow Edge
-function linkToEdge(
-  link: Link,
-  isSelected: boolean,
-  isDimmed: boolean,
-  nodePositions: Map<string, Position>,
-  linkAnchorMode: 'auto' | 'manual',
-  linkCurveMode: 'straight' | 'curved' | 'orthogonal',
-  isEditing?: boolean,
-  onLabelChange?: (newLabel: string) => void,
-  onStopEditing?: () => void,
-  parallelIndex?: number,
-  parallelCount?: number,
-  onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
-  confidenceDisplay?: EvaluationModel | null,
-  displayedPropertyValues?: { key: string; value: string }[],
-  remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[],
-  simplified?: boolean,
-  handleSlots?: HandleSlots
-): Edge {
-  const { sourceHandle, targetHandle } = resolveLinkHandles(link, nodePositions, linkAnchorMode);
-
-  const strokeDasharray = getStrokeDasharray(link.visual.style, link.visual.thickness);
-
-  // Handle direction (with fallback to legacy 'directed' field)
-  const direction = link.direction || (link.directed ? 'forward' : 'none');
-  const hasStartArrow = direction === 'backward' || direction === 'both';
-  const hasEndArrow = direction === 'forward' || direction === 'both';
-
-  // Simplified mode: minimal data for SimpleEdge (1 SVG path instead of 10-15 elements)
-  if (simplified) {
-    return {
-      id: link.id,
-      source: link.fromId,
-      target: link.toId,
-      sourceHandle: sourceHandle ?? 'source-right',
-      targetHandle: targetHandle ?? 'target-left',
-      type: 'simple',
-      data: {
-        color: link.visual.color,
-        thickness: link.visual.thickness,
-        dashArray: strokeDasharray,
-        hasStartArrow,
-        hasEndArrow,
-        isDimmed,
-        isSelected,
-      },
-      selected: isSelected,
-    };
-  }
-
-  return {
-    id: link.id,
-    source: link.fromId,
-    target: link.toId,
-    sourceHandle: sourceHandle ?? 'source-right',
-    targetHandle: targetHandle ?? 'target-left',
-    type: 'custom',
-    label: link.label || undefined,
-    labelStyle: {
-      fontSize: FONT_SIZE_PX[link.visual.fontSize || 'sm'],
-      fontWeight: 500,
-      // fill handled by CustomEdge with CSS variables
-    },
-    labelBgStyle: {
-      // fill handled by CustomEdge with CSS variables
-      fillOpacity: 0.9,
-    },
-    labelBgPadding: [4, 2] as [number, number],
-    labelBgBorderRadius: 3,
-    style: {
-      stroke: link.visual.color,
-      strokeDasharray,
-    },
-    data: {
-      color: link.visual.color,
-      thickness: link.visual.thickness,
-      dashArray: strokeDasharray,
-      hasStartArrow,
-      hasEndArrow,
-      isSelected,
-      isDimmed,
-      isEditing,
-      onLabelChange,
-      onStopEditing,
-      parallelIndex,
-      parallelCount,
-      // Offsets along the node side, shared by every link attached to the same handle
-      sourceSlot: handleSlots?.source ?? 0,
-      targetSlot: handleSlots?.target ?? 0,
-      // Each route style keeps its own manual offset
-      curveOffset: (linkCurveMode === 'orthogonal' ? link.orthogonalOffset : link.curveOffset) ?? { x: 0, y: 0 },
-      onCurveOffsetChange,
-      // Curve mode: straight or curved
-      curveMode: linkCurveMode,
-      // Include handles in data to force React Flow to re-render when they change
-      _sourceHandle: sourceHandle,
-      _targetHandle: targetHandle,
-      // Confidence / grading indicator
-      showConfidenceIndicator: !!confidenceDisplay,
-      confidenceBadge: confidenceDisplay
-        ? getEvaluationBadge(link.confidence, link.evaluation, confidenceDisplay)
-        : null,
-      // Displayed properties
-      displayedPropertyValues,
-      // Remote user presence (passed from Canvas, not subscribed per-edge)
-      remoteLinkSelectors,
-      // Font size
-      fontSize: link.visual.fontSize,
-    },
-    selected: isSelected,
-  };
-}
 
 export function Canvas() {
   // Below this zoom a label is a few pixels tall and unreadable, so the node's
@@ -1504,7 +891,6 @@ export function Canvas() {
       if (!currentIds.has(id)) callbacksCache.current.delete(id);
     }
   }, [elements]);
-
 
   // --- Phase A: Node structures (depends on data only) ---
   // Incremental: only rebuild structures for elements whose reference changed.
@@ -2624,8 +2010,6 @@ export function Canvas() {
   }, [overviewActive, edges, links, nodes, temporalHiddenLinkIds, viewHiddenIds, linkVisualContext, themeMode, t]);
   const linksLayerSceneRef = useRef(linksLayerScene);
   linksLayerSceneRef.current = linksLayerScene;
-
-
 
   // Track starting positions for undo
   const dragStartPositionsRef = useRef<Map<string, Position>>(new Map());
@@ -5596,7 +4980,6 @@ export function Canvas() {
               }}
             />
           )}
-
 
         </div>
 

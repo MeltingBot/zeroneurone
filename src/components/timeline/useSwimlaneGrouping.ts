@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Element } from '../../types';
-import type { TimelineItem } from './TimelineView';
+import type { TimelineItem } from './timelineItems';
 import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 

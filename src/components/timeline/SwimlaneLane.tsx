@@ -1,6 +1,6 @@
 import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import type { LaneLayout, LayoutItem } from './useSwimlaneLayout';
-import type { TimelineItem } from './TimelineView';
+import type { TimelineItem } from './timelineItems';
 import {
   SWIMLANE_LANE_PADDING,
   SWIMLANE_LABEL_WIDTH,
