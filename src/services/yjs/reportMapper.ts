@@ -312,21 +312,6 @@ export function reorderSectionsInYMap(
 // SECTION CONVERSION HELPERS (kept for Dexie/export paths)
 // ============================================================================
 
-export function sectionToPlainObject(section: ReportSection): any {
-  return {
-    id: section.id,
-    title: section.title,
-    order: section.order,
-    content: section.content,
-    elementIds: section.elementIds,
-    graphSnapshot: section.graphSnapshot ? {
-      imageDataUrl: section.graphSnapshot.imageDataUrl,
-      viewport: section.graphSnapshot.viewport,
-      capturedAt: dateToYjs(section.graphSnapshot.capturedAt),
-    } : null,
-  };
-}
-
 function plainObjectToSection(obj: any): ReportSection {
   return {
     id: obj.id || '',

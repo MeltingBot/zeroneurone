@@ -31,15 +31,11 @@ export function EditableField({
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Track the value we're editing from - used to detect if we should accept external changes
-  const editingFromRef = useRef(value);
-
   // Sync from props ONLY when not editing
   // This prevents flash during typing
   useEffect(() => {
     if (!isEditing) {
       setLocalValue(value);
-      editingFromRef.current = value;
     }
   }, [value, isEditing]);
 
@@ -53,7 +49,6 @@ export function EditableField({
 
   const handleClick = useCallback(() => {
     if (!isEditing) {
-      editingFromRef.current = value;
       setLocalValue(value);
       setIsEditing(true);
     }

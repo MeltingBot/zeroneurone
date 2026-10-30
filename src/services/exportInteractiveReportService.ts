@@ -58,7 +58,7 @@ function sanitiseHtml(html: string): string {
   }) as string;
 }
 
-// Simple Markdown to HTML converter (no external dependency)
+// Simple Markdown to HTML converter; its output goes through sanitiseHtml
 function markdownToHtml(md: string): string {
   let html = md
     // Escape HTML
@@ -95,7 +95,7 @@ function markdownToHtml(md: string): string {
       return `<a href="${escapeXml(safeUrl)}" target="_blank" rel="noopener">${text}</a>`;
     })
     // Line breaks (two spaces or explicit)
-    .replace(/  \n/g, '<br>\n')
+    .replace(/ {2}\n/g, '<br>\n')
     // Paragraphs
     .replace(/\n\n/g, '</p><p>')
     // Wrap lists
@@ -742,7 +742,6 @@ function gpc(ts){return{x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1]
 container.addEventListener('touchstart',function(e){if(e.touches.length===2){panning=false;ipd=gpd(e.touches);ipvb={width:vb.width,height:vb.height,x:vb.x,y:vb.y}}},{passive:true});
 container.addEventListener('touchmove',function(e){if(e.touches.length===2&&ipd>0){e.preventDefault();var cd=gpd(e.touches),sc=ipd/cd,ctr=gpc(e.touches),r=container.getBoundingClientRect();var sx=ipvb.x+(ctr.x-r.left)/r.width*ipvb.width,sy=ipvb.y+(ctr.y-r.top)/r.height*ipvb.height;var nw=ipvb.width*sc,nh=ipvb.height*sc;vb.width=nw;vb.height=nh;vb.x=sx-(ctr.x-r.left)/r.width*nw;vb.y=sy-(ctr.y-r.top)/r.height*nh}},{passive:false});
 container.addEventListener('touchend',function(e){if(e.touches.length<2)ipd=0},{passive:true});
-function zoomAt(f,cx,cy){var nw=vb.width/f,nh=vb.height/f;vb.x=cx-(cx-vb.x)/f-(nw-vb.width)/2*(f>1?0:1);vb.y=cy-(cy-vb.y)/f-(nh-vb.height)/2*(f>1?0:1);vb.width=nw;vb.height=nh}
 function zoom(f){var cx=vb.x+vb.width/2,cy=vb.y+vb.height/2;vb.width/=f;vb.height/=f;vb.x=cx-vb.width/2;vb.y=cy-vb.height/2}
 function focusOnPoint(cx,cy,zl){var tw=ivb.width/zl,th=ivb.height/zl;vb.width=tw;vb.height=th;vb.x=cx-tw/2;vb.y=cy-th/2}
 container.addEventListener('wheel',function(e){e.preventDefault();zoom(e.deltaY<0?1.1:0.9)});

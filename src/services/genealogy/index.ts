@@ -7,7 +7,6 @@
 export {
   detectGenealogyFormat,
   detectGenealogyFormatFromName,
-  isGenealogyFile,
   parseGenealogyFile,
   importGenealogyFile,
   getGenealogyImportPreview,

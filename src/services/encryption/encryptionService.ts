@@ -47,12 +47,6 @@ export interface EncryptionMeta {
   autoLockMinutes?: number | null;
 }
 
-export interface EncryptionState {
-  enabled: boolean;
-  /** DEK en mémoire — null si non déchiffrée */
-  dek: Uint8Array | null;
-}
-
 // ============================================================================
 // CONSTANTES
 // ============================================================================

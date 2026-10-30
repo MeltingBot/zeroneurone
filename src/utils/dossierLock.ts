@@ -83,10 +83,6 @@ export function assertDossierWritable(): void {
   if (openLock) refuseWrite(openLock);
 }
 
-export function isDossierClosed(dossier: Pick<Dossier, 'closedAt'> | null | undefined): boolean {
-  return !!dossier?.closedAt;
-}
-
 type RetentionFields = Pick<Dossier, 'createdAt' | 'closedAt' | 'closureHistory' | 'retentionFrom'>;
 
 /**

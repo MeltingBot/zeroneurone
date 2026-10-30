@@ -91,7 +91,7 @@ export const dossierRepository = {
   },
 
   /**
-   * Create an dossier with a specific UUID
+   * Create a dossier with a specific UUID
    * Used when joining a shared dossier to maintain the same ID across clients
    */
   async createWithId(
@@ -139,7 +139,7 @@ export const dossierRepository = {
   },
 
   /**
-   * Toggle favorite status of an dossier
+   * Toggle favorite status of a dossier
    */
   async toggleFavorite(id: DossierId): Promise<boolean> {
     const dossier = await db.dossiers.get(id);

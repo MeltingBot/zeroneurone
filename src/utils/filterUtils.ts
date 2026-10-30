@@ -1,4 +1,4 @@
-import type { CanvasTab, Element, EvaluationModel, Link, TabId, ViewFilters } from '../types';
+import type { CanvasTab, Element, EvaluationModel, TabId, ViewFilters } from '../types';
 import { matchesEvaluationFilters } from './evaluation';
 import { dateEndInclusive, datePropertyRules, elementDateIntervals, overlaps, toMinuteStart } from './temporalUtils';
 
@@ -82,16 +82,6 @@ export function elementMatchesFilters(
   }
 
   return true;
-}
-
-/**
- * Check if a link should be dimmed (either endpoint is dimmed)
- */
-export function linkShouldBeDimmed(
-  link: Link,
-  dimmedElementIds: Set<string>
-): boolean {
-  return dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
 }
 
 /**

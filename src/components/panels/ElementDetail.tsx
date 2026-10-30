@@ -989,7 +989,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
     }
 
     return allSuggestions;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [element.id, element.tags, currentDossier?.settings.tagPropertyAssociations, currentDossier?.settings.suggestedProperties, propertyChoicesMap, tagSetsMap]);
 
   // Simplified view for annotations (just notes + border)

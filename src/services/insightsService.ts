@@ -382,19 +382,6 @@ class InsightsService {
   }
 
   /**
-   * Depth-first search for connected components
-   */
-  private dfs(graph: Graph, nodeId: string, visited: Set<string>): void {
-    visited.add(nodeId);
-
-    graph.forEachNeighbor(nodeId, (neighbor) => {
-      if (!visited.has(neighbor)) {
-        this.dfs(graph, neighbor, visited);
-      }
-    });
-  }
-
-  /**
    * Clear the service state
    */
   clear(): void {

@@ -85,7 +85,7 @@ const SKIP_KEYS = new Set(['registered', 'platform_variables']);
 // ============================================================================
 
 /**
- * Import OSINT Industries JSON results into an dossier
+ * Import OSINT Industries JSON results into a dossier
  * Creates a central query element connected to found modules
  */
 export async function importOsintIndustries(

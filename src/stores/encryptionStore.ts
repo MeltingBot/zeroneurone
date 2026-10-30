@@ -17,8 +17,6 @@ interface EncryptionStoreState {
   dek: Uint8Array | null;
   /** Vrai si l'app attend la saisie du mot de passe */
   isLocked: boolean;
-  /** Vrai pendant une opération de migration */
-  isMigrating: boolean;
   /** Message d'erreur (mot de passe incorrect, etc.) */
   error: string | null;
   /**
@@ -34,7 +32,6 @@ interface EncryptionStoreState {
   setDek: (dek: Uint8Array) => void;
   setEnabled: (enabled: boolean) => void;
   setLocked: (locked: boolean) => void;
-  setMigrating: (migrating: boolean) => void;
   setError: (error: string | null) => void;
   setReady: () => void;
   /** Délai d'auto-verrouillage en minutes (null = désactivé) */
@@ -48,7 +45,6 @@ export const useEncryptionStore = create<EncryptionStoreState>((set) => ({
   isEnabled: false,
   dek: null,
   isLocked: false,
-  isMigrating: false,
   error: null,
   isReady: false,
   autoLockMinutes: null,
@@ -56,7 +52,6 @@ export const useEncryptionStore = create<EncryptionStoreState>((set) => ({
   setDek: (dek) => set({ dek, isLocked: false, error: null }),
   setEnabled: (enabled) => set({ isEnabled: enabled }),
   setLocked: (locked) => set({ isLocked: locked }),
-  setMigrating: (migrating) => set({ isMigrating: migrating }),
   setError: (error) => set({ error }),
   setReady: () => set({ isReady: true }),
 

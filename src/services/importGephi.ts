@@ -41,13 +41,6 @@ const t = (key: string, options?: Record<string, unknown>) =>
 // Format Detection
 // ============================================================================
 
-/** Detect GEXF XML format from file content */
-export function isGEXFFormat(content: string): boolean {
-  return content.includes('<gexf') && (
-    content.includes('gexf.net') || content.includes('xmlns')
-  );
-}
-
 /** Detect Gephi Lite JSON format from parsed data */
 export function isGephiLiteFormat(data: unknown): boolean {
   if (!data || typeof data !== 'object') return false;
@@ -966,13 +959,10 @@ export function spreadGephiPositions(nodes: { element: Element; positioned: bool
 
 /** Darken a hex color for border usage */
 export function darkenColor(hex: string): string {
-  if (!hex.startsWith('#') || hex.length < 7) return '#737373';
-  try {
-    const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 60);
-    const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - 60);
-    const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - 60);
-    return rgbToHex(r, g, b);
-  } catch {
-    return '#737373';
-  }
+  // parseInt does not throw on bad digits, it returns NaN: check them first
+  if (!/^#[0-9a-f]{6}/i.test(hex)) return '#737373';
+  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 60);
+  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - 60);
+  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - 60);
+  return rgbToHex(r, g, b);
 }

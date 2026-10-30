@@ -34,7 +34,6 @@ export function ZoneEditTool({ map, elementId, coordinates, color: rawColor = '#
     ? (getComputedStyle(document.documentElement).getPropertyValue(rawBorderColor.slice(4, -1).trim()).trim() || '#059669')
     : rawBorderColor;
   const verticesRef = useRef<[number, number][]>([]);
-  const originalRef = useRef<[number, number][]>([]);
   const draggingIndexRef = useRef<number | null>(null);
   // For resize mode (circle/square)
   const resizeDragging = useRef(false);
@@ -209,13 +208,11 @@ export function ZoneEditTool({ map, elementId, coordinates, color: rawColor = '#
   useEffect(() => {
     if (coordinates.length === 0) {
       verticesRef.current = [];
-      originalRef.current = [];
       resizeCenterRef.current = null;
       updateSource();
       return;
     }
     verticesRef.current = coordinates.map(c => [...c] as [number, number]);
-    originalRef.current = coordinates.map(c => [...c] as [number, number]);
     if (shapeOrigin) {
       const center = computePolygonCenter(coordinates);
       resizeCenterRef.current = [center.lng, center.lat];

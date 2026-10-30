@@ -93,10 +93,8 @@ interface SyncStoreState extends SyncState {
   share: (dossierName?: string, asyncEnabled?: boolean) => Promise<{ shareUrl: string; encryptionKey: string }>;
   unshare: () => Promise<void>;
   updateLocalUserName: (name: string) => void;
-  updateLocalUserColor: (color: string) => void;
 
-  /** Cursor/selection/dragging updates for awareness */
-  updateCursor: (position: { x: number; y: number } | null) => void;
+  /** Selection/dragging updates for awareness */
   updateSelection: (elementIds: string[]) => void;
   updateLinkSelection: (linkIds: string[]) => void;
   updateDragging: (elementIds: string[]) => void;
@@ -427,30 +425,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         const state = awareness.getLocalState() || {};
         awareness.setLocalState({ ...state, name });
       }
-    },
-
-    // Update local user color
-    updateLocalUserColor: (color: string) => {
-      const { localUser } = get();
-      const updated = { ...localUser, color };
-      localStorage.setItem('zeroneurone-user', JSON.stringify(updated));
-      set({ localUser: updated });
-
-      // Update awareness if connected
-      const awareness = syncService.getAwareness();
-      if (awareness) {
-        const state = awareness.getLocalState() || {};
-        awareness.setLocalState({ ...state, color });
-      }
-    },
-
-    // Update cursor position (call on mouse move when on canvas)
-    updateCursor: (position) => {
-      const awareness = syncService.getAwareness();
-      if (!awareness) return;
-
-      const state = awareness.getLocalState() || {};
-      awareness.setLocalState({ ...state, cursor: position });
     },
 
     // Update current selection

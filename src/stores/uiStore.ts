@@ -350,10 +350,9 @@ export const useUIStore = create<UIState>()(
     set({ activeTool: tool });
   },
 
-  // Toasts — delegated to toastStore, the store the rendered ToastContainer
-  // reads. (uiStore.toasts is kept for type/back-compat but is no longer the
-  // source of truth.) This makes every showToast caller — including plugins via
-  // pluginAPI.toast — actually render.
+  // Toasts — delegated to toastStore, the store ToastContainer renders, so
+  // every showToast caller (plugins through pluginAPI.toast included) shows.
+  // uiStore.toasts stays in the state for the plugin typings but is never filled.
   showToast: (type, message, duration = 3000) => {
     return useToastStore.getState().addToast(type, message, duration);
   },
@@ -467,7 +466,7 @@ export const useUIStore = create<UIState>()(
   requestZoneDraw: (callback, existingGeo) => set((s) => ({ pendingZoneDrawCallback: callback, pendingZoneEditGeo: existingGeo ?? null, pendingZoneRequestId: s.pendingZoneRequestId + 1 })),
   clearZoneDraw: () => set({ pendingZoneDrawCallback: null, pendingZoneEditGeo: null }),
 
-  // Reset dossier-specific state (called when closing an dossier)
+  // Reset dossier-specific state (called when closing a dossier)
   resetDossierState: () => {
     set({
       hideMedia: false,

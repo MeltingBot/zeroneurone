@@ -975,7 +975,7 @@ export function MapView() {
     return result.filter(r => isGeoInRange(r.geoData || { type: 'point', ...r.geo }));
   }, [elements, selectedDate, periodWindow, elementLinkVisibility, getPositionAtTime, getAnyGeoPosition, isOnMap, temporalMode, temporalTrace, isVisibleViaLink, propertyIntervals]);
 
-  // Legacy geoElements for compatibility (preserves full GeoData including polygons).
+  // Geolocated elements, with their full GeoData (polygons included).
   // Enriched with _markerKey/_eventId so a single element can produce several markers
   // (co-temporal events at different coordinates — e.g. GSM multi-cell pings).
   const geoElements = useMemo(() => {

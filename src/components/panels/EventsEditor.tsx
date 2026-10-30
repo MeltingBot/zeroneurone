@@ -788,7 +788,7 @@ export function EventsEditor({
     (eventId: string) => {
       const event = events.find((e) => e.id === eventId);
       if (event) {
-        const { geo, ...rest } = event;
+        const { geo: _geo, ...rest } = event;
         const newEvents = events.map((e) => (e.id === eventId ? rest as ElementEvent : e));
         onChange(newEvents);
       }

@@ -33,8 +33,6 @@ const NODE_MODULES_ROOTS = [
 const DUAL_LICENSE_CHOICES = {
   dompurify: 'Apache-2.0 (parmi MPL-2.0 ou Apache-2.0)',
   jszip: 'MIT (parmi MIT ou GPL-3.0-or-later)',
-  'vis-data': 'MIT (parmi Apache-2.0 ou MIT)',
-  'vis-util': 'MIT (parmi Apache-2.0 ou MIT)',
   '@maplibre/mlt': 'MIT (parmi MIT ou Apache-2.0)',
 };
 
@@ -53,8 +51,6 @@ const NOTICE_FILE_PATTERN = /^NOTICE([-._].*)?$/i;
 const DUAL_LICENSE_FILE_HINTS = {
   dompurify: /apache/i,
   jszip: /mit/i,
-  'vis-data': /mit/i,
-  'vis-util': /mit/i,
   '@maplibre/mlt': /mit/i,
 };
 

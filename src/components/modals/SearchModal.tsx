@@ -306,7 +306,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       if (matchIdx !== -1 && notes.length > maxLen) {
         const half = Math.floor((maxLen - query.length) / 2);
         let start = Math.max(0, matchIdx - half);
-        let end = Math.min(notes.length, start + maxLen);
+        const end = Math.min(notes.length, start + maxLen);
         if (end - start < maxLen) start = Math.max(0, end - maxLen);
         const prefix = start > 0 ? '...' : '';
         const suffix = end < notes.length ? '...' : '';
@@ -370,7 +370,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             const matchIdx = line.toLowerCase().indexOf(queryLower);
             const half = Math.floor((maxLen - query.length) / 2);
             let start = Math.max(0, matchIdx - half);
-            let end = Math.min(line.length, start + maxLen);
+            const end = Math.min(line.length, start + maxLen);
             if (end - start < maxLen) start = Math.max(0, end - maxLen);
             const prefix = start > 0 ? '...' : '';
             const suffix = end < line.length ? '...' : '';

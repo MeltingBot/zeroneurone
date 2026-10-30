@@ -91,7 +91,7 @@ class ReportService {
   }
 
   /**
-   * Helper to get translation with fallback
+   * Translation of a synthesis content key
    */
   private t(key: string, options?: Record<string, unknown>): string {
     return i18next.t(`modals:synthesis.content.${key}`, options) as string;
@@ -571,7 +571,7 @@ class ReportService {
   private renderElementsTableHTML(elements: Element[], assets: Asset[], options: ReportOptions): string {
     const showProps = options.includeProperties;
 
-    let html = `    <table>
+    const html = `    <table>
       <tr>
         <th>${this.t('element')}</th>
         <th>${this.t('notes')}</th>
@@ -1024,8 +1024,8 @@ class ReportService {
    * Open report in new window for printing
    */
   openForPrint(html: string): void {
-    // Loading a Blob URL replaces the deprecated document.write path: the report
-    // is parsed as a normal document instead of being written into a blank one.
+    // A Blob URL rather than document.write (deprecated): the report is parsed
+    // as a normal document instead of being written into a blank one.
     // Note it stays same-origin — a Blob URL inherits the creating origin — so
     // the escaping in generateHTML remains the actual defence.
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
@@ -1044,7 +1044,7 @@ class ReportService {
     };
 
     // Print once the document is actually rendered; a large report can take
-    // well over the fixed delay the previous implementation relied on.
+    // well over any fixed delay.
     printWindow.addEventListener('load', printOnce, { once: true });
     // Fallback in case the load event already fired before we subscribed.
     setTimeout(printOnce, 3000);

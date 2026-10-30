@@ -371,7 +371,7 @@ function buildEdgeSVG(
   const thickness = link.visual.thickness ?? 2;
   const dashArray = getStrokeDasharray(link.visual.style, thickness);
 
-  let parts: string[] = [];
+  const parts: string[] = [];
 
   // Path
   let pathAttrs = `d="${geometry.path}" fill="none" stroke="${color}" stroke-width="${thickness}" stroke-linecap="round"`;

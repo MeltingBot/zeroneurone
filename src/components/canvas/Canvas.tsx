@@ -35,7 +35,7 @@ import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
 import { CanvasGrid } from './CanvasGrid';
 import { SuggestionPreviewLines } from './SuggestionPreviewLines';
-import { AlignmentGuides, computeGuides, type Guide } from './AlignmentGuides';
+import { AlignmentGuides, computeGuides } from './AlignmentGuides';
 import { CustomEdge } from './CustomEdge';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
@@ -687,7 +687,6 @@ function linkToEdge(
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
-  onStartEditing?: () => void,
   parallelIndex?: number,
   parallelCount?: number,
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
@@ -762,7 +761,6 @@ function linkToEdge(
       isEditing,
       onLabelChange,
       onStopEditing,
-      onStartEditing,
       parallelIndex,
       parallelCount,
       // Offsets along the node side, shared by every link attached to the same handle
@@ -1944,20 +1942,15 @@ export function Canvas() {
   // --- Stable edge callback refs (eliminates closure recreations per edge recalc) ---
   const handleLinkLabelChangeRef = useRef(handleLinkLabelChange);
   const handleCurveOffsetChangeRef = useRef(handleCurveOffsetChange);
-  const selectLinkRef = useRef(selectLink);
-  const startEditingLinkRef = useRef(startEditingLink);
 
   useEffect(() => {
     handleLinkLabelChangeRef.current = handleLinkLabelChange;
     handleCurveOffsetChangeRef.current = handleCurveOffsetChange;
-    selectLinkRef.current = selectLink;
-    startEditingLinkRef.current = startEditingLink;
   });
 
   const edgeCallbacksCache = useRef(new Map<string, {
     onLabelChange: (newLabel: string) => void;
     onCurveOffsetChange: (offset: { x: number; y: number }) => void;
-    onStartEditing: () => void;
   }>());
 
   function getEdgeCallbacks(linkId: string) {
@@ -1966,10 +1959,6 @@ export function Canvas() {
       cached = {
         onLabelChange: (newLabel: string) => handleLinkLabelChangeRef.current(linkId, newLabel),
         onCurveOffsetChange: (offset: { x: number; y: number }) => handleCurveOffsetChangeRef.current(linkId, offset),
-        onStartEditing: () => {
-          selectLinkRef.current(linkId);
-          startEditingLinkRef.current(linkId);
-        },
       };
       edgeCallbacksCache.current.set(linkId, cached);
     }
@@ -1988,7 +1977,6 @@ export function Canvas() {
   const isDraggingRef = useRef(false);
   const lastElementCreatedAtRef = useRef(0);
   const draggingNodeIdsRef = useRef<Set<string>>(new Set());
-  // lastDragEndRef removed — no longer needed after eliminating useLayoutEffect double-render
   const isHandlingSelectionRef = useRef(false);
 
   // Ref for sync mode - used inside handleNodesChange without adding it as dependency
@@ -2002,8 +1990,7 @@ export function Canvas() {
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
 
-  // Alignment guides state
-  const [_activeGuides, setActiveGuides] = useState<Guide[]>([]);
+  // Alignment guides: drawn from the dragged node's position
   const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ id: string; position: { x: number; y: number } } | null>(null);
   const lastGuideUpdateRef = useRef<number>(0);
   const GUIDE_THROTTLE_MS = 100;
@@ -2311,7 +2298,7 @@ export function Canvas() {
         edge = linkToEdge(
           link, isSelected, isLinkDimmed, nodePositions,
           linkAnchorMode, linkCurveMode,
-          undefined, undefined, undefined, undefined,
+          undefined, undefined, undefined,
           undefined, undefined, undefined, undefined, undefined, undefined,
           true
         );
@@ -2332,7 +2319,7 @@ export function Canvas() {
           link, isSelected, isLinkDimmed, nodePositions,
           linkAnchorMode, linkCurveMode,
           editingLinkId === link.id,
-          edgeCbs.onLabelChange, stopEditing, edgeCbs.onStartEditing,
+          edgeCbs.onLabelChange, stopEditing,
           parallel.index, parallel.count,
           edgeCbs.onCurveOffsetChange,
           confidenceDisplay, linkDisplayedPropertyValues,
@@ -2733,9 +2720,6 @@ export function Canvas() {
         }
       } else if (nowDragging.size === 0) {
         setDraggedNodeInfo(null);
-        // Same array when already empty: nodes entering the screen during a
-        // pan report their size here, a new [] would re-render the canvas
-        setActiveGuides((prev) => (prev.length === 0 ? prev : []));
       }
 
       // Update awareness for collaboration
@@ -2831,7 +2815,6 @@ export function Canvas() {
 
         // Clear alignment guides
         setDraggedNodeInfo(null);
-        setActiveGuides([]);
 
         // Update store FIRST (synchronous), then release isDraggingRef.
         // This ensures displayNodes = nodes has the final positions when the switch happens.
@@ -4400,7 +4383,7 @@ export function Canvas() {
             toast.error(result.errors[0] || tPages('dossier.importPlacement.error'));
           }
         });
-      } catch (error) {
+      } catch {
         toast.error(tPages('dossier.importPlacement.error'));
       } finally {
         setIsImportingPlacement(false);
@@ -4522,8 +4505,9 @@ export function Canvas() {
     [selectElement, startEditingElement]
   );
 
-  // Handle double click on edge - start inline label editing
-  // Note: This is kept as a fallback but main double-click detection is in handleEdgeClick
+  // Double click on edge: inline label editing. React Flow does not fire it
+  // reliably, so handleEdgeClick detects double clicks too; both may run,
+  // which is harmless (startEditingLink only sets state).
   const handleEdgeDoubleClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       event.stopPropagation();
@@ -5454,7 +5438,6 @@ export function Canvas() {
       hideAllFlowNodesNowRef.current();
       setOverviewActive(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overviewEnabled, nodes.length, setOverviewActive]);
 
   // Handle selection change from selection box — throttled to avoid 60fps store updates
@@ -5915,7 +5898,6 @@ export function Canvas() {
             <LinkContextMenu
               x={linkContextMenu.x}
               y={linkContextMenu.y}
-              linkId={linkContextMenu.linkId}
               linkLabel={linkContextMenu.linkLabel}
               onEditLabel={() => {
                 startEditingLink(linkContextMenu.linkId);

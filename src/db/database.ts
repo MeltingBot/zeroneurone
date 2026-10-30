@@ -264,83 +264,6 @@ class DossierDatabase extends Dexie {
   }
 
   /**
-   * Recovery migration: if the DB was upgraded to v8/v9 but the data
-   * wasn't actually copied (bug: investigations:null deleted the table
-   * before upgrade() could read it), detect and fix the situation.
-   *
-   * Call this ONCE after db.open() succeeds.
-   */
-  async runRecoveryMigration(): Promise<void> {
-    try {
-      // Check if dossiers table is empty but investigations has data
-      const dossierCount = await this.dossiers.count();
-      if (dossierCount > 0) return; // Already migrated, nothing to do
-
-      // Check if investigations table still exists and has data
-      let investigations: any[];
-      try {
-        investigations = await this.table('investigations').toArray();
-      } catch {
-        return; // Table doesn't exist
-      }
-      if (investigations.length === 0) return;
-
-      console.info(`[Recovery] Found ${investigations.length} investigations to migrate to dossiers`);
-
-      await this.transaction('rw',
-        [this.dossiers, this.elements, this.links, this.assets,
-         this.views, this.reports, this.canvasTabs, this.pluginData],
-        async () => {
-          // Copy investigations → dossiers
-          await this.dossiers.bulkAdd(investigations);
-
-          // Remap investigationId → dossierId in child tables (except pluginData)
-          const remapId = (record: any) => {
-            if (record.investigationId !== undefined) {
-              record.dossierId = record.investigationId;
-              delete record.investigationId;
-            }
-            return record;
-          };
-
-          const tables = ['elements', 'links', 'assets', 'views', 'reports', 'canvasTabs'];
-          for (const tableName of tables) {
-            const table = this.table(tableName);
-            const records = await table.toArray();
-            const needsMigration = records.some((r: any) => r.investigationId !== undefined);
-            if (needsMigration) {
-              const migrated = records.map(remapId);
-              await table.clear();
-              if (migrated.length > 0) {
-                await table.bulkAdd(migrated);
-              }
-            }
-          }
-
-          // pluginData: keep investigationId (PK) but add dossierId
-          const pluginRecords = await this.pluginData.toArray();
-          if (pluginRecords.some((r: any) => r.investigationId && !r.dossierId)) {
-            const migrated = pluginRecords.map((r: any) => {
-              if (r.investigationId && !r.dossierId) {
-                r.dossierId = r.investigationId;
-              }
-              return r;
-            });
-            await this.pluginData.clear();
-            if (migrated.length > 0) {
-              await this.pluginData.bulkAdd(migrated);
-            }
-          }
-        }
-      );
-
-      console.info('[Recovery] Migration complete');
-    } catch (error) {
-      console.error('[Recovery] Migration failed:', error);
-    }
-  }
-
-  /**
    * Active le chiffrement at-rest avec la DEK fournie.
    *
    * Dexie compile la chaîne de middlewares au moment de open(). Si la DB est
@@ -845,7 +768,7 @@ export async function cleanOrphanedOpfs(): Promise<void> {
       for (const name of orphans) {
         try {
           await dir.removeEntry(name, { recursive: true });
-          console.log(`[opfs] Removed orphaned: ${dirName}/${name}`);
+          console.info(`[opfs] Removed orphaned: ${dirName}/${name}`);
         } catch { /* ignore */ }
       }
 

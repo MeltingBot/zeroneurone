@@ -27,7 +27,6 @@ interface CustomEdgeData {
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
-  onStartEditing?: () => void;
   // For parallel edge offset
   parallelIndex?: number;  // 0, 1, 2, ... for edges between same nodes
   parallelCount?: number;  // Total number of edges between same nodes
@@ -88,7 +87,6 @@ function CustomEdgeComponent(props: EdgeProps) {
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
-  // const onStartEditing = edgeData?.onStartEditing; // Currently unused
   const parallelIndex = edgeData?.parallelIndex ?? 0;
   const parallelCount = edgeData?.parallelCount ?? 1;
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };

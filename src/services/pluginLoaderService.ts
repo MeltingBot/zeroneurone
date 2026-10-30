@@ -100,7 +100,7 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
     }
 
     if (skipIds.includes(entry.id)) {
-      console.log(`[ZN] Plugin "${entry.id}" skipped (workspace version active)`);
+      console.info(`[ZN] Plugin "${entry.id}" skipped (workspace version active)`);
       continue;
     }
 
@@ -147,7 +147,7 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
         loaded++;
 
         const trustLabel = trust === 'trusted' ? '(trusted)' : '(community)';
-        console.log(`[ZN] Plugin "${entry.id}" registered ${trustLabel}`);
+        console.info(`[ZN] Plugin "${entry.id}" registered ${trustLabel}`);
 
         // Auto-register a basic home:card if the plugin didn't create one.
         // This ensures every external plugin is visible in the Extensions
@@ -181,7 +181,7 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
   }
 
   if (loaded > 0) {
-    console.log(`[ZN] Loaded ${loaded} external plugin(s)`);
+    console.info(`[ZN] Loaded ${loaded} external plugin(s)`);
   }
 }
 

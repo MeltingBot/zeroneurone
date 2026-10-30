@@ -4,7 +4,7 @@
  * Handles:
  * - Y.Doc lifecycle (create, open, close)
  * - y-indexeddb provider for local persistence
- * - y-websocket provider for collaboration via signaling server
+ * - y-websocket provider for collaboration through a relay server
  * - E2E encryption for data exchange
  * - Sync state management
  */
@@ -25,7 +25,7 @@ const messageSync = 0;
 const messageYjsSyncStep1 = 0;
 const messageYjsUpdate = 2;
 
-// Storage key for signaling server URL
+// Storage key for the relay server URL (historical name, kept for saved settings)
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
 type StateListener = (state: SyncState) => void;
@@ -90,21 +90,14 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Set the signaling server URL
+   * Set the relay server URL
    */
   setServerUrl(url: string): void {
     this.serverUrl = url;
   }
 
   /**
-   * Get the current signaling server URL
-   */
-  getServerUrl(): string {
-    return this.serverUrl;
-  }
-
-  /**
-   * Check if a signaling server is configured
+   * Check if a relay server is configured
    */
   isServerConfigured(): boolean {
     return this.serverUrl.trim() !== '';
@@ -162,7 +155,7 @@ class SyncService {
   }
 
   /**
-   * Check if an dossier is currently open
+   * Check if a dossier is currently open
    */
   /** Updates of the open dossier that could not be decrypted (wrong or missing key). */
   getUndecryptableCount(): number {
@@ -214,7 +207,7 @@ class SyncService {
   }
 
   /**
-   * Open an dossier in local mode (no sync)
+   * Open a dossier in local mode (no sync)
    * Creates/loads Y.Doc with IndexedDB persistence (chiffré si DEK disponible)
    */
   async openLocal(dossierId: string): Promise<Y.Doc> {
@@ -250,7 +243,7 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Open an dossier in shared mode (sync with peers via signaling server)
+   * Open a dossier in shared mode (sync with peers through the relay server)
    * If the dossier has local data, it will be synced with peers
    *
    * @param dossierId - The dossier UUID (used for local storage)
@@ -297,7 +290,7 @@ class SyncService {
       accessToken = await deriveAccessToken(encryptionKey, roomId);
     }
 
-    // Connect to signaling server
+    // Connect to the relay server
     // Uses roomId if provided (hashed), otherwise dossierId (legacy)
     this.connectWebSocket(effectiveRoomId, encryptionKey, {
       async: asyncEnabled,
@@ -352,7 +345,7 @@ class SyncService {
   }
 
   /**
-   * Stop sharing (disconnect from signaling server)
+   * Stop sharing (disconnect from the relay server)
    */
   async unshare(): Promise<void> {
     if (this.websocketProvider) {
@@ -701,16 +694,14 @@ class SyncService {
    * @param encryptionKey - The E2E encryption key
    * @param dossierName - Optional display name
    * @param asyncEnabled - Whether async buffering is enabled (default: false)
-   * @param baseUrl - Optional base URL (defaults to the app's origin + base path)
    */
   async buildShareUrl(
     dossierId: string,
     encryptionKey: string,
     dossierName?: string,
     asyncEnabled?: boolean,
-    baseUrl?: string
   ): Promise<string> {
-    const base = baseUrl || appUrl('/').replace(/\/$/, '');
+    const base = appUrl('/').replace(/\/$/, '');
 
     // Derive hashed room ID from UUID + key (server cannot correlate)
     const hashedRoomId = await deriveRoomId(dossierId, encryptionKey);
@@ -738,102 +729,7 @@ class SyncService {
   }
 
   /**
-   * Parse a share URL to extract dossier ID and encryption key
-   *
-   * Supports both formats for backwards compatibility:
-   *
-   * OLD FORMAT (pre-v1.7):
-   * /join/{uuid}?server=...&name=...#key=xxx
-   *
-   * NEW FORMAT (v2):
-   * /join/{hash}?server=...&async=1#key=xxx&name=xxx&id=uuid
-   *
-   * @param url - The share URL to parse
-   * @returns Object with dossierId, encryptionKey, serverUrl, name, roomId, async flag
-   */
-  parseShareUrl(url: string): {
-    dossierId: string;
-    encryptionKey: string | null;
-    serverUrl: string | null;
-    name: string | null;
-    roomId: string; // The actual roomId to use for WebSocket (hash or UUID)
-    isLegacyFormat: boolean;
-    asyncEnabled: boolean; // Whether async buffering is enabled
-  } {
-    const parsed = new URL(url);
-
-    // Extract path segment: /join/{something}
-    const pathMatch = parsed.pathname.match(/\/join\/([^/]+)/);
-    const pathSegment = pathMatch ? pathMatch[1] : '';
-
-    // Parse fragment parameters
-    let encryptionKey: string | null = null;
-    let fragmentId: string | null = null;
-    let fragmentName: string | null = null;
-
-    if (parsed.hash) {
-      const hashParams = new URLSearchParams(parsed.hash.slice(1));
-      encryptionKey = hashParams.get('key');
-      fragmentId = hashParams.get('id');
-      fragmentName = hashParams.get('name');
-    }
-
-    // Extract query params
-    const serverUrl = parsed.searchParams.get('server');
-    const queryName = parsed.searchParams.get('name');
-    const asyncEnabled = parsed.searchParams.get('async') === '1';
-
-    // Determine format:
-    // - NEW FORMAT: id is in fragment, path contains hash
-    // - OLD FORMAT: id is in path (UUID format), name may be in query
-    const isLegacyFormat = !fragmentId;
-
-    // Dossier ID: from fragment (new) or path (old)
-    const dossierId = fragmentId || pathSegment;
-
-    // Room ID: path segment (hash in new format, UUID in old format)
-    const roomId = pathSegment;
-
-    // Name: from fragment (new) or query (old)
-    const name = fragmentName || queryName;
-
-    return {
-      dossierId,
-      encryptionKey,
-      serverUrl,
-      name,
-      roomId,
-      isLegacyFormat,
-      asyncEnabled,
-    };
-  }
-
-  /**
-   * Check if IndexedDB has data for a given dossier
-   */
-  async hasLocalData(dossierId: string): Promise<boolean> {
-    const dbName = `zeroneurone-ydoc-${dossierId}`;
-    try {
-      const databases = await indexedDB.databases();
-      return databases.some(db => db.name === dbName);
-    } catch {
-      // Firefox doesn't support indexedDB.databases()
-      // Try to open and check
-      return new Promise((resolve) => {
-        const request = indexedDB.open(dbName);
-        request.onsuccess = () => {
-          const db = request.result;
-          const hasData = db.objectStoreNames.length > 0;
-          db.close();
-          resolve(hasData);
-        };
-        request.onerror = () => resolve(false);
-      });
-    }
-  }
-
-  /**
-   * Delete local data for an dossier
+   * Delete local data for a dossier
    */
   async deleteLocalData(dossierId: string): Promise<void> {
     if (this.dossierId === dossierId) await this.close();

@@ -266,8 +266,6 @@ export function DossierPage() {
     if (!hasMedia) return;
     opfsWarnedRef.current = id;
     fileService.isOpfsWritable().then((writable) => {
-      // Use toastStore.toast (the one actually rendered by ToastContainer);
-      // uiStore.showToast writes to a different, unrendered store.
       if (!writable) toast.warning(t('dossier.opfsUnavailable'), 8000);
     });
   }, [id, isLoading, elements, t]);

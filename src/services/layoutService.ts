@@ -776,26 +776,6 @@ class LayoutService {
   }
 
   /**
-   * Get layout description
-   */
-  getLayoutDescription(layoutType: LayoutType): string {
-    switch (layoutType) {
-      case 'force':
-        return 'Regroupe les elements connectes, separe les clusters';
-      case 'clusters':
-        return 'Regroupe chaque communaute en ilot separe';
-      case 'circular':
-        return 'Dispose les elements en cercle';
-      case 'grid':
-        return 'Aligne les elements en grille reguliere';
-      case 'random':
-        return 'Disperse les elements aleatoirement';
-      default:
-        return '';
-    }
-  }
-
-  /**
    * Get all available layout types
    */
   getAvailableLayouts(): LayoutType[] {

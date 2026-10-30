@@ -107,7 +107,7 @@ const PROPERTY_FIELDS = [
 // ============================================================================
 
 /**
- * Import a PredicaGraph JSON export into an dossier
+ * Import a PredicaGraph JSON export into a dossier
  */
 export async function importPredicaGraph(
   content: string,

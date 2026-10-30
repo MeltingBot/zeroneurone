@@ -28,7 +28,9 @@ dist-ssr
 
 # Internal working docs (not versioned)
 claudedocs/
-data/
+/data/
+# Local experiment, kept out of the repo
+src/data/nerGazetteer.ts
 # Personal project docs (not versioned)
 doc_perso/
 

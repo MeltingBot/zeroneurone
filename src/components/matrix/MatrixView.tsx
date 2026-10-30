@@ -394,7 +394,6 @@ export function MatrixView() {
   }, [draggingCol]);
 
   // Column resize
-  const resizingColRef = useRef<string | null>(null);
   const resizeStartXRef = useRef(0);
   const resizeStartWidthRef = useRef(0);
   const [resizingCol, setResizingCol] = useState<string | null>(null);
@@ -402,7 +401,6 @@ export function MatrixView() {
   const handleResizeMouseDown = useCallback((e: React.MouseEvent, col: ColumnDef) => {
     e.preventDefault();
     e.stopPropagation();
-    resizingColRef.current = col.key;
     resizeStartXRef.current = e.clientX;
     resizeStartWidthRef.current = columnWidths[col.key] ?? col.width;
     setResizingCol(col.key);
@@ -416,7 +414,6 @@ export function MatrixView() {
       setColumnWidths((prev) => ({ ...prev, [resizingCol]: newWidth }));
     };
     const handleMouseUp = () => {
-      resizingColRef.current = null;
       setResizingCol(null);
     };
     document.addEventListener('mousemove', handleMouseMove);

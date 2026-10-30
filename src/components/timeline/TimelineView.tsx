@@ -565,7 +565,7 @@ export function TimelineView() {
           if (asset?.thumbnailDataUrl) {
             newThumbnails[assetId] = asset.thumbnailDataUrl;
           }
-        } catch (e) {
+        } catch {
           console.warn('Failed to load thumbnail:', assetId);
         }
       }

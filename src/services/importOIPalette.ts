@@ -134,7 +134,7 @@ const SKIP_KEYS = new Set(['registered', 'platform_variables']);
 // ============================================================================
 
 /**
- * Import a Graph Palette (OSINT Industries visual export) into an dossier
+ * Import a Graph Palette (OSINT Industries visual export) into a dossier
  */
 export async function importOIPalette(
   content: string,

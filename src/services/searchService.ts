@@ -35,7 +35,7 @@ class SearchService {
   private indexedFrom = new Map<string, { source: Element | Link; assetText: string; commentText: string; content: string }>();
 
   /**
-   * Load and index all elements and links for an dossier (full rebuild).
+   * Load and index all elements and links for a dossier (full rebuild).
    * Use syncIncremental() for subsequent updates.
    */
   loadDossier(
@@ -140,30 +140,6 @@ class SearchService {
     }
     this.index.add(doc);
     this.indexedFrom.set(doc.id, { source, assetText, commentText, content });
-  }
-
-  /**
-   * Remove an element from the index
-   */
-  removeElement(elementId: string): void {
-    this.indexedFrom.delete(elementId);
-    try {
-      this.index.discard(elementId);
-    } catch {
-      // Document didn't exist
-    }
-  }
-
-  /**
-   * Remove a link from the index
-   */
-  removeLink(linkId: string): void {
-    this.indexedFrom.delete(linkId);
-    try {
-      this.index.discard(linkId);
-    } catch {
-      // Document didn't exist
-    }
   }
 
   /**

@@ -7,10 +7,7 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   minRows?: number;
-  maxRows?: number;
   className?: string;
-  /** If true, show preview by default when there's content */
-  previewByDefault?: boolean;
   /** Called when user starts editing */
   onFocus?: () => void;
   /** Called when user stops editing */
@@ -23,7 +20,6 @@ export function MarkdownEditor({
   placeholder = 'Markdown: **gras**, *italique*, [lien](url)...',
   minRows = 4,
   className = '',
-  previewByDefault: _previewByDefault = true,
   onFocus,
   onBlur,
 }: MarkdownEditorProps) {

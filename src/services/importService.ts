@@ -59,7 +59,7 @@ import { importOIPalette, isOIPaletteFormat } from './importOIPalette';
 import { importExcalidraw, isExcalidrawFormat } from './importExcalidraw';
 import { importSTIX2, isSTIX2Format } from './importSTIX2';
 import { importGephiLiteJSON, isGephiLiteFormat } from './importGephi';
-import { importGenealogyFile, detectGenealogyFormatFromName, type GenealogyImportOptions } from './genealogy';
+import { importGenealogyFile, type GenealogyImportOptions } from './genealogy';
 import { dateFromInputKeys, parseDateValue, parseDateWithPrecision, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 import { reportMediaProgress } from './importProgress';
 
@@ -119,8 +119,6 @@ export class ImportValidationError extends Error {
     this.name = 'ImportValidationError';
   }
 }
-
-export type ImportFormat = 'json' | 'csv' | 'zip' | 'graphml' | 'gexf';
 
 export interface ImportResult {
   success: boolean;
@@ -2002,7 +2000,7 @@ class ImportService {
     content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
-      delimiter: options.delimiter ?? this.detectCSVDelimiter(content),
+      delimiter: options.delimiter ?? detectCSVDelimiter(content),
       createMissingElements: true,
       ...options,
     };
@@ -2024,7 +2022,7 @@ class ImportService {
         return result;
       }
 
-      const headers = this.parseCSVLine(lines[0], opts.delimiter).map(h => h.toLowerCase());
+      const headers = parseCSVLine(lines[0], opts.delimiter).map(h => h.toLowerCase());
       const dataLines = lines.slice(1);
 
       // Check if this is a unified format (has 'type' column)
@@ -2098,7 +2096,7 @@ class ImportService {
       });
       const customProperties = csvPropertyReader(
         customPropertyIndices,
-        dataLines.map((line) => this.parseCSVLine(line, opts.delimiter)),
+        dataLines.map((line) => parseCSVLine(line, opts.delimiter)),
       );
 
       // Track created elements by label for linking
@@ -2115,7 +2113,7 @@ class ImportService {
       // First pass: create all elements
       let rowNum = 2;
       for (const line of dataLines) {
-        const values = this.parseCSVLine(line, opts.delimiter);
+        const values = parseCSVLine(line, opts.delimiter);
         if (values.length === 0) {
           rowNum++;
           continue;
@@ -2228,7 +2226,7 @@ class ImportService {
       // Second pass: create all links
       rowNum = 2;
       for (const line of dataLines) {
-        const values = this.parseCSVLine(line, opts.delimiter);
+        const values = parseCSVLine(line, opts.delimiter);
         if (values.length === 0) {
           rowNum++;
           continue;
@@ -2389,7 +2387,7 @@ class ImportService {
       const eventsByElementId = new Map<string, ElementEvent[]>();
       rowNum = 2;
       for (const line of dataLines) {
-        const values = this.parseCSVLine(line, opts.delimiter);
+        const values = parseCSVLine(line, opts.delimiter);
         if (values.length === 0) {
           rowNum++;
           continue;
@@ -2541,7 +2539,7 @@ class ImportService {
     content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
-      delimiter: options.delimiter ?? this.detectCSVDelimiter(content),
+      delimiter: options.delimiter ?? detectCSVDelimiter(content),
       createMissingElements: true,
       ...options,
     };
@@ -2567,7 +2565,7 @@ class ImportService {
       let dataLines: string[];
 
       if (opts.hasHeaders) {
-        headers = this.parseCSVLine(lines[0], opts.delimiter);
+        headers = parseCSVLine(lines[0], opts.delimiter);
         dataLines = lines.slice(1);
       } else {
         // Default headers for elements
@@ -2599,13 +2597,13 @@ class ImportService {
       const freeColumns = headers
         .map((name, index) => ({ index, name: name.trim() }))
         .filter(({ index, name }) => name && !used.has(index));
-      const customProperties = csvPropertyReader(freeColumns, dataLines.map((line) => this.parseCSVLine(line, opts.delimiter)));
+      const customProperties = csvPropertyReader(freeColumns, dataLines.map((line) => parseCSVLine(line, opts.delimiter)));
 
       // Process each row
       let rowNum = opts.hasHeaders ? 2 : 1;
       for (const line of dataLines) {
         try {
-          const values = this.parseCSVLine(line, opts.delimiter);
+          const values = parseCSVLine(line, opts.delimiter);
           if (values.length === 0) continue;
 
           const label = values[labelIdx]?.trim();
@@ -2718,7 +2716,7 @@ class ImportService {
     content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
-      delimiter: options.delimiter ?? this.detectCSVDelimiter(content),
+      delimiter: options.delimiter ?? detectCSVDelimiter(content),
       createMissingElements: false,
       ...options,
     };
@@ -2753,7 +2751,7 @@ class ImportService {
       let dataLines: string[];
 
       if (opts.hasHeaders) {
-        headers = this.parseCSVLine(lines[0], opts.delimiter);
+        headers = parseCSVLine(lines[0], opts.delimiter);
         dataLines = lines.slice(1);
       } else {
         headers = ['from', 'to', 'label'];
@@ -2787,7 +2785,7 @@ class ImportService {
       let rowNum = opts.hasHeaders ? 2 : 1;
       for (const line of dataLines) {
         try {
-          const values = this.parseCSVLine(line, opts.delimiter);
+          const values = parseCSVLine(line, opts.delimiter);
           if (values.length === 0) continue;
 
           const fromValue = values[fromIdx]?.trim().toLowerCase();
@@ -3010,14 +3008,6 @@ class ImportService {
   }
 
   /**
-   * Check if a file is a genealogy file
-   */
-  isGenealogyFile(file: File): boolean {
-    const format = detectGenealogyFormatFromName(file.name);
-    return format !== null;
-  }
-
-  /**
    * Read file content as text
    */
   readFileAsText(file: File): Promise<string> {
@@ -3038,14 +3028,6 @@ class ImportService {
       normalized = normalized.slice(1);
     }
     return normalized.replace(/\r\n?/g, '\n');
-  }
-
-  private detectCSVDelimiter(content: string): string {
-    return detectCSVDelimiter(content);
-  }
-
-  private parseCSVLine(line: string, delimiter: string): string[] {
-    return parseCSVLine(line, delimiter);
   }
 
   /**

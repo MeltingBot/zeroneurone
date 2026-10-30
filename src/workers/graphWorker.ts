@@ -2,13 +2,12 @@
  * Graph Worker
  *
  * Offloads heavy graph computations (insights, layout) from the main thread.
- * Uses Tarjan's algorithm for bridge detection (O(n+m) vs previous O(n²*(n+m))).
- * Uses sorted + sliding window for similar labels (O(n log n) vs previous O(n²)).
+ * Bridges are articulation points (Tarjan, O(n+m), see graph/algorithms);
+ * similar labels use a sorted sliding window (O(n log n)).
  */
 
 import Graph from 'graphology';
 import louvain from 'graphology-communities-louvain';
-import { bidirectional } from 'graphology-shortest-path';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { random } from 'graphology-layout';
@@ -30,7 +29,6 @@ interface SerializedElement {
   label: string;
   isGroup?: boolean;
   position: { x: number; y: number };
-  properties?: { key: string; value: unknown }[];
   /** Visual props used to compute the real rendered footprint for layout. */
   shape?: ElementShape;
   size?: ElementSize;
@@ -44,14 +42,11 @@ interface SerializedLink {
   fromId: string;
   toId: string;
   label?: string;
-  confidence?: number | null;
   direction?: string;
 }
 
 interface LayoutOptions {
-  padding?: number;
   center?: { x: number; y: number };
-  scale?: number;
   layoutType: 'force' | 'clusters' | 'circular' | 'grid' | 'random' | 'hierarchy';
   /** Locked elements as discs (canvas centre + radius): clusters are packed around them */
   obstacles?: { x: number; y: number; r: number }[];
@@ -70,14 +65,11 @@ interface InsightsData {
 type WorkerRequest = { requestId?: number } & (
   | { type: 'computeInsights'; elements: SerializedElement[]; links: SerializedLink[] }
   | { type: 'computeLayout'; elements: SerializedElement[]; links: SerializedLink[]; options: LayoutOptions }
-  | { type: 'findPaths'; elements: SerializedElement[]; links: SerializedLink[]; fromId: string; toId: string }
-  | { type: 'cancel' }
 );
 
 type WorkerResponse = { requestId?: number } & (
   | { type: 'insightsResult'; data: InsightsData }
   | { type: 'layoutResult'; positions: Record<string, { x: number; y: number }> }
-  | { type: 'pathResult'; paths: { path: string[]; length: number }[] }
   | { type: 'progress'; percent: number; phase: string }
   | { type: 'error'; message: string }
 );
@@ -105,10 +97,6 @@ function buildGraph(elements: SerializedElement[], links: SerializedLink[]): Gra
 
   return graph;
 }
-
-// ============================================================================
-// BRIDGE DETECTION — Tarjan's Algorithm O(V+E)
-// ============================================================================
 
 // ============================================================================
 // INSIGHTS COMPUTATION
@@ -803,24 +791,6 @@ function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: S
 }
 
 // ============================================================================
-// PATH FINDING
-// ============================================================================
-
-function findPaths(elements: SerializedElement[], links: SerializedLink[], fromId: string, toId: string): { path: string[]; length: number }[] {
-  const graph = buildGraph(elements, links);
-  if (!graph.hasNode(fromId) || !graph.hasNode(toId)) return [];
-
-  try {
-    const path = bidirectional(graph, fromId, toId);
-    if (path) {
-      return [{ path, length: path.length - 1 }];
-    }
-  } catch { /* no path */ }
-
-  return [];
-}
-
-// ============================================================================
 // PROGRESS REPORTING
 // ============================================================================
 
@@ -849,14 +819,6 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
         self.postMessage({ type: 'layoutResult', positions, requestId } satisfies WorkerResponse);
         break;
       }
-      case 'findPaths': {
-        const paths = findPaths(request.elements, request.links, request.fromId, request.toId);
-        self.postMessage({ type: 'pathResult', paths, requestId } satisfies WorkerResponse);
-        break;
-      }
-      case 'cancel':
-        // Currently no cancellation mechanism for synchronous algorithms
-        break;
     }
   } catch (err) {
     self.postMessage({ type: 'error', message: (err as Error).message, requestId } satisfies WorkerResponse);

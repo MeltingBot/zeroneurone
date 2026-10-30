@@ -4,7 +4,7 @@
  */
 
 import i18next from 'i18next';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../utils';
 import type {
   Element,
   Link,
@@ -75,7 +75,7 @@ function personToElement(
   sourceFile: string,
   options: GenealogyImportOptions
 ): Partial<Element> {
-  const id = uuidv4() as ElementId;
+  const id = generateUUID() as ElementId;
 
   // Build life events
   const events: ElementEvent[] = [];
@@ -83,7 +83,7 @@ function personToElement(
   if (person.birthDate) {
     const birthDate = toDate(person.birthDate);
     events.push({
-      id: uuidv4(),
+      id: generateUUID(),
       date: birthDate,
       dateEnd: birthDate, // Point-in-time event: same start and end
       ...datingOf(person.birthDate),
@@ -100,7 +100,7 @@ function personToElement(
   if (person.deathDate) {
     const deathDate = toDate(person.deathDate);
     events.push({
-      id: uuidv4(),
+      id: generateUUID(),
       date: deathDate,
       dateEnd: deathDate, // Point-in-time event: same start and end
       ...datingOf(person.deathDate),
@@ -118,7 +118,7 @@ function personToElement(
   for (const residence of person.residences || []) {
     if (residence.startDate || residence.place) {
       events.push({
-        id: uuidv4(),
+        id: generateUUID(),
         date: residence.startDate ? toDate(residence.startDate) : new Date(),
         dateEnd: residence.endDate ? toDate(residence.endDate) : undefined,
         ...(residence.startDate ? datingOf(residence.startDate, residence.endDate) : {}),
@@ -320,7 +320,7 @@ function familyToLinks(
       }
 
       links.push({
-        id: uuidv4() as LinkId,
+        id: generateUUID() as LinkId,
         dossierId,
         fromId: husbandElementId,
         toId: wifeElementId,
@@ -369,7 +369,7 @@ function familyToLinks(
       if (options.addGenealogyTag) tags.push(t('tags.genealogy'));
 
       links.push({
-        id: uuidv4() as LinkId,
+        id: generateUUID() as LinkId,
         dossierId,
         fromId: parentElementId,
         toId: childElementId,
@@ -412,7 +412,7 @@ function familyToLinks(
           if (options.addGenealogyTag) tags.push(t('tags.genealogy'));
 
           links.push({
-            id: uuidv4() as LinkId,
+            id: generateUUID() as LinkId,
             dossierId,
             fromId: sibling1Id,
             toId: sibling2Id,

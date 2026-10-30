@@ -65,7 +65,7 @@ type ProgressCallback = (percent: number, phase: string) => void;
 // SERVICE
 // ============================================================================
 
-type RequestKind = 'insights' | 'layout' | 'paths';
+type RequestKind = 'insights' | 'layout';
 
 interface PendingRequest {
   id: number;
@@ -77,13 +77,12 @@ interface PendingRequest {
 const RESULT_KIND: Record<string, RequestKind> = {
   insightsResult: 'insights',
   layoutResult: 'layout',
-  pathResult: 'paths',
 };
 
 class GraphWorkerService {
   private worker: Worker | null = null;
   // One pending request per kind: a new insights request replaces the previous
-  // insights request, never a layout or a path search. The worker handles
+  // insights request, never a layout. The worker handles
   // messages in order, so each answer is matched to its request by id; an
   // answer to a replaced request is dropped.
   private pending = new Map<RequestKind, PendingRequest>();
@@ -132,11 +131,7 @@ class GraphWorkerService {
     if (!kind) return;
     const request = this.takeMatching(response.requestId, kind);
     if (!request) return; // Stale: its request was replaced
-    request.resolve(
-      response.type === 'insightsResult' ? response.data
-        : response.type === 'layoutResult' ? response.positions
-        : response.paths,
-    );
+    request.resolve(response.type === 'insightsResult' ? response.data : response.positions);
   }
 
   /** Send a request, replacing (and settling) the previous one of the same kind */
@@ -209,36 +204,6 @@ class GraphWorkerService {
       links: this.serializeLinks(links),
       options,
     }, onProgress ?? null);
-  }
-
-  /**
-   * Find paths between two elements in the worker thread.
-   */
-  findPaths(
-    elements: Element[],
-    links: Link[],
-    fromId: string,
-    toId: string
-  ): Promise<{ path: string[]; length: number }[]> {
-    return this.send('paths', {
-      type: 'findPaths',
-      elements: this.serializeElements(elements),
-      links: this.serializeLinks(links),
-      fromId,
-      toId,
-    }, null);
-  }
-
-  /**
-   * Terminate the worker.
-   */
-  terminate() {
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
-    }
-    for (const request of this.pending.values()) request.reject(new SupersededError('worker terminated'));
-    this.pending.clear();
   }
 }
 

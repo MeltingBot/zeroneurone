@@ -154,22 +154,3 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children;
   }
 }
-
-/**
- * HOC to wrap a component with an error boundary
- */
-export function withErrorBoundary<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
-  scope?: string
-) {
-  const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
-
-  const ComponentWithErrorBoundary = (props: P) => (
-    <ErrorBoundary scope={scope || displayName}>
-      <WrappedComponent {...props} />
-    </ErrorBoundary>
-  );
-
-  ComponentWithErrorBoundary.displayName = `withErrorBoundary(${displayName})`;
-  return ComponentWithErrorBoundary;
-}

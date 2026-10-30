@@ -329,15 +329,11 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   // Also handles "undef" string values in OSINTracker exports
   const timestampToDate = (ts: number | string | null | undefined): Date | null => {
     // Handle null, undefined, 0, or "undef" string
-    if (!ts || ts === 0 || ts === 'undef' || typeof ts !== 'number') return null;
-    try {
-      // If > 10^12, it's already milliseconds; otherwise multiply by 1000
-      const ms = ts > 1e12 ? ts : ts * 1000;
-      const date = new Date(ms);
-      return isNaN(date.getTime()) ? null : date;
-    } catch {
-      return null;
-    }
+    if (!ts || ts === 'undef' || typeof ts !== 'number') return null;
+    // If > 10^12, it's already milliseconds; otherwise multiply by 1000
+    const ms = ts > 1e12 ? ts : ts * 1000;
+    const date = new Date(ms);
+    return isNaN(date.getTime()) ? null : date;
   };
 
   // Helper to combine date timestamp + time timestamp into a Date object

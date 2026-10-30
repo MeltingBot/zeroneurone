@@ -673,6 +673,7 @@ class FileService {
   private normalizeExtractedText(text: string): string | null {
     let result = text;
     // Remove control characters (keep newlines and tabs)
+    // eslint-disable-next-line no-control-regex -- matching control characters is the point
     result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
     // Normalize common ligatures
     result = result.replace(/\uFB01/g, 'fi').replace(/\uFB02/g, 'fl');
