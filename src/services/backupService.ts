@@ -15,6 +15,7 @@ import type {
   ElementId,
   LinkId,
 } from '../types';
+import { replaceReportRefs } from '../utils/reportRefs';
 
 const BACKUP_VERSION = '1.0.0';
 
@@ -129,7 +130,7 @@ class BackupService {
     linkIdMap: Map<LinkId, LinkId>,
   ): string {
     // Replace [[Label|old-id]] with [[Label|new-id]]
-    return content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_match, label, oldId) => {
+    return replaceReportRefs(content, (label, oldId) => {
       const newId = elementIdMap.get(oldId) || linkIdMap.get(oldId) || oldId;
       return `[[${label}|${newId}]]`;
     });
@@ -373,20 +374,6 @@ class BackupService {
     }
 
     return result;
-  }
-
-  /**
-   * Download blob as a file
-   */
-  downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   }
 }
 

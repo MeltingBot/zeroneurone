@@ -19,6 +19,7 @@ import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWe
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
 import { deleteYDocDatabase } from './dossierPurge';
+import { ydocDatabaseName } from './yjs/ydocName';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
@@ -218,7 +219,7 @@ class SyncService {
     this.ydoc = new Y.Doc();
 
     // Set up IndexedDB persistence (chiffré ou non selon la DEK)
-    const dbName = `zeroneurone-ydoc-${dossierId}`;
+    const dbName = ydocDatabaseName(dossierId);
     this.indexeddbProvider = new EncryptedIndexeddbPersistence(
       dbName, this.ydoc, this.atRestDek || undefined
     );
@@ -275,7 +276,7 @@ class SyncService {
 
     // Set up IndexedDB persistence (for offline support, chiffré si DEK disponible)
     // Uses dossierId (UUID) for local storage
-    const dbName = `zeroneurone-ydoc-${dossierId}`;
+    const dbName = ydocDatabaseName(dossierId);
     this.indexeddbProvider = new EncryptedIndexeddbPersistence(
       dbName, this.ydoc, this.atRestDek || undefined
     );

@@ -7,6 +7,8 @@ import { ReportSectionEditor } from '../report/ReportSectionEditor';
 import { Input, IconButton } from '../common';
 import { exportInteractiveReport } from '../../services/exportInteractiveReportService';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { stripReportRefs } from '../../utils/reportRefs';
+import { downloadBlob } from '../../utils/download';
 
 export function ReportPanel() {
   const { t } = useTranslation('panels');
@@ -127,7 +129,7 @@ export function ReportPanel() {
         let content = section.content;
         if (!keepLinks) {
           // Replace [[Label|uuid]] with just Label
-          content = content.replace(/\[\[([^\]|]+)\|[^\]]+\]\]/g, '$1');
+          content = stripReportRefs(content);
         }
 
         markdown += content + '\n\n';
@@ -135,14 +137,7 @@ export function ReportPanel() {
 
       // Create and download file
       const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${currentReport.title || 'report'}.md`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `${currentReport.title || 'report'}.md`);
       emitExport('report-md', undefined, currentReport.dossierId);
     },
     [currentReport]
@@ -161,14 +156,7 @@ export function ReportPanel() {
         assets
       );
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${currentReport.title || 'report'}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `${currentReport.title || 'report'}.html`);
       emitExport('report-html', undefined, currentDossier.id);
     } catch (err) {
       console.error('Failed to export interactive report:', err);

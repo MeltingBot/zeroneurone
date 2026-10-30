@@ -1,5 +1,6 @@
 import { db } from '../db/database';
 import type { DossierId } from '../types';
+import { ydocDatabaseName } from './yjs/ydocName';
 
 /**
  * Removal of every trace of a dossier from this browser, and the check that
@@ -24,7 +25,7 @@ const LOCAL_STORAGE_PREFIXES = ['viewport_', 'zn:suggestions:excludedKeys:'] as 
 /** OPFS folders that may hold a dossier's files (`investigations` is the legacy name) */
 const OPFS_DIRS = ['dossiers', 'investigations'] as const;
 
-export const ydocDatabaseName = (dossierId: string) => `zeroneurone-ydoc-${dossierId}`;
+export { ydocDatabaseName };
 
 export interface PurgeCheck {
   /** Where: `dexie:<table>`, `opfs:<dir>`, `indexeddb:ydoc`, `localStorage` */

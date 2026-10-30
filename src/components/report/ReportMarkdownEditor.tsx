@@ -8,6 +8,7 @@ import { sanitizeLinkLabel } from '../../utils';
 import { useDossierStore, useSelectionStore, useViewStore, useSyncStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { canvasPosition } from '../../utils/revealElement';
+import { reportRefRegex } from '../../utils/reportRefs';
 
 interface ReportMarkdownEditorProps {
   value: string;
@@ -25,7 +26,7 @@ interface AutocompleteState {
 }
 
 // Regex to match [[Label|uuid]] element links
-const LINK_REGEX = /\[\[([^\]|]+)\|([a-fA-F0-9-]+)\]\]/g;
+const LINK_REGEX = reportRefRegex();
 
 // Parse content into segments (text and links)
 interface TextSegment {

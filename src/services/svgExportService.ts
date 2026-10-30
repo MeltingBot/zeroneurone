@@ -1,7 +1,8 @@
 import type { Element, Link, Position, ElementSize } from '../types';
-import { safeColor } from '../utils/escapeHtml';
+import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
+import { isLightColor } from '../utils/themeColors';
 
 // ============================================================================
 // TYPES
@@ -58,25 +59,6 @@ function resolveColor(color: string): string {
   // Colours reach us from imported archives and collaboration peers, so they
   // cannot go straight into fill=/stroke= attributes of the exported SVG.
   return safeColor(color, '#9a948d');
-}
-
-function isLightColor(color: string): boolean {
-  const hex = resolveColor(color).replace('#', '');
-  if (hex.length !== 6) return true;
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 128;
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }
 
 // ============================================================================
@@ -189,7 +171,7 @@ function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions, ima
   const borderWidth = element.visual.borderWidth ?? 2;
   const borderStyle = element.visual.borderStyle ?? 'solid';
   const label = element.label || 'Sans nom';
-  const textColor = isLightColor(color) ? '#111827' : '#ffffff';
+  const textColor = isLightColor(resolveColor(color)) ? '#111827' : '#ffffff';
 
   let dashArray = '';
   if (borderStyle === 'dashed') dashArray = ` stroke-dasharray="${borderWidth * 4} ${borderWidth * 2}"`;

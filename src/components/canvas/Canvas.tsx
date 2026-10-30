@@ -933,7 +933,21 @@ export function Canvas() {
   }, [links, currentDossier, setClipboard, buildClipboardData]);
 
   // History store for undo/redo
-  const { pushAction, popUndo, popRedo } = useHistoryStore();
+  const pushAction = useHistoryStore((s) => s.pushAction);
+
+  // Delete elements with their attached links, recorded for undo along with
+  // the tabs they belonged to (an undo puts them back in those tabs)
+  const deleteElementsWithHistory = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    const attachedLinks = links.filter((l) => idSet.has(l.fromId) || idSet.has(l.toId));
+    pushAction({
+      type: 'delete-elements',
+      undo: { elements: elements.filter((el) => idSet.has(el.id)), links: attachedLinks, tabMembership: captureTabMembership(ids) },
+      redo: { elementIds: ids, linkIds: attachedLinks.map((l) => l.id) },
+    });
+    await deleteElements(ids);
+  }, [elements, links, pushAction, deleteElements]);
 
   // Selection store — individual selectors prevent re-renders when unrelated selection state changes
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
@@ -3211,18 +3225,10 @@ export function Canvas() {
     const elsToCut = elements.filter(el => selectedEls.includes(el.id));
     if (elsToCut.length > 0) {
       writeClipboard(elsToCut, [...selectedLinkIds]);
-      // Save for undo
-      const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
-      const tabMembership = captureTabMembership(selectedEls);
-      pushAction({
-        type: 'delete-elements',
-        undo: { elements: elsToCut, links: relevantLinks, tabMembership },
-        redo: { elementIds: selectedEls, linkIds: relevantLinks.map(l => l.id) },
-      });
-      await deleteElements(selectedEls);
+      await deleteElementsWithHistory(selectedEls);
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, selectedLinkIds, deleteElements, clearSelection, pushAction, writeClipboard]);
+  }, [elements, getSelectedElementIds, selectedLinkIds, deleteElementsWithHistory, clearSelection, writeClipboard]);
 
   const handleSelectionDuplicate = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
@@ -3277,17 +3283,9 @@ export function Canvas() {
   const handleSelectionDelete = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length === 0) return;
-    const elsToDelete = elements.filter(el => selectedEls.includes(el.id));
-    const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
-    const tabMembership = captureTabMembership(selectedEls);
-    pushAction({
-      type: 'delete-elements',
-      undo: { elements: elsToDelete, links: relevantLinks, tabMembership },
-      redo: { elementIds: selectedEls, linkIds: relevantLinks.map(l => l.id) },
-    });
-    await deleteElements(selectedEls);
+    await deleteElementsWithHistory(selectedEls);
     clearSelection();
-  }, [elements, links, getSelectedElementIds, deleteElements, clearSelection, pushAction]);
+  }, [getSelectedElementIds, deleteElementsWithHistory, clearSelection]);
 
   // Canvas menu (right-click on the selection box): lock or unlock every
   // selected element; unlock only when all of them are already locked
@@ -3702,21 +3700,10 @@ export function Canvas() {
 
   const handleContextMenuDelete = useCallback(async () => {
     if (contextMenu) {
-      const elementId = contextMenu.elementId;
-      // Collect data for undo
-      const el = elementMap.get(elementId);
-      const elementsToDelete = el ? [el] : [];
-      const linksToDelete = links.filter(l => l.fromId === elementId || l.toId === elementId);
-      const tabMembership = captureTabMembership([elementId]);
-      pushAction({
-        type: 'delete-elements',
-        undo: { elements: elementsToDelete, links: linksToDelete, tabMembership },
-        redo: { elementIds: [elementId] },
-      });
-      await deleteElements([elementId]);
+      await deleteElementsWithHistory([contextMenu.elementId]);
       clearSelection();
     }
-  }, [contextMenu, elementMap, links, deleteElements, clearSelection, pushAction]);
+  }, [contextMenu, deleteElementsWithHistory, clearSelection]);
 
   // Preview handler for context menu
   const handleContextMenuPreview = useCallback(() => {
@@ -3749,26 +3736,11 @@ export function Canvas() {
         : [];
 
     if (elsToCut.length > 0) {
-      // Copy first
       writeClipboard(elsToCut, [...selectedLinkIds]);
-
-      // Then delete
-      const idsToDelete = elsToCut.map(el => el.id);
-      const linksToDelete = links.filter(l =>
-        idsToDelete.includes(l.fromId) || idsToDelete.includes(l.toId)
-      );
-
-      const tabMembership = captureTabMembership(idsToDelete);
-      pushAction({
-        type: 'delete-elements',
-        undo: { elements: elsToCut, links: linksToDelete, tabMembership },
-        redo: { elementIds: idsToDelete },
-      });
-
-      await deleteElements(idsToDelete);
+      await deleteElementsWithHistory(elsToCut.map(el => el.id));
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElements, clearSelection, pushAction, writeClipboard]);
+  }, [elements, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElementsWithHistory, clearSelection, writeClipboard]);
 
   // Duplicate handler for context menu
   const handleContextMenuDuplicate = useCallback(() => {
@@ -4638,289 +4610,10 @@ export function Canvas() {
     }
   }, []);
 
-  // Handle undo (for keyboard shortcut - uses popUndo to get action then executes)
-  const handleUndo = useCallback(async () => {
-    const action = popUndo();
-    if (!action) return;
-
-    switch (action.type) {
-      // Deletions (elements, links) are undone by the history store: one
-      // Y.Doc transaction for the lot, tab membership restored. Re-creating
-      // them here one by one cost a render each, seconds for a few hundred.
-      case 'delete-elements':
-      case 'delete-element':
-      case 'delete-link':
-        await useHistoryStore.getState().applyUndo(action);
-        break;
-
-      case 'update-element':
-        // Restore previous values
-        if (action.undo.elementId && action.undo.changes) {
-          await updateElement(action.undo.elementId, action.undo.changes);
-        }
-        break;
-
-      case 'update-link':
-        // Restore previous link values
-        if (action.undo.linkId && action.undo.linkChanges) {
-          await updateLink(action.undo.linkId, action.undo.linkChanges);
-        }
-        break;
-
-      case 'move-elements':
-      case 'move-element':
-        // Restore previous positions
-        if (action.undo.positions) {
-          await updateElementPositions(action.undo.positions);
-        }
-        break;
-
-      case 'extract-to-element':
-        // Restore property/event on source element
-        if (action.undo.elementId && action.undo.changes) {
-          await updateElement(action.undo.elementId, action.undo.changes);
-        }
-        // Delete created element (cascades to delete connected link)
-        if (action.redo.elementIds) {
-          await deleteElements(action.redo.elementIds);
-        }
-        break;
-
-      case 'dissolve-group':
-        // Recreate the group element
-        if (action.undo.elements) {
-          pasteElements(action.undo.elements, []);
-        }
-        // Restore children to relative positions with parentGroupId
-        if (action.undo.positions && action.undo.elements?.[0]) {
-          const groupId = action.undo.elements[0].id;
-          for (const child of action.undo.positions) {
-            await updateElement(child.id, {
-              parentGroupId: groupId,
-              position: child.position,
-            });
-          }
-        }
-        break;
-
-      case 'remove-from-group': {
-        // Restore child to relative position with parentGroupId
-        if (action.undo.elementId && action.undo.changes) {
-          await updateElement(action.undo.elementId, action.undo.changes);
-          // Add child back to group's childIds
-          const groupId = action.undo.changes.parentGroupId;
-          if (groupId) {
-            const group = elementMap.get(groupId);
-            if (group && !group.childIds.includes(action.undo.elementId)) {
-              await updateElement(groupId, {
-                childIds: [...group.childIds, action.undo.elementId],
-              });
-            }
-          }
-        }
-        break;
-      }
-
-      case 'create-group':
-        // Undo: restore children to absolute positions, delete group
-        if (action.undo.positions) {
-          for (const child of action.undo.positions) {
-            await updateElement(child.id, { parentGroupId: null, position: child.position });
-          }
-        }
-        if (action.redo.elementIds) {
-          await deleteElements(action.redo.elementIds);
-        }
-        break;
-
-      case 'delete-tab':
-        if (action.undo.snapshot) {
-          const { useTabStore } = await import('../../stores');
-          await useTabStore.getState().restoreTab(action.undo.snapshot);
-        }
-        break;
-
-      case 'delete-view':
-        if (action.undo.snapshot) {
-          const { useViewStore } = await import('../../stores');
-          useViewStore.getState().restoreView(action.undo.snapshot);
-        }
-        break;
-
-      case 'delete-section':
-        if (action.undo.snapshot) {
-          const { useReportStore } = await import('../../stores');
-          await useReportStore.getState().restoreSection(action.undo.snapshot);
-        }
-        break;
-
-      case 'clear-filters':
-        if (action.undo.snapshot) {
-          const { useViewStore } = await import('../../stores');
-          const vs = useViewStore.getState();
-          vs.setFilters(action.undo.snapshot.filters);
-          if (action.undo.snapshot.hiddenElementIds?.length > 0) {
-            vs.hideElements(action.undo.snapshot.hiddenElementIds);
-          }
-        }
-        break;
-
-      default:
-        // Types without canvas-specific handling (create-link, update-bulk,
-        // merge-elements, add-asset…) use the history store's own executor
-        await useHistoryStore.getState().applyUndo(action);
-    }
-  }, [popUndo, createElement, createLink, deleteElements, updateElement, updateLink, updateElementPositions, pasteElements, elementMap]);
-
-  // Handle redo (for keyboard shortcut - uses popRedo to get action then executes)
-  const handleRedo = useCallback(async () => {
-    const action = popRedo();
-    if (!action) return;
-
-    switch (action.type) {
-      case 'delete-elements':
-      case 'delete-element':
-        // Re-delete elements
-        if (action.redo.elementIds) {
-          await deleteElements(action.redo.elementIds);
-        }
-        if (action.redo.linkIds) {
-          await deleteLinks(action.redo.linkIds);
-        }
-        break;
-
-
-      case 'update-element':
-        // Re-apply changes
-        if (action.redo.elementId && action.redo.changes) {
-          await updateElement(action.redo.elementId, action.redo.changes);
-        }
-        break;
-
-      case 'delete-link':
-        // Re-delete links
-        if (action.redo.linkIds) {
-          await deleteLinks(action.redo.linkIds);
-        }
-        break;
-
-      case 'update-link':
-        // Re-apply link changes
-        if (action.redo.linkId && action.redo.linkChanges) {
-          await updateLink(action.redo.linkId, action.redo.linkChanges);
-        }
-        break;
-
-      case 'move-elements':
-      case 'move-element':
-        // Apply new positions
-        if (action.redo.positions) {
-          await updateElementPositions(action.redo.positions);
-        }
-        break;
-
-      case 'extract-to-element':
-        // Re-create element and link
-        if (action.redo.elements) {
-          for (const el of action.redo.elements) {
-            await createElement(el.label, el.position, el);
-          }
-        }
-        if (action.redo.links) {
-          for (const link of action.redo.links) {
-            await createLink(link.fromId, link.toId, { ...link, id: link.id });
-          }
-        }
-        // Remove property/event from source again
-        if (action.redo.elementId && action.redo.changes) {
-          await updateElement(action.redo.elementId, action.redo.changes);
-        }
-        break;
-
-      case 'dissolve-group':
-        // Convert children to absolute positions and clear parentGroupId
-        if (action.undo.positions && action.undo.elements?.[0]) {
-          const group = action.undo.elements[0];
-          for (const child of action.undo.positions) {
-            await updateElement(child.id, {
-              parentGroupId: null,
-              position: {
-                x: child.position.x + group.position.x,
-                y: child.position.y + group.position.y,
-              },
-            });
-          }
-        }
-        // Delete the group element
-        if (action.redo.elementIds) {
-          await deleteElements(action.redo.elementIds);
-        }
-        break;
-
-      case 'remove-from-group': {
-        // Remove child from group (set absolute position, clear parentGroupId)
-        if (action.redo.elementId && action.redo.changes) {
-          await updateElement(action.redo.elementId, action.redo.changes);
-          // Remove child from group's childIds
-          const groupId = action.undo.changes?.parentGroupId;
-          if (groupId) {
-            const group = elementMap.get(groupId);
-            if (group) {
-              await updateElement(groupId, {
-                childIds: group.childIds.filter(id => id !== action.redo.elementId),
-              });
-            }
-          }
-        }
-        break;
-      }
-
-      case 'create-group':
-        // Redo: recreate group, move children to relative positions
-        if (action.redo.elements) {
-          pasteElements(action.redo.elements, []);
-          const group = action.redo.elements[0];
-          if (action.redo.positions) {
-            for (const child of action.redo.positions) {
-              await updateElement(child.id, { parentGroupId: group.id, position: child.position });
-            }
-          }
-        }
-        break;
-
-      case 'delete-tab':
-        if (action.redo.snapshot) {
-          const { useTabStore } = await import('../../stores');
-          await useTabStore.getState().deleteTab(action.redo.snapshot);
-        }
-        break;
-
-      case 'delete-view':
-        if (action.redo.snapshot) {
-          const { useViewStore } = await import('../../stores');
-          await useViewStore.getState().deleteView(action.redo.snapshot);
-        }
-        break;
-
-      case 'delete-section':
-        if (action.redo.snapshot) {
-          const { useReportStore } = await import('../../stores');
-          await useReportStore.getState().removeSection(action.redo.snapshot);
-        }
-        break;
-
-      case 'clear-filters': {
-        const { useViewStore } = await import('../../stores');
-        const vs = useViewStore.getState();
-        vs.clearFilters();
-        vs.showAllElements();
-        break;
-      }
-
-      default:
-        await useHistoryStore.getState().applyRedo(action);
-    }
-  }, [popRedo, deleteElements, deleteLinks, createElement, createLink, updateElement, updateLink, updateElementPositions, elementMap, pasteElements]);
+  // Undo/redo go through the history store: one implementation for every
+  // entry point, and the replay marked as such (asUndo) for plugin events
+  const handleUndo = useCallback(() => useHistoryStore.getState().undo(), []);
+  const handleRedo = useCallback(() => useHistoryStore.getState().redo(), []);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -4979,18 +4672,7 @@ export function Canvas() {
         const selectedLks = getSelectedLinkIds();
 
         if (selectedEls.length > 0) {
-          // Save for undo
-          const elementsToDelete = elements.filter(el => selectedEls.includes(el.id));
-          const linksToDelete = links.filter(l =>
-            selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
-          );
-          const tabMembership = captureTabMembership(selectedEls);
-          pushAction({
-            type: 'delete-elements',
-            undo: { elements: elementsToDelete, links: linksToDelete, tabMembership },
-            redo: { elementIds: selectedEls },
-          });
-          await deleteElements(selectedEls);
+          await deleteElementsWithHistory(selectedEls);
         }
         if (selectedLks.length > 0) {
           const linksToDelete = links.filter(l => selectedLks.includes(l.id));
@@ -5041,20 +4723,7 @@ export function Canvas() {
         if (selectedEls.length > 0) {
           const elsToCut = elements.filter(el => selectedEls.includes(el.id));
           writeClipboard(elsToCut, [...selectedLinkIds]);
-
-          // Delete the cut elements
-          const linksToDelete = links.filter(l =>
-            selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
-          );
-
-          const tabMembership = captureTabMembership(selectedEls);
-          pushAction({
-            type: 'delete-elements',
-            undo: { elements: elsToCut, links: linksToDelete, tabMembership },
-            redo: { elementIds: selectedEls },
-          });
-
-          await deleteElements(selectedEls);
+          await deleteElementsWithHistory(selectedEls);
           clearSelection();
         }
       }
@@ -5184,7 +4853,7 @@ export function Canvas() {
     getSelectedElementIds,
     getSelectedLinkIds,
     selectedLinkIds,
-    deleteElements,
+    deleteElementsWithHistory,
     deleteLinks,
     clearSelection,
     selectElements,
@@ -5621,17 +5290,7 @@ export function Canvas() {
               const selectedEls = getSelectedElementIds();
               const selectedLks = getSelectedLinkIds();
               if (selectedEls.length > 0) {
-                const elementsToDelete = elements.filter(el => selectedEls.includes(el.id));
-                const linksToDelete = links.filter(l =>
-                  selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
-                );
-                const tabMembership = captureTabMembership(selectedEls);
-                pushAction({
-                  type: 'delete-elements',
-                  undo: { elements: elementsToDelete, links: linksToDelete, tabMembership },
-                  redo: { elementIds: selectedEls },
-                });
-                deleteElements(selectedEls);
+                void deleteElementsWithHistory(selectedEls);
               }
               if (selectedLks.length > 0) {
                 const linksToDelete = links.filter(l => selectedLks.includes(l.id));

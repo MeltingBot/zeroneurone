@@ -9,6 +9,7 @@ import { splitCSVRecords } from '../../utils/csv';
 import { TagSetEditorModal } from './TagSetEditorModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
+import { downloadBlob } from '../../utils/download';
 
 interface TagSetManagerModalProps {
   isOpen: boolean;
@@ -149,14 +150,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: 'application/json',
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.json`);
 
     showToast('success', t('tagSets.tagsExportedJson', { count: tagSets.length }));
   }, [tagSets, showToast, t]);
@@ -187,14 +181,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
 
     const csv = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.csv`);
 
     showToast('success', t('tagSets.tagsExportedCsv', { count: tagSets.length }));
   }, [tagSets, showToast, t]);
@@ -208,14 +195,7 @@ Vehicule,Un vehicule,#f97316,diamond,immatriculation:text;marque:text;modele:tex
 Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:text`;
 
     const blob = new Blob([template], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'modele-tagsets.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, 'modele-tagsets.csv');
   }, []);
 
   // Trigger file input for import

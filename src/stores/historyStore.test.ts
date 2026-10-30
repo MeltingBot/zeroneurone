@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useHistoryStore } from './historyStore';
+import { emitPluginEvent, onAnyPluginEvent } from '../plugins/pluginEventBus';
 import type { Element, Link } from '../types';
 
 // historyStore reaches the other stores through `await import()`, so these
@@ -42,6 +43,7 @@ const suggestionsStore = { refresh: vi.fn() };
 
 vi.mock('./dossierStore', () => ({
   useDossierStore: { getState: () => dossierStore },
+  whenDeletionsSettled: () => Promise.resolve(),
 }));
 vi.mock('./tabStore', () => ({
   useTabStore: { getState: () => tabStore },
@@ -133,19 +135,17 @@ describe('history stack mechanics', () => {
     expect(dossierStore.deleteElements).not.toHaveBeenCalled();
   });
 
-  it('popUndo / popRedo move an action across without executing it', () => {
-    push({ type: 'delete-element', undo: { elements: [element('e1')] }, redo: {} });
-
-    const popped = history().popUndo();
-
-    expect(popped?.type).toBe('delete-element');
-    expect(dossierStore.pasteElements).not.toHaveBeenCalled();
-    expect(history().future).toHaveLength(1);
-
-    const back = history().popRedo();
-    expect(back?.type).toBe('delete-element');
-    expect(history().past).toHaveLength(1);
-    expect(history().future).toHaveLength(0);
+  it('marks the events emitted while replaying as undo, for plugins', async () => {
+    const origins: string[] = [];
+    const off = onAnyPluginEvent((event) => { origins.push(event.origin); });
+    dossierStore.updateElement.mockImplementationOnce(async () => {
+      emitPluginEvent({ type: 'element:updated', dossierId: 'd', entityId: 'e1', timestamp: 0 });
+    });
+    push({ type: 'update-element', undo: { elementId: 'e1', changes: { label: 'avant' } }, redo: { elementId: 'e1', changes: { label: 'après' } } });
+    await history().undo();
+    emitPluginEvent({ type: 'element:updated', dossierId: 'd', entityId: 'e1', timestamp: 0 });
+    off();
+    expect(origins).toEqual(['undo', 'local']);
   });
 });
 
@@ -448,14 +448,13 @@ describe('update-bulk', () => {
     expect(dossierStore.updateLinks).toHaveBeenCalledWith(['l1', 'l2'], { label: 'détient' });
   });
 
-  it('applyUndo runs an action popped by an external handler, stacks untouched', async () => {
+  it('applyUndo runs an action without touching the stacks', async () => {
     push(action);
-    const popped = history().popUndo()!;
-    await history().applyUndo(popped);
+    await history().applyUndo(action as Parameters<ReturnType<typeof history>['applyUndo']>[0]);
 
     expect(dossierStore.updateLink).toHaveBeenCalledWith('l1', { label: 'avant' });
-    expect(history().past).toHaveLength(0);
-    expect(history().future).toHaveLength(1);
+    expect(history().past).toHaveLength(1);
+    expect(history().future).toHaveLength(0);
   });
 });
 

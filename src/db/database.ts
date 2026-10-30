@@ -27,6 +27,7 @@ import type { JsonMappingTemplate } from '../utils/jsonMapping';
 import type { EncryptionMeta } from '../services/encryption/encryptionService';
 import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../services/encryption/dexieEncryptionMiddleware';
 import { removeAllDossierLocalStorage } from '../services/dossierPurge';
+import { dossierIdOfYdocDatabase, isYdocDatabaseName } from '../services/yjs/ydocName';
 
 export interface PluginDataRow {
   pluginId: string;
@@ -470,7 +471,7 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
   try {
     const databases = await indexedDB.databases();
     ydocDatabases = databases
-      .filter(d => d.name?.startsWith('zeroneurone-ydoc-'))
+      .filter(d => isYdocDatabaseName(d.name))
       .map(d => d.name || '')
       .filter(Boolean);
 
@@ -534,7 +535,7 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
         // Skip databases that can't be opened
       }
       ydocEstimatedSize += dbSize;
-      const dossierId = dbName.replace('zeroneurone-ydoc-', '');
+      const dossierId = dossierIdOfYdocDatabase(dbName);
       ydocSizes.push({ dbName, dossierId, size: dbSize });
     }
     // Sort by size descending
@@ -604,7 +605,7 @@ export async function purgeYjsDatabases(): Promise<{ deleted: number; errors: st
   try {
     const databases = await indexedDB.databases();
     const ydocDatabases = databases
-      .filter(d => d.name?.startsWith('zeroneurone-ydoc-'))
+      .filter(d => isYdocDatabaseName(d.name))
       .map(d => d.name || '')
       .filter(Boolean);
 
@@ -682,7 +683,7 @@ export async function purgeYjsHistory(
   dbName: string,
   options: { dropUndecryptable?: boolean } = {},
 ): Promise<YjsHistoryPurgeResult> {
-  const dossierId = dbName.replace('zeroneurone-ydoc-', '');
+  const dossierId = dossierIdOfYdocDatabase(dbName);
 
   const dossier = await db.dossiers.get(dossierId);
   if (dossier?.lastSharedKey) return { status: 'skipped', reason: 'shared' };

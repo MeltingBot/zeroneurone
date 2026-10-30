@@ -21,6 +21,7 @@ import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatP
 import { formatItemDates, itemTooltip } from './timelineDates';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { downloadBlob } from '../../utils/download';
 
 export interface TimelineItem {
   id: string;
@@ -2015,14 +2016,7 @@ function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
 
   const csv = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, filename);
   emitExport('timeline-csv');
 }
 

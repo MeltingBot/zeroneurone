@@ -751,6 +751,19 @@ function makeLink(dossierId: DossierId, fromId: ElementId, toId: ElementId, opti
   };
 }
 
+// Deletions still finishing: the state drops the elements at once, their
+// removal from the tabs follows. An undo started in between would have its
+// tab restore undone by that removal, so undo/redo wait for them.
+const pendingDeletions = new Set<Promise<unknown>>();
+function trackDeletion<T>(run: Promise<T>): Promise<T> {
+  pendingDeletions.add(run);
+  run.then(() => pendingDeletions.delete(run), () => pendingDeletions.delete(run));
+  return run;
+}
+export function whenDeletionsSettled(): Promise<void> {
+  return Promise.allSettled([...pendingDeletions]).then(() => undefined);
+}
+
 // A Y.Doc entry that cannot be read (malformed, or sent by a newer or broken
 // peer) is skipped by the sync below. Said once per entry, not on every sync.
 const warnedSkippedEntries = new Set<string>();
@@ -1558,50 +1571,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
   },
 
-  deleteElement: async (id: ElementId) => {
-    const ydoc = syncService.getYDoc();
-    assertWritable(get);
-    if (!ydoc) {
-      throw new Error('Y.Doc not available');
-    }
+  // One element is a deletion of one: same tab cleanup, same undo safety
+  deleteElement: (id: ElementId) => get().deleteElements([id]),
 
-    const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
-
-    // Find connected links
-    const linksToDelete: string[] = [];
-    linksMap.forEach((ymap, linkId) => {
-      const map = ymap as Y.Map<any>;
-      if (map.get('fromId') === id || map.get('toId') === id) {
-        linksToDelete.push(linkId);
-      }
-    });
-
-    // Update Zustand FIRST (synchronous) for instant UI response
-    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
-    localOpPending = true;
-    const linksToDeleteSet = new Set(linksToDelete);
-    set((state) => ({
-      elements: state.elements.filter(el => el.id !== id),
-      links: state.links.filter(lk => !linksToDeleteSet.has(lk.id)),
-    }));
-
-    ydoc.transact(() => {
-      linksToDelete.forEach(linkId => linksMap.delete(linkId));
-      elementsMap.delete(id);
-    });
-
-    // Also delete from Dexie for backwards compatibility
-    await elementRepository.delete(id).catch((err) => onPersistFailure(err, 'element.delete'));
-
-    // Cascade: remove from all canvas tabs
-    const invId = get().currentDossier?.id;
-    if (invId) {
-      useTabStore.getState().removeElementFromAllTabs(invId, id);
-      emitPluginEvent('element:deleted', invId, id);
-    }
-  },
-
-  deleteElements: async (ids: ElementId[]) => {
+  deleteElements: (ids: ElementId[]) => trackDeletion((async () => {
     const ydoc = syncService.getYDoc();
     assertWritable(get);
     if (!ydoc) {
@@ -1647,7 +1620,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         .catch((err) => onPersistFailure(err, 'tab.removeElements'));
       ids.forEach(id => emitPluginEvent('element:deleted', invId, id));
     }
-  },
+  })()),
 
   updateElementPosition: async (id: ElementId, position: Position) => {
     const ydoc = syncService.getYDoc();

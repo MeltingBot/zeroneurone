@@ -31,6 +31,8 @@ import { backupService } from '../../services/backupService';
 import { db as dexieDb } from '../../db/database';
 import { appPath } from '../../utils/basePath';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { dossierIdOfYdocDatabase } from '../../services/yjs/ydocName';
+import { downloadBlob } from '../../utils/download';
 
 interface StorageModalProps {
   isOpen: boolean;
@@ -116,7 +118,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
     try {
       const blob = await backupService.exportAll();
       const timestamp = new Date().toISOString().slice(0, 10);
-      backupService.downloadBlob(blob, `zeroneurone_backup_${timestamp}.zip`);
+      downloadBlob(blob, `zeroneurone_backup_${timestamp}.zip`);
       // One event per dossier in the backup: each dossier's trace stands on its own
       for (const dossierId of await dexieDb.dossiers.toCollection().primaryKeys()) {
         emitExport('backup', undefined, String(dossierId));
@@ -628,7 +630,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
                         return (
                           <div className="mt-2 p-2 border border-warning/40 rounded bg-warning/10 space-y-1.5">
                             {unreadable.map((u) => {
-                              const dossierId = u.dbName.replace('zeroneurone-ydoc-', '');
+                              const dossierId = dossierIdOfYdocDatabase(u.dbName);
                               return (
                                 <p key={u.dbName} className="text-[10px] text-text-secondary">
                                   {t('storage.compact.unreadable', {

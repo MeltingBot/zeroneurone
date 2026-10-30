@@ -30,6 +30,7 @@ import { resolveAbsolutePosition } from './svgExportService';
 import { dateInputKeys, isDayOnly, parseDateValue, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 import { joinSourceLines, sourceToMarkdown } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
+import { LEGACY_ELEMENT_LINK_SOURCE, REPORT_REF_SOURCE } from '../utils/reportRefs';
 
 /** Translated strings used in the generated notes (provided by the caller). */
 export interface ObsidianLabels {
@@ -82,7 +83,7 @@ const RESERVED_KEYS = new Set([
   'date', 'date_start', 'date_end', 'location', 'group',
 ]);
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
-const REPORT_REF = /\[\[([^\]|]+)\|([a-fA-F0-9-]+)\]\]|\[([^\]]+)\]\(#element:([a-fA-F0-9-]+)\)/g;
+const REPORT_REF = new RegExp(`${REPORT_REF_SOURCE}|${LEGACY_ELEMENT_LINK_SOURCE}`, 'g');
 
 // ============================================================================
 // NAMES

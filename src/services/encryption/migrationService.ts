@@ -80,7 +80,7 @@ async function countUndecryptableData(
 
   for (const dossier of dossiers) {
     try {
-      const count = await countUndecryptableUpdates(`zeroneurone-ydoc-${dossier.id}`, dek);
+      const count = await countUndecryptableUpdates(ydocDatabaseName(dossier.id), dek);
       total += count.total;
       if (count.undecryptable > 0) {
         undecryptable += count.undecryptable;
@@ -101,6 +101,7 @@ async function countUndecryptableData(
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './opfsEncryption';
 import { syncService } from '../syncService';
 import { runBeforeDisableHooks } from '../../plugins/pluginAPI';
+import { ydocDatabaseName } from '../yjs/ydocName';
 
 export interface MigrationProgress {
   phase: string;
@@ -283,7 +284,7 @@ export async function enableEncryption(
       total: 5,
     });
     try {
-      await migrateToEncrypted(`zeroneurone-ydoc-${inv.id}`, dek);
+      await migrateToEncrypted(ydocDatabaseName(inv.id), dek);
     } catch (err) {
       console.warn(`[migrationService] Erreur y-indexeddb ${inv.id}:`, err);
       failures.push(`dossier ${inv.id}`);
@@ -418,7 +419,7 @@ export async function disableEncryption(
       total: 5,
     });
     try {
-      await migrateToPlaintext(`zeroneurone-ydoc-${inv.id}`, dek);
+      await migrateToPlaintext(ydocDatabaseName(inv.id), dek);
     } catch (err) {
       console.warn(`[migrationService] Erreur y-indexeddb ${inv.id}:`, err);
       failures.push(`dossier ${inv.id}`);

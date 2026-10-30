@@ -5,6 +5,7 @@ import { generateUUID } from '../../utils';
 import type { Report, ReportSection, DossierId, UUID, ReportSectionId } from '../../types';
 import { getYMaps } from '../../types/yjs';
 import { yMapToReport } from '../../services/yjs/reportMapper';
+import { ydocDatabaseName } from '../../services/yjs/ydocName';
 
 // Helper to rehydrate dates from IndexedDB
 function rehydrateReport(report: Report): Report {
@@ -139,7 +140,7 @@ export const reportRepository = {
     }
 
     // Try to load from Y.Doc via y-indexeddb
-    const dbName = `zeroneurone-ydoc-${dossierId}`;
+    const dbName = ydocDatabaseName(dossierId);
     let ydoc: Y.Doc | null = null;
     let provider: EncryptedIndexeddbPersistence | null = null;
 

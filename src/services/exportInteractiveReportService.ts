@@ -12,11 +12,13 @@ import type { Element, Link, Asset, Dossier, Report } from '../types';
 import { fileService } from './fileService';
 import { computeLinkRoutes, computeNodeLayout } from './svgExportService';
 import { arrowPolygon } from '../utils/edgeRouting';
-import { escapeJsonForScript, safeColor, sanitizeUrl } from '../utils/escapeHtml';
+import { escapeJsonForScript, safeColor, sanitizeUrl, escapeXml } from '../utils/escapeHtml';
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
+import { replaceReportRefs, stripReportRefs } from '../utils/reportRefs';
+import { createSlugger } from '../utils/slugify';
 
 // CSS variable to hex color map (same as svgExportService)
 const CSS_VAR_MAP: Record<string, string> = {
@@ -119,9 +121,9 @@ function markdownToHtml(md: string): string {
 
 // Convert element references [[Label|uuid]] to clickable links
 function parseElementReferences(html: string): string {
-  return html.replace(
-    /\[\[([^\]|]+)\|([a-f0-9-]+)\]\]/g,
-    (_: string, label: string, id: string) => {
+  return replaceReportRefs(
+    html,
+    (label: string, id: string) => {
       const safeLabel = label.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       return `<a href="#" class="element-ref" data-element-id="${id}" title="${safeLabel}">${safeLabel}</a>`;
     }
@@ -319,14 +321,6 @@ function generateGraphSVG(
   return svg;
 }
 
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
 
 // Generate thumbnail from image blob
 async function generateThumbnail(blob: Blob, maxSize = 200, quality = 0.7): Promise<string> {
@@ -478,13 +472,10 @@ export async function exportInteractiveReport(
   // Build TOC and report HTML
   const tocItems: { id: string; title: string }[] = [];
   let reportHtml = `<h1>${escapeXml(report.title)}</h1>`;
+  // Unique anchors: two sections of the same title each get their own
+  const slugFor = createSlugger();
   for (const section of report.sections) {
-    const slug = section.title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    const slug = slugFor(section.title);
     tocItems.push({ id: slug, title: section.title });
     reportHtml += `<h2 id="${slug}">${escapeXml(section.title)}</h2>`;
     reportHtml += parseElementReferences(markdownToHtml(section.content));
@@ -495,7 +486,7 @@ export async function exportInteractiveReport(
   for (const section of report.sections) {
     reportMarkdown += `## ${section.title}\n\n`;
     // Replace [[Label|uuid]] with just Label
-    reportMarkdown += section.content.replace(/\[\[([^\]|]+)\|[^\]]+\]\]/g, '$1') + '\n\n';
+    reportMarkdown += stripReportRefs(section.content) + '\n\n';
   }
 
   // Element details for tooltips

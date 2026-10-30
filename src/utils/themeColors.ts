@@ -52,3 +52,14 @@ export function getThemeAwareColor(color: string, isDarkMode: boolean): string {
   // Keep medium and dark colors as-is
   return color;
 }
+
+/** Whether text on this background should be dark (CSS variables are taken as light) */
+export function isLightColor(color: string): boolean {
+  if (color.startsWith('var(')) return true;
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return true;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+}

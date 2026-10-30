@@ -29,21 +29,10 @@ import { revealElement } from '../../utils/revealElement';
 import { EvaluationInput } from './EvaluationInput';
 import { parsePropertyDate } from '../../utils/dates';
 import { SourceField } from '../common/SourceField';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface ElementDetailProps {
   element: Element;
-}
-
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
 }
 
 /** Inline GeoJSON coordinate editor for polygon zones */

@@ -13,6 +13,9 @@ import { buildANXExport } from './exportANX';
 import { formatDateForExport, formatPreciseDateKey, parsePropertyDate, toLocalDateKey } from '../utils/dates';
 import { buildObsidianVault, toVaultBasename, type ObsidianLabels } from './exportObsidian';
 import { emitExport } from '../plugins/pluginEventBus';
+import { replaceReportRefs } from '../utils/reportRefs';
+import { downloadBlob } from '../utils/download';
+import { escapeXml } from '../utils/escapeHtml';
 
 /** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
 function propertyValueToCSV(prop: Property): string {
@@ -343,7 +346,7 @@ class ExportService {
 
       // Process content: resolve [[Label|id]] references
       let content = section.content || '';
-      content = content.replace(/\[\[([^\]|]+)\|([a-f0-9-]+)\]\]/g, (_match, label, id) => {
+      content = replaceReportRefs(content, (label, id) => {
         if (referenceMap.has(id)) {
           return `**${label}**`;
         }
@@ -530,7 +533,7 @@ class ExportService {
     const text = formatEvaluation(item.evaluation);
     if (!text || !item.evaluation) return '';
     return `
-          <attvalue for="evaluation" value="${this.escapeXML(text)}"/>
+          <attvalue for="evaluation" value="${escapeXml(text)}"/>
           <attvalue for="evaluation_scale" value="${item.evaluation.scale}"/>`;
   }
 
@@ -587,15 +590,15 @@ class ExportService {
     // Nodes
     const nodes = elements.map((el) => `
     <node id="${el.id}">
-      <data key="label">${this.escapeXML(el.label)}</data>
+      <data key="label">${escapeXml(el.label)}</data>
       <data key="color">${el.visual.color}</data>
-      <data key="notes">${this.escapeXML(el.notes)}</data>
+      <data key="notes">${escapeXml(el.notes)}</data>
     </node>`).join('');
 
     // Edges
     const edges = links.map((link) => `
     <edge id="${link.id}" source="${link.fromId}" target="${link.toId}">
-      <data key="edgeLabel">${this.escapeXML(link.label)}</data>
+      <data key="edgeLabel">${escapeXml(link.label)}</data>
       <data key="edgeColor">${link.visual.color}</data>
     </edge>`).join('');
 
@@ -622,7 +625,7 @@ class ExportService {
 
     const meta = `  <meta>
     <creator>ZeroNeurone</creator>
-    <description>${this.escapeXML(dossier.name ?? '')}</description>
+    <description>${escapeXml(dossier.name ?? '')}</description>
   </meta>`;
 
     const graphOpen = `  <graph defaultedgetype="directed" mode="static">`;
@@ -644,10 +647,10 @@ class ExportService {
         const rgb = this.hexToRgb(el.visual?.color);
         const size = this.sizeToNumber(el.visual?.size, el.visual?.customWidth);
         const tags = Array.isArray(el.tags) ? el.tags.join(', ') : '';
-        return `      <node id="${el.id}" label="${this.escapeXML(el.label)}">
+        return `      <node id="${el.id}" label="${escapeXml(el.label)}">
         <attvalues>
-          <attvalue for="notes" value="${this.escapeXML(el.notes ?? '')}"/>
-          <attvalue for="tags" value="${this.escapeXML(tags)}"/>${this.evaluationGEXF(el)}
+          <attvalue for="notes" value="${escapeXml(el.notes ?? '')}"/>
+          <attvalue for="tags" value="${escapeXml(tags)}"/>${this.evaluationGEXF(el)}
         </attvalues>
         <viz:color r="${rgb.r}" g="${rgb.g}" b="${rgb.b}"/>
         <viz:position x="${el.position.x}" y="${-el.position.y}" z="0"/>
@@ -669,7 +672,7 @@ class ExportService {
           source = link.toId;
           target = link.fromId;
         }
-        const label = link.label ? ` label="${this.escapeXML(link.label)}"` : '';
+        const label = link.label ? ` label="${escapeXml(link.label)}"` : '';
         const confidenceValue =
           typeof link.confidence === 'number'
             ? `<attvalue for="confidence" value="${Math.round(link.confidence)}"/>`
@@ -861,22 +864,9 @@ ${edges}
    */
   download(content: string, filename: string, mimeType: string): void {
     const blob = new Blob([content], { type: mimeType });
-    this.downloadBlob(blob, filename);
+    downloadBlob(blob, filename);
   }
 
-  /**
-   * Download blob as a file
-   */
-  downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
 
   /**
    * Export and download dossier in specified format
@@ -906,7 +896,7 @@ ${edges}
     switch (format) {
       case 'zip': {
         const zipBlob = await this.exportToZip(dossier, elements, links, assets || [], report, tabs, views, queries, queryHistory, comments);
-        this.downloadBlob(zipBlob, `${baseName}.zip`);
+        downloadBlob(zipBlob, `${baseName}.zip`);
         break;
       }
       case 'json': {
@@ -953,7 +943,7 @@ ${edges}
       case 'obsidian': {
         if (!obsidianLabels) throw new Error('Obsidian export requires labels');
         const vault = await this.exportToObsidian(dossier, elements, links, assets || [], obsidianLabels, report, tabs, obsidianFolderByTag);
-        this.downloadBlob(vault, `${baseName}_obsidian.zip`);
+        downloadBlob(vault, `${baseName}_obsidian.zip`);
         break;
       }
     }
@@ -969,15 +959,6 @@ ${edges}
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
-  }
-
-  private escapeXML(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
   }
 }
 

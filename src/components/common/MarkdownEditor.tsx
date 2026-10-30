@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect, isValidElement } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { slugify } from '../../utils/slugify';
+import { getTextContent } from '../../utils/reactText';
 
 interface MarkdownEditorProps {
   value: string;
@@ -96,25 +98,7 @@ export function MarkdownEditor({
   );
 }
 
-// Generate slug from heading text for anchor links
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
 
-// Extract text content from React children
-function getTextContent(children: React.ReactNode): string {
-  if (typeof children === 'string') return children;
-  if (Array.isArray(children)) return children.map(getTextContent).join('');
-  if (isValidElement<{ children?: React.ReactNode }>(children)) {
-    return getTextContent(children.props.children);
-  }
-  return '';
-}
 
 /** Read-only markdown preview component */
 export function MarkdownPreview({ content, className = '' }: { content: string; className?: string }) {

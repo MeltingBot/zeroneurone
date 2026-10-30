@@ -25,6 +25,7 @@ import { useHoverPopover } from '../../hooks/useHoverPopover';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { useFocusElementEvent } from '../../hooks/useFocusElementEvent';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { downloadBlob } from '../../utils/download';
 
 // Element with geo coordinates (resolved for a specific time)
 interface ResolvedGeoElement {
@@ -3102,13 +3103,6 @@ function exportMapToCSV(geoElements: { label: string; type?: string; geo: GeoDat
   });
   const csv = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, filename);
   emitExport('map-csv');
 }

@@ -10,6 +10,7 @@ import { parseNumericText } from '../../utils/numericText';
 import { ArrowUpDown, ArrowUp, ArrowDown, Upload, Box, Link2 } from 'lucide-react';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { GROUP_FIELDS, buildGroups, type GroupRow } from '../../utils/queryGroups';
+import { downloadBlob } from '../../utils/download';
 
 interface TableRow {
   id: string;
@@ -179,12 +180,7 @@ export function QueryResultsTable() {
     };
     const download = (lines: string[]) => {
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'query-results.csv';
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, 'query-results.csv');
       emitExport('query-csv');
     };
 

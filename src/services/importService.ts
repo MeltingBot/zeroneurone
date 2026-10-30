@@ -62,6 +62,7 @@ import { importGephiLiteJSON, isGephiLiteFormat } from './importGephi';
 import { importGenealogyFile, type GenealogyImportOptions } from './genealogy';
 import { dateFromInputKeys, parseDateValue, parseDateWithPrecision, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 import { reportMediaProgress } from './importProgress';
+import { reportRefRegex } from '../utils/reportRefs';
 
 /**
  * Date read from an imported value. A bare `YYYY-MM-DD` is a calendar day (local
@@ -1940,11 +1941,7 @@ class ImportService {
       return content;
     }
 
-    // Regex to match [[Label|uuid]] pattern (case-insensitive for UUID)
-    // uuid format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    const refRegex = /\[\[([^\]|]+)\|([a-fA-F0-9-]{36})\]\]/g;
-
-    return content.replace(refRegex, (match, label, oldId) => {
+    return content.replace(reportRefRegex(), (match, label, oldId) => {
       // Try element map first
       if (hasElementMap) {
         const newElementId = elementIdMap!.get(oldId as ElementId)

@@ -9,6 +9,7 @@ import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { generateUUID } from '../../utils';
 import { formatBytes } from '../../utils/formatBytes';
+import { downloadBlob } from '../../utils/download';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { emitExport } from '../../plugins/pluginEventBus';
@@ -316,15 +317,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       // Get file from OPFS using fileService (handles directory navigation)
       const file = await fileService.getAssetFile(asset);
 
-      // Create download link
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = asset.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(file, asset.filename);
       emitExport('asset', { assetId: asset.id }, asset.dossierId);
     } catch (error) {
       console.error('Error downloading file:', error);

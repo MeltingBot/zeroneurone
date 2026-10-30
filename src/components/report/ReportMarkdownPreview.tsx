@@ -4,6 +4,9 @@ import remarkGfm from 'remark-gfm';
 import { useDossierStore, useSelectionStore, useViewStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { canvasPosition } from '../../utils/revealElement';
+import { LEGACY_ELEMENT_LINK_SOURCE, REPORT_REF_SOURCE, reportRefRegex } from '../../utils/reportRefs';
+import { slugify } from '../../utils/slugify';
+import { getTextContent } from '../../utils/reactText';
 
 interface ReportMarkdownPreviewProps {
   content: string;
@@ -11,10 +14,10 @@ interface ReportMarkdownPreviewProps {
 }
 
 // Regex to match [[Label|uuid]] element links (case-insensitive for UUID)
-const ELEMENT_LINK_REGEX = /\[\[([^\]|]+)\|([a-fA-F0-9-]+)\]\]/g;
+const ELEMENT_LINK_REGEX = reportRefRegex();
 
 // Fallback regex for preprocessed format [Label](#element:uuid) in case ReactMarkdown doesn't parse it
-const PREPROCESSED_LINK_REGEX = /\[([^\]]+)\]\(#element:([a-fA-F0-9-]+)\)/g;
+const PREPROCESSED_LINK_REGEX = new RegExp(LEGACY_ELEMENT_LINK_SOURCE, 'g');
 
 // Size mapping for element visual size (same as svgExportService)
 const SIZE_MAP: Record<string, number> = { small: 40, medium: 56, large: 72 };
@@ -24,25 +27,7 @@ function getElementSizePixels(size: string | number | undefined): number {
   return 56; // Default medium
 }
 
-// Generate slug from heading text for anchor links
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
 
-// Extract text content from React children
-function getTextContent(children: React.ReactNode): string {
-  if (typeof children === 'string') return children;
-  if (Array.isArray(children)) return children.map(getTextContent).join('');
-  if (isValidElement<{ children?: React.ReactNode }>(children)) {
-    return getTextContent(children.props.children);
-  }
-  return '';
-}
 
 // Component to render element links inline
 function ElementLinkRenderer({
@@ -55,7 +40,7 @@ function ElementLinkRenderer({
   onElementClick: (id: string) => void;
 }) {
   // Combined regex: matches both [[Label|uuid]] and [Label](#element:uuid) formats
-  const combinedRegex = /\[\[([^\]|]+)\|([a-fA-F0-9-]+)\]\]|\[([^\]]+)\]\(#element:([a-fA-F0-9-]+)\)/g;
+  const combinedRegex = new RegExp(`${REPORT_REF_SOURCE}|${LEGACY_ELEMENT_LINK_SOURCE}`, 'g');
 
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;

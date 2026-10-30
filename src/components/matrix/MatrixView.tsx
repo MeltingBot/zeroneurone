@@ -21,6 +21,7 @@ import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { downloadBlob } from '../../utils/download';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -785,16 +786,11 @@ export function MatrixView() {
     );
     const csv = [headers, ...rows].join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
     const slug = dossierName.replace(/[^a-zA-Z0-9À-ÿ_-]/g, '_').replace(/_+/g, '_');
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const ts = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-    a.download = `${slug}_matrice_${ts}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${slug}_matrice_${ts}.csv`);
     emitExport('matrix-csv');
   }, [sortedElements, visibleCols, evaluationModel]);
 

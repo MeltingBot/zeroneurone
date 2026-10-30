@@ -12,6 +12,7 @@ import { useDossierStore, useQueryStore, toast } from '../../stores';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { isExportedNode, withLayersAt } from '../canvas/overview/exportLayers';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { downloadBlob } from '../../utils/download';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -166,7 +167,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const now = new Date();
       const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
       const baseName = `${currentDossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
-      exportService.downloadBlob(encBlob, `${baseName}.znzip`);
+      downloadBlob(encBlob, `${baseName}.znzip`);
       emitExport('znzip', undefined, currentDossier.id);
 
       toast.success(t('export.zip.success'));

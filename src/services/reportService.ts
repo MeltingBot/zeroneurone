@@ -1,7 +1,7 @@
 import type { Dossier, Element, Link, Asset, EvaluationModel } from '../types';
 import { evaluationSortKey, formatEvaluation, getEvaluationModel, isInModel } from '../utils/evaluation';
 import { getGeoCenter, isGeoPolygon } from '../utils/geo';
-import { safeColor, safeDataImageUrl } from '../utils/escapeHtml';
+import { safeColor, safeDataImageUrl, escapeHtml } from '../utils/escapeHtml';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -10,6 +10,7 @@ import { formatEventWhen } from '../utils/temporalUtils';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
 import { isWebScheme, joinSourceLines, parseSourceLinks, sourceToMarkdown } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
+import { downloadBlob } from '../utils/download';
 
 // Configure marked for secure rendering
 marked.setOptions({
@@ -183,7 +184,7 @@ class ReportService {
        so it inherits the app origin. It carries no script of its own, hence the
        absence of script-src under default-src 'none'. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:;">
-  <title>${this.escapeHTML(title)}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     :root {
       --color-primary: #1e40af;
@@ -263,7 +264,7 @@ class ReportService {
 </head>
 <body>
   <header>
-    <h1>${this.escapeHTML(title)}</h1>
+    <h1>${escapeHtml(title)}</h1>
     <p class="meta">${this.t('generatedOn', { date: new Date().toLocaleDateString(dateLocale(locale)), time: new Date().toLocaleTimeString(dateLocale(locale)) })}</p>
   </header>
 `;
@@ -329,7 +330,7 @@ class ReportService {
         ${insights.clusters.map(c => {
           const clusterElements = c.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
           const more = c.elementIds.length > 5 ? ` (+${c.elementIds.length - 5})` : '';
-          return `<tr><td>${c.id}</td><td>${c.elementIds.length}</td><td>${clusterElements.map(l => this.escapeHTML(l)).join(', ')}${more}</td></tr>`;
+          return `<tr><td>${c.id}</td><td>${c.elementIds.length}</td><td>${clusterElements.map(l => escapeHtml(l)).join(', ')}${more}</td></tr>`;
         }).join('\n        ')}
       </table>
     </div>\n`;
@@ -344,7 +345,7 @@ class ReportService {
         ${topCentral.map(c => {
           const el = elements.find(e => e.id === c.elementId);
           const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
-          return `<tr><td>${this.escapeHTML(el?.label || this.t('unknown'))}</td><td>${c.score.toFixed(3)}</td><td>${connectionCount}</td></tr>`;
+          return `<tr><td>${escapeHtml(el?.label || this.t('unknown'))}</td><td>${c.score.toFixed(3)}</td><td>${connectionCount}</td></tr>`;
         }).join('\n        ')}
       </table>
     </div>\n`;
@@ -357,7 +358,7 @@ class ReportService {
       <ul class="insight-list">
         ${insights.bridges.slice(0, 10).map(id => {
           const el = elements.find(e => e.id === id);
-          return `<li>${this.escapeHTML(el?.label || this.t('unknown'))}</li>`;
+          return `<li>${escapeHtml(el?.label || this.t('unknown'))}</li>`;
         }).join('\n        ')}
       </ul>
     </div>\n`;
@@ -370,7 +371,7 @@ class ReportService {
       <ul class="insight-list">
         ${insights.isolated.slice(0, 10).map(id => {
           const el = elements.find(e => e.id === id);
-          return `<li>${this.escapeHTML(el?.label || this.t('unknown'))}</li>`;
+          return `<li>${escapeHtml(el?.label || this.t('unknown'))}</li>`;
         }).join('\n        ')}
         ${insights.isolated.length > 10 ? `<li>${this.t('andMore', { count: insights.isolated.length - 10 })}</li>` : ''}
       </ul>
@@ -390,10 +391,10 @@ class ReportService {
         const dateStr = formatEventWhen(ev, locale);
         const location = ev.geo ? `${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' (zone)' : ''}` : '';
         return `<tr>
-        <td>${this.escapeHTML(dateStr)}</td>
-        <td>${this.escapeHTML(ev.elementLabel)}</td>
-        <td>${this.escapeHTML(ev.label)}</td>
-        <td>${ev.description ? this.escapeHTML(ev.description) : ''}${location ? ` [${location}]` : ''}</td>
+        <td>${escapeHtml(dateStr)}</td>
+        <td>${escapeHtml(ev.elementLabel)}</td>
+        <td>${escapeHtml(ev.label)}</td>
+        <td>${ev.description ? escapeHtml(ev.description) : ''}${location ? ` [${location}]` : ''}</td>
       </tr>`;
       }).join('\n      ')}
     </table>
@@ -408,7 +409,7 @@ class ReportService {
       if (options.groupElementsByTag) {
         const tagGroups = this.groupByTags(sortedElements, locale);
         for (const [tag, tagElements] of Object.entries(tagGroups)) {
-          html += `    <h3>${this.escapeHTML(tag)} (${tagElements.length})</h3>\n`;
+          html += `    <h3>${escapeHtml(tag)} (${tagElements.length})</h3>\n`;
           html += this.renderElementsTableHTML(tagElements, assets, options);
         }
       } else {
@@ -429,10 +430,10 @@ class ReportService {
         const toEl = elements.find(e => e.id === link.toId);
         const arrow = link.directed ? '→' : '↔';
         return `<tr>
-        <td>${this.escapeHTML(fromEl?.label || '?')}</td>
-        <td>${this.escapeHTML(toEl?.label || '?')}</td>
+        <td>${escapeHtml(fromEl?.label || '?')}</td>
+        <td>${escapeHtml(toEl?.label || '?')}</td>
         <td>${arrow}</td>
-        <td>${link.label ? this.escapeHTML(link.label) : '-'}</td>
+        <td>${link.label ? escapeHtml(link.label) : '-'}</td>
         <td class="markdown-content">${link.notes ? this.markdownToHTML(link.notes) : '-'}</td>
       </tr>`;
       }).join('\n      ')}
@@ -458,9 +459,9 @@ class ReportService {
           const hasPreview = isImage && thumb;
 
           html += `      <div class="media-item">
-        ${hasPreview ? `<img src="${thumb}" alt="${this.escapeHTML(asset.filename)}" />` : `<div style="width:100pt;height:60pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:8pt;color:var(--color-secondary)">${asset.mimeType.split('/')[0].toUpperCase()}</div>`}
-        <div class="media-name">${this.escapeHTML(asset.filename)}</div>
-        <div style="font-size:7pt;color:var(--color-secondary)">${this.escapeHTML(el.label)} - ${sizeKB} Ko</div>
+        ${hasPreview ? `<img src="${thumb}" alt="${escapeHtml(asset.filename)}" />` : `<div style="width:100pt;height:60pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:8pt;color:var(--color-secondary)">${asset.mimeType.split('/')[0].toUpperCase()}</div>`}
+        <div class="media-name">${escapeHtml(asset.filename)}</div>
+        <div style="font-size:7pt;color:var(--color-secondary)">${escapeHtml(el.label)} - ${sizeKB} Ko</div>
       </div>\n`;
         }
       }
@@ -496,10 +497,10 @@ class ReportService {
             .filter((a): a is Asset => a !== undefined);
 
           html += `    <div class="fiche">
-      <h3 style="margin:0 0 8pt;color:var(--color-primary)">${this.escapeHTML(el.label)}</h3>
+      <h3 style="margin:0 0 8pt;color:var(--color-primary)">${escapeHtml(el.label)}</h3>
       <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('identity')}</th></tr>
-        <tr><td>${this.t('tags')}</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join(' ') : '-'}</td></tr>
+        <tr><td>${this.t('tags')}</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ') : '-'}</td></tr>
         <tr><td>${this.evaluationTitle()}</td><td>${this.evaluationText(el)}</td></tr>
         <tr><td>${this.t('source')}</td><td>${el.source ? this.sourceHTML(el.source) : '-'}</td></tr>
         ${el.notes ? `<tr><td>${this.t('notes')}</td><td class="markdown-content">${this.markdownToHTML(el.notes)}</td></tr>` : ''}
@@ -509,7 +510,7 @@ class ReportService {
           if (el.properties.length > 0) {
             html += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('properties')} (${el.properties.length})</th></tr>
-        ${el.properties.map(p => `<tr><td>${this.escapeHTML(p.key)}</td><td>${this.escapeHTML(formatPropertyValue(p.value, p.type, locale, p.timeZone))}</td></tr>`).join('\n        ')}
+        ${el.properties.map(p => `<tr><td>${escapeHtml(p.key)}</td><td>${escapeHtml(formatPropertyValue(p.value, p.type, locale, p.timeZone))}</td></tr>`).join('\n        ')}
       </table>\n`;
           }
 
@@ -520,7 +521,7 @@ class ReportService {
         ${el.events.map(ev => {
           const dateStr = formatEventWhen(ev, locale);
           const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
-          return `<tr><td>${this.escapeHTML(dateStr)}</td><td><b>${this.escapeHTML(ev.label)}</b>${ev.description ? ` - ${this.escapeHTML(ev.description)}` : ''}${geo}</td></tr>`;
+          return `<tr><td>${escapeHtml(dateStr)}</td><td><b>${escapeHtml(ev.label)}</b>${ev.description ? ` - ${escapeHtml(ev.description)}` : ''}${geo}</td></tr>`;
         }).join('\n        ')}
       </table>\n`;
           }
@@ -529,7 +530,7 @@ class ReportService {
           if (connections.length > 0) {
             html += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('relations')} (${connections.length})</th></tr>
-        ${connections.map(c => `<tr><td>${c.direction}</td><td><b>${this.escapeHTML(c.label)}</b>${c.linkLabel ? ` (${this.escapeHTML(c.linkLabel)})` : ''}</td></tr>`).join('\n        ')}
+        ${connections.map(c => `<tr><td>${c.direction}</td><td><b>${escapeHtml(c.label)}</b>${c.linkLabel ? ` (${escapeHtml(c.linkLabel)})` : ''}</td></tr>`).join('\n        ')}
       </table>\n`;
           }
 
@@ -543,8 +544,8 @@ class ReportService {
             const thumb = safeDataImageUrl(a.thumbnailDataUrl);
             const hasPreview = isImage && thumb;
             return `<div class="media-item" style="max-width:100pt">
-            ${hasPreview ? `<img src="${thumb}" alt="${this.escapeHTML(a.filename)}" style="max-width:90pt;max-height:60pt" />` : `<div style="width:60pt;height:40pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:7pt;color:var(--color-secondary)">${a.mimeType.split('/')[0].toUpperCase()}</div>`}
-            <div style="font-size:7pt;color:var(--color-secondary);word-break:break-all">${this.escapeHTML(a.filename)}</div>
+            ${hasPreview ? `<img src="${thumb}" alt="${escapeHtml(a.filename)}" style="max-width:90pt;max-height:60pt" />` : `<div style="width:60pt;height:40pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:7pt;color:var(--color-secondary)">${a.mimeType.split('/')[0].toUpperCase()}</div>`}
+            <div style="font-size:7pt;color:var(--color-secondary);word-break:break-all">${escapeHtml(a.filename)}</div>
             <div style="font-size:6pt;color:var(--color-secondary)">${(a.size / 1024).toFixed(1)} Ko</div>
           </div>`;
           }).join('\n          ')}
@@ -583,18 +584,18 @@ class ReportService {
       </tr>
       ${elements.map(el => {
         const propsHtml = showProps && el.properties.length > 0
-          ? el.properties.map(p => `<b>${this.escapeHTML(p.key)}:</b> ${this.escapeHTML(formatPropertyValue(p.value, p.type, i18next.language, p.timeZone))}`).join('<br>')
+          ? el.properties.map(p => `<b>${escapeHtml(p.key)}:</b> ${escapeHtml(formatPropertyValue(p.value, p.type, i18next.language, p.timeZone))}`).join('<br>')
           : '-';
         const filesHtml = options.includeFiles && el.assetIds.length > 0
           ? el.assetIds.map(id => {
               const asset = assets.find(a => a.id === id);
-              return asset ? this.escapeHTML(asset.filename) : '?';
+              return asset ? escapeHtml(asset.filename) : '?';
             }).join(', ')
           : '-';
         return `<tr>
-        <td><span class="color-dot" style="background:${safeColor(el.visual.color, '#d4cec4')}"></span>${this.escapeHTML(el.label)}</td>
+        <td><span class="color-dot" style="background:${safeColor(el.visual.color, '#d4cec4')}"></span>${escapeHtml(el.label)}</td>
         <td class="markdown-content">${el.notes ? this.markdownToHTML(el.notes) : '-'}</td>
-        <td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join('') : '-'}</td>
+        <td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') : '-'}</td>
         <td>${this.evaluationText(el)}</td>
         <td>${el.source ? this.sourceHTML(el.source) : '-'}</td>
         ${showProps ? `<td>${propsHtml}</td>` : ''}
@@ -1076,14 +1077,7 @@ class ReportService {
     }
 
     const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename + extension;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, filename + extension);
   }
 
   private sortElements(elements: Element[], sortBy: ReportOptions['sortElementsBy']): Element[] {
@@ -1145,23 +1139,14 @@ class ReportService {
     return counts;
   }
 
-  private escapeHTML(str: string): string {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
   /** Source as HTML: web links become anchors, asset and plugin links their label only. */
   private sourceHTML(source: string): string {
     return parseSourceLinks(source, getSourceSchemeNames())
       .map(s => {
         // One source per line
-        if (s.kind === 'text') return this.escapeHTML(s.text).replace(/\r?\n/g, '<br>');
-        if (!isWebScheme(s.scheme)) return this.escapeHTML(s.label);
-        return `<a href="${this.escapeHTML(s.target)}" target="_blank" rel="noopener noreferrer">${this.escapeHTML(s.label)}</a>`;
+        if (s.kind === 'text') return escapeHtml(s.text).replace(/\r?\n/g, '<br>');
+        if (!isWebScheme(s.scheme)) return escapeHtml(s.label);
+        return `<a href="${escapeHtml(s.target)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.label)}</a>`;
       })
       .join('');
   }
@@ -1180,7 +1165,7 @@ class ReportService {
       return DOMPurify.sanitize(html, SANITIZE_CONFIG) as string;
     } catch {
       // Fallback to escaped HTML if markdown parsing fails
-      return this.escapeHTML(text).replace(/\n/g, '<br>');
+      return escapeHtml(text).replace(/\n/g, '<br>');
     }
   }
 }

@@ -7,7 +7,7 @@ import { OverviewMinimap } from './overview/OverviewMinimap';
 import type { OverviewScene } from './overview/overviewTypes';
 
 // Check if a hex color is very light (luminance > 0.85)
-function isLightColor(hex: string): boolean {
+function isVeryLightColor(hex: string): boolean {
   const c = hex.replace('#', '');
   if (c.length < 6) return false;
   const r = parseInt(c.substring(0, 2), 16) / 255;
@@ -121,7 +121,7 @@ export function DraggableMinimap({ scene = null }: DraggableMinimapProps = {}) {
   // Very light colours (white, near-white) are replaced with a visible gray
   const visibleColor = useCallback((color: string | undefined) => {
     const fallback = isDark ? '#64748b' : '#94a3b8';
-    if (!color || isLightColor(color)) return fallback;
+    if (!color || isVeryLightColor(color)) return fallback;
     return color;
   }, [isDark]);
   const nodeColor = useCallback(
