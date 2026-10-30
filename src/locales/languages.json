@@ -4,10 +4,10 @@
   { "code": "es", "label": "Español", "flag": "🇪🇸" },
   { "code": "de", "label": "Deutsch", "flag": "🇩🇪" },
   { "code": "it", "label": "Italiano", "flag": "🇮🇹" },
-   { "code": "pt", "label": "Portuguese", "flag": "🇵🇹" },
-   { "code": "nl", "label": "Nederlands", "flag": "🇳🇱"},
-   { "code": "pl", "label": "Polski", "flag": "🇵🇱"},
-   { "code": "ua", "label": "Українська", "flag": "🇺🇦"},
-        { "code": "eu", "label": "Euskadi", "flag": "eus" },
-   { "code": "ca", "label": "Català", "flag": "cat" }
+  { "code": "pt", "label": "Português", "flag": "🇵🇹" },
+  { "code": "nl", "label": "Nederlands", "flag": "🇳🇱" },
+  { "code": "pl", "label": "Polski", "flag": "🇵🇱" },
+  { "code": "ua", "label": "Українська", "flag": "🇺🇦" },
+  { "code": "eu", "label": "Euskara", "flag": "eus" },
+  { "code": "ca", "label": "Català", "flag": "cat" }
 ]

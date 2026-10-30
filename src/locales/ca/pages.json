@@ -417,7 +417,8 @@
     "ofmLiberty": "Detallat",
     "ofmDark": "Fosc",
     "ofmFiord": "Alt contrast",
-    "timeZoneHint": "Fus horari"
+    "timeZoneHint": "Fus horari",
+    "exportCSV": "Exporta a CSV"
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

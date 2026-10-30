@@ -490,7 +490,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       undo: { elementId: element.id, changes: { geo: oldGeo } },
       redo: { elementId: element.id, changes: { geo: newGeo } },
     });
-  }, [geoLat, geoLng, element.id, element.geo, pushAction]);
+  }, [geoLat, geoLng, geoAlt, element.id, element.geo, pushAction]);
 
   // Pending geo picker callback (for events editor)
   const pendingGeoPickerCallback = useRef<((lat: number, lng: number) => void) | null>(null);

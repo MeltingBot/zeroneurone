@@ -229,6 +229,16 @@ describe('evaluator — dates', () => {
     expect(r.elementIds.has(els[0].id)).toBe(true);
   });
 
+  it('reads a date property stored as YYYY-MM-DD as that calendar day, in any time zone', () => {
+    const els = [
+      makeElement({ properties: [{ key: 'naissance', value: '2024-03-15', type: 'date' }] }),
+      makeElement({ properties: [{ key: 'naissance', value: '2024-03-16', type: 'date' }] }),
+    ];
+    expect([...query('naissance = 2024-03-15', els).elementIds]).toEqual([els[0].id]);
+    expect([...query('naissance >= 2024-03-16', els).elementIds]).toEqual([els[1].id]);
+    expect([...query('naissance < 2024-03-16', els).elementIds]).toEqual([els[0].id]);
+  });
+
   it('date >= range start', () => {
     const els = [
       makeElement({ date: new Date('2024-06-01T00:00:00') }),

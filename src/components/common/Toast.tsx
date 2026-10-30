@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useToastStore, type ToastType } from '../../stores/toastStore';
@@ -59,25 +59,25 @@ interface ToastItemProps {
 function ToastItem({ id, type, message, Icon, onRemove }: ToastItemProps) {
   const { t } = useTranslation('common');
   const [isExiting, setIsExiting] = useState(false);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleRemove = () => {
+    if (exitTimerRef.current) return;
     setIsExiting(true);
-    setTimeout(() => onRemove(id), 200);
+    exitTimerRef.current = setTimeout(() => onRemove(id), 200);
   };
 
-  useEffect(() => {
-    // Allow keyboard dismissal
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleRemove();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+  useEffect(() => () => {
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
   }, []);
 
   return (
     <div
+      // Escape only when focus is on the toast: a window-wide listener also
+      // fired when Escape was closing a modal or a menu
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') handleRemove();
+      }}
       role="alert"
       aria-live="polite"
       data-testid="toast"

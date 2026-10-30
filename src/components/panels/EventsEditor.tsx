@@ -85,7 +85,13 @@ const EventItem = memo(function EventItem({
   const [localDate, setLocalDate] = useState(event.date);
   const [localDateEnd, setLocalDateEnd] = useState(event.dateEnd);
 
-  // Sync local state when event prop changes (e.g., from undo/redo or collab)
+  // Sync local state when event prop changes (e.g., from undo/redo or collab).
+  // Keyed on values, not references: geo and dates are new objects each time
+  // the element is read back from Y.js, which would reset a field being typed
+  // whenever anything else on the element changed.
+  const geoKey = event.geo ? JSON.stringify(event.geo) : '';
+  const dateKey = event.date ? new Date(event.date).getTime() : null;
+  const dateEndKey = event.dateEnd ? new Date(event.dateEnd).getTime() : null;
   useEffect(() => {
     setLabel(event.label || '');
     setDescription(event.description || '');
@@ -96,7 +102,8 @@ const EventItem = memo(function EventItem({
     setAltStr(event.geo?.altitude?.toString() ?? '');
     setLocalDate(event.date);
     setLocalDateEnd(event.dateEnd);
-  }, [event.id, event.label, event.description, event.source, event.geo, event.date, event.dateEnd]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- geoKey/dateKey/dateEndKey stand for event.geo/date/dateEnd
+  }, [event.id, event.label, event.description, event.source, geoKey, dateKey, dateEndKey]);
 
   // Inputs show and read the hours in the event's source zone (system zone when unset)
   const formatDateForInput = (date: Date): string => dateInputKeys(new Date(date), event.timeZone).date;

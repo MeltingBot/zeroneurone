@@ -4,6 +4,7 @@
 import type { Element, Link } from '../../types';
 import { formatEvaluation } from '../../utils/evaluation';
 import { fuzzyMatch } from '../../utils/fuzzyMatch';
+import { parsePropertyDate } from '../../utils/dates';
 import type { QueryNode, QueryCondition, QueryWithin, QueryOperator, QueryValue, QueryResult } from './types';
 
 // ── Evaluation context ──
@@ -162,14 +163,11 @@ function toNumber(v: unknown): number | null {
   return null;
 }
 
+// A bare `YYYY-MM-DD` is a calendar day at local midnight, like the date
+// literals of the parser; `new Date()` would read it as UTC midnight, the
+// previous day west of UTC
 function toDate(v: unknown): Date | null {
-  if (v instanceof Date) return v;
-  if (typeof v === 'string') {
-    const d = new Date(v);
-    if (!isNaN(d.getTime())) return d;
-  }
-  if (typeof v === 'number') return new Date(v);
-  return null;
+  return parsePropertyDate(v);
 }
 
 function toString(v: unknown): string {

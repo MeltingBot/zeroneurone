@@ -428,7 +428,8 @@
     "ofmLiberty": "Gedetailleerd",
     "ofmDark": "Donker",
     "ofmFiord": "Hoog contrast",
-    "timeZoneHint": "Tijdzone"
+    "timeZoneHint": "Tijdzone",
+    "exportCSV": "Exporteren naar CSV"
   },
   "timeline": {
     "noEvents": "Geen gedateerde gebeurtenissen",

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import i18n, {
   initI18n,
   ensureLanguageLoaded,
@@ -7,6 +7,7 @@ import i18n, {
   SUPPORTED_LANGUAGES,
   FALLBACK_LANGUAGE,
   NAMESPACES,
+  detectLanguage,
 } from './i18n';
 
 /**
@@ -76,5 +77,31 @@ describe('switching language', () => {
 
   it('ignores an unknown language instead of throwing', async () => {
     await expect(ensureLanguageLoaded('zz')).resolves.toBeUndefined();
+  });
+});
+
+describe('browser language detection', () => {
+  function withBrowserLanguages(languages: string[], run: () => void) {
+    const stored = localStorage.getItem('zeroneurone-lang');
+    localStorage.removeItem('zeroneurone-lang');
+    const spy = vi.spyOn(navigator, 'languages', 'get').mockReturnValue(languages);
+    try {
+      run();
+    } finally {
+      spy.mockRestore();
+      if (stored !== null) localStorage.setItem('zeroneurone-lang', stored);
+    }
+  }
+
+  it('maps the Ukrainian subtag uk to the ua translation', () => {
+    withBrowserLanguages(['uk-UA', 'en'], () => expect(detectLanguage()).toBe('ua'));
+  });
+
+  it('takes the first supported language, ignoring region and case', () => {
+    withBrowserLanguages(['xx', 'DE-ch'], () => expect(detectLanguage()).toBe('de'));
+  });
+
+  it('falls back to English when nothing matches', () => {
+    withBrowserLanguages(['xx'], () => expect(detectLanguage()).toBe(FALLBACK_LANGUAGE));
   });
 });

@@ -432,7 +432,8 @@
     "ofmLiberty": "Детальна",
     "ofmDark": "Темна",
     "ofmFiord": "Висока контрастність",
-    "timeZoneHint": "Часовий пояс"
+    "timeZoneHint": "Часовий пояс",
+    "exportCSV": "Експортувати в CSV"
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

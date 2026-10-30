@@ -5,8 +5,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // =============================================================================
 // DYNAMIC LANGUAGE LOADING
 // To add a new language:
-// 1. Add entry to /public/locales/languages.json
-// 2. Create translation files in /public/locales/{code}/
+// 1. Add entry to src/locales/languages.json
+// 2. Create translation files in src/locales/{code}/
 //    (common.json, modals.json, panels.json, pages.json, importData.json)
 // That's it! No code changes needed.
 // =============================================================================
@@ -25,6 +25,10 @@ export const FALLBACK_LANGUAGE = 'en';
 export const NAMESPACES = ['common', 'modals', 'panels', 'pages', 'importData'];
 
 const LANGUAGE_STORAGE_KEY = 'zeroneurone-lang';
+
+// Browser language subtags whose UI code differs: Ukrainian is shipped as
+// `ua` (see dateLocale), browsers report `uk`
+const BROWSER_LANGUAGE_ALIASES: Record<string, string> = { uk: 'ua' };
 
 type Bundle = Record<string, unknown>;
 type Loader = () => Promise<{ default: Bundle }>;
@@ -79,7 +83,7 @@ export async function changeLanguage(lang: string): Promise<void> {
  * Mirrors what LanguageDetector would pick with order ['localStorage',
  * 'navigator'], so we can fetch the right bundles before init.
  */
-function detectLanguage(): string {
+export function detectLanguage(): string {
   const codes = new Set(SUPPORTED_LANGUAGES.map((l) => l.code));
   try {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -88,7 +92,8 @@ function detectLanguage(): string {
     // localStorage can throw in private browsing; fall through to navigator.
   }
   for (const tag of navigator.languages ?? [navigator.language]) {
-    const base = tag?.split('-')[0];
+    const subtag = tag?.split('-')[0].toLowerCase();
+    const base = subtag ? (BROWSER_LANGUAGE_ALIASES[subtag] ?? subtag) : undefined;
     if (base && codes.has(base)) return base;
   }
   return FALLBACK_LANGUAGE;

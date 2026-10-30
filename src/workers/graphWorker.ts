@@ -167,8 +167,8 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
       });
     }
   });
+  // Whole list, as insightsService: the panel pages through it
   centrality.sort((a, b) => b.degree - a.degree);
-  centrality.splice(10);
 
   postProgress(50, 'bridges');
 

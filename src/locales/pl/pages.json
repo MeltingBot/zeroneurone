@@ -432,7 +432,8 @@
     "ofmLiberty": "Szczegółowy",
     "ofmDark": "Ciemny",
     "ofmFiord": "Wysoki kontrast",
-    "timeZoneHint": "Strefa czasowa"
+    "timeZoneHint": "Strefa czasowa",
+    "exportCSV": "Eksportuj do CSV"
   },
   "timeline": {
     "noEvents": "Brak datowanych zdarzeń",

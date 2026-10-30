@@ -650,7 +650,12 @@ function PropertyValueInput({
   const [localDateTimeDate, setLocalDateTimeDate] = useState(() => dateInputParts(value, timeZone).date);
   const [localDateTimeTime, setLocalDateTimeTime] = useState(() => dateInputParts(value, timeZone).time);
 
-  // Sync local state when prop value changes externally (undo/redo, collab)
+  // Sync local state when prop value changes externally (undo/redo, collab).
+  // Keyed on the value, not its reference: a date or a list is a new object
+  // each time the element is read back, which would reset the field being typed.
+  const valueKey = value instanceof Date
+    ? `date:${value.getTime()}`
+    : value !== null && typeof value === 'object' ? JSON.stringify(value) : value;
   useEffect(() => {
     setLocalText(String(value ?? ''));
     setLocalNumber(value !== null && value !== undefined ? String(value) : '');
@@ -658,7 +663,8 @@ function PropertyValueInput({
     const zoned = dateInputParts(value, timeZone);
     setLocalDateTimeDate(zoned.date);
     setLocalDateTimeTime(zoned.time);
-  }, [value, timeZone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- valueKey stands for value
+  }, [valueKey, timeZone]);
 
   const baseInputClass = compact
     ? 'w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary'

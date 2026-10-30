@@ -417,7 +417,8 @@
     "ofmLiberty": "Xehetua",
     "ofmDark": "Iluna",
     "ofmFiord": "Kontraste handia",
-    "timeZoneHint": "Ordu-eremua"
+    "timeZoneHint": "Ordu-eremua",
+    "exportCSV": "CSV-ra esportatu"
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",
