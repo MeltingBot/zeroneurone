@@ -63,6 +63,9 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
   const [purgeAllMessage, setPurgeAllMessage] = useState<string | null>(null);
   const [compactingDb, setCompactingDb] = useState<string | null>(null);
   const [compactMessage, setCompactMessage] = useState<string | null>(null);
+  // Dossiers whose history holds updates that cannot be decrypted
+  const [unreadable, setUnreadable] = useState<{ dbName: string; undecryptable: number; total: number }[]>([]);
+  const [confirmDropUnreadable, setConfirmDropUnreadable] = useState(false);
   const [dossierNames, setDossierNames] = useState<Record<string, string>>({});
   const [sharedDossierIds, setSharedDossierIds] = useState<Set<string>>(() => new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -168,20 +171,29 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
 
   // Sequential: each purge holds a readwrite transaction on its own database,
   // and a summary of all of them reads better than one toast per dossier.
-  const handlePurgeHistory = async (dbNames: string[], busyKey: string) => {
+  const handlePurgeHistory = async (dbNames: string[], busyKey: string, dropUndecryptable = false) => {
     setCompactingDb(busyKey);
     setCompactMessage(null);
+    setConfirmDropUnreadable(false);
     let freed = 0;
     let skipped = 0;
     let failed = 0;
+    let dropped = 0;
+    const found: { dbName: string; undecryptable: number; total: number }[] = [];
     try {
       for (const dbName of dbNames) {
-        const result = await purgeYjsHistory(dbName);
-        if (result.status === 'done') freed += Math.max(0, result.before - result.after);
-        else if (result.status === 'failed') failed++;
+        const result = await purgeYjsHistory(dbName, { dropUndecryptable });
+        if (result.status === 'done') {
+          freed += Math.max(0, result.before - result.after);
+          dropped += result.dropped;
+        } else if (result.status === 'failed' && result.reason === 'undecryptable') {
+          found.push({ dbName, undecryptable: result.undecryptable, total: result.total });
+        } else if (result.status === 'failed') failed++;
         else if (result.reason !== 'empty') skipped++;
       }
+      setUnreadable((prev) => [...prev.filter((u) => !dbNames.includes(u.dbName)), ...found]);
       const parts = [t('storage.compact.freed', { size: formatBytes(freed, locale) })];
+      if (dropped > 0) parts.push(t('storage.compact.dropped', { count: dropped }));
       if (skipped > 0) parts.push(t('storage.compact.skipped', { count: skipped }));
       if (failed > 0) parts.push(t('storage.compact.failed', { count: failed }));
       setCompactMessage(parts.join(' · '));
@@ -617,6 +629,66 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
                       {compactMessage && (
                         <p className="mt-1 text-[10px] text-text-tertiary" role="status">{compactMessage}</p>
                       )}
+                      {unreadable.length > 0 && (() => {
+                        // Nothing readable at all points to a wrong key: never offered for deletion
+                        const droppable = unreadable.filter((u) => u.undecryptable < u.total);
+                        return (
+                          <div className="mt-2 p-2 border border-warning/40 rounded bg-warning/10 space-y-1.5">
+                            {unreadable.map((u) => {
+                              const dossierId = u.dbName.replace('zeroneurone-ydoc-', '');
+                              return (
+                                <p key={u.dbName} className="text-[10px] text-text-secondary">
+                                  {t('storage.compact.unreadable', {
+                                    name: dossierNames[dossierId] || dossierId.slice(0, 8) + '…',
+                                    count: u.undecryptable,
+                                    total: u.total,
+                                  })}
+                                  {u.undecryptable === u.total && ` — ${t('storage.compact.unreadableAll')}`}
+                                </p>
+                              );
+                            })}
+                            {droppable.length > 0 && !confirmDropUnreadable && (
+                              <button
+                                onClick={() => setConfirmDropUnreadable(true)}
+                                disabled={compactingDb !== null}
+                                className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-error border border-error/30 rounded hover:bg-error/10 disabled:opacity-50"
+                              >
+                                <Trash2 size={10} />
+                                {t('storage.compact.drop')}
+                              </button>
+                            )}
+                            {droppable.length > 0 && confirmDropUnreadable && (
+                              <div className="space-y-1.5">
+                                <p className="text-[10px] text-error font-medium">
+                                  {t('storage.compact.dropConfirm', {
+                                    count: droppable.reduce((sum, u) => sum + u.undecryptable, 0),
+                                  })}
+                                </p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handlePurgeHistory(droppable.map((u) => u.dbName), '__unreadable__', true)}
+                                    disabled={compactingDb !== null}
+                                    className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-white bg-error rounded hover:bg-error/90 disabled:opacity-50"
+                                  >
+                                    {compactingDb === '__unreadable__' ? (
+                                      <RefreshCw size={10} className="animate-spin" />
+                                    ) : (
+                                      <Trash2 size={10} />
+                                    )}
+                                    {t('storage.compact.drop')}
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDropUnreadable(false)}
+                                    className="px-1.5 py-0.5 text-[10px] text-text-secondary border border-border-default rounded hover:bg-bg-tertiary"
+                                  >
+                                    {t('common:actions.cancel')}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

@@ -361,7 +361,8 @@
     "mermaidCopied": "Auswahl als Mermaid kopiert",
     "mermaidCopyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
     "dotCopied": "Auswahl als DOT kopiert",
-    "closedBanner": "Abgeschlossen am {{date}} — schreibgeschützt"
+    "closedBanner": "Abgeschlossen am {{date}} — schreibgeschützt",
+    "undecryptableUpdates": "Unlesbare Änderungen: {{count}}. Sie bleiben erhalten; siehe Speicher > Wartung."
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",

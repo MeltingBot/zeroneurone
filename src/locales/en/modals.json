@@ -451,7 +451,12 @@
       "freed": "Space freed: {{size}}",
       "skipped": "Skipped: {{count}} (shared or open)",
       "failed": "Not processed: {{count}} (unreadable or unverifiable content, nothing was changed)",
-      "error": "Purge error"
+      "error": "Purge error",
+      "unreadable": "{{name}}: unreadable changes {{count}}/{{total}}",
+      "unreadableAll": "none readable (wrong key?), nothing will be deleted",
+      "drop": "Delete unreadable",
+      "dropConfirm": "Permanently erase the unreadable changes ({{count}})? The rest of the content is kept.",
+      "dropped": "Unreadable deleted: {{count}}"
     }
   },
   "localStorage": {

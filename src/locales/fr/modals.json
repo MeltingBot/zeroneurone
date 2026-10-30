@@ -442,7 +442,12 @@
       "freed": "Espace libéré : {{size}}",
       "skipped": "Ignorés : {{count}} (partagés ou ouverts)",
       "failed": "Non traités : {{count}} (contenu illisible ou non vérifiable, rien n'a été modifié)",
-      "error": "Erreur lors de la purge"
+      "error": "Erreur lors de la purge",
+      "unreadable": "{{name}} : modifications illisibles {{count}}/{{total}}",
+      "unreadableAll": "aucune lisible (clé incorrecte ?), rien ne sera supprimé",
+      "drop": "Supprimer les illisibles",
+      "dropConfirm": "Effacer définitivement les modifications illisibles ({{count}}) ? Le reste du contenu est conservé.",
+      "dropped": "Illisibles supprimées : {{count}}"
     },
     "purgeAll": {
       "title": "Supprimer tous les dossiers",

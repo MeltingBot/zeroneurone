@@ -361,7 +361,8 @@
     "mermaidCopied": "Selectie gekopieerd als Mermaid",
     "mermaidCopyFailed": "Kopiëren naar het klembord mislukt",
     "dotCopied": "Selectie gekopieerd als DOT",
-    "closedBanner": "Afgesloten op {{date}} — alleen-lezen"
+    "closedBanner": "Afgesloten op {{date}} — alleen-lezen",
+    "undecryptableUpdates": "Onleesbare wijzigingen: {{count}}. Ze blijven bewaard; zie Opslag > Onderhoud."
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

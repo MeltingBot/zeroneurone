@@ -709,9 +709,10 @@ export async function purgeYjsDatabases(): Promise<{ deleted: number; errors: st
 }
 
 export type YjsHistoryPurgeResult =
-  | { status: 'done'; before: number; after: number }
+  | { status: 'done'; before: number; after: number; dropped: number }
   | { status: 'skipped'; reason: 'open' | 'shared' | 'empty' }
-  | { status: 'failed'; reason: 'undecryptable' | 'unsupported' | 'mismatch' | 'error' };
+  | { status: 'failed'; reason: 'undecryptable'; undecryptable: number; total: number }
+  | { status: 'failed'; reason: 'unsupported' | 'mismatch' | 'error' };
 
 /**
  * Assets of a dossier whose file is in OPFS and matches its recorded hash,
@@ -750,8 +751,14 @@ async function verifiedLocalAssets(dossierId: string): Promise<Map<string, strin
  * Skipped for a shared dossier (the fresh document could no longer merge with
  * the peers' copies) and for the dossier being edited (its live document
  * would write the history back).
+ *
+ * Fails on updates that cannot be decrypted, unless `dropUndecryptable` is
+ * set: the user then chose to erase them (see rewriteStoredUpdates).
  */
-export async function purgeYjsHistory(dbName: string): Promise<YjsHistoryPurgeResult> {
+export async function purgeYjsHistory(
+  dbName: string,
+  options: { dropUndecryptable?: boolean } = {},
+): Promise<YjsHistoryPurgeResult> {
   const dossierId = dbName.replace('zeroneurone-ydoc-', '');
 
   const dossier = await db.dossiers.get(dossierId);
@@ -798,12 +805,16 @@ export async function purgeYjsHistory(dbName: string): Promise<YjsHistoryPurgeRe
       Y.applyUpdate(check, snapshot);
       if (ydocFingerprint(check) !== ydocFingerprint(source)) throw new MismatchError(dbName);
       return snapshot;
-    });
+    }, options);
     if (!result) return { status: 'skipped', reason: 'empty' };
     return { status: 'done', ...result };
   } catch (error) {
     console.error(`[purgeYjsHistory] ${dbName}:`, error);
-    if (error instanceof UndecryptableUpdateError) return { status: 'failed', reason: 'undecryptable' };
+    // Still undecryptable while dropping: nothing at all could be read
+    if (error instanceof UndecryptableUpdateError) {
+      if (options.dropUndecryptable) return { status: 'failed', reason: 'error' };
+      return { status: 'failed', reason: 'undecryptable', undecryptable: error.undecryptable, total: error.total };
+    }
     if (error instanceof UnsupportedYdocError) return { status: 'failed', reason: 'unsupported' };
     if (error instanceof MismatchError) return { status: 'failed', reason: 'mismatch' };
     return { status: 'failed', reason: 'error' };

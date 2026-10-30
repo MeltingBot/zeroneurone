@@ -361,7 +361,8 @@
     "mermaidCopied": "Selección copiada como Mermaid",
     "mermaidCopyFailed": "No se pudo copiar al portapapeles",
     "dotCopied": "Selección copiada como DOT",
-    "closedBanner": "Cerrado el {{date}} — solo lectura"
+    "closedBanner": "Cerrado el {{date}} — solo lectura",
+    "undecryptableUpdates": "Cambios ilegibles: {{count}}. Se conservan; ver Almacenamiento > Mantenimiento."
   },
   "map": {
     "noGeoElements": "Ningún elemento geolocalizado",

@@ -442,7 +442,12 @@
       "freed": "Vrijgemaakte ruimte: {{size}}",
       "skipped": "Overgeslagen: {{count}} (gedeeld of geopend)",
       "failed": "Niet verwerkt: {{count}} (onleesbare of niet-verifieerbare inhoud, er is niets gewijzigd)",
-      "error": "Fout bij het wissen"
+      "error": "Fout bij het wissen",
+      "unreadable": "{{name}}: onleesbare wijzigingen {{count}}/{{total}}",
+      "unreadableAll": "geen leesbaar (verkeerde sleutel?), er wordt niets verwijderd",
+      "drop": "Onleesbare verwijderen",
+      "dropConfirm": "Onleesbare wijzigingen ({{count}}) definitief wissen? De rest van de inhoud blijft behouden.",
+      "dropped": "Onleesbare verwijderd: {{count}}"
     }
   },
   "localStorage": {

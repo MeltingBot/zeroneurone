@@ -361,7 +361,8 @@
     "mermaidCopied": "Seleção copiada como Mermaid",
     "mermaidCopyFailed": "Não foi possível copiar para a área de transferência",
     "dotCopied": "Seleção copiada como DOT",
-    "closedBanner": "Encerrado em {{date}} — só de leitura"
+    "closedBanner": "Encerrado em {{date}} — só de leitura",
+    "undecryptableUpdates": "Alterações ilegíveis: {{count}}. São mantidas; ver Armazenamento > Manutenção."
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",

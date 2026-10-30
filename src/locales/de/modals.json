@@ -442,7 +442,12 @@
       "freed": "Freigegebener Speicher: {{size}}",
       "skipped": "Übersprungen: {{count}} (geteilt oder geöffnet)",
       "failed": "Nicht verarbeitet: {{count}} (unlesbarer oder nicht überprüfbarer Inhalt, nichts wurde geändert)",
-      "error": "Fehler beim Bereinigen"
+      "error": "Fehler beim Bereinigen",
+      "unreadable": "{{name}}: unlesbare Änderungen {{count}}/{{total}}",
+      "unreadableAll": "keine lesbar (falscher Schlüssel?), nichts wird gelöscht",
+      "drop": "Unlesbare löschen",
+      "dropConfirm": "Unlesbare Änderungen ({{count}}) endgültig löschen? Der übrige Inhalt bleibt erhalten.",
+      "dropped": "Unlesbare gelöscht: {{count}}"
     }
   },
   "localStorage": {

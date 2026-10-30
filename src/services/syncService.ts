@@ -164,6 +164,11 @@ class SyncService {
   /**
    * Check if an dossier is currently open
    */
+  /** Updates of the open dossier that could not be decrypted (wrong or missing key). */
+  getUndecryptableCount(): number {
+    return this.indexeddbProvider?._undecryptableCount ?? 0;
+  }
+
   isOpen(): boolean {
     return this.ydoc !== null;
   }
@@ -641,23 +646,31 @@ class SyncService {
       this.websocketProvider = null;
     }
 
-    // Compact Y.js data (replace all updates with single snapshot) then destroy
-    if (this.indexeddbProvider) {
-      await this.indexeddbProvider.compact();
-      await this.indexeddbProvider.destroy();
+    // Compact Y.js data (replace all updates with single snapshot) then
+    // destroy. A failed compaction only costs disk space: the teardown must
+    // still complete, or every later open would inherit a half-closed state.
+    try {
+      if (this.indexeddbProvider) {
+        try {
+          await this.indexeddbProvider.compact();
+        } catch (err) {
+          console.warn('[SyncService] Compaction failed on close:', err);
+        }
+        await this.indexeddbProvider.destroy();
+      }
+    } finally {
       this.indexeddbProvider = null;
+
+      if (this.ydoc) {
+        this.ydoc.destroy();
+        this.ydoc = null;
+      }
+
+      this.dossierId = null;
+      this.encryptionKey = null;
+
+      this.setState({ ...DEFAULT_SYNC_STATE });
     }
-
-    // Destroy Y.Doc
-    if (this.ydoc) {
-      this.ydoc.destroy();
-      this.ydoc = null;
-    }
-
-    this.dossierId = null;
-    this.encryptionKey = null;
-
-    this.setState({ ...DEFAULT_SYNC_STATE });
   }
 
   // ============================================================================

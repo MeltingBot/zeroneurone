@@ -101,20 +101,29 @@ function fetchUpdatesEncrypted(
       if (!persistence._destroyed) {
         beforeApplyUpdatesCallback(updatesStore);
 
+        let undecryptable = 0;
         Y.transact(persistence.doc, () => {
           rawUpdates.forEach(raw => {
             let update: Uint8Array | null = raw;
 
-            // Déchiffrer si nécessaire
-            if (persistence._encryptionKey && isEncryptedUpdate(raw)) {
-              update = decryptUpdate(unwrapEncryptedUpdate(raw), persistence._encryptionKey);
+            if (isEncryptedUpdate(raw)) {
+              update = persistence._encryptionKey
+                ? decryptUpdate(unwrapEncryptedUpdate(raw), persistence._encryptionKey)
+                : null;
             }
 
             if (update) {
               Y.applyUpdate(persistence.doc, update);
+            } else {
+              undecryptable++;
             }
           });
         }, persistence, false);
+
+        if (undecryptable > 0 && persistence._undecryptableCount !== undecryptable) {
+          console.warn(`[encryptedIndexeddbPersistence] ${persistence.name}: ${undecryptable}/${rawUpdates.length} updates cannot be decrypted; compaction disabled to keep them.`);
+        }
+        persistence._undecryptableCount = undecryptable;
 
         afterApplyUpdatesCallback(updatesStore);
       }
@@ -133,6 +142,9 @@ function storeStateEncrypted(
   forceStore = true
 ): Promise<void> {
   return fetchUpdatesEncrypted(persistence).then(updatesStore => {
+    // Compaction deletes every stored update: those that could not be
+    // decrypted would be lost for good.
+    if (persistence._undecryptableCount > 0) return;
     if (forceStore || persistence._dbsize >= PREFERRED_TRIM_SIZE) {
       // Compresser en un seul snapshot
       let snapshot = Y.encodeStateAsUpdate(persistence.doc);
@@ -165,6 +177,8 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
   _dbref: number = 0;
   _dbsize: number = 0;
   _destroyed: boolean = false;
+  /** Updates of the last read that could not be decrypted (wrong or missing key). */
+  _undecryptableCount: number = 0;
   db: IDBDatabase | null = null;
   synced: boolean = false;
 
@@ -189,9 +203,12 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
       ])
     );
 
+    let rejectSynced: (reason: Error) => void = () => {};
     this.whenSynced = promise.create(
-      (resolve: (value: EncryptedIndexeddbPersistence) => void) =>
-        this.on('synced', () => resolve(this))
+      (resolve: (value: EncryptedIndexeddbPersistence) => void, reject: (reason: Error) => void) => {
+        rejectSynced = reject;
+        this.on('synced', () => resolve(this));
+      }
     );
 
     this._db.then(db => {
@@ -213,7 +230,10 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
         this.emit('synced', [this]);
       };
 
-      fetchUpdatesEncrypted(this, beforeApplyUpdatesCallback, afterApplyUpdatesCallback);
+      return fetchUpdatesEncrypted(this, beforeApplyUpdatesCallback, afterApplyUpdatesCallback);
+    }).catch((err: unknown) => {
+      console.error(`[encryptedIndexeddbPersistence] ${name}: initial load failed`, err);
+      rejectSynced(err instanceof Error ? err : new Error(String(err)));
     });
 
     this._storeUpdate = (update: Uint8Array, origin: unknown) => {
@@ -230,15 +250,19 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
           dataToStore = wrapEncryptedUpdate(encrypted);
         }
 
-        idb.addAutoKey(updatesStore, dataToStore as unknown as ArrayBuffer);
+        idb.addAutoKey(updatesStore, dataToStore as unknown as ArrayBuffer).catch((err: unknown) => {
+          console.error(`[encryptedIndexeddbPersistence] ${name}: update not stored`, err);
+        });
 
         if (++this._dbsize >= PREFERRED_TRIM_SIZE) {
           if (this._storeTimeoutId !== null) {
             clearTimeout(this._storeTimeoutId);
           }
           this._storeTimeoutId = setTimeout(() => {
-            storeStateEncrypted(this, false);
             this._storeTimeoutId = null;
+            storeStateEncrypted(this, false).catch((err: unknown) => {
+              console.warn(`[encryptedIndexeddbPersistence] ${name}: compaction failed`, err);
+            });
           }, this._storeTimeout);
         }
       }
@@ -267,9 +291,10 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
     this.doc.off('update', this._storeUpdate);
     this.doc.off('destroy', this.destroy);
     this._destroyed = true;
+    // A database that never opened has nothing to close
     return this._db.then(db => {
       db.close();
-    });
+    }, () => undefined);
   }
 
   clearData(): Promise<void> {
@@ -308,7 +333,15 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
 // ============================================================================
 
 /** Raised when a stored update cannot be read: the rewrite is abandoned. */
-export class UndecryptableUpdateError extends Error {}
+export class UndecryptableUpdateError extends Error {
+  readonly undecryptable: number;
+  readonly total: number;
+  constructor(dbName: string, undecryptable = 0, total = 0) {
+    super(dbName);
+    this.undecryptable = undecryptable;
+    this.total = total;
+  }
+}
 
 /**
  * Replaces every stored update of `dbName` with the single update returned by
@@ -321,13 +354,16 @@ export class UndecryptableUpdateError extends Error {}
  *
  * Refuses to run when an update cannot be decrypted (no key, or the wrong
  * one): the loaded document would be incomplete, and writing it would destroy
- * the missing part.
+ * the missing part. With `dropUndecryptable`, an explicit user choice, those
+ * updates are left out and erased instead — unless none at all can be read,
+ * which points to a wrong key rather than damaged data.
  */
 export async function rewriteStoredUpdates(
   dbName: string,
   encryptionKey: Uint8Array | null,
-  transform: (updates: Uint8Array[]) => Uint8Array | null
-): Promise<{ before: number; after: number } | null> {
+  transform: (updates: Uint8Array[]) => Uint8Array | null,
+  options: { dropUndecryptable?: boolean } = {}
+): Promise<{ before: number; after: number; dropped: number } | null> {
   const db = await idb.openDB(dbName, (db: IDBDatabase) =>
     idb.createStores(db, [
       [UPDATES_STORE_NAME, { autoIncrement: true }],
@@ -336,7 +372,7 @@ export async function rewriteStoredUpdates(
   );
 
   return new Promise((resolve, reject) => {
-    let result: { before: number; after: number } | null = null;
+    let result: { before: number; after: number; dropped: number } | null = null;
     let failure: unknown = null;
     const tx = db.transaction([UPDATES_STORE_NAME], 'readwrite');
     const store = tx.objectStore(UPDATES_STORE_NAME);
@@ -346,14 +382,22 @@ export async function rewriteStoredUpdates(
       try {
         const raws = (getReq.result as (Uint8Array | ArrayBuffer)[])
           .map((raw) => (raw instanceof Uint8Array ? raw : new Uint8Array(raw)));
-        const updates = raws.map((raw) => {
-          if (!isEncryptedUpdate(raw)) return raw;
+        const updates: Uint8Array[] = [];
+        let dropped = 0;
+        for (const raw of raws) {
+          if (!isEncryptedUpdate(raw)) {
+            updates.push(raw);
+            continue;
+          }
           const decrypted = encryptionKey
             ? decryptUpdate(unwrapEncryptedUpdate(raw), encryptionKey)
             : null;
-          if (!decrypted) throw new UndecryptableUpdateError(dbName);
-          return decrypted;
-        });
+          if (decrypted) updates.push(decrypted);
+          else dropped++;
+        }
+        if (dropped > 0 && (!options.dropUndecryptable || updates.length === 0)) {
+          throw new UndecryptableUpdateError(dbName, dropped, raws.length);
+        }
 
         const snapshot = transform(updates);
         if (!snapshot) return;
@@ -365,6 +409,7 @@ export async function rewriteStoredUpdates(
         result = {
           before: raws.reduce((sum, raw) => sum + raw.byteLength, 0),
           after: stored.byteLength,
+          dropped,
         };
       } catch (err) {
         failure = err;

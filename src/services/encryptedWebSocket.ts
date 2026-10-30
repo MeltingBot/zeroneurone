@@ -17,6 +17,7 @@ export class EncryptedWebSocket {
   private pendingOutgoing: ArrayBuffer[] = [];
   private pendingIncoming: MessageEvent[] = [];
   private keyReady = false;
+  private keyFailed = false;
   // Serialized send chain — each send awaits the previous one to preserve ordering
   private sendChain: Promise<void> = Promise.resolve();
 
@@ -45,6 +46,7 @@ export class EncryptedWebSocket {
     };
 
     this.ws.onmessage = async (event) => {
+      if (this.keyFailed) return;
       // If key not ready yet, queue the message
       if (!this.keyReady) {
         this.pendingIncoming.push(event);
@@ -94,16 +96,26 @@ export class EncryptedWebSocket {
         return;
       }
     } catch (err) {
-      // Decryption failed - likely key mismatch
-      // Drop the message silently to avoid y-websocket errors
+      // Decryption failed, likely a key mismatch: drop the message so that
+      // y-websocket does not try to decode garbage
       console.error('[EncryptedWS] Decryption failed:', err);
       return;
     }
   }
 
   /**
-   * Set the encryption key
+   * Called when the key cannot be imported: nothing could ever be sent or
+   * read, so the queues are dropped and the socket closed instead of
+   * buffering forever.
    */
+  failEncryption(err: unknown): void {
+    console.error('[EncryptedWS] Encryption key import failed, closing connection:', err);
+    this.keyFailed = true;
+    this.pendingOutgoing = [];
+    this.pendingIncoming = [];
+    this.ws.close(4001, 'encryption key error');
+  }
+
   async setEncryptionKey(keyString: string): Promise<void> {
     this.key = await importEncryptionKey(keyString);
 
@@ -188,6 +200,7 @@ export class EncryptedWebSocket {
 
   // WebSocket interface methods
   send(data: string | ArrayBuffer | Blob | ArrayBufferView): void {
+    if (this.keyFailed) return;
     // Convert to ArrayBuffer if needed
     let buffer: ArrayBuffer;
     if (data instanceof ArrayBuffer) {
@@ -195,8 +208,9 @@ export class EncryptedWebSocket {
     } else if (ArrayBuffer.isView(data)) {
       buffer = (data.buffer as ArrayBuffer).slice(data.byteOffset, data.byteOffset + data.byteLength);
     } else if (data instanceof Blob) {
-      // For Blob, we can't encrypt synchronously - this shouldn't happen with y-websocket
-      this.ws.send(data);
+      // A Blob cannot be encrypted synchronously; y-websocket never sends one.
+      // Refuse it rather than let it leave in clear text.
+      console.error('[EncryptedWS] Blob payload refused: it cannot be encrypted');
       return;
     } else {
       // String data - convert to ArrayBuffer
@@ -330,10 +344,7 @@ export function createEncryptedWebSocketClass(encryptionKey: string | null): typ
   return class extends EncryptedWebSocket {
     constructor(url: string | URL, protocols?: string | string[]) {
       super(url, protocols);
-      // Set the encryption key asynchronously
-      this.setEncryptionKey(key).catch(() => {
-        // Key import failed - encryption won't work
-      });
+      this.setEncryptionKey(key).catch((err: unknown) => this.failEncryption(err));
     }
   } as unknown as typeof WebSocket;
 }

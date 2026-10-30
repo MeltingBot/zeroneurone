@@ -361,7 +361,8 @@
     "mermaidCopied": "Selecció copiada com a Mermaid",
     "mermaidCopyFailed": "No s'ha pogut copiar al porta-retalls",
     "dotCopied": "Selecció copiada com a DOT",
-    "closedBanner": "Tancat el {{date}} — només lectura"
+    "closedBanner": "Tancat el {{date}} — només lectura",
+    "undecryptableUpdates": "Canvis il·legibles: {{count}}. Es conserven; vegeu Emmagatzematge > Manteniment."
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

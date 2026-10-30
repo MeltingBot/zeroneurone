@@ -362,7 +362,8 @@
     "mermaidCopied": "Selection copied as Mermaid",
     "mermaidCopyFailed": "Could not copy to the clipboard",
     "dotCopied": "Selection copied as DOT",
-    "closedBanner": "Closed on {{date}} — read-only"
+    "closedBanner": "Closed on {{date}} — read-only",
+    "undecryptableUpdates": "Unreadable changes: {{count}}. They are kept; see Storage > Maintenance."
   },
   "map": {
     "noGeoElements": "No geolocated elements",

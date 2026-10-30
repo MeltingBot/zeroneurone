@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { ZIP_LIMITS, ZipEntryTooLargeError, readZipEntryBuffer, readZipEntryText } from './zipLimits';
 import { db } from '../db/database';
 import { fileService } from './fileService';
 import { generateUUID, getExtension, stripLocalOnlyDossierFields } from '../utils';
@@ -166,7 +167,15 @@ class BackupService {
       }
 
       onProgress?.('Analyse des données...');
-      const jsonContent = await jsonFile.async('string');
+      // A full backup holds every dossier, hence the archive-wide bound
+      let jsonContent: string;
+      try {
+        jsonContent = await readZipEntryText(jsonFile, ZIP_LIMITS.MAX_ZIP_SIZE);
+      } catch (error) {
+        if (!(error instanceof ZipEntryTooLargeError)) throw error;
+        result.errors.push('Archive invalide: backup.json trop volumineux');
+        return result;
+      }
       const rawData = JSON.parse(jsonContent);
 
       // Legacy compat: normalize 'investigations' key → 'dossiers'
@@ -219,7 +228,7 @@ class BackupService {
           const assetFile = zip.file(assetMeta.archivePath);
           if (!assetFile) continue;
 
-          const arrayBuffer = await assetFile.async('arraybuffer');
+          const arrayBuffer = await readZipEntryBuffer(assetFile, ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP);
           const srcDossierId = assetMeta.dossierId || (assetMeta as any).investigationId;
           const newDossierId = dossierIdMap.get(srcDossierId);
           if (!newDossierId) continue;

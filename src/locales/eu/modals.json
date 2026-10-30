@@ -442,7 +442,12 @@
       "freed": "Askatutako lekua: {{size}}",
       "skipped": "Saltatuak: {{count}} (partekatuak edo irekiak)",
       "failed": "Prozesatu gabeak: {{count}} (eduki irakurgaitza edo egiaztaezina, ez da ezer aldatu)",
-      "error": "Errorea garbitzean"
+      "error": "Errorea garbitzean",
+      "unreadable": "{{name}}: aldaketa irakurtezinak {{count}}/{{total}}",
+      "unreadableAll": "bat ere ez da irakurgarria (gako okerra?), ez da ezer ezabatuko",
+      "drop": "Ezabatu irakurtezinak",
+      "dropConfirm": "Aldaketa irakurtezinak ({{count}}) behin betiko ezabatu? Gainerako edukia gorde egiten da.",
+      "dropped": "Ezabatutako irakurtezinak: {{count}}"
     }
   },
   "localStorage": {

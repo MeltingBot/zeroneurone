@@ -363,7 +363,8 @@
     "mermaidCopied": "Zaznaczenie skopiowane jako Mermaid",
     "mermaidCopyFailed": "Nie udało się skopiować do schowka",
     "dotCopied": "Zaznaczenie skopiowane jako DOT",
-    "closedBanner": "Zamknięta {{date}} — tylko do odczytu"
+    "closedBanner": "Zamknięta {{date}} — tylko do odczytu",
+    "undecryptableUpdates": "Nieczytelne zmiany: {{count}}. Zostały zachowane; zobacz Pamięć > Konserwacja."
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

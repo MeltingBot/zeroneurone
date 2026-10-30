@@ -442,7 +442,12 @@
       "freed": "Espai alliberat: {{size}}",
       "skipped": "Omesos: {{count}} (compartits o oberts)",
       "failed": "No processats: {{count}} (contingut il·legible o no verificable, no s'ha modificat res)",
-      "error": "Error en purgar"
+      "error": "Error en purgar",
+      "unreadable": "{{name}}: canvis il·legibles {{count}}/{{total}}",
+      "unreadableAll": "cap de llegible (clau incorrecta?), no s'eliminarà res",
+      "drop": "Eliminar il·legibles",
+      "dropConfirm": "Esborrar definitivament els canvis il·legibles ({{count}})? La resta del contingut es conserva.",
+      "dropped": "Il·legibles eliminats: {{count}}"
     }
   },
   "localStorage": {

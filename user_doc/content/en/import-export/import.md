@@ -674,6 +674,8 @@ Expected structure: object with `nodes` and `edges`, where nodes have `data.type
 }
 ```
 
+Remote profile pictures (`pfp_image`) are not downloaded: their address is kept in the `image_url` link property.
+
 ---
 
 ### OSINTracker
