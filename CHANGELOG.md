@@ -1,5 +1,56 @@
 # Changelog
 
+## 2.86.7
+
+### Sécurité et données
+
+- **Exports CSV** — la carte, la timeline, les jeux de tags, la matrice et
+  les requêtes sont protégés contre l'injection de formules, comme l'export
+  principal : une cellule commençant par `=`, `+`, `-` ou `@` est précédée
+  d'une apostrophe (un `@pseudo` ou un `+33 6…` aussi). Les nombres purs
+  restent des nombres. Jusqu'à 2.86.6, ces exports n'étaient pas protégés.
+- **Restauration de sauvegarde, imports ANB, ANX, STIX 2 et PredicaGraph**
+  — tout ou rien : une erreur en cours de route ne laisse plus de dossier à
+  moitié restauré ou importé ; les fichiers déjà copiés sont retirés.
+- **Collaboration chiffrée** — avec une clé invalide, la connexion ne se
+  relance plus en boucle ; l'indicateur affiche l'erreur.
+
+### Traçabilité (plugins)
+
+- **Ctrl+Z / Ctrl+Shift+Z sur le canvas** — les plugins reçoivent
+  l'annulation et le rétablissement avec l'origine `undo`. Jusqu'à 2.86.6,
+  ils les recevaient avec l'origine `local` : un journal de traçabilité
+  produit avec ces versions peut présenter une annulation comme une action
+  de l'analyste.
+
+### Corrections
+
+- **Annuler juste après une suppression ou un couper** — les éléments
+  reviennent bien dans leur onglet.
+- **Disposition « force »** — les éléments verrouillés sont de nouveau
+  évités quand le calcul se fait en arrière-plan.
+- **Rapport interactif** — deux sections de même titre ont chacune leur
+  ancre.
+- **Éditeur de rapport** — l'aperçu ne reste plus figé après une
+  modification d'un collaborateur sur la même section.
+- **Échap** — ferme les sélecteurs de position sur la carte ; fermer une
+  fenêtre avec Échap ne désélectionne plus les éléments du canvas.
+- **Menu contextuel du canvas** — créer un élément, un groupe, une note et
+  coller ne sont plus proposés sur une sélection multiple.
+
+### Interface
+
+- Couleurs alignées sur la palette : survols des boutons, sélection des
+  liens et des groupes à la couleur d'accent, timeline sans dégradés.
+- Traductions complétées dans les 11 langues ; écran d'erreur, éditeur
+  visuel, import chiffré, fichiers joints et toasts traduits ; tailles de
+  fichiers et « il y a… » dans la langue de l'interface.
+
+### Interne
+
+- Code mort et dépendances inutilisées retirés, gros fichiers découpés
+  (canvas, carte, timeline, import), utilitaires communs.
+
 ## 2.86.6
 
 ### Canvas
