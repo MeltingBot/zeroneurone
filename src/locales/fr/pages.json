@@ -153,6 +153,7 @@
       "hide": "Masquer",
       "hideSelection": "Masquer la sélection",
       "showOnly": "Afficher uniquement",
+      "showHidden": "Afficher les masqués ({{count}})",
       "showOnlySelection": "Afficher uniquement la sélection",
       "showOnlyElement": "Afficher uniquement l'élément",
       "hideElement": "Masquer l'élément",

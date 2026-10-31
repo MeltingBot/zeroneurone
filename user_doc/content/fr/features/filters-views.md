@@ -80,8 +80,7 @@ Clic-droit sur un élément → **Masquer** pour le retirer temporairement du ca
 
 Clic-droit → **Afficher uniquement la sélection** (ou **Afficher uniquement** sur le fond du canvas) masque tout le reste. Les groupes qui contiennent la sélection restent visibles, ainsi que les membres d'un groupe sélectionné.
 
-
-Retrouvez les éléments masqués dans **Filtres** → **Éléments masqués**.
+Les éléments masqués sont listés en haut du panneau **Filtres**, sous le compteur : un clic sur l'œil d'une ligne en réaffiche un, **Tout afficher** les réaffiche tous. Le clic droit sur le fond du canvas propose aussi **Afficher les masqués (N)**.
 
 ---
 

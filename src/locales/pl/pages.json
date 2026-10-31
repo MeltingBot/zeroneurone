@@ -153,6 +153,7 @@
       "hide": "Ukryj",
       "hideSelection": "Ukryj zaznaczenie",
       "showOnly": "Pokaż tylko",
+      "showHidden": "Pokaż ukryte ({{count}})",
       "showOnlySelection": "Pokaż tylko zaznaczenie",
       "showOnlyElement": "Pokaż tylko ten element",
       "hideElement": "Ukryj element",

@@ -153,6 +153,7 @@
       "hide": "Ausblenden",
       "hideSelection": "Auswahl ausblenden",
       "showOnly": "Nur anzeigen",
+      "showHidden": "Ausgeblendete anzeigen ({{count}})",
       "showOnlySelection": "Nur Auswahl anzeigen",
       "showOnlyElement": "Nur dieses Element anzeigen",
       "hideElement": "Element ausblenden",

@@ -153,6 +153,7 @@
       "hide": "Ezkutatu",
       "hideSelection": "Hautapena ezkutatu",
       "showOnly": "Hau bakarrik erakutsi",
+      "showHidden": "Erakutsi ezkutatuak ({{count}})",
       "showOnlySelection": "Hautapena bakarrik erakutsi",
       "showOnlyElement": "Elementua bakarrik erakutsi",
       "hideElement": "Elementua ezkutatu",
