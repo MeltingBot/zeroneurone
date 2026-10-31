@@ -7,6 +7,7 @@
 
 import type { Element, Link } from '../types';
 import { toLayoutEdges, toLayoutNodes } from './graph/layouts';
+import type { StructuralRoles } from './graph/structuralRoles';
 
 export type { LayoutType, LayoutOptions } from './graph/layouts';
 import type { LayoutOptions } from './graph/layouts';
@@ -31,7 +32,7 @@ export interface WorkerInsightsData {
   centrality: { elementId: string; degree: number; betweenness: number; score: number }[];
   bridges: string[];
   isolated: string[];
-  similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
+  roles: StructuralRoles;
 }
 
 type ProgressCallback = (percent: number, phase: string) => void;

@@ -28,6 +28,10 @@ import type { Asset, Element, Link } from '../types';
 import { closestPointOnPolygon, computePolygonAreaKm2, getGeoCenter, isGeoPolygon, pointInPolygon } from '../utils/geo';
 import { assetHashOf, findAssetByHash, isWebScheme, parseSourceLinks } from '../utils/sourceLinks';
 import { propertyDateSpans, type DatePropertyRulesLike } from '../utils/temporalUtils';
+import { findMergeCandidates, type MergeLevel, type MergeReason } from './dedup/candidates';
+import type { PhoneParser } from './dedup/normalizers';
+
+export type { MergeReason } from './dedup/candidates';
 
 export type SuggestionRule = 'sharedValue' | 'sharedSource' | 'inZone' | 'nearby' | 'meeting';
 
@@ -69,7 +73,20 @@ export interface PivotSuggestion {
   existingId: string | null;
 }
 
-export type Suggestion = LinkSuggestion | PivotSuggestion;
+/** Two elements that may be one: merged on acceptance, never linked */
+export interface MergeSuggestion {
+  kind: 'merge';
+  id: string;
+  elementIds: [string, string];
+  /** 0-100 */
+  /** How sure the pair is, from the evidence */
+  level: MergeLevel;
+  /** Orders the pairs within a level (never shown) */
+  score: number;
+  reasons: MergeReason[];
+}
+
+export type Suggestion = LinkSuggestion | PivotSuggestion | MergeSuggestion;
 
 export interface SuggestionOptions {
   /** Suggestion ids the analyst dismissed */
@@ -95,6 +112,8 @@ export interface SuggestionOptions {
    * is linked, and a filtered-out element carrying the value is still the pivot.
    */
   candidateIds?: ReadonlySet<string> | null;
+  /** Possible duplicates (merge suggestions); absent or null turns the rule off */
+  duplicates?: { minRank: number; parsePhone: PhoneParser | null } | null;
   /** Rules without settings, each on unless set to false */
   rules?: { sharedValue?: boolean; sharedSource?: boolean; inZone?: boolean };
   /** Property keys left out of the shared values rule, folded (see foldKey) */
@@ -213,9 +232,22 @@ function reasonDismissalId(fromId: string, toId: string, reason: SuggestionReaso
   return `${linkSuggestionId(fromId, toId)}:${reason.rule}${reason.rule === 'sharedValue' ? `:${foldKey(reason.key)}` : ''}`;
 }
 
+/** Id of a merge suggestion: the unordered pair, never a value */
+export function mergeSuggestionId(a: string, b: string): string {
+  return `merge:${pairKey(a, b)}`;
+}
+
 /** Ids to store when the analyst dismisses this suggestion */
 export function dismissalIds(s: Suggestion): string[] {
-  return s.kind === 'pivot' ? [s.id] : s.reasons.map(r => reasonDismissalId(s.fromId, s.toId, r));
+  if (s.kind === 'link') return s.reasons.map(r => reasonDismissalId(s.fromId, s.toId, r));
+  return [s.id];
+}
+
+/** Elements a suggestion is about */
+export function suggestionElementIds(s: Suggestion): string[] {
+  if (s.kind === 'link') return [s.fromId, s.toId];
+  if (s.kind === 'merge') return [...s.elementIds];
+  return [...s.memberIds, ...(s.existingId ? [s.existingId] : [])];
 }
 
 /** Elements that can be linked: no groups, no annotations */
@@ -843,21 +875,33 @@ export function analyzeLinkSuggestions(
   // Between two tags: a link joins an `a` to a `b`, a pivot gathers both
   const joinsTags = (s: Suggestion) => {
     if (!between) return true;
-    if (s.kind === 'link') {
-      return (hasTag(s.fromId, between.a) && hasTag(s.toId, between.b)) || (hasTag(s.fromId, between.b) && hasTag(s.toId, between.a));
+    const [x, y] = s.kind === 'link' ? [s.fromId, s.toId] : s.kind === 'merge' ? s.elementIds : [null, null];
+    if (x !== null && y !== null) {
+      return (hasTag(x, between.a) && hasTag(y, between.b)) || (hasTag(x, between.b) && hasTag(y, between.a));
     }
-    const ids = [...s.memberIds, ...(s.existingId ? [s.existingId] : [])];
+    const ids = suggestionElementIds(s);
     return ids.some(id => hasTag(id, between.a)) && ids.some(id => hasTag(id, between.b));
   };
-  const inScopeOf = (s: Suggestion) =>
-    joinsTags(s) && inScope(s.kind === 'link' ? [s.fromId, s.toId] : [...s.memberIds, ...(s.existingId ? [s.existingId] : [])]);
+  const inScopeOf = (s: Suggestion) => joinsTags(s) && inScope(suggestionElementIds(s));
 
   const sortedLinks = [...linkSuggestions.values()]
     .map(s => ({ ...s, reasons: [...s.reasons].sort((a, b) => RULE_RANK[a.rule] - RULE_RANK[b.rule]) }))
     .sort((a, b) => b.reasons.length - a.reasons.length || RULE_RANK[a.reasons[0].rule] - RULE_RANK[b.reasons[0].rule]);
   const sortedPivots = pivots.sort((a, b) => b.memberIds.length - a.memberIds.length);
 
-  const all: Suggestion[] = [...sortedPivots, ...sortedLinks];
+  // Possible duplicates first, best score first: merging changes what the
+  // other suggestions are about
+  // Searched in the whole dossier, kept when one of the two is shown: a record
+  // and its double often sit in two tabs (two imports)
+  const shownIds = candidateIds ?? null;
+  const merges: MergeSuggestion[] = options.duplicates
+    ? findMergeCandidates(between ? linkable.filter(el => hasTag(el.id, between.a) || hasTag(el.id, between.b)) : linkable,
+      { minRank: options.duplicates.minRank, parsePhone: options.duplicates.parsePhone })
+      .filter(c => !shownIds || shownIds.has(c.elementIds[0]) || shownIds.has(c.elementIds[1]))
+      .map(c => ({ kind: 'merge', id: mergeSuggestionId(c.elementIds[0], c.elementIds[1]), elementIds: c.elementIds, level: c.level, score: c.score, reasons: c.reasons }))
+    : [];
+
+  const all: Suggestion[] = [...merges, ...sortedPivots, ...sortedLinks];
   const liveIds = new Set(all.flatMap(dismissalIds));
 
   // Drop dismissed pivots, and dismissed reasons of links (a link stays while
@@ -866,7 +910,7 @@ export function analyzeLinkSuggestions(
   // keeps the reasons still pending; the dismissed ones can be reviewed)
   const split = (keepDismissed: boolean) => all
     .map((s): Suggestion | null => {
-      if (s.kind === 'pivot') return !!dismissed?.has(s.id) === keepDismissed ? s : null;
+      if (s.kind !== 'link') return !!dismissed?.has(s.id) === keepDismissed ? s : null;
       const reasons = s.reasons.filter(r => !!dismissed?.has(reasonDismissalId(s.fromId, s.toId, r)) === keepDismissed);
       return reasons.length > 0 ? { ...s, reasons } : null;
     })
@@ -884,6 +928,13 @@ export function analyzeLinkSuggestions(
   // Property keys left out count as a rule that did not run, for their key
   const keysNarrowed = valuesOn && !!options.excludedKeys?.size;
   for (const id of dismissed ?? []) {
+    // A set-aside duplicate goes only with one of its elements: whether it is
+    // produced depends on the level each viewer picks, it tells nothing
+    if (id.startsWith('merge:')) {
+      const [a, b] = id.slice('merge:'.length).split('|');
+      if (!existing.has(a) || !existing.has(b)) staleDismissalIds.add(id);
+      continue;
+    }
     const link = /^link:([^:]+):([a-zA-Z]+)(?::(.*))?$/.exec(id);
     const keyLeftOut = !!link && link[2] === 'sharedValue' && !!options.excludedKeys?.has(link[3] ?? '');
     if (link && (!ran[link[2]] || keyLeftOut)) {
@@ -935,12 +986,19 @@ export function evidenceOf(
 
 /**
  * Dismissed suggestion ids carried by an imported dossier, rewritten for the
- * new element ids. Link suggestions name their pair: dropped when an element
- * of the pair was not imported. Pivot suggestions name a value: kept as is.
+ * new element ids. Link and merge suggestions name their pair: dropped when an
+ * element of the pair was not imported. Pivot suggestions name a value: kept as is.
  */
 export function remapDismissedSuggestions(ids: readonly string[], elementIdMap: ReadonlyMap<string, string>): string[] {
   const out: string[] = [];
   for (const id of ids) {
+    if (id.startsWith('merge:')) {
+      const [a, b] = id.slice('merge:'.length).split('|');
+      const newA = elementIdMap.get(a);
+      const newB = elementIdMap.get(b);
+      if (newA && newB) out.push(mergeSuggestionId(newA, newB));
+      continue;
+    }
     if (!id.startsWith('link:')) {
       out.push(id);
       continue;

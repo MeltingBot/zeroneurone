@@ -37,6 +37,9 @@ interface CanvasContextMenuProps {
   onQueryFromSelection?: () => void;
   // Select the links of the selection (all links when nothing is selected)
   onSelectLinks?: () => void;
+  /** Hidden elements of the dossier, and showing them all again */
+  hiddenCount?: number;
+  onShowHidden?: () => void;
   // Link suggestions restricted to the selection
   onSuggestLinks?: () => void;
   // Canvas tabs: add the selection to one, or make a new one from it
@@ -76,6 +79,8 @@ function CanvasContextMenuComponent({
   onFindSimilar,
   onQueryFromSelection,
   onSelectLinks,
+  hiddenCount = 0,
+  onShowHidden,
   onSuggestLinks,
   tabs = [],
   onAddSelectionToTab,
@@ -157,9 +162,10 @@ function CanvasContextMenuComponent({
             onSelect: onToggleLockSelection,
           },
         ] : [],
-        onSelectLinks ? [
-          { id: 'select-links', label: cm(hasSelection ? 'selectLinks' : 'selectAllLinks'), icon: Spline, shortcut: hasSelection ? undefined : 'Ctrl+Shift+A', onSelect: onSelectLinks },
-        ] : [],
+        [
+          onSelectLinks && { id: 'select-links', label: cm(hasSelection ? 'selectLinks' : 'selectAllLinks'), icon: Spline, shortcut: hasSelection ? undefined : 'Ctrl+Shift+A', onSelect: onSelectLinks },
+          hiddenCount > 0 && onShowHidden && { id: 'show-hidden', label: t('dossier.contextMenu.showHidden', { count: hiddenCount }), icon: Eye, onSelect: onShowHidden },
+        ],
         // Creating or pasting has nothing to do with a multiple selection
         selectedCount > 1 ? [] : [
           { id: 'add-element', label: cm('addElement'), icon: Plus, shortcut: 'E', onSelect: onCreateElement },

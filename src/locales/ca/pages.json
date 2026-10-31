@@ -153,6 +153,7 @@
       "hide": "Amagar",
       "hideSelection": "Amagar selecció",
       "showOnly": "Mostrar només",
+      "showHidden": "Mostra els amagats ({{count}})",
       "showOnlySelection": "Mostrar només la selecció",
       "showOnlyElement": "Mostrar només l'element",
       "hideElement": "Amagar element",

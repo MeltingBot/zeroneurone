@@ -85,6 +85,18 @@ export function SidePanel() {
   });
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
+  const tabStripRef = useRef<HTMLDivElement>(null);
+
+  // The open tab stays in sight when the strip scrolls
+  useEffect(() => {
+    const strip = tabStripRef.current;
+    const tab = strip?.querySelector<HTMLElement>(`[data-panel-tab="${CSS.escape(activeTab)}"]`);
+    if (!strip || !tab) return;
+    if (tab.offsetLeft < strip.scrollLeft) strip.scrollLeft = tab.offsetLeft;
+    else if (tab.offsetLeft + tab.offsetWidth > strip.scrollLeft + strip.clientWidth) {
+      strip.scrollLeft = tab.offsetLeft + tab.offsetWidth - strip.clientWidth;
+    }
+  }, [activeTab, width]);
 
   const isBottom = panelSide === 'bottom';
   const isDetached = panelSide === 'detached';
@@ -458,7 +470,17 @@ export function SidePanel() {
       {/* Header with tabs */}
       <header className="relative border-b border-border-default shrink-0">
         <div className="flex items-center h-10 px-1 overflow-hidden">
-          <div className="flex items-center gap-0.5 flex-1 min-w-0">
+          {/* Tabs keep their size: too narrow a panel scrolls them (wheel included) */}
+          <div
+            ref={tabStripRef}
+            onWheel={(e) => {
+              const strip = e.currentTarget;
+              if (strip.scrollWidth > strip.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                strip.scrollLeft += e.deltaY;
+              }
+            }}
+            className="relative flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -467,6 +489,7 @@ export function SidePanel() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   title={tab.label}
+                  data-panel-tab={tab.id}
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer.effectAllowed = 'move';
@@ -487,7 +510,7 @@ export function SidePanel() {
                     setDraggedPanelTab(null);
                     setPanelTabDropTarget(null);
                   }}
-                  className={`relative flex items-center gap-1 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                  className={`relative shrink-0 flex items-center gap-1 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                     isActive
                       ? 'bg-accent/10 text-accent px-2'
                       : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary px-1.5'

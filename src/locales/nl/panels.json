@@ -523,6 +523,25 @@
       "isolated": "Geïsoleerd",
       "similar": "Vergelijkbaar"
     },
+    "roles": {
+      "title": "Rollen",
+      "soleConnector": "{{x}} is de enige verbinding tussen {{groups}}",
+      "bridgeLink": "De verbinding {{x}} – {{y}} is de enige doorgang tussen {{groups}}",
+      "cutOff": "{{x}} is de enige toegang tot {{count}} elementen, waaronder {{y}}",
+      "cutOffNamed": "{{x}} is de enige toegang tot {{names}}",
+      "broker": "{{x}} verbindt {{groups}}",
+      "group": "de groep van {{lead}} ({{size}})",
+      "target": "Rapportsectie",
+      "newSection": "Nieuwe sectie",
+      "addAll": "Alles toevoegen ({{count}})",
+      "addToReport": "Aan rapport toevoegen",
+      "sectionTitle": "Structurele rollen",
+      "analyzedOn": "Analyse van {{date}}",
+      "added": "Toegevoegd aan rapport: {{section}}",
+      "addFailed": "Toevoegen aan rapport mislukt",
+      "search": "Naam zoeken",
+      "clearSearch": "Wissen"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Groepen van sterk verbonden elementen",
@@ -567,20 +586,6 @@
       "hideAll": "Alles verbergen",
       "showAll": "Alles tonen"
     },
-    "similar": {
-      "title": "Potentiële duplicaten",
-      "mode": {
-        "fuzzy": "Ruim",
-        "exact": "Strikt",
-        "fuzzyDesc": "Gelijkende namen, typfouten inbegrepen",
-        "exactDesc": "Zelfde naam, hoofdletters en schrijfwijze van nummers buiten beschouwing"
-      },
-      "description": "Elementen met vergelijkbare namen",
-      "count": "{{count}} vergelijkbare paren",
-      "noSimilar": "Geen vergelijkbare labels",
-      "select": "Selecteren",
-      "merge": "Samenvoegen"
-    },
     "paths": {
       "title": "Pad zoeken",
       "button": "Pad vinden tussen twee elementen",
@@ -593,7 +598,26 @@
       "maxDepth": "Max. diepte",
       "highlightThisPath": "Dit pad markeren",
       "noPath": "Geen pad gevonden tussen deze elementen",
-      "pathLength": "{{count}} stap(pen)"
+      "pathLength": "{{count}} stap(pen)",
+      "blockedByConstraints": "Pad uitgesloten door de beperkingen",
+      "constraints": {
+        "title": "Beperkingen",
+        "reset": "Beperkingen wissen",
+        "include": "Opnemen",
+        "exclude": "Uitsluiten",
+        "labels": "Labels",
+        "tags": "Tags",
+        "period": "Periode",
+        "periodStart": "Begin",
+        "periodEnd": "Einde",
+        "keepUndated": "Ongedateerde verbanden behouden",
+        "minConfidence": "Minimaal vertrouwen",
+        "evaluationAtLeast": "Deze code of beter",
+        "keepUngraded": "Onbeoordeelde verbanden behouden",
+        "keepNoConfidence": "Verbanden zonder vertrouwen behouden",
+        "respectDirection": "Richting van verbanden volgen",
+        "applied": "beperkingen toegepast"
+      }
     },
     "cycles": {
       "button": "Cycli detecteren",
@@ -802,7 +826,9 @@
       "zones": "Zones",
       "valuesHint": "Zelfde waarde voor dezelfde eigenschap (telefoon, IBAN…)",
       "sourcesHint": "Zelfde bijlage of geciteerde webpagina",
-      "zonesHint": "Punt of kleine zone binnen een grotere zone"
+      "zonesHint": "Punt of kleine zone binnen een grotere zone",
+      "duplicates": "Duplicaten",
+      "duplicatesHint": "Zelfde telefoon, IBAN, kenteken of e-mail, of gelijkende namen"
     },
     "keys": {
       "all": "alle",
@@ -810,6 +836,35 @@
       "search": "Filteren",
       "selectAll": "Alle",
       "selectNone": "Geen"
+    },
+    "merge": {
+      "action": "Samenvoegen",
+      "threshold": "Minimaal niveau",
+      "kind": {
+        "phone": "telefoon",
+        "iban": "IBAN",
+        "plate": "kenteken",
+        "email": "e-mail"
+      },
+      "reason": {
+        "sameIdentifier": "Zelfde {{kind}}: {{value}}",
+        "sameName": "Zelfde naam",
+        "phonetic": "Zelfde uitspraak",
+        "similarName": "Gelijkende namen ({{value}} %)",
+        "sharedTags": "Gedeelde tags: {{count}}",
+        "conflict": "{{kind}}: verschillende waarden",
+        "differentNumbers": "Verschillende nummers"
+      },
+      "level": {
+        "veryLikely": "Zeer waarschijnlijk",
+        "likely": "Waarschijnlijk",
+        "possible": "Mogelijk"
+      },
+      "minLevel": {
+        "possible": "Alle",
+        "likely": "Waarschijnlijk en zeer waarschijnlijk",
+        "veryLikely": "Alleen zeer waarschijnlijk"
+      }
     }
   }
 }

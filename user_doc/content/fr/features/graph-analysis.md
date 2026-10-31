@@ -18,6 +18,30 @@ Cliquez sur **Actualiser** pour recalculer les métriques après des modificatio
 
 ---
 
+## Rôles
+
+La section **Rôles**, en tête du panneau, dit en une phrase qui tient le réseau :
+
+| Phrase | Sens |
+|--------|------|
+| « X est le seul lien entre le groupe de A et le groupe de B » | Sans X, les deux groupes ne sont plus reliés |
+| « Le lien X – Y est le seul passage entre… » | Supprimer ce lien coupe les groupes ; deux liens parallèles entre X et Y ne comptent pas comme un passage unique |
+| « X est le seul accès à N éléments, dont Y » | Ces N éléments ne sont reliés au reste du graphe que par X. Y est le plus relié d'entre eux ; jusqu'à trois éléments, tous sont nommés |
+| « X fait le lien entre… » | X touche au moins trois groupes et figure parmi les plus fortes intermédiarités, sans en être le seul lien |
+
+Un groupe est un cluster de Louvain, nommé d'après son membre le plus relié, avec son nombre d'éléments entre parenthèses. Les phrases sont classées par nombre d'éléments séparés ; dix s'affichent, **Voir plus** donne la suite. Au-delà de dix phrases, un champ de recherche garde celles qui citent un nom : tapez-en un pour voir le rôle que joue cet élément.
+
+- **Clic sur une phrase** : met en évidence l'élément et les groupes concernés.
+- **Clic sur un nom** : sélectionne l'élément et le cadre à l'écran.
+
+### Ajouter au rapport
+
+L'icône au bout d'une phrase l'ajoute au rapport ; **Tout ajouter (N)** ajoute les N phrases, ou seulement celles que garde la recherche, y compris celles que « Voir plus » n'a pas encore affichées. Un ajout au rapport ne s'annule pas avec Ctrl+Z : effacez le texte dans la section. La liste à gauche choisit la section : **Nouvelle section** en crée une, « Rôles structurels », et les ajouts suivants vont dans celle-ci. Le rapport est créé s'il n'existe pas.
+
+Les noms deviennent des références cliquables, et chaque ajout commence par la date de l'analyse. Les groupes dépendent du graphe au moment du calcul : le texte inséré ne change plus, même si le dossier évolue ensuite. Pour un même graphe, l'analyse donne toujours les mêmes groupes.
+
+---
+
 ## Clusters (Communautés)
 
 L'algorithme de Louvain détecte automatiquement les **communautés** : groupes d'éléments plus connectés entre eux qu'avec le reste du graphe.
@@ -108,17 +132,6 @@ Liste des éléments **sans aucune connexion**.
 
 ---
 
-## Doublons potentiels
-
-Paires d'éléments aux noms proches, qui désignent peut-être la même chose. Un clic sur la ligne sélectionne les deux éléments et cadre la vue sur eux (un second clic désélectionne) ; un clic sur un des deux noms sélectionne cet élément et centre la vue dessus, la paire restant en évidence. **Fusionner** réunit les deux.
-
-- **Large** : noms proches, fautes de frappe comprises (« Jean Dupont » / « Jean Dupond »).
-- **Strict** : même nom, à la casse et à l'écriture des numéros près (`06 39 98 33 17` = `0639983317`).
-
-Le choix est mémorisé. Dans les deux modes, deux numéros différents (`0639985018` et `0639985078`) ne sont jamais proposés : ce sont deux lignes, pas une faute de frappe.
-
----
-
 ## Chemins
 
 Trouvez le **plus court chemin** entre deux éléments.
@@ -138,7 +151,21 @@ Trouvez le **plus court chemin** entre deux éléments.
 
 ### Tous les chemins
 
-Activez **Tous les chemins** pour énumérer **toutes les routes** entre les deux éléments, et non plus seulement la plus courte. Réglez la **profondeur maximale** (nombre de liens, 1 à 8) pour borner la recherche et éviter l'explosion combinatoire sur les réseaux denses. Chaque chemin trouvé est listé (trié du plus court au plus long) ; l'ensemble des routes est surligné sur le canvas, et un clic sur un chemin de la liste met en évidence celui-ci uniquement. Accessible aussi via clic droit sur deux éléments → **Tous les chemins**.
+Activez **Tous les chemins** pour lister **plusieurs routes** entre les deux éléments (jusqu'aux 200 plus courtes), et non plus seulement la plus courte. Réglez la **profondeur maximale** (nombre de liens, 1 à 8) pour borner la recherche et éviter l'explosion combinatoire sur les réseaux denses. Chaque chemin trouvé est listé (trié du plus court au plus long) ; l'ensemble des routes est surligné sur le canvas, et un clic sur un chemin de la liste met en évidence celui-ci uniquement. Accessible aussi via clic droit sur deux éléments → **Tous les chemins**.
+
+
+### Contraintes
+
+Le bloc **Contraintes** restreint les liens qu'un chemin peut emprunter :
+
+- **Libellés** et **Tags** : n'emprunter que les liens qui portent l'une des valeurs choisies (**Inclure**), ou jamais ceux-là (**Exclure**) ;
+- **Période** : seulement les liens datés dans la période. **Garder les liens non datés** laisse passer ceux qui n'ont pas de date ;
+- **Confiance minimale** (modèle ZeroNeurone) ou **cotation minimale** (modèles Europol et Admiralty) : un code retient ce code et tous les codes plus forts, par exemple B sur l'axe source retient A et B. **Garder les liens non cotés** laisse passer les liens sans confiance ni cotation ;
+- **Respecter le sens des liens** : un lien orienté ne se parcourt que dans son sens, un lien neutre ou bidirectionnel dans les deux.
+
+Seuls les liens réellement empruntés sont surlignés sur le canvas. Un résultat filtré porte la mention **contraintes appliquées**. Si un chemin existe mais que les contraintes l'excluent, le panneau l'indique, au lieu d'annoncer qu'il n'y a aucun chemin.
+
+Les contraintes sont mémorisées pour chaque dossier, dans ce navigateur. Elles ne s'appliquent qu'aux recherches lancées depuis le panneau : les entrées **Trouver les chemins** et **Tous les chemins** du clic droit cherchent toujours sans contraintes.
 
 ---
 

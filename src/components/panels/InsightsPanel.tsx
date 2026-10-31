@@ -1,11 +1,10 @@
-import { Fragment, useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Network,
   Star,
   GitBranch,
   CircleOff,
-  Copy,
   Loader2,
   ChevronRight,
   ChevronDown,
@@ -17,16 +16,15 @@ import {
   RotateCw,
   X,
   ArrowRight,
-  Merge,
   Search,
   Group,
   Ungroup,
+  Waypoints,
 } from 'lucide-react';
-import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore, useUIStore } from '../../stores';
+import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
-import { MergeElementsModal } from '../modals/MergeElementsModal';
 import type { Element } from '../../types';
 import { DEFAULT_FILTERS } from '../../types';
 import { graphStructureSignature } from '../../services/graph/structureSignature';
@@ -35,10 +33,27 @@ import { useProgressStore } from '../../stores/progressStore';
 import { dateLocale } from '../../utils/dates';
 import { revealElement, revealElements } from '../../utils/revealElement';
 import { groupElements } from '../../utils/groupElements';
+import { getEvaluationModel } from '../../utils/evaluation';
+import { PathConstraintsEditor } from './insights/PathConstraintsEditor';
+import { RolesSection } from './insights/RolesSection';
+import { readPathConstraints, writePathConstraints } from '../../utils/pathConstraintsStorage';
+import type { PathConstraints } from '../../services/graph/constrainedPaths';
+
+/** Says a path result went through the constraints, so a missing path is read as such */
+function ConstrainedMark() {
+  const { t } = useTranslation('panels');
+  return (
+    <span className="ml-1.5 font-normal text-text-secondary" data-testid="path-constrained">
+      · {t('insights.paths.constraints.applied')}
+    </span>
+  );
+}
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
-  const { elements, links, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
+  const { elements, links, dissolveGroup } = useDossierStore();
+  const dossierId = useDossierStore((s) => s.currentDossier?.id ?? null);
+  const evaluationModel = useDossierStore((s) => getEvaluationModel(s.currentDossier));
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore(useShallow((s) => ({ hideElements: s.hideElements, hiddenElementIds: s.hiddenElementIds, showElement: s.showElement, setFilters: s.setFilters, clearFilters: s.clearFilters })));
@@ -47,7 +62,7 @@ export function InsightsPanel() {
     centrality,
     bridges,
     isolated,
-    similarLabels,
+    structuralRoles,
     computedAt,
     isComputing,
     highlightType,
@@ -56,12 +71,13 @@ export function InsightsPanel() {
     pathFromId,
     pathToId,
     pathSearchMode,
+    pathBlockedByConstraints,
+    pathConstrained,
     computeInsights,
     highlightCluster,
     highlightCentralElement,
     highlightBridges,
     highlightIsolated,
-    highlightSimilarPair,
     findPaths,
     findAllPaths,
     highlightPath,
@@ -74,29 +90,26 @@ export function InsightsPanel() {
     clearHighlight,
     clearPaths,
   } = useInsightsStore();
-  // Potential duplicates: close names, or the same name only (case and the
-  // writing of a number aside)
-  const similarMode = useUIStore((s) => s.similarMode);
-  const setSimilarMode = useUIStore((s) => s.setSimilarMode);
-  const shownSimilar = useMemo(
-    () => (similarMode === 'exact' ? similarLabels.filter((p) => p.similarity >= 1) : similarLabels),
-    [similarLabels, similarMode],
-  );
-
   // Local state for expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['clusters', 'centrality'])
+    new Set(['roles', 'clusters', 'centrality'])
   );
 
   // Path finding state
-  const [mergePair, setMergePair] = useState<{ el1: Element; el2: Element } | null>(null);
-  const elementMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
   const [pathMode, setPathMode] = useState(false);
   const [pathFrom, setPathFrom] = useState<string | null>(null);
   const [pathTo, setPathTo] = useState<string | null>(null);
   // All-paths mode: enumerate every simple path (bounded depth) instead of the shortest
   const [allPathsMode, setAllPathsMode] = useState(false);
   const [pathMaxDepth, setPathMaxDepth] = useState(5);
+  // Constraints of the searches run from this panel, kept per dossier. The
+  // context menu searches without them: its result is never silently narrowed.
+  const [pathConstraints, setPathConstraints] = useState<PathConstraints>(() => readPathConstraints(dossierId));
+  const [constraintsDossierId, setConstraintsDossierId] = useState(dossierId);
+  if (constraintsDossierId !== dossierId) {
+    setConstraintsDossierId(dossierId);
+    setPathConstraints(readPathConstraints(dossierId));
+  }
   // Cycle detection
   const [cycleMode, setCycleMode] = useState(false);
   /** Row of the element picked in the cycle list (an element can sit in several cycles) */
@@ -193,9 +206,6 @@ export function InsightsPanel() {
       case 'bridges':
         highlightBridges();
         setExpandedSections((prev) => new Set([...prev, 'bridges']));
-        break;
-      case 'duplicates':
-        setExpandedSections((prev) => new Set([...prev, 'similar']));
         break;
     }
   }, [highlightIsolated, highlightBridges]);
@@ -374,31 +384,6 @@ export function InsightsPanel() {
     toggleHideElements(isolated);
   }, [isolated, toggleHideElements]);
 
-  // Similar labels actions
-  const handleSimilarClick = useCallback(
-    (elementId1: string, elementId2: string) => {
-      // Toggle: if this pair is already selected, deselect
-      if (selectedElementIds.has(elementId1) && selectedElementIds.has(elementId2) && selectedElementIds.size === 2) {
-        clearSelection();
-        clearHighlight();
-        return;
-      }
-      highlightSimilarPair(elementId1, elementId2);
-      selectElements([elementId1, elementId2]);
-      revealElements([elementId1, elementId2]);
-    },
-    [highlightSimilarPair, selectElements, selectedElementIds, clearSelection, clearHighlight]
-  );
-  // A name of the pair: that element alone, zoomed on, the pair still highlighted
-  const handleSimilarElementClick = useCallback(
-    (elementId: string, elementId1: string, elementId2: string) => {
-      highlightSimilarPair(elementId1, elementId2);
-      selectElement(elementId);
-      revealElement(elementId);
-    },
-    [highlightSimilarPair, selectElement]
-  );
-
   // Path finding
   const handleStartPathFinding = useCallback(() => {
     setPathMode(true);
@@ -437,14 +422,33 @@ export function InsightsPanel() {
 
   // Run shortest-path or all-paths search depending on the active mode.
   const runPathSearch = useCallback(
-    (fromId: string, toId: string) => {
-      if (allPathsMode) {
-        findAllPaths(fromId, toId, pathMaxDepth);
+    (fromId: string, toId: string, overrides: { all?: boolean; depth?: number; constraints?: PathConstraints } = {}) => {
+      const options = { constraints: overrides.constraints ?? pathConstraints, model: evaluationModel };
+      if (overrides.all ?? allPathsMode) {
+        findAllPaths(fromId, toId, overrides.depth ?? pathMaxDepth, options);
       } else {
-        findPaths(fromId, toId);
+        findPaths(fromId, toId, options);
       }
     },
-    [allPathsMode, pathMaxDepth, findAllPaths, findPaths]
+    [allPathsMode, pathMaxDepth, findAllPaths, findPaths, pathConstraints, evaluationModel]
+  );
+
+  // Re-run on the user's own changes only (mode, depth, constraints): a search
+  // adopted from the context menu stays as it was run, without the constraints.
+  const rerunPathSearch = useCallback(
+    (overrides: { all?: boolean; depth?: number; constraints?: PathConstraints }) => {
+      if (pathFrom && pathTo) runPathSearch(pathFrom, pathTo, overrides);
+    },
+    [pathFrom, pathTo, runPathSearch]
+  );
+
+  const handlePathConstraintsChange = useCallback(
+    (constraints: PathConstraints) => {
+      setPathConstraints(constraints);
+      writePathConstraints(dossierId, constraints);
+      rerunPathSearch({ constraints });
+    },
+    [dossierId, rerunPathSearch]
   );
 
   const handleSelectPathElement = useCallback(
@@ -458,14 +462,6 @@ export function InsightsPanel() {
     },
     [pathFrom, pathTo, runPathSearch]
   );
-
-  // Re-run the search when the mode or depth changes and both endpoints are set.
-  useEffect(() => {
-    if (pathFrom && pathTo) {
-      runPathSearch(pathFrom, pathTo);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allPathsMode, pathMaxDepth]);
 
   // Reflect a path search triggered from outside the panel (e.g. the canvas
   // context menu): open the path UI with the right mode and endpoints so the
@@ -507,7 +503,7 @@ export function InsightsPanel() {
     centrality.length > 0 ||
     bridges.length > 0 ||
     isolated.length > 0 ||
-    similarLabels.length > 0;
+    structuralRoles.facts.length > 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -616,7 +612,10 @@ export function InsightsPanel() {
                     <input
                       type="checkbox"
                       checked={allPathsMode}
-                      onChange={(e) => setAllPathsMode(e.target.checked)}
+                      onChange={(e) => {
+                        setAllPathsMode(e.target.checked);
+                        rerunPathSearch({ all: e.target.checked });
+                      }}
                       className="accent-accent"
                     />
                     {t('insights.paths.allPaths')}
@@ -629,20 +628,30 @@ export function InsightsPanel() {
                         min={1}
                         max={8}
                         value={pathMaxDepth}
-                        onChange={(e) =>
-                          setPathMaxDepth(Math.max(1, Math.min(8, Number(e.target.value) || 1)))
-                        }
+                        onChange={(e) => {
+                          const depth = Math.max(1, Math.min(8, Number(e.target.value) || 1));
+                          setPathMaxDepth(depth);
+                          rerunPathSearch({ depth });
+                        }}
                         className="w-12 px-1 py-0.5 rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
                       />
                     </label>
                   )}
                 </div>
 
+                <PathConstraintsEditor
+                  constraints={pathConstraints}
+                  onChange={handlePathConstraintsChange}
+                  links={analyzed.links}
+                  model={evaluationModel}
+                />
+
                 {/* Path results — all-paths mode: list every route (click to highlight) */}
                 {pathResults.length > 0 && allPathsMode && (
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded space-y-1">
                     <div className="text-xs text-accent font-medium mb-1">
                       {t('insights.paths.pathsFound', { count: pathResults.length })}
+                      {pathConstrained && <ConstrainedMark />}
                     </div>
                     <div className="max-h-40 overflow-y-auto space-y-1">
                       {pathResults.map((result, pathIdx) => (
@@ -676,6 +685,7 @@ export function InsightsPanel() {
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded">
                     <div className="text-xs text-accent font-medium mb-1">
                       {t('insights.paths.pathFound', { count: pathResults[0].length })}
+                      {pathConstrained && <ConstrainedMark />}
                     </div>
                     <div className="flex flex-wrap items-center gap-1 text-xs text-text-secondary">
                       {pathResults[0].path.map((nodeId, idx) => (
@@ -698,7 +708,8 @@ export function InsightsPanel() {
                 {pathFrom && pathTo && pathResults.length === 0 && (
                   <div className="mt-2 p-2 bg-warning/10 border border-warning/30 rounded">
                     <div className="text-xs text-warning">
-                      {t('insights.paths.noPath')}
+                      {t(pathBlockedByConstraints ? 'insights.paths.blockedByConstraints' : 'insights.paths.noPath')}
+                      {pathConstrained && !pathBlockedByConstraints && <ConstrainedMark />}
                     </div>
                   </div>
                 )}
@@ -814,6 +825,28 @@ export function InsightsPanel() {
         {/* Insights sections */}
         {hasInsights && !isComputing && (
           <div className="divide-y divide-border-default">
+            {/* Structural roles, in sentences */}
+            {structuralRoles.facts.length > 0 && (
+              <InsightSection
+                id="roles"
+                title={t('insights.roles.title')}
+                icon={<Waypoints size={12} />}
+                count={structuralRoles.facts.length}
+                isExpanded={expandedSections.has('roles')}
+                onToggle={() => toggleSection('roles')}
+              >
+                {/* A new analysis starts with no sentence picked */}
+                <RolesSection
+                  key={computedAt?.getTime() ?? 0}
+                  roles={structuralRoles}
+                  clusters={clusters}
+                  elements={elements}
+                  computedAt={computedAt}
+                  dossierId={dossierId}
+                />
+              </InsightSection>
+            )}
+
             {/* Clusters */}
             {clusters.length > 0 && (
               <InsightSection
@@ -1067,89 +1100,6 @@ export function InsightsPanel() {
               </InsightSection>
             )}
 
-            {/* Similar labels */}
-            {similarLabels.length > 0 && (
-              <InsightSection
-                id="similar"
-                title={t('insights.similar.title')}
-                icon={<Copy size={12} />}
-                count={shownSimilar.length}
-                isExpanded={expandedSections.has('similar')}
-                onToggle={() => toggleSection('similar')}
-                description={t('insights.similar.description')}
-              >
-                <div className="flex items-center mb-2 w-fit rounded border border-border-default overflow-hidden" data-testid="similar-mode">
-                  {(['fuzzy', 'exact'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setSimilarMode(mode)}
-                      aria-pressed={similarMode === mode}
-                      title={t(`insights.similar.mode.${mode}Desc`)}
-                      className={`px-2 py-0.5 text-[10px] ${
-                        similarMode === mode
-                          ? 'bg-bg-tertiary text-text-primary font-medium'
-                          : 'text-text-tertiary hover:text-text-primary'
-                      }`}
-                    >
-                      {t(`insights.similar.mode.${mode}`)}
-                    </button>
-                  ))}
-                </div>
-                {shownSimilar.length === 0 && (
-                  <p className="text-[10px] text-text-tertiary">{t('insights.similar.noSimilar')}</p>
-                )}
-                <ProgressiveList
-                  items={shownSimilar}
-                  initialCount={10}
-                  increment={10}
-                  className="space-y-1"
-                  renderItem={(pair, index) => (
-                    <div
-                      key={index}
-                      className="p-2 rounded hover:bg-bg-secondary transition-colors"
-                    >
-                      <div
-                        className="flex items-center gap-1 text-xs text-text-primary cursor-pointer"
-                        onClick={() => handleSimilarClick(pair.elementId1, pair.elementId2)}
-                      >
-                        {[pair.elementId1, pair.elementId2].map((id, i) => (
-                          <Fragment key={id}>
-                            {i === 1 && <span className="text-text-tertiary">≈</span>}
-                            <span
-                              className="truncate max-w-[100px] hover:underline"
-                              title={getElementLabel(id)}
-                              onClick={(e) => { e.stopPropagation(); handleSimilarElementClick(id, pair.elementId1, pair.elementId2); }}
-                              data-testid="similar-element"
-                            >
-                              {getElementLabel(id)}
-                            </span>
-                          </Fragment>
-                        ))}
-                        <span className="ml-auto text-[10px] text-text-tertiary tabular-nums">
-                          {Math.round(pair.similarity * 100)}%
-                        </span>
-                      </div>
-                      <div className="flex gap-1 mt-1">
-                        <ActionButton
-                          icon={<MousePointer2 size={10} />}
-                          label={t('insights.similar.select')}
-                          onClick={() => handleSimilarClick(pair.elementId1, pair.elementId2)}
-                        />
-                        <ActionButton
-                          icon={<Merge size={10} />}
-                          label={t('insights.similar.merge')}
-                          onClick={() => {
-                            const el1 = elementMap.get(pair.elementId1);
-                            const el2 = elementMap.get(pair.elementId2);
-                            if (el1 && el2) setMergePair({ el1, el2 });
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                />
-              </InsightSection>
-            )}
           </div>
         )}
 
@@ -1178,23 +1128,6 @@ export function InsightsPanel() {
         )}
       </div>
 
-      {/* Merge modal for similar pairs */}
-      {mergePair && (
-        <MergeElementsModal
-          isOpen={true}
-          onClose={() => setMergePair(null)}
-          elements={[mergePair.el1, mergePair.el2]}
-          onMerge={async (targetId, [sourceId]) => {
-            const snapshot = await mergeElementsAction(targetId, sourceId);
-            pushAction({
-              type: 'merge-elements',
-              undo: { snapshot },
-              redo: { snapshot },
-            });
-            clearSelection();
-          }}
-        />
-      )}
     </div>
   );
 }

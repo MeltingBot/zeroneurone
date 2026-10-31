@@ -523,6 +523,25 @@
       "isolated": "Isoliert",
       "similar": "Ähnlich"
     },
+    "roles": {
+      "title": "Rollen",
+      "soleConnector": "{{x}} ist die einzige Verbindung zwischen {{groups}}",
+      "bridgeLink": "Die Verbindung {{x}} – {{y}} ist der einzige Weg zwischen {{groups}}",
+      "cutOff": "{{x}} ist der einzige Zugang zu {{count}} Elementen, darunter {{y}}",
+      "cutOffNamed": "{{x}} ist der einzige Zugang zu {{names}}",
+      "broker": "{{x}} verbindet {{groups}}",
+      "group": "der Gruppe um {{lead}} ({{size}})",
+      "target": "Berichtsabschnitt",
+      "newSection": "Neuer Abschnitt",
+      "addAll": "Alle hinzufügen ({{count}})",
+      "addToReport": "Zum Bericht hinzufügen",
+      "sectionTitle": "Strukturelle Rollen",
+      "analyzedOn": "Analyse vom {{date}}",
+      "added": "Zum Bericht hinzugefügt: {{section}}",
+      "addFailed": "Hinzufügen zum Bericht fehlgeschlagen",
+      "search": "Namen suchen",
+      "clearSearch": "Löschen"
+    },
     "clusters": {
       "title": "Cluster",
       "description": "Gruppen stark verbundener Elemente",
@@ -567,20 +586,6 @@
       "hideAll": "Alle ausblenden",
       "showAll": "Alle einblenden"
     },
-    "similar": {
-      "title": "Potenzielle Duplikate",
-      "mode": {
-        "fuzzy": "Weit",
-        "exact": "Streng",
-        "fuzzyDesc": "Ähnliche Namen, Tippfehler eingeschlossen",
-        "exactDesc": "Gleicher Name, bis auf Groß-/Kleinschreibung und Schreibweise von Nummern"
-      },
-      "description": "Elemente mit ähnlichen Namen",
-      "count": "{{count}} ähnliche(s) Paar(e)",
-      "noSimilar": "Keine ähnlichen Bezeichnungen",
-      "select": "Auswählen",
-      "merge": "Zusammenführen"
-    },
     "paths": {
       "title": "Pfadsuche",
       "button": "Pfad zwischen zwei Elementen finden",
@@ -593,7 +598,26 @@
       "maxDepth": "Max. Tiefe",
       "highlightThisPath": "Diesen Pfad hervorheben",
       "noPath": "Kein Pfad zwischen diesen Elementen gefunden",
-      "pathLength": "{{count}} Schritt(e)"
+      "pathLength": "{{count}} Schritt(e)",
+      "blockedByConstraints": "Pfad durch die Einschränkungen ausgeschlossen",
+      "constraints": {
+        "title": "Einschränkungen",
+        "reset": "Einschränkungen entfernen",
+        "include": "Einschließen",
+        "exclude": "Ausschließen",
+        "labels": "Beschriftungen",
+        "tags": "Tags",
+        "period": "Zeitraum",
+        "periodStart": "Beginn",
+        "periodEnd": "Ende",
+        "keepUndated": "Undatierte Verbindungen behalten",
+        "minConfidence": "Mindestvertrauen",
+        "evaluationAtLeast": "Dieser Code oder besser",
+        "keepUngraded": "Unbewertete Verbindungen behalten",
+        "keepNoConfidence": "Verbindungen ohne Vertrauen behalten",
+        "respectDirection": "Richtung der Verbindungen beachten",
+        "applied": "Einschränkungen angewendet"
+      }
     },
     "cycles": {
       "button": "Zyklen erkennen",
@@ -802,7 +826,9 @@
       "zones": "Zonen",
       "valuesHint": "Gleicher Wert derselben Eigenschaft (Telefon, IBAN…)",
       "sourcesHint": "Gleiche angehängte Datei oder zitierte Webseite",
-      "zonesHint": "Punkt oder kleine Zone innerhalb einer größeren Zone"
+      "zonesHint": "Punkt oder kleine Zone innerhalb einer größeren Zone",
+      "duplicates": "Duplikate",
+      "duplicatesHint": "Gleiche Telefonnummer, IBAN, Kennzeichen oder E-Mail, oder ähnliche Namen"
     },
     "keys": {
       "all": "alle",
@@ -810,6 +836,35 @@
       "search": "Filtern",
       "selectAll": "Alle",
       "selectNone": "Keine"
+    },
+    "merge": {
+      "action": "Zusammenführen",
+      "threshold": "Mindeststufe",
+      "kind": {
+        "phone": "Telefon",
+        "iban": "IBAN",
+        "plate": "Kennzeichen",
+        "email": "E-Mail"
+      },
+      "reason": {
+        "sameIdentifier": "Gleiche(s) {{kind}}: {{value}}",
+        "sameName": "Gleicher Name",
+        "phonetic": "Gleiche Aussprache",
+        "similarName": "Ähnliche Namen ({{value}} %)",
+        "sharedTags": "Gemeinsame Tags: {{count}}",
+        "conflict": "{{kind}}: unterschiedliche Werte",
+        "differentNumbers": "Verschiedene Zahlen"
+      },
+      "level": {
+        "veryLikely": "Sehr wahrscheinlich",
+        "likely": "Wahrscheinlich",
+        "possible": "Möglich"
+      },
+      "minLevel": {
+        "possible": "Alle",
+        "likely": "Wahrscheinlich und sehr wahrscheinlich",
+        "veryLikely": "Nur sehr wahrscheinlich"
+      }
     }
   }
 }

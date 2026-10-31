@@ -153,6 +153,7 @@
       "hide": "Verbergen",
       "hideSelection": "Selectie verbergen",
       "showOnly": "Alleen tonen",
+      "showHidden": "Verborgen tonen ({{count}})",
       "showOnlySelection": "Alleen selectie tonen",
       "showOnlyElement": "Alleen dit element tonen",
       "hideElement": "Element verbergen",

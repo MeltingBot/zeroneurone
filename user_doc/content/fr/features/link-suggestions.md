@@ -40,6 +40,7 @@ Chaque règle se coche ou se décoche dans le panneau. Par exemple, pour ne cher
 | **Propriétés** | Même valeur pour la même propriété (téléphone, IBAN, email, plaque…) | Propriétés comparées |
 | **Sources** | Même pièce jointe, ou même page web citée en source | — |
 | **Zones** | Un point ou une petite zone à l'intérieur d'une zone plus grande (un site dans sa commune) | — |
+| **Doublons** | Deux éléments qui sont peut-être le même : à **fusionner**, pas à relier | Niveau minimal |
 | **Lieux à moins de** | Deux éléments placés à moins d'une distance, sans tenir compte des dates | Rayon |
 | **Rencontres à moins de** | Deux éléments au même endroit **au même moment** | Rayon, fenêtre de temps, durée des séjours |
 
@@ -67,6 +68,39 @@ Le bouton à côté de **Propriétés** (« toutes », ou « 3/12 ») déplie la
 | 2 éléments | Un **lien** entre eux |
 | 3 éléments ou plus | Un **pivot** : créer un élément pour la valeur (le téléphone, l'IBAN, le document) et le relier à tous |
 | — | Si un élément porte déjà cette valeur comme nom, la proposition est de **relier à cet élément** plutôt que d'en créer un second |
+
+### Doublons
+
+La règle **Doublons** propose de fusionner deux éléments qui désignent sans doute la même chose. Chaque proposition affiche un **niveau** et ses raisons. Le niveau dépend de ce qui a été trouvé :
+
+| Niveau | Preuves |
+|--------|---------|
+| **Très probable** | Même identifiant **et** nom proche (ou deux noms qui sont le même numéro écrit autrement) |
+| **Probable** | Même identifiant seul, ou même nom |
+| **Possible** | Noms proches, ou même prononciation, seulement |
+
+Les raisons possibles :
+
+| Raison | Ce qui est comparé |
+|--------|--------------------|
+| **Même téléphone, IBAN, plaque ou e-mail** | Dans le nom ou les propriétés, quelle que soit l'écriture. Téléphones au format international (`06 12 34 56 78` = `+33 6 12 34 56 78`, numéros étrangers compris ; un numéro sans indicatif est lu comme français) ; IBAN dont la clé de contrôle est valide ; plaques `AB-123-CD`, et `1234 AB 56` sous une propriété « plaque » ou « immatriculation » |
+| **Même nom** | À la casse, aux accents, à la ponctuation et à l'ordre des mots près (« DUPONT Jean » = « Jean Dupont ») |
+| **Même prononciation** | Clé phonétique française dérivée de Phonex (« Dupont » / « Dupond », « Martin » / « Martain ») |
+| **Noms proches** | Distance de Jaro-Winkler, pour les fautes de frappe |
+| **Tags communs** | Léger bonus |
+
+Deux raisons font descendre d'un niveau, affichées en couleur d'avertissement :
+
+- **Téléphones (ou IBAN…) différents** : les deux éléments ont ce type d'identifiant mais aucune valeur commune. Deux homonymes, ou une même personne avec deux lignes : la paire reste proposée, un niveau plus bas.
+- **Nombres différents** dans les noms (« Lot 3 » / « Lot 4 ») : deux choses, pas une faute de frappe.
+
+Un élément dont le nom est un numéro (« 06 12 34 56 78 »), un IBAN, une plaque ou un e-mail n'est comparé qu'aux éléments du même genre. Une fiche qui porte ce numéro en propriété n'est pas son double : la règle **Propriétés** propose de les relier.
+
+Les doublons sont cherchés dans **tout le dossier** : une paire est proposée dès qu'un des deux éléments est affiché, même si l'autre est dans un autre onglet, filtré ou masqué (deux imports rangés chacun dans son onglet, par exemple).
+
+La liste à côté de la case choisit ce qui est montré : **Toutes** (par défaut), **Probables et très probables**, **Très probables seulement**. Les doublons passent en tête de liste, des plus probables aux moins probables. Deux éléments déjà reliés restent proposés : un lien ne prouve pas qu'il s'agit de deux personnes.
+
+La bibliothèque des numéros de téléphone n'est chargée qu'au premier usage de la règle.
 
 ### Lieux et rencontres
 
@@ -109,9 +143,9 @@ Exemples : des infractions à proximité de sites importés en GeoJSON ; des inf
 - **Clic sur « Créer et relier N éléments »** (ou « Relier N éléments ») d'un pivot : déplie la liste de ses éléments, dont chaque nom se clique comme ci-dessous
 - **Clic sur le nom** d'un élément : il est sélectionné seul et centré dans la vue courante (canvas, carte ou timeline), et un résumé s'affiche sous la ligne (tags, 6 premières propriétés, lien **Ouvrir la fiche** vers l'onglet Détail). Un second clic sur le nom le masque. Chaque élément est sur sa propre ligne ; un nom long passe à la ligne (2 lignes au plus)
 - **Pertinence / Distance / Date**, à côté du compteur (affiché quand des suggestions ont une distance ou une date) : en tri par distance, les lieux, rencontres et zones passent en tête, du plus proche au plus loin (un point dans une zone compte pour 0 m) ; en tri par date, les rencontres passent en tête, de la plus récente à la plus ancienne (date de la première rencontre) ; les autres suivent dans leur ordre. Le bouton à côté inverse l'ordre, quel que soit le tri ; les suggestions sans distance ou sans date restent en fin de liste
-- **✓** accepte, **✕** écarte
+- **✓** accepte, **✕** écarte. Pour un doublon, l'icône de fusion ouvre la fenêtre de fusion : choisissez l'élément conservé ; tags, propriétés, pièces jointes et liens de l'autre lui sont reportés. Ctrl+Z annule la fusion
 - **Cocher une ligne** cadre le canvas sur ses éléments et garde le lien proposé en pointillés, même en passant sur un autre onglet du panneau, jusqu'à ce qu'elle soit décochée, acceptée ou écartée. Ce lien n'est pas créé dans le dossier
-- **Cocher plusieurs lignes** (ou la case de tête pour tout cocher) affiche **Accepter (N)** et **Écarter (N)**
+- **Cocher plusieurs lignes** (ou la case de tête pour tout cocher) affiche **Accepter (N)** et **Écarter (N)**. Les doublons se fusionnent un par un : **Accepter (N)** ne les compte pas
 - Le champ **Rechercher** filtre la liste par nom d'élément ou par texte des raisons
 
 Accepter et écarter s'annulent avec **Ctrl+Z**, y compris une acceptation groupée (un seul Ctrl+Z).

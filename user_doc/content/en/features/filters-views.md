@@ -80,8 +80,7 @@ Right-click on an element → **Hide** to temporarily remove it from the canvas 
 
 Right-click → **Show only selection** (or **Show only** on the canvas background) hides everything else. The groups holding the selection stay visible, as do the members of a selected group.
 
-
-Find hidden elements in **Filters** → **Hidden elements**.
+Hidden elements are listed at the top of the **Filters** panel, under the counter: the eye of a row shows one again, **Show all** shows them all. Right-clicking the canvas background also offers **Show hidden (N)**.
 
 ---
 

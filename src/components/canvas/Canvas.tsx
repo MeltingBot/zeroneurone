@@ -108,6 +108,7 @@ const OVERVIEW_EXIT_ZOOM = 0.4;
 const EMPTY_EDGES: Edge[] = [];
 /** No cycle highlighted: a stable empty map, so the edges are not rebuilt. */
 const EMPTY_LINK_FLOW: ReadonlyMap<string, 'forward' | 'backward' | 'both'> = new Map();
+const EMPTY_LINK_SET: ReadonlySet<string> = new Set();
 
 const nodeTypes = {
   element: ElementNode,
@@ -433,10 +434,25 @@ export function Canvas() {
     findAllPaths,
     clearHighlight,
   } = useInsightsStore();
-  // Links of the highlighted cycles, with the way each is walked
-  const cycleLinkFlow = useInsightsStore((s) => (s.highlightType === 'cycle' ? s.cycleLinkFlow : EMPTY_LINK_FLOW));
+  // Links of the highlighted cycles, or of a path that followed link direction,
+  // with the way each is walked (their dashes move)
+  const cycleLinkFlow = useInsightsStore((s) => (
+    s.highlightType === 'cycle' ? s.cycleLinkFlow
+      : s.highlightType === 'path' && s.pathDirected ? s.pathLinkFlow
+        : EMPTY_LINK_FLOW
+  ));
+  // Links of an undirected path: they glow, with no sense to show
+  const undirectedPathFlow = useInsightsStore((s) => (
+    s.highlightType === 'path' && !s.pathDirected ? s.pathLinkFlow : EMPTY_LINK_FLOW
+  ));
+  // ...and the bridge link a role sentence is about
+  const roleLinkIds = useInsightsStore((s) => (s.highlightType === 'role' ? s.roleLinkIds : EMPTY_LINK_SET));
+  const pathGlowLinks = useMemo(
+    () => (roleLinkIds.size > 0 ? roleLinkIds : new Set(undirectedPathFlow.keys())),
+    [undirectedPathFlow, roleLinkIds],
+  );
   // Element picked in the cycle list: a stronger glow
-  const focusedElementId = useInsightsStore((s) => (s.highlightType === 'cycle' ? s.focusedElementId : null));
+  const focusedElementId = useInsightsStore((s) => (s.highlightType === 'cycle' || s.highlightType === 'role' ? s.focusedElementId : null));
 
   // Query store for ZNQuery canvas filter
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
@@ -1565,7 +1581,8 @@ export function Canvas() {
     temporal: temporalClassification,
     showUndated: canvasTemporal.showUndated,
     flowLinks: cycleLinkFlow,
-  }), [selectedLinkIds, dimmedElementIds, emphasizedElementIds, queryFilterActive, queryMatchLinkIds, temporalClassification, canvasTemporal.showUndated, cycleLinkFlow]);
+    glowLinks: pathGlowLinks,
+  }), [selectedLinkIds, dimmedElementIds, emphasizedElementIds, queryFilterActive, queryMatchLinkIds, temporalClassification, canvasTemporal.showUndated, cycleLinkFlow, pathGlowLinks]);
 
   const allEdges = useMemo(() => {
     // The overview layer draws every link itself. Returning before the cache
@@ -1609,7 +1626,7 @@ export function Canvas() {
     // click only swaps the few links it has to instead of reordering them all.
     let cappedLinks = visibleLinks;
     if (visibleLinks.length > MAX_RENDERED_EDGES) {
-      const isPriority = (link: Link) => selectedLinkIds.has(link.id) || cycleLinkFlow.has(link.id)
+      const isPriority = (link: Link) => selectedLinkIds.has(link.id) || cycleLinkFlow.has(link.id) || pathGlowLinks.has(link.id)
         || selectedElementIds.has(link.fromId) || selectedElementIds.has(link.toId);
       let priorityCount = 0;
       for (const link of visibleLinks) if (isPriority(link)) priorityCount++;
@@ -2834,6 +2851,8 @@ export function Canvas() {
     const selectedEls = getSelectedElementIds();
     showOnly(selectedEls.length > 1 && selectedEls.includes(contextMenu.elementId) ? selectedEls : [contextMenu.elementId]);
   }, [contextMenu, getSelectedElementIds, showOnly]);
+
+  const showAllHidden = useCallback(() => useViewStore.getState().showAllElements(), []);
 
   const handleSelectionHide = useCallback(() => {
     const selectedEls = getSelectedElementIds();
@@ -4914,6 +4933,8 @@ export function Canvas() {
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
               onSelectLinks={allEdges.length > 0 || (overviewScene?.linkCount ?? 0) > 0 ? handleSelectLinks : undefined}
+              hiddenCount={hiddenElementIds.size}
+              onShowHidden={showAllHidden}
               onSuggestLinks={handleSuggestLinks}
               tabs={canvasTabs}
               onAddSelectionToTab={(tabId) => addIdsToTab(tabId, Array.from(selectedElementIds))}

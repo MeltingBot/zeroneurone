@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Element, Link } from '../types';
 import { analyzeLinkSuggestions, dismissalIds, evidenceOf, DEFAULT_MAX_PRESENCE_MS, type Suggestion, type SuggestionReason } from '../services/linkSuggestions';
+import { DEFAULT_MERGE_RANK, MERGE_LEVELS } from '../services/dedup/candidates';
+import { getPhoneParser } from '../services/dedup/phoneLib';
 import { useDossierStore } from './dossierStore';
 import { useHistoryStore } from './historyStore';
 import { useViewStore } from './viewStore';
@@ -37,6 +39,10 @@ const SOURCES_KEY = 'zn:suggestions:sources';
 const ZONES_KEY = 'zn:suggestions:zones';
 const PLACES_KEY = 'zn:suggestions:places';
 const MEETINGS_KEY = 'zn:suggestions:meetings';
+const DUPLICATES_KEY = 'zn:suggestions:duplicates';
+const DUPLICATE_THRESHOLD_KEY = 'zn:suggestions:duplicateLevel';
+/** Lowest level of a possible duplicate the analyst can pick, as its rank */
+const DUPLICATE_RANKS = MERGE_LEVELS.map((l) => l.rank);
 /** Property keys left out, per dossier (keys differ from one dossier to the next) */
 const EXCLUDED_KEYS_PREFIX = 'zn:suggestions:excludedKeys:';
 
@@ -126,6 +132,9 @@ interface SuggestionsState {
   valuesEnabled: boolean;
   sourcesEnabled: boolean;
   zonesEnabled: boolean;
+  /** Possible duplicates rule on, and the lowest level it keeps (its rank) */
+  duplicatesEnabled: boolean;
+  duplicateThreshold: number;
   /** Places rule (points close to each other) on */
   placesEnabled: boolean;
   /** Meeting rule (same place, same time) on, and its time window in ms */
@@ -155,7 +164,10 @@ interface SuggestionsState {
   setNearbyRadius: (radius: number) => void;
   setMeetingRadius: (radius: number) => void;
   setMaxStay: (ms: number) => void;
-  setRuleEnabled: (rule: 'values' | 'sources' | 'zones', on: boolean) => void;
+  setRuleEnabled: (rule: 'values' | 'sources' | 'zones' | 'duplicates', on: boolean) => void;
+  setDuplicateThreshold: (rank: number) => void;
+  /** Merge a possible duplicate (one undo step); the suggestion leaves the list */
+  merge: (suggestionId: string, targetId: string, sourceId: string) => Promise<void>;
   setPlacesEnabled: (on: boolean) => void;
   setMeetingsEnabled: (on: boolean) => void;
   setMeetingWindow: (window: number) => void;
@@ -219,6 +231,8 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   sourcesEnabled: readFlag(SOURCES_KEY),
   zonesEnabled: readFlag(ZONES_KEY),
   placesEnabled: readFlag(PLACES_KEY),
+  duplicatesEnabled: readFlag(DUPLICATES_KEY),
+  duplicateThreshold: readChoice(DUPLICATE_THRESHOLD_KEY, DUPLICATE_RANKS, DEFAULT_MERGE_RANK),
   meetingsEnabled: readFlag(MEETINGS_KEY),
   shownCount: null,
   meetingsTruncated: false,
@@ -252,6 +266,8 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
         }
         : null,
       candidateIds: shown,
+      // French numbers only until the phone library is loaded (the panel loads it)
+      duplicates: get().duplicatesEnabled ? { minRank: get().duplicateThreshold, parsePhone: getPhoneParser() } : null,
       between: get().between,
       excludedKeys: new Set(get().excludedKeys),
     });
@@ -293,9 +309,24 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   },
 
   setRuleEnabled: (rule, on) => {
-    const key = { values: VALUES_KEY, sources: SOURCES_KEY, zones: ZONES_KEY }[rule];
+    const key = { values: VALUES_KEY, sources: SOURCES_KEY, zones: ZONES_KEY, duplicates: DUPLICATES_KEY }[rule];
     set({ [`${rule}Enabled`]: on } as Partial<SuggestionsState>);
     saveChoice(key, on ? 1 : 0);
+  },
+
+  setDuplicateThreshold: (rank) => {
+    set({ duplicateThreshold: rank });
+    saveChoice(DUPLICATE_THRESHOLD_KEY, rank);
+  },
+
+  merge: async (suggestionId, targetId, sourceId) => {
+    const snapshot = await useDossierStore.getState().mergeElements(targetId, sourceId);
+    useHistoryStore.getState().pushAction({
+      type: 'merge-elements',
+      undo: { snapshot },
+      redo: { snapshot },
+    });
+    set(state => ({ suggestions: state.suggestions?.filter(s => s.id !== suggestionId) ?? null }));
   },
 
   setPlacesEnabled: (on) => {
@@ -333,7 +364,8 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   },
 
   accept: async (ids, labelFor, describe) => {
-    const chosen = (get().suggestions ?? []).filter(s => ids.includes(s.id));
+    // A merge is accepted one at a time, through the merge dialog (see merge)
+    const chosen = (get().suggestions ?? []).filter(s => ids.includes(s.id) && s.kind !== 'merge');
     if (chosen.length === 0) return;
     const store = useDossierStore.getState();
     const elementById = new Map(store.elements.map(el => [el.id, el]));
@@ -342,6 +374,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     const specs: { fromId: string; toId: string; options?: Partial<Link> }[] = [];
 
     for (const s of chosen) {
+      if (s.kind === 'merge') continue;
       if (s.kind === 'link') {
         specs.push({
           fromId: s.fromId,
@@ -381,7 +414,8 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
       },
     });
 
-    set(state => ({ suggestions: state.suggestions?.filter(s => !ids.includes(s.id)) ?? null }));
+    const accepted = new Set(chosen.map(s => s.id));
+    set(state => ({ suggestions: state.suggestions?.filter(s => !accepted.has(s.id)) ?? null }));
   },
 
   dismiss: async (ids) => {

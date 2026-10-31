@@ -98,7 +98,6 @@ it('graph compute paths', async () => {
     row.clusters = ms(() => insightsService.getClusters());
     row.centrality = ms(() => insightsService.getCentrality());
     row.bridges = ms(() => insightsService.getBridges());
-    row.similarLabels = ms(() => insightsService.detectSimilarLabels());
     row.searchIndex = ms(() => searchService.loadDossier('bench', elements, links, []));
     row.searchReindex = ms(() => searchService.syncIncremental(elements, links, []));
     row.filters = ms(() =>

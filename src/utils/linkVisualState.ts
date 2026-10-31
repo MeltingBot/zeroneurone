@@ -21,6 +21,8 @@ export interface LinkVisualContext {
   showUndated: boolean;
   /** Links of the highlighted cycles and the way they are walked: they alone glow, and their dashes move. */
   flowLinks?: ReadonlyMap<string, 'forward' | 'backward' | 'both'>;
+  /** Links walked by an undirected path search: they alone glow, without moving dashes. */
+  glowLinks?: ReadonlySet<string>;
 }
 
 /**
@@ -51,9 +53,11 @@ export function linkVisualState(link: Link, ctx: LinkVisualContext): LinkVisualS
   const flow: LinkFlow = isDimmed || walked === undefined ? null : walked;
   const isHighlighted = ctx.temporal
     ? ctx.temporal.activeLinkIds.has(link.id) && !isDimmed
-    // A cycle search glows its own links, not the chords between its elements
+    // A cycle or path search glows its own links, not the chords between its elements
     : ctx.flowLinks && ctx.flowLinks.size > 0
       ? flow !== null
-      : ctx.emphasizedElementCount > 0 && !isDimmed;
+      : ctx.glowLinks && ctx.glowLinks.size > 0
+        ? ctx.glowLinks.has(link.id) && !isDimmed
+        : ctx.emphasizedElementCount > 0 && !isDimmed;
   return { isSelected, isDimmed, isHighlighted, flow };
 }

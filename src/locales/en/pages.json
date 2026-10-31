@@ -153,6 +153,7 @@
       "hide": "Hide",
       "hideSelection": "Hide selection",
       "showOnly": "Show only",
+      "showHidden": "Show hidden ({{count}})",
       "showOnlySelection": "Show only selection",
       "showOnlyElement": "Show only this element",
       "hideElement": "Hide element",

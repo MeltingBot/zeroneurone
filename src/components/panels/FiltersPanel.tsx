@@ -16,6 +16,8 @@ import {
   SquareDashed,
   Plus,
   Check,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore, useTabStore, useSelectionStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
@@ -290,6 +292,8 @@ export function FiltersPanel() {
 
   // Quick filters: the set of each chip, and what a click does with it
   const [quickMode, setQuickModeState] = useState<QuickMode>(readQuickMode);
+  // Hidden elements: under the header, the list folds away on demand
+  const [hiddenOpen, setHiddenOpen] = useState(true);
   const setQuickMode = (mode: QuickMode) => {
     setQuickModeState(mode);
     try { localStorage.setItem(QUICK_MODE_KEY, mode); } catch { /* per-viewer convenience */ }
@@ -372,14 +376,16 @@ export function FiltersPanel() {
             </span>
             {/* Hidden count on the same line: hiding never shifts the panel down */}
             {hiddenElementIds.size > 0 && (
-              <span
-                className="flex items-center gap-0.5 text-xs text-text-tertiary"
+              <button
+                onClick={() => setHiddenOpen((o) => !o)}
+                aria-expanded={hiddenOpen}
+                className="flex items-center gap-0.5 text-xs text-text-tertiary hover:text-text-primary"
                 title={t('filters.hiddenCount', { count: hiddenElementIds.size })}
                 data-testid="filters-hidden-count"
               >
                 <EyeOff size={12} />
                 {hiddenElementIds.size}
-              </span>
+              </button>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -427,6 +433,18 @@ export function FiltersPanel() {
           </div>
         )}
       </div>
+
+      {/* Hidden elements: on top, where hiding them is undone */}
+      {hiddenElementIds.size > 0 && (
+        <HiddenElementsSection
+          hiddenElementIds={hiddenElementIds}
+          elements={elements}
+          showElement={showElement}
+          showAllElements={showAllElements}
+          open={hiddenOpen}
+          onToggle={() => setHiddenOpen((o) => !o)}
+        />
+      )}
 
       {/* Active filters summary: on top, out of the scrolled list, always in sight */}
       {(isActive || queryActive) && (
@@ -797,15 +815,6 @@ export function FiltersPanel() {
 
       </div>
 
-      {/* Hidden elements section */}
-      {hiddenElementIds.size > 0 && (
-        <HiddenElementsSection
-          hiddenElementIds={hiddenElementIds}
-          elements={elements}
-          showElement={showElement}
-          showAllElements={showAllElements}
-        />
-      )}
     </div>
   );
 }
@@ -816,6 +825,8 @@ interface HiddenElementsSectionProps {
   elements: Element[];
   showElement: (id: string) => void;
   showAllElements: () => void;
+  open: boolean;
+  onToggle: () => void;
 }
 
 function HiddenElementsSection({
@@ -823,18 +834,23 @@ function HiddenElementsSection({
   elements,
   showElement,
   showAllElements,
+  open,
+  onToggle,
 }: HiddenElementsSectionProps) {
   const { t } = useTranslation('panels');
 
   return (
-    <div className="border-t border-border-default p-3 max-h-48 overflow-y-auto">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
+    <div className="border-b border-border-default px-3 py-2" data-testid="filters-hidden">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onToggle}
+          aria-expanded={open}
+          className="flex items-center gap-2 text-xs font-medium text-text-primary hover:text-text-secondary"
+        >
+          {open ? <ChevronDown size={12} className="text-text-tertiary" /> : <ChevronRight size={12} className="text-text-tertiary" />}
           <EyeOff size={12} className="text-text-secondary" />
-          <span className="text-xs font-medium text-text-primary">
-            {t('filters.hiddenElements.title')} ({hiddenElementIds.size})
-          </span>
-        </div>
+          {t('filters.hiddenElements.title')} ({hiddenElementIds.size})
+        </button>
         <button
           onClick={showAllElements}
           className="flex items-center gap-1 px-2 py-1 text-[10px] text-accent hover:bg-accent/10 rounded"
@@ -843,11 +859,12 @@ function HiddenElementsSection({
           {t('filters.hiddenElements.showAll')}
         </button>
       </div>
+      {open && (
       <ProgressiveList
         items={Array.from(hiddenElementIds)}
         initialCount={20}
         increment={20}
-        className="space-y-1"
+        className="space-y-1 mt-2 max-h-48 overflow-y-auto"
         renderItem={(id) => {
           const element = elements.find((el) => el.id === id);
           if (!element) return null;
@@ -870,6 +887,7 @@ function HiddenElementsSection({
           );
         }}
       />
+      )}
     </div>
   );
 }

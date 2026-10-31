@@ -1,8 +1,10 @@
 import { create } from 'zustand';
-import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
-import { insightsService, type PathResult, type CycleResult } from '../services/insightsService';
+import type { Element, Link, ElementId, Cluster, CentralityResult } from '../types';
+import { insightsService, type PathResult, type CycleResult, type PathSearchOptions } from '../services/insightsService';
 import { graphWorkerService, SupersededError } from '../services/graphWorkerService';
 import { useProgressStore } from './progressStore';
+import { hasActiveConstraints } from '../services/graph/constrainedPaths';
+import type { StructuralRoles } from '../services/graph/structuralRoles';
 
 interface InsightsState {
   // Results
@@ -10,7 +12,8 @@ interface InsightsState {
   centrality: CentralityResult[];
   bridges: ElementId[];
   isolated: ElementId[];
-  similarLabels: SimilarPair[];
+  /** Who holds the network together, as structured facts */
+  structuralRoles: StructuralRoles;
   computedAt: Date | null;
   /**
    * Structure signature of the graph the results describe (or are being
@@ -24,7 +27,7 @@ interface InsightsState {
   computeProgress: number;
   computePhase: string;
   highlightedElementIds: Set<ElementId>;
-  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | 'suggestion' | 'between' | null;
+  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'path' | 'cycle' | 'suggestion' | 'between' | 'role' | null;
   selectedClusterId: number | null;
 
   // Path finding
@@ -33,6 +36,14 @@ interface InsightsState {
   pathToId: ElementId | null;
   /** Which path search produced the current results (drives the panel UI) */
   pathSearchMode: 'shortest' | 'all' | null;
+  /** No admitted path, but one exists without the constraints */
+  pathBlockedByConstraints: boolean;
+  /** Whether the last path search followed link direction */
+  pathDirected: boolean;
+  /** Whether constraints narrowed the last path search (a context-menu search has none) */
+  pathConstrained: boolean;
+  /** Links walked by the highlighted paths. Read while highlightType is 'path'. */
+  pathLinkFlow: Map<string, CycleLinkFlow>;
 
   // Cycle detection
   cycles: CycleResult[];
@@ -44,7 +55,9 @@ interface InsightsState {
   cycleLinkFlow: Map<string, CycleLinkFlow>;
   /** Whether the last cycle search followed link direction. */
   cyclesDirected: boolean;
-  /** Element picked in the cycle list: a stronger glow on the canvas. Read while highlightType is 'cycle'. */
+  /** Links a structural role sentence is about (a bridge link). Read while highlightType is 'role'. */
+  roleLinkIds: Set<string>;
+  /** Element picked in the cycle list, or the subject of a role sentence: a stronger glow on the canvas. Read while highlightType is 'cycle' or 'role'. */
   focusedElementId: ElementId | null;
 
   // Actions
@@ -54,13 +67,14 @@ interface InsightsState {
   highlightCentralElement: (elementId: ElementId, neighborIds?: Iterable<ElementId>) => void;
   highlightBridges: () => void;
   highlightIsolated: () => void;
-  highlightSimilarPair: (elementId1: ElementId, elementId2: ElementId) => void;
   /** Highlight the elements of a link suggestion (panel hover) */
   highlightSuggestion: (elementIds: ElementId[]) => void;
   /** What links two combined tabs: shared elements, direct links or relays */
   highlightBetween: (elementIds: ElementId[]) => void;
-  findPaths: (fromId: ElementId, toId: ElementId) => void;
-  findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number) => void;
+  /** Highlight what a structural role sentence is about, its subject glowing stronger */
+  highlightRole: (elementIds: Iterable<ElementId>, focusId: ElementId | null, linkIds?: Iterable<string>) => void;
+  findPaths: (fromId: ElementId, toId: ElementId, options?: PathFilterOptions) => void;
+  findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number, options?: PathFilterOptions & { maxPaths?: number }) => void;
   highlightPath: (pathIndex: number) => void;
   findCycles: (maxLength?: number, directed?: boolean) => void;
   highlightCycle: (cycleIndex: number) => void;
@@ -73,6 +87,29 @@ interface InsightsState {
 }
 
 export type CycleLinkFlow = 'forward' | 'backward' | 'both';
+
+const EMPTY_ROLES: StructuralRoles = { facts: [], clusterLeads: {} };
+
+/** Constraints of a path search, and the model their grading threshold is read in */
+export type PathFilterOptions = Pick<PathSearchOptions, 'constraints' | 'model'>;
+
+/**
+ * Links of the paths, with the way they are walked when the search followed
+ * link direction ('both' otherwise, or when two paths disagree).
+ */
+function pathLinkFlowOf(paths: readonly PathResult[], directed: boolean): Map<string, CycleLinkFlow> {
+  const flow = new Map<string, CycleLinkFlow>();
+  for (const p of paths) {
+    for (const step of p.steps) {
+      for (const l of step) {
+        const walk: CycleLinkFlow = !directed ? 'both' : l.forward ? 'forward' : 'backward';
+        const seen = flow.get(l.linkId);
+        flow.set(l.linkId, seen === undefined || seen === walk ? walk : 'both');
+      }
+    }
+  }
+  return flow;
+}
 
 /**
  * Each link of the cycles with the way it is walked. An undirected search
@@ -97,7 +134,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   centrality: [],
   bridges: [],
   isolated: [],
-  similarLabels: [],
+  structuralRoles: EMPTY_ROLES,
   computedAt: null,
   computedKey: null,
 
@@ -112,11 +149,16 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   pathFromId: null,
   pathToId: null,
   pathSearchMode: null,
+  pathBlockedByConstraints: false,
+  pathLinkFlow: new Map(),
+  pathDirected: false,
+  pathConstrained: false,
 
   cycles: [],
   cycleLinkFlow: new Map(),
   cyclesDirected: false,
   focusedElementId: null,
+  roleLinkIds: new Set(),
 
   // Actions
   computeInsights: (elements, links, key) => {
@@ -141,7 +183,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         centrality: results.centrality,
         bridges: results.bridges,
         isolated: results.isolated,
-        similarLabels: results.similarLabels,
+        structuralRoles: results.roles,
         computedAt: new Date(),
         isComputing: false,
         computeProgress: 100,
@@ -164,7 +206,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
           centrality: results.centrality,
           bridges: results.bridges,
           isolated: results.isolated,
-          similarLabels: results.similarLabels,
+            structuralRoles: results.roles,
           computedAt: results.computedAt,
           isComputing: false,
         });
@@ -223,6 +265,16 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     });
   },
 
+  highlightRole: (elementIds, focusId, linkIds = []) => {
+    set({
+      highlightedElementIds: new Set(elementIds),
+      highlightType: 'role',
+      selectedClusterId: null,
+      focusedElementId: focusId,
+      roleLinkIds: new Set(linkIds),
+    });
+  },
+
   highlightSuggestion: (elementIds) => {
     set({
       highlightedElementIds: new Set(elementIds),
@@ -231,21 +283,23 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     });
   },
 
-  highlightSimilarPair: (elementId1, elementId2) => {
-    set({
-      highlightedElementIds: new Set([elementId1, elementId2]),
-      highlightType: 'similar',
-      selectedClusterId: null,
+  findPaths: (fromId, toId, given) => {
+    const options = given ?? {};
+    const directed = !!options?.constraints?.respectDirection;
+    const { paths, blockedByConstraints } = insightsService.searchPaths(fromId, toId, {
+      k: 1,
+      maxDepth: Number.MAX_SAFE_INTEGER,
+      ...options,
     });
-  },
-
-  findPaths: (fromId, toId) => {
-    const paths = insightsService.findPaths(fromId, toId);
     set({
       pathResults: paths,
       pathFromId: fromId,
       pathToId: toId,
       pathSearchMode: 'shortest',
+      pathBlockedByConstraints: blockedByConstraints,
+      pathConstrained: hasActiveConstraints(options.constraints, options.model),
+      pathDirected: directed,
+      pathLinkFlow: pathLinkFlowOf(paths.slice(0, 1), directed),
     });
 
     // Auto-highlight first path if found
@@ -255,16 +309,30 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         highlightType: 'path',
         selectedClusterId: null,
       });
+    } else if (get().highlightType === 'path') {
+      // No path: the previous one must not stay lit
+      set({ highlightedElementIds: new Set(), highlightType: null });
     }
   },
 
-  findAllPaths: (fromId, toId, maxDepth = 5) => {
-    const paths = insightsService.findAllPaths(fromId, toId, maxDepth);
+  findAllPaths: (fromId, toId, maxDepth = 5, given) => {
+    const options = given ?? {};
+    const directed = !!options?.constraints?.respectDirection;
+    const { paths, blockedByConstraints } = insightsService.searchPaths(fromId, toId, {
+      k: options?.maxPaths ?? 200,
+      maxDepth,
+      constraints: options?.constraints,
+      model: options?.model,
+    });
     set({
       pathResults: paths,
       pathFromId: fromId,
       pathToId: toId,
       pathSearchMode: 'all',
+      pathBlockedByConstraints: blockedByConstraints,
+      pathConstrained: hasActiveConstraints(options.constraints, options.model),
+      pathDirected: directed,
+      pathLinkFlow: pathLinkFlowOf(paths, directed),
     });
 
     // Highlight the union of every path so all routes are visible at once.
@@ -278,16 +346,20 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         highlightType: 'path',
         selectedClusterId: null,
       });
+    } else if (get().highlightType === 'path') {
+      // No path: the previous ones must not stay lit
+      set({ highlightedElementIds: new Set(), highlightType: null });
     }
   },
 
   highlightPath: (pathIndex) => {
-    const { pathResults } = get();
+    const { pathResults, pathDirected } = get();
     if (pathResults[pathIndex]) {
       set({
         highlightedElementIds: new Set(pathResults[pathIndex].path),
         highlightType: 'path',
         selectedClusterId: null,
+        pathLinkFlow: pathLinkFlowOf([pathResults[pathIndex]], pathDirected),
       });
     }
   },
@@ -351,6 +423,9 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathFromId: null,
       pathToId: null,
       pathSearchMode: null,
+      pathBlockedByConstraints: false,
+      pathConstrained: false,
+      pathLinkFlow: new Map(),
     });
   },
 
@@ -363,7 +438,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       centrality: [],
       bridges: [],
       isolated: [],
-      similarLabels: [],
+          structuralRoles: EMPTY_ROLES,
       computedAt: null,
       computedKey: null,
       isComputing: false,
@@ -376,6 +451,9 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathFromId: null,
       pathToId: null,
       pathSearchMode: null,
+      pathBlockedByConstraints: false,
+      pathConstrained: false,
+      pathLinkFlow: new Map(),
       cycles: [],
     });
   },

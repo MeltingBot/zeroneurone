@@ -524,6 +524,25 @@
       "isolated": "Isolati",
       "similar": "Simili"
     },
+    "roles": {
+      "title": "Ruoli",
+      "soleConnector": "{{x}} è l'unico legame tra {{groups}}",
+      "bridgeLink": "Il legame {{x}} – {{y}} è l'unico passaggio tra {{groups}}",
+      "cutOff": "{{x}} è l'unico accesso a {{count}} elementi, tra cui {{y}}",
+      "cutOffNamed": "{{x}} è l'unico accesso a {{names}}",
+      "broker": "{{x}} collega {{groups}}",
+      "group": "il gruppo di {{lead}} ({{size}})",
+      "target": "Sezione del rapporto",
+      "newSection": "Nuova sezione",
+      "addAll": "Aggiungi tutto ({{count}})",
+      "addToReport": "Aggiungi al rapporto",
+      "sectionTitle": "Ruoli strutturali",
+      "analyzedOn": "Analisi del {{date}}",
+      "added": "Aggiunto al rapporto: {{section}}",
+      "addFailed": "Impossibile aggiungere al rapporto",
+      "search": "Cerca un nome",
+      "clearSearch": "Cancella"
+    },
     "clusters": {
       "title": "Cluster",
       "description": "Gruppi di elementi fortemente connessi",
@@ -568,20 +587,6 @@
       "hideAll": "Nascondi tutti",
       "showAll": "Mostra tutti"
     },
-    "similar": {
-      "title": "Potenziali duplicati",
-      "mode": {
-        "fuzzy": "Ampio",
-        "exact": "Rigoroso",
-        "fuzzyDesc": "Nomi simili, refusi compresi",
-        "exactDesc": "Stesso nome, a parte maiuscole e scrittura dei numeri"
-      },
-      "description": "Elementi con nomi simili",
-      "count": "{{count}} coppia/e simile/i",
-      "noSimilar": "Nessuna etichetta simile",
-      "select": "Seleziona",
-      "merge": "Unisci"
-    },
     "paths": {
       "title": "Ricerca percorso",
       "button": "Trova un percorso tra due elementi",
@@ -594,7 +599,26 @@
       "maxDepth": "Profondità max",
       "highlightThisPath": "Evidenzia questo percorso",
       "noPath": "Nessun percorso trovato tra questi elementi",
-      "pathLength": "{{count}} passo/i"
+      "pathLength": "{{count}} passo/i",
+      "blockedByConstraints": "Percorso escluso dai vincoli",
+      "constraints": {
+        "title": "Vincoli",
+        "reset": "Rimuovi i vincoli",
+        "include": "Includi",
+        "exclude": "Escludi",
+        "labels": "Etichette",
+        "tags": "Tag",
+        "period": "Periodo",
+        "periodStart": "Inizio",
+        "periodEnd": "Fine",
+        "keepUndated": "Mantieni i collegamenti senza data",
+        "minConfidence": "Affidabilità minima",
+        "evaluationAtLeast": "Questo codice o migliore",
+        "keepUngraded": "Mantieni i collegamenti non valutati",
+        "keepNoConfidence": "Mantieni i collegamenti senza affidabilità",
+        "respectDirection": "Rispetta il verso dei collegamenti",
+        "applied": "vincoli applicati"
+      }
     },
     "cycles": {
       "button": "Rileva cicli",
@@ -803,7 +827,9 @@
       "zones": "Zone",
       "valuesHint": "Stesso valore nella stessa proprietà (telefono, IBAN…)",
       "sourcesHint": "Stesso allegato o stessa pagina web citata",
-      "zonesHint": "Punto o piccola zona all'interno di una zona più grande"
+      "zonesHint": "Punto o piccola zona all'interno di una zona più grande",
+      "duplicates": "Duplicati",
+      "duplicatesHint": "Stesso telefono, IBAN, targa o e-mail, o nomi simili"
     },
     "keys": {
       "all": "tutte",
@@ -811,6 +837,35 @@
       "search": "Filtra",
       "selectAll": "Tutte",
       "selectNone": "Nessuna"
+    },
+    "merge": {
+      "action": "Unisci",
+      "threshold": "Livello minimo",
+      "kind": {
+        "phone": "telefono",
+        "iban": "IBAN",
+        "plate": "targa",
+        "email": "e-mail"
+      },
+      "reason": {
+        "sameIdentifier": "Stesso {{kind}}: {{value}}",
+        "sameName": "Stesso nome",
+        "phonetic": "Stessa pronuncia",
+        "similarName": "Nomi simili ({{value}} %)",
+        "sharedTags": "Tag comuni: {{count}}",
+        "conflict": "{{kind}}: valori diversi",
+        "differentNumbers": "Numeri diversi"
+      },
+      "level": {
+        "veryLikely": "Molto probabile",
+        "likely": "Probabile",
+        "possible": "Possibile"
+      },
+      "minLevel": {
+        "possible": "Tutti",
+        "likely": "Probabili e molto probabili",
+        "veryLikely": "Solo molto probabili"
+      }
     }
   }
 }

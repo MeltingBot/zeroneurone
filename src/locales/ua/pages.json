@@ -153,6 +153,7 @@
       "hide": "Сховати",
       "hideSelection": "Сховати вибране",
       "showOnly": "Показати лише",
+      "showHidden": "Показати приховані ({{count}})",
       "showOnlySelection": "Показати лише вибране",
       "showOnlyElement": "Показати лише цей елемент",
       "hideElement": "Сховати елемент",

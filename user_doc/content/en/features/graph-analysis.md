@@ -18,6 +18,30 @@ Click **Refresh** to recalculate metrics after modifications.
 
 ---
 
+## Roles
+
+The **Roles** section, at the top of the panel, says in one sentence who holds the network together:
+
+| Sentence | Meaning |
+|----------|---------|
+| "X is the only link between the group of A and the group of B" | Without X, the two groups are no longer connected |
+| "The link X – Y is the only way between…" | Removing this link cuts the groups apart; two parallel links between X and Y do not count as a single way |
+| "X is the only access to N elements, including Y" | These N elements are connected to the rest of the graph only through X. Y is the best-linked of them; up to three elements, all are named |
+| "X connects…" | X touches at least three groups and ranks among the highest betweenness, without being their only link |
+
+A group is a Louvain cluster, named after its best-linked member, with its number of elements in brackets. Sentences are ranked by the number of elements separated; ten show, **Show more** gives the rest. Past ten sentences, a search field keeps those that mention a name: type one to see the role that element plays.
+
+- **Click a sentence**: highlights the element and the groups concerned.
+- **Click a name**: selects the element and frames it on screen.
+
+### Add to the report
+
+The icon at the end of a sentence adds it to the report; **Add all (N)** adds the N sentences, or only those the search keeps, including those "Show more" has not shown yet. An addition to the report is not undone with Ctrl+Z: delete the text in the section. The list on the left picks the section: **New section** creates one, "Structural roles", and later additions go to it. The report is created if there is none.
+
+Names become clickable references, and each addition starts with the date of the analysis. The groups depend on the graph at the time of the computation: the inserted text no longer changes, even if the dossier evolves later. For the same graph, the analysis always gives the same groups.
+
+---
+
 ## Clusters (Communities)
 
 The Louvain algorithm automatically detects **communities**: groups of elements more connected to each other than to the rest of the graph.
@@ -108,17 +132,6 @@ List of elements **without any connection**.
 
 ---
 
-## Potential duplicates
-
-Pairs of elements with close names, which may be the same thing. Clicking the row selects both elements and frames the view on them (a second click deselects); clicking one of the two names selects that element and centres the view on it, the pair staying highlighted. **Merge** joins them.
-
-- **Broad**: close names, typos included ("Jean Dupont" / "Jean Dupond").
-- **Strict**: the same name, case and the writing of numbers aside (`06 39 98 33 17` = `0639983317`).
-
-The choice is remembered. In both modes, two different numbers (`0639985018` and `0639985078`) are never offered: they are two lines, not a typo.
-
----
-
 ## Paths
 
 Find the **shortest path** between two elements.
@@ -138,7 +151,21 @@ Find the **shortest path** between two elements.
 
 ### All paths
 
-Enable **All paths** to enumerate **every route** between the two elements, not just the shortest one. Set the **maximum depth** (number of links, 1 to 8) to bound the search and avoid combinatorial explosion on dense networks. Every path found is listed (sorted shortest to longest); the union of all routes is highlighted on the canvas, and clicking a path in the list highlights that one only. Also available via right-click on two elements → **All paths**.
+Enable **All paths** to list **several routes** between the two elements (up to the 200 shortest), not just the shortest one. Set the **maximum depth** (number of links, 1 to 8) to bound the search and avoid combinatorial explosion on dense networks. Every path found is listed (sorted shortest to longest); the union of all routes is highlighted on the canvas, and clicking a path in the list highlights that one only. Also available via right-click on two elements → **All paths**.
+
+
+### Constraints
+
+The **Constraints** block narrows the links a path may walk:
+
+- **Labels** and **Tags**: walk only the links carrying one of the chosen values (**Include**), or never those (**Exclude**);
+- **Period**: only the links dated within the period. **Keep undated links** lets through those with no date;
+- **Minimum confidence** (ZeroNeurone model) or **minimum grading** (Europol and Admiralty models): a code keeps that code and every stronger one, for instance B on the source axis keeps A and B. **Keep ungraded links** lets through the links with no confidence or grading;
+- **Follow link direction**: a directed link is walked its own way only, a neutral or two-way link either way.
+
+Only the links actually walked are highlighted on the canvas. A narrowed result reads **constraints applied**. When a path exists but the constraints exclude it, the panel says so, instead of reporting that there is no path.
+
+Constraints are kept for each dossier, in this browser. They apply to the searches run from the panel only: the **Find paths** and **All paths** right-click entries always search without them.
 
 ---
 

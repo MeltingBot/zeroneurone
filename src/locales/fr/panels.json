@@ -524,6 +524,25 @@
       "isolated": "Isolés",
       "similar": "Similaires"
     },
+    "roles": {
+      "title": "Rôles",
+      "soleConnector": "{{x}} est le seul lien entre {{groups}}",
+      "bridgeLink": "Le lien {{x}} – {{y}} est le seul passage entre {{groups}}",
+      "cutOff": "{{x}} est le seul accès à {{count}} éléments, dont {{y}}",
+      "cutOffNamed": "{{x}} est le seul accès à {{names}}",
+      "broker": "{{x}} fait le lien entre {{groups}}",
+      "group": "le groupe de {{lead}} ({{size}})",
+      "target": "Section du rapport",
+      "newSection": "Nouvelle section",
+      "addAll": "Tout ajouter ({{count}})",
+      "addToReport": "Ajouter au rapport",
+      "sectionTitle": "Rôles structurels",
+      "analyzedOn": "Analyse du {{date}}",
+      "added": "Ajouté au rapport : {{section}}",
+      "addFailed": "Échec de l'ajout au rapport",
+      "search": "Rechercher un nom",
+      "clearSearch": "Effacer"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Groupes d'éléments fortement connectés",
@@ -568,20 +587,6 @@
       "hideAll": "Masquer tous",
       "showAll": "Afficher tous"
     },
-    "similar": {
-      "title": "Doublons potentiels",
-      "mode": {
-        "fuzzy": "Large",
-        "exact": "Strict",
-        "fuzzyDesc": "Noms proches, fautes de frappe comprises",
-        "exactDesc": "Même nom, à la casse et à l'écriture des numéros près"
-      },
-      "description": "Éléments avec des noms similaires",
-      "count": "{{count}} paire(s) similaire(s)",
-      "noSimilar": "Aucun label similaire",
-      "select": "Sélectionner",
-      "merge": "Fusionner"
-    },
     "paths": {
       "title": "Recherche de chemin",
       "button": "Trouver un chemin entre deux éléments",
@@ -594,7 +599,26 @@
       "maxDepth": "Profondeur max",
       "highlightThisPath": "Mettre ce chemin en évidence",
       "noPath": "Aucun chemin trouvé entre ces éléments",
-      "pathLength": "{{count}} étape(s)"
+      "pathLength": "{{count}} étape(s)",
+      "blockedByConstraints": "Chemin exclu par les contraintes",
+      "constraints": {
+        "title": "Contraintes",
+        "reset": "Retirer les contraintes",
+        "include": "Inclure",
+        "exclude": "Exclure",
+        "labels": "Libellés",
+        "tags": "Tags",
+        "period": "Période",
+        "periodStart": "Début",
+        "periodEnd": "Fin",
+        "keepUndated": "Garder les liens non datés",
+        "minConfidence": "Confiance minimale",
+        "evaluationAtLeast": "Ce code ou mieux",
+        "keepUngraded": "Garder les liens non cotés",
+        "keepNoConfidence": "Garder les liens sans confiance",
+        "respectDirection": "Respecter le sens des liens",
+        "applied": "contraintes appliquées"
+      }
     },
     "cycles": {
       "button": "Détecter les cycles",
@@ -803,7 +827,9 @@
       "zones": "Zones",
       "valuesHint": "Même valeur pour la même propriété (téléphone, IBAN…)",
       "sourcesHint": "Même pièce jointe ou même page web citée",
-      "zonesHint": "Point ou petite zone à l'intérieur d'une zone plus grande"
+      "zonesHint": "Point ou petite zone à l'intérieur d'une zone plus grande",
+      "duplicates": "Doublons",
+      "duplicatesHint": "Même téléphone, IBAN, plaque ou e-mail, ou noms proches"
     },
     "keys": {
       "all": "toutes",
@@ -811,6 +837,35 @@
       "search": "Filtrer",
       "selectAll": "Toutes",
       "selectNone": "Aucune"
+    },
+    "merge": {
+      "action": "Fusionner",
+      "threshold": "Niveau minimal",
+      "kind": {
+        "phone": "téléphone",
+        "iban": "IBAN",
+        "plate": "plaque",
+        "email": "e-mail"
+      },
+      "reason": {
+        "sameIdentifier": "Même {{kind}} : {{value}}",
+        "sameName": "Même nom",
+        "phonetic": "Même prononciation",
+        "similarName": "Noms proches ({{value}} %)",
+        "sharedTags": "Tags communs : {{count}}",
+        "conflict": "{{kind}} : valeurs différentes",
+        "differentNumbers": "Nombres différents"
+      },
+      "level": {
+        "veryLikely": "Très probable",
+        "likely": "Probable",
+        "possible": "Possible"
+      },
+      "minLevel": {
+        "possible": "Toutes",
+        "likely": "Probables et très probables",
+        "veryLikely": "Très probables seulement"
+      }
     }
   }
 }

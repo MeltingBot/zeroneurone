@@ -523,6 +523,25 @@
       "isolated": "Isolatuak",
       "similar": "Antzekoak"
     },
+    "roles": {
+      "title": "Rolak",
+      "soleConnector": "{{x}} da {{groups}} arteko lotura bakarra",
+      "bridgeLink": "{{x}} – {{y}} lotura da {{groups}} arteko igarobide bakarra",
+      "cutOff": "{{x}} da {{count}} elementuetarako sarbide bakarra, {{y}} barne",
+      "cutOffNamed": "{{x}} da {{names}} elementuetarako sarbide bakarra",
+      "broker": "{{x}}(e)k {{groups}} lotzen ditu",
+      "group": "{{lead}}(r)en taldea ({{size}})",
+      "target": "Txostenaren atala",
+      "newSection": "Atal berria",
+      "addAll": "Gehitu dena ({{count}})",
+      "addToReport": "Gehitu txostenera",
+      "sectionTitle": "Egitura-rolak",
+      "analyzedOn": "{{date}}(e)ko analisia",
+      "added": "Txostenera gehituta: {{section}}",
+      "addFailed": "Ezin izan da txostenera gehitu",
+      "search": "Bilatu izen bat",
+      "clearSearch": "Garbitu"
+    },
     "clusters": {
       "title": "Clusterrak",
       "description": "Indartsuki konektatutako elementu taldeak",
@@ -567,20 +586,6 @@
       "hideAll": "Guztiak ezkutatu",
       "showAll": "Guztiak erakutsi"
     },
-    "similar": {
-      "title": "Bikoiztu potentzialak",
-      "mode": {
-        "fuzzy": "Zabala",
-        "exact": "Zorrotza",
-        "fuzzyDesc": "Izen antzekoak, idazketa-akatsak barne",
-        "exactDesc": "Izen bera, maiuskulak eta zenbakien idazkera alde batera"
-      },
-      "description": "Izen antzekodun elementuak",
-      "count": "{{count}} bikote antzeko",
-      "noSimilar": "Ez dago etiketa antzekorik",
-      "select": "Hautatu",
-      "merge": "Batu"
-    },
     "paths": {
       "title": "Bide bilaketa",
       "button": "Bi elementuren arteko bidea aurkitu",
@@ -593,7 +598,26 @@
       "maxDepth": "Gehieneko sakonera",
       "highlightThisPath": "Nabarmendu bide hau",
       "noPath": "Ez da biderik aurkitu elementu hauen artean",
-      "pathLength": "{{count}} urrats"
+      "pathLength": "{{count}} urrats",
+      "blockedByConstraints": "Murrizketek kanpoan utzitako bidea",
+      "constraints": {
+        "title": "Murrizketak",
+        "reset": "Kendu murrizketak",
+        "include": "Sartu",
+        "exclude": "Baztertu",
+        "labels": "Etiketak",
+        "tags": "Etiketak (tag)",
+        "period": "Aldia",
+        "periodStart": "Hasiera",
+        "periodEnd": "Amaiera",
+        "keepUndated": "Gorde datarik gabeko loturak",
+        "minConfidence": "Gutxieneko konfiantza",
+        "evaluationAtLeast": "Kode hau edo hobea",
+        "keepUngraded": "Gorde ebaluatu gabeko loturak",
+        "keepNoConfidence": "Gorde konfiantzarik gabeko loturak",
+        "respectDirection": "Errespetatu loturen norabidea",
+        "applied": "murrizketak aplikatuta"
+      }
     },
     "cycles": {
       "button": "Zikloak detektatu",
@@ -802,7 +826,9 @@
       "zones": "Eremuak",
       "valuesHint": "Balio bera propietate berean (telefonoa, IBAN…)",
       "sourcesHint": "Erantsitako fitxategi bera edo aipatutako web orri bera",
-      "zonesHint": "Puntua edo eremu txikia eremu handiago baten barruan"
+      "zonesHint": "Puntua edo eremu txikia eremu handiago baten barruan",
+      "duplicates": "Bikoiztuak",
+      "duplicatesHint": "Telefono, IBAN, matrikula edo posta bera, edo antzeko izenak"
     },
     "keys": {
       "all": "guztiak",
@@ -810,6 +836,35 @@
       "search": "Iragazi",
       "selectAll": "Guztiak",
       "selectNone": "Bat ere ez"
+    },
+    "merge": {
+      "action": "Bateratu",
+      "threshold": "Gutxieneko maila",
+      "kind": {
+        "phone": "telefonoa",
+        "iban": "IBAN",
+        "plate": "matrikula",
+        "email": "posta"
+      },
+      "reason": {
+        "sameIdentifier": "{{kind}} bera: {{value}}",
+        "sameName": "Izen bera",
+        "phonetic": "Ahoskera bera",
+        "similarName": "Antzeko izenak (% {{value}})",
+        "sharedTags": "Etiketa komunak: {{count}}",
+        "conflict": "{{kind}}: balio desberdinak",
+        "differentNumbers": "Zenbaki desberdinak"
+      },
+      "level": {
+        "veryLikely": "Oso litekeena",
+        "likely": "Litekeena",
+        "possible": "Posiblea"
+      },
+      "minLevel": {
+        "possible": "Guztiak",
+        "likely": "Litekeenak eta oso litekeenak",
+        "veryLikely": "Oso litekeenak soilik"
+      }
     }
   }
 }

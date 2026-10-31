@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagCombobox } from '../modals/TagCombobox';
 import { revealElement } from '../../utils/revealElement';
-import { ArrowDownUp, Check, ChevronDown, ChevronUp, Loader2, RotateCcw, Search, X } from 'lucide-react';
+import { ArrowDownUp, Check, ChevronDown, ChevronUp, Loader2, Merge, RotateCcw, Search, X } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
 import { MAX_STAYS } from '../../stores/suggestionsStore';
-import { foldKey, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
+import { loadPhoneParser } from '../../services/dedup/phoneLib';
+import { MERGE_LEVELS } from '../../services/dedup/candidates';
+import { MergeElementsModal } from '../modals/MergeElementsModal';
+import { foldKey, suggestionElementIds, type MergeReason, type MergeSuggestion, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
 import type { Element } from '../../types';
 import { useProgressStore } from '../../stores/progressStore';
 
@@ -42,9 +45,10 @@ function fold(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-function involvedIds(s: Suggestion): string[] {
-  return s.kind === 'link' ? [s.fromId, s.toId] : [...s.memberIds, ...(s.existingId ? [s.existingId] : [])];
-}
+const involvedIds = suggestionElementIds;
+
+/** Reasons that speak against a merge: shown as a warning */
+const isWarning = (r: MergeReason) => r.rule === 'conflict' || r.rule === 'differentNumbers';
 
 /** Distance a suggestion is about, in metres: nearest place or meeting, 0 for
  *  a point in a zone; Infinity when it has none (values, sources, pivots) */
@@ -144,7 +148,7 @@ export function SuggestionsPanel() {
   const currentDossierId = useDossierStore((s) => s.currentDossier?.id ?? null);
   const {
     suggestions, dismissedSuggestions, dossierId, scope, nearbyRadius, meetingRadius, maxStay, placesEnabled, meetingsEnabled, meetingWindow,
-    valuesEnabled, sourcesEnabled, zonesEnabled, setRuleEnabled,
+    valuesEnabled, sourcesEnabled, zonesEnabled, setRuleEnabled, duplicatesEnabled, duplicateThreshold, setDuplicateThreshold, merge,
     shownCount, meetingsTruncated, crowdedCount, between, setBetween, excludedKeys, setExcludedKeys, loadExcludedKeys,
     analyze, refresh, setNearbyRadius, setMeetingRadius, setMaxStay, setPlacesEnabled, setMeetingsEnabled, setMeetingWindow, accept, dismiss, restore,
   } = useSuggestionsStore();
@@ -284,6 +288,21 @@ export function SuggestionsPanel() {
     }
   }, [t, formatDistance, formatDate]);
 
+  const mergeReasonText = useCallback((reason: MergeReason) => {
+    switch (reason.rule) {
+      case 'sameIdentifier': return t('suggestions.merge.reason.sameIdentifier', { kind: t(`suggestions.merge.kind.${reason.kind}`), value: reason.value });
+      case 'sameName': return t('suggestions.merge.reason.sameName');
+      case 'phonetic': return t('suggestions.merge.reason.phonetic');
+      case 'similarName': return t('suggestions.merge.reason.similarName', { value: Math.round(reason.similarity * 100) });
+      case 'sharedTags': return t('suggestions.merge.reason.sharedTags', { count: reason.count });
+      case 'conflict': return t('suggestions.merge.reason.conflict', { kind: t(`suggestions.merge.kind.${reason.kind}`) });
+      case 'differentNumbers': return t('suggestions.merge.reason.differentNumbers');
+    }
+  }, [t]);
+
+  // Possible duplicate being merged (the dialog picks the element kept)
+  const [merging, setMerging] = useState<MergeSuggestion | null>(null);
+
   const linkLabel = useCallback((reason: SuggestionReason) => {
     switch (reason.rule) {
       case 'sharedValue': return t('suggestions.linkLabel.sharedValue', { key: reason.key });
@@ -333,10 +352,11 @@ export function SuggestionsPanel() {
     return visible.map((s) => {
       const parts = involvedIds(s).map(label);
       if (s.kind === 'link') parts.push(...s.reasons.map(reasonText));
+      else if (s.kind === 'merge') parts.push(...s.reasons.map(mergeReasonText));
       else parts.push(s.reason.value ?? '', s.reason.key ?? '', reasonText(s.reason));
       return fold(parts.join(' '));
     });
-  }, [visible, searching, label, reasonText]);
+  }, [visible, searching, label, reasonText, mergeReasonText]);
 
   const searched = useMemo(() => {
     const query = fold(search.trim());
@@ -430,17 +450,21 @@ export function SuggestionsPanel() {
     setChecked(new Set());
     setAnalyzing(true);
     useProgressStore.getState().start('suggestions', 'activity.suggestions');
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    // Duplicates read phone numbers with libphonenumber: loaded on first use
+    const ready = useSuggestionsStore.getState().duplicatesEnabled ? loadPhoneParser() : Promise.resolve(null);
+    void ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
       try {
         analyze(null);
       } finally {
         setAnalyzing(false);
         useProgressStore.getState().end('suggestions');
       }
-    }));
+    })));
   }, [analyze, setChecked]);
 
   const checkedIds = shown.filter((s) => checked.has(s.id)).map((s) => s.id);
+  // Merges go one by one through their dialog: the bulk accept leaves them out
+  const acceptableIds = shown.filter((s) => checked.has(s.id) && s.kind !== 'merge').map((s) => s.id);
 
   // The checked suggestions draw their links on the canvas, until unchecked,
   // accepted or dismissed (they then leave the list), the panel open or not;
@@ -448,6 +472,7 @@ export function SuggestionsPanel() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const previewPairs = shown.filter((s) => checked.has(s.id) || s.id === hoveredId).flatMap((s) => {
     if (s.kind === 'link') return [{ id: s.id, fromId: s.fromId, toId: s.toId }];
+    if (s.kind === 'merge') return [];
     const hub = s.existingId;
     return hub ? s.memberIds.map((m) => ({ id: `${s.id}:${m}`, fromId: hub, toId: m })) : [];
   });
@@ -551,7 +576,35 @@ export function SuggestionsPanel() {
             </ul>
           </div>
         )}
+        {/* Rules with a setting: one per row, their settings in one column */}
         <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs text-text-secondary">
+          <label className="flex items-center gap-1.5 h-6" title={t('suggestions.rules.duplicatesHint')}>
+            <input
+              type="checkbox"
+              checked={duplicatesEnabled}
+              onChange={(e) => {
+                setRuleEnabled('duplicates', e.target.checked);
+                if (e.target.checked) void loadPhoneParser().then(() => refresh());
+                else refresh();
+              }}
+              data-testid="suggestions-rule-duplicates"
+              className="rounded border-border-default"
+            />
+            {t('suggestions.rules.duplicates')}
+          </label>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={duplicateThreshold}
+              onChange={(e) => { setDuplicateThreshold(Number(e.target.value)); refresh(); }}
+              disabled={!duplicatesEnabled}
+              aria-label={t('suggestions.merge.threshold')}
+              title={t('suggestions.merge.threshold')}
+              data-testid="suggestions-duplicate-threshold"
+              className={SELECT_CLASS}
+            >
+              {MERGE_LEVELS.map((l) => <option key={l.rank} value={l.rank}>{t(`suggestions.merge.minLevel.${l.level}`)}</option>)}
+            </select>
+          </div>
           <label className="flex items-center gap-1.5 h-6" title={t('suggestions.placesHint')}>
             <input
               type="checkbox"
@@ -619,39 +672,39 @@ export function SuggestionsPanel() {
               ))}
             </select>
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-secondary" data-testid="suggestions-between">
-          <span className="shrink-0">{t('suggestions.between')}</span>
-          <TagCombobox
-            value={betweenA}
-            onChange={setBetweenA}
-            onPick={(a) => applyBetween(a, betweenB)}
-            allowNew={false}
-            options={tabTags}
-            aria-label={t('suggestions.betweenFirst')}
-            className={`${SELECT_CLASS} w-28`}
-          />
-          <span className="shrink-0">{t('suggestions.and')}</span>
-          <TagCombobox
-            value={betweenB}
-            onChange={setBetweenB}
-            onPick={(b) => applyBetween(betweenA, b)}
-            allowNew={false}
-            options={tabTags}
-            placeholder={between && between.a === between.b ? t('suggestions.betweenSame') : undefined}
-            aria-label={t('suggestions.betweenSecond')}
-            className={`${SELECT_CLASS} w-28`}
-          />
-          {between && (
-            <button
-              onClick={() => { setBetweenA(''); setBetweenB(''); setBetween(null); }}
-              title={t('suggestions.betweenClear')}
-              aria-label={t('suggestions.betweenClear')}
-              className="p-0.5 rounded text-text-tertiary hover:text-text-primary"
-            >
-              <X size={12} />
-            </button>
-          )}
+          <span>{t('suggestions.between')}</span>
+          <div className="flex items-center gap-1.5 min-w-0" data-testid="suggestions-between">
+            <TagCombobox
+              value={betweenA}
+              onChange={setBetweenA}
+              onPick={(a) => applyBetween(a, betweenB)}
+              allowNew={false}
+              options={tabTags}
+              aria-label={t('suggestions.betweenFirst')}
+              className={`${SELECT_CLASS} w-28`}
+            />
+            <span className="shrink-0">{t('suggestions.and')}</span>
+            <TagCombobox
+              value={betweenB}
+              onChange={setBetweenB}
+              onPick={(b) => applyBetween(betweenA, b)}
+              allowNew={false}
+              options={tabTags}
+              placeholder={between && between.a === between.b ? t('suggestions.betweenSame') : undefined}
+              aria-label={t('suggestions.betweenSecond')}
+              className={`${SELECT_CLASS} w-28`}
+            />
+            {between && (
+              <button
+                onClick={() => { setBetweenA(''); setBetweenB(''); setBetween(null); }}
+                title={t('suggestions.betweenClear')}
+                aria-label={t('suggestions.betweenClear')}
+                className="p-0.5 rounded text-text-tertiary hover:text-text-primary"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
         </div>
         {visible && !between && crowdedCount > 0 && (
           <p className="text-xs text-text-tertiary" data-testid="suggestions-crowded">{t('suggestions.crowded', { count: crowdedCount })}</p>
@@ -752,14 +805,16 @@ export function SuggestionsPanel() {
               >
                 {t('suggestions.dismissN', { count: checkedIds.length })}
               </button>
-              <button
-                onClick={() => handleAccept(checkedIds)}
-                disabled={busy}
-                data-testid="suggestions-accept-checked"
-                className="px-2 py-0.5 text-xs font-medium rounded bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
-              >
-                {t('suggestions.acceptN', { count: checkedIds.length })}
-              </button>
+              {acceptableIds.length > 0 && (
+                <button
+                  onClick={() => handleAccept(acceptableIds)}
+                  disabled={busy}
+                  data-testid="suggestions-accept-checked"
+                  className="px-2 py-0.5 text-xs font-medium rounded bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
+                >
+                  {t('suggestions.acceptN', { count: acceptableIds.length })}
+                </button>
+              )}
             </>
           )}
           {!bulk && (reviewDismissed || dismissedList.length > 0) && (
@@ -809,6 +864,24 @@ export function SuggestionsPanel() {
                       </span>
                     ))}
                   </>
+                ) : s.kind === 'merge' ? (
+                  <>
+                    {s.elementIds.map((id, i) => (
+                      <span key={id} className={`block text-sm break-words line-clamp-2 ${i === 0 ? 'text-text-primary' : 'text-text-secondary'}`} title={label(id)}>
+                        {i === 1 && <span className="text-text-tertiary">≈ </span>}
+                        {nameButton(s.id, id)}
+                      </span>
+                    ))}
+                    <span className="block text-xs text-text-tertiary break-words" data-testid="suggestion-merge-reasons">
+                      <span className="font-medium text-text-secondary">{t(`suggestions.merge.level.${s.level}`)}</span>
+                      {s.reasons.map((r, i) => (
+                        <Fragment key={i}>
+                          {' · '}
+                          <span className={isWarning(r) ? 'text-warning' : undefined}>{mergeReasonText(r)}</span>
+                        </Fragment>
+                      ))}
+                    </span>
+                  </>
                 ) : (
                   <>
                     <span className="block text-sm text-text-primary truncate" title={s.existingId ? label(s.existingId) : s.reason.value}>
@@ -854,15 +927,28 @@ export function SuggestionsPanel() {
                   </button>
                 ) : (
                   <>
-                    <button
-                      onClick={() => handleAccept([s.id])}
-                      disabled={busy}
-                      title={t('suggestions.accept')}
-                      aria-label={t('suggestions.accept')}
-                      className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50"
-                    >
-                      <Check size={14} />
-                    </button>
+                    {s.kind === 'merge' ? (
+                      <button
+                        onClick={() => setMerging(s)}
+                        disabled={busy}
+                        title={t('suggestions.merge.action')}
+                        aria-label={t('suggestions.merge.action')}
+                        data-testid="suggestion-merge"
+                        className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50"
+                      >
+                        <Merge size={14} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAccept([s.id])}
+                        disabled={busy}
+                        title={t('suggestions.accept')}
+                        aria-label={t('suggestions.accept')}
+                        className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50"
+                      >
+                        <Check size={14} />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDismiss([s.id])}
                       disabled={busy}
@@ -889,6 +975,18 @@ export function SuggestionsPanel() {
             </li>
           )}
         </ul>
+      )}
+
+      {merging && merging.elementIds.every((id) => elementById.has(id)) && (
+        <MergeElementsModal
+          isOpen={true}
+          onClose={() => setMerging(null)}
+          elements={merging.elementIds.map((id) => elementById.get(id)!)}
+          onMerge={async (targetId, [sourceId]) => {
+            await merge(merging.id, targetId, sourceId);
+            clearHighlight();
+          }}
+        />
       )}
     </div>
   );

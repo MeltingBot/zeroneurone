@@ -523,6 +523,25 @@
       "isolated": "Isolated",
       "similar": "Similar"
     },
+    "roles": {
+      "title": "Roles",
+      "soleConnector": "{{x}} is the only link between {{groups}}",
+      "bridgeLink": "The link {{x}} – {{y}} is the only way between {{groups}}",
+      "cutOff": "{{x}} is the only access to {{count}} elements, including {{y}}",
+      "cutOffNamed": "{{x}} is the only access to {{names}}",
+      "broker": "{{x}} connects {{groups}}",
+      "group": "the group of {{lead}} ({{size}})",
+      "target": "Report section",
+      "newSection": "New section",
+      "addAll": "Add all ({{count}})",
+      "addToReport": "Add to report",
+      "sectionTitle": "Structural roles",
+      "analyzedOn": "Analysis of {{date}}",
+      "added": "Added to report: {{section}}",
+      "addFailed": "Could not add to report",
+      "search": "Search a name",
+      "clearSearch": "Clear"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Groups of strongly connected elements",
@@ -567,20 +586,6 @@
       "hideAll": "Hide all",
       "showAll": "Show all"
     },
-    "similar": {
-      "title": "Potential duplicates",
-      "mode": {
-        "fuzzy": "Broad",
-        "exact": "Strict",
-        "fuzzyDesc": "Close names, typos included",
-        "exactDesc": "Same name, case and number writing aside"
-      },
-      "description": "Elements with similar names",
-      "count": "{{count}} similar pair(s)",
-      "noSimilar": "No similar labels",
-      "select": "Select",
-      "merge": "Merge"
-    },
     "paths": {
       "title": "Path finder",
       "button": "Find a path between two elements",
@@ -593,7 +598,26 @@
       "maxDepth": "Max depth",
       "highlightThisPath": "Highlight this path",
       "noPath": "No path found between these elements",
-      "pathLength": "{{count}} step(s)"
+      "pathLength": "{{count}} step(s)",
+      "blockedByConstraints": "Path excluded by the constraints",
+      "constraints": {
+        "title": "Constraints",
+        "reset": "Clear constraints",
+        "include": "Include",
+        "exclude": "Exclude",
+        "labels": "Labels",
+        "tags": "Tags",
+        "period": "Period",
+        "periodStart": "Start",
+        "periodEnd": "End",
+        "keepUndated": "Keep undated links",
+        "minConfidence": "Minimum confidence",
+        "evaluationAtLeast": "This code or better",
+        "keepUngraded": "Keep ungraded links",
+        "keepNoConfidence": "Keep links without confidence",
+        "respectDirection": "Follow link direction",
+        "applied": "constraints applied"
+      }
     },
     "cycles": {
       "button": "Detect cycles",
@@ -802,7 +826,9 @@
       "zones": "Zones",
       "valuesHint": "Same value under the same property (phone, IBAN…)",
       "sourcesHint": "Same attached file or cited web page",
-      "zonesHint": "Point or small zone inside a larger zone"
+      "zonesHint": "Point or small zone inside a larger zone",
+      "duplicates": "Duplicates",
+      "duplicatesHint": "Same phone, IBAN, plate or email, or close names"
     },
     "keys": {
       "all": "all",
@@ -810,6 +836,35 @@
       "search": "Filter",
       "selectAll": "All",
       "selectNone": "None"
+    },
+    "merge": {
+      "action": "Merge",
+      "threshold": "Minimum level",
+      "kind": {
+        "phone": "phone",
+        "iban": "IBAN",
+        "plate": "plate",
+        "email": "email"
+      },
+      "reason": {
+        "sameIdentifier": "Same {{kind}}: {{value}}",
+        "sameName": "Same name",
+        "phonetic": "Sounds the same",
+        "similarName": "Close names ({{value}} %)",
+        "sharedTags": "Shared tags: {{count}}",
+        "conflict": "{{kind}}: different values",
+        "differentNumbers": "Different numbers"
+      },
+      "level": {
+        "veryLikely": "Very likely",
+        "likely": "Likely",
+        "possible": "Possible"
+      },
+      "minLevel": {
+        "possible": "All",
+        "likely": "Likely and very likely",
+        "veryLikely": "Very likely only"
+      }
     }
   }
 }
