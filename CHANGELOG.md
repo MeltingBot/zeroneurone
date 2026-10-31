@@ -1,5 +1,59 @@
 # Changelog
 
+## 2.87.0
+
+### Chemins contraints
+
+- **Plusieurs chemins, filtrés** — « Tous les chemins » donne les 200 plus
+  courts sans boucle (algorithme de Yen). Un bloc **Contraintes** les limite :
+  libellés et tags des liens (inclure ou exclure), période, confiance ou
+  cotation minimale (Europol, Admiralty), sens des liens. Un lien non daté
+  ou non coté passe ou non, au choix.
+- « Chemin exclu par les contraintes » quand un chemin existe sans elles ;
+  « contraintes appliquées » en tête d'un résultat filtré. Contraintes
+  mémorisées par dossier ; le clic droit cherche toujours sans contraintes.
+- Seuls les liens empruntés s'allument ; tirets animés seulement quand le
+  sens est respecté. Un résultat vide efface le surlignage précédent.
+
+### Rôles structurels
+
+- **Section Rôles** en tête des Analyses : qui tient le réseau, en phrases.
+  « X est le seul lien entre le groupe de A et le groupe de B », « Le lien
+  X – Y est le seul passage entre… », « X est le seul accès à N éléments,
+  dont Y » (jusqu'à trois éléments, tous nommés), « X fait le lien entre… ».
+  Clic sur une phrase : l'élément et les groupes s'allument. Recherche par
+  nom au-delà de dix phrases.
+- **Ajout au rapport** — une phrase ou toutes, dans une nouvelle section
+  « Rôles structurels » ou une section existante ; noms en références
+  cliquables, date de l'analyse en tête.
+- Groupes (Louvain) reproductibles : même graphe, mêmes groupes, quel que
+  soit l'ordre des éléments.
+
+### Doublons
+
+- **Règle Doublons** dans Suggestions : paires à fusionner, avec un niveau
+  (très probable, probable, possible) tiré des preuves et leurs raisons :
+  même téléphone (format international, numéros étrangers compris), IBAN à
+  clé valide, plaque, e-mail ; même nom à l'ordre des mots près ; même
+  prononciation (clé phonétique française) ; noms proches. Deux numéros
+  différents ou deux nombres différents dans les noms font descendre d'un
+  niveau. Cherchés dans tout le dossier, proposés dès qu'un des deux
+  éléments est affiché.
+- Fusion par la fenêtre de fusion, annulable ; une paire écartée ne revient
+  pas (partagé en collaboration, suit l'export).
+- Un élément-numéro n'est jamais proposé en doublon de la fiche qui porte ce
+  numéro : la règle Propriétés propose de les relier.
+- La section « Doublons potentiels » et le compteur « doublons » des
+  Analyses sont retirés.
+
+### Interface
+
+- **Filtres** — les éléments masqués sont listés en haut du panneau.
+- Clic droit sur le canvas : « Afficher les masqués (N) ».
+- Onglets du panneau latéral : ils ne se chevauchent plus quand le panneau
+  est étroit ; la rangée défile.
+- Réglages des suggestions alignés : une règle à réglage par ligne.
+
 ## 2.86.7
 
 ### Sécurité et données
