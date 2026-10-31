@@ -523,6 +523,25 @@
       "isolated": "Isolated",
       "similar": "Similar"
     },
+    "roles": {
+      "title": "Roles",
+      "soleConnector": "{{x}} is the only link between {{groups}}",
+      "bridgeLink": "The link {{x}} – {{y}} is the only way between {{groups}}",
+      "cutOff": "{{x}} is the only access to {{count}} elements, including {{y}}",
+      "cutOffNamed": "{{x}} is the only access to {{names}}",
+      "broker": "{{x}} connects {{groups}}",
+      "group": "the group of {{lead}} ({{size}})",
+      "target": "Report section",
+      "newSection": "New section",
+      "addAll": "Add all ({{count}})",
+      "addToReport": "Add to report",
+      "sectionTitle": "Structural roles",
+      "analyzedOn": "Analysis of {{date}}",
+      "added": "Added to report: {{section}}",
+      "addFailed": "Could not add to report",
+      "search": "Search a name",
+      "clearSearch": "Clear"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Groups of strongly connected elements",
@@ -593,7 +612,26 @@
       "maxDepth": "Max depth",
       "highlightThisPath": "Highlight this path",
       "noPath": "No path found between these elements",
-      "pathLength": "{{count}} step(s)"
+      "pathLength": "{{count}} step(s)",
+      "blockedByConstraints": "Path excluded by the constraints",
+      "constraints": {
+        "title": "Constraints",
+        "reset": "Clear constraints",
+        "include": "Include",
+        "exclude": "Exclude",
+        "labels": "Labels",
+        "tags": "Tags",
+        "period": "Period",
+        "periodStart": "Start",
+        "periodEnd": "End",
+        "keepUndated": "Keep undated links",
+        "minConfidence": "Minimum confidence",
+        "evaluationAtLeast": "This code or better",
+        "keepUngraded": "Keep ungraded links",
+        "keepNoConfidence": "Keep links without confidence",
+        "respectDirection": "Follow link direction",
+        "applied": "constraints applied"
+      }
     },
     "cycles": {
       "button": "Detect cycles",

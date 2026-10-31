@@ -523,6 +523,25 @@
       "isolated": "Isoliert",
       "similar": "Ähnlich"
     },
+    "roles": {
+      "title": "Rollen",
+      "soleConnector": "{{x}} ist die einzige Verbindung zwischen {{groups}}",
+      "bridgeLink": "Die Verbindung {{x}} – {{y}} ist der einzige Weg zwischen {{groups}}",
+      "cutOff": "{{x}} ist der einzige Zugang zu {{count}} Elementen, darunter {{y}}",
+      "cutOffNamed": "{{x}} ist der einzige Zugang zu {{names}}",
+      "broker": "{{x}} verbindet {{groups}}",
+      "group": "der Gruppe um {{lead}} ({{size}})",
+      "target": "Berichtsabschnitt",
+      "newSection": "Neuer Abschnitt",
+      "addAll": "Alle hinzufügen ({{count}})",
+      "addToReport": "Zum Bericht hinzufügen",
+      "sectionTitle": "Strukturelle Rollen",
+      "analyzedOn": "Analyse vom {{date}}",
+      "added": "Zum Bericht hinzugefügt: {{section}}",
+      "addFailed": "Hinzufügen zum Bericht fehlgeschlagen",
+      "search": "Namen suchen",
+      "clearSearch": "Löschen"
+    },
     "clusters": {
       "title": "Cluster",
       "description": "Gruppen stark verbundener Elemente",
@@ -593,7 +612,26 @@
       "maxDepth": "Max. Tiefe",
       "highlightThisPath": "Diesen Pfad hervorheben",
       "noPath": "Kein Pfad zwischen diesen Elementen gefunden",
-      "pathLength": "{{count}} Schritt(e)"
+      "pathLength": "{{count}} Schritt(e)",
+      "blockedByConstraints": "Pfad durch die Einschränkungen ausgeschlossen",
+      "constraints": {
+        "title": "Einschränkungen",
+        "reset": "Einschränkungen entfernen",
+        "include": "Einschließen",
+        "exclude": "Ausschließen",
+        "labels": "Beschriftungen",
+        "tags": "Tags",
+        "period": "Zeitraum",
+        "periodStart": "Beginn",
+        "periodEnd": "Ende",
+        "keepUndated": "Undatierte Verbindungen behalten",
+        "minConfidence": "Mindestvertrauen",
+        "evaluationAtLeast": "Dieser Code oder besser",
+        "keepUngraded": "Unbewertete Verbindungen behalten",
+        "keepNoConfidence": "Verbindungen ohne Vertrauen behalten",
+        "respectDirection": "Richtung der Verbindungen beachten",
+        "applied": "Einschränkungen angewendet"
+      }
     },
     "cycles": {
       "button": "Zyklen erkennen",

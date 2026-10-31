@@ -523,6 +523,25 @@
       "isolated": "Aislados",
       "similar": "Similares"
     },
+    "roles": {
+      "title": "Roles",
+      "soleConnector": "{{x}} es el único vínculo entre {{groups}}",
+      "bridgeLink": "El vínculo {{x}} – {{y}} es el único paso entre {{groups}}",
+      "cutOff": "{{x}} es el único acceso a {{count}} elementos, entre ellos {{y}}",
+      "cutOffNamed": "{{x}} es el único acceso a {{names}}",
+      "broker": "{{x}} conecta {{groups}}",
+      "group": "el grupo de {{lead}} ({{size}})",
+      "target": "Sección del informe",
+      "newSection": "Nueva sección",
+      "addAll": "Añadir todo ({{count}})",
+      "addToReport": "Añadir al informe",
+      "sectionTitle": "Roles estructurales",
+      "analyzedOn": "Análisis del {{date}}",
+      "added": "Añadido al informe: {{section}}",
+      "addFailed": "No se pudo añadir al informe",
+      "search": "Buscar un nombre",
+      "clearSearch": "Borrar"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Grupos de elementos fuertemente conectados",
@@ -593,7 +612,26 @@
       "maxDepth": "Profundidad máx.",
       "highlightThisPath": "Resaltar esta ruta",
       "noPath": "Sin camino encontrado entre estos elementos",
-      "pathLength": "{{count}} paso(s)"
+      "pathLength": "{{count}} paso(s)",
+      "blockedByConstraints": "Camino excluido por las restricciones",
+      "constraints": {
+        "title": "Restricciones",
+        "reset": "Quitar las restricciones",
+        "include": "Incluir",
+        "exclude": "Excluir",
+        "labels": "Etiquetas de vínculo",
+        "tags": "Tags",
+        "period": "Periodo",
+        "periodStart": "Inicio",
+        "periodEnd": "Fin",
+        "keepUndated": "Conservar los vínculos sin fecha",
+        "minConfidence": "Confianza mínima",
+        "evaluationAtLeast": "Este código o mejor",
+        "keepUngraded": "Conservar los vínculos sin evaluar",
+        "keepNoConfidence": "Conservar los vínculos sin confianza",
+        "respectDirection": "Respetar el sentido de los vínculos",
+        "applied": "restricciones aplicadas"
+      }
     },
     "cycles": {
       "button": "Detectar ciclos",

@@ -1,12 +1,12 @@
 import Graph from 'graphology';
-import louvain from 'graphology-communities-louvain';
-import { bidirectional } from 'graphology-shortest-path';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
-import type { Element, Link, ElementId, LinkId, Cluster, CentralityResult, SimilarPair } from '../types';
+import type { Element, Link, ElementId, LinkId, Cluster, CentralityResult, SimilarPair, EvaluationModel } from '../types';
 import {
   findArticulationPoints,
   detectSimilarLabels as detectSimilarLabelsShared,
 } from './graph/algorithms';
+import { findConstrainedPaths, type PathConstraints } from './graph/constrainedPaths';
+import { computeCommunities, computeStructuralRoles, type StructuralRoles } from './graph/structuralRoles';
 
 export interface InsightsResult {
   clusters: Cluster[];
@@ -14,12 +14,30 @@ export interface InsightsResult {
   bridges: ElementId[];
   isolated: ElementId[];
   similarLabels: SimilarPair[];
+  roles: StructuralRoles;
   computedAt: Date;
 }
 
 export interface PathResult {
   path: ElementId[];
   length: number;
+  /** steps[i]: the links walkable between path[i] and path[i + 1] */
+  steps: CycleLink[][];
+}
+
+export interface PathSearchOptions {
+  /** Number of paths, shortest first */
+  k: number;
+  /** Maximum number of steps of a path */
+  maxDepth: number;
+  constraints?: PathConstraints | null;
+  model?: EvaluationModel;
+}
+
+export interface PathSearchResult {
+  paths: PathResult[];
+  /** No path through the admitted links, but one when the constraints are dropped */
+  blockedByConstraints: boolean;
 }
 
 /** A link a cycle goes through, and the way it is walked. */
@@ -41,12 +59,14 @@ export interface CycleResult {
 class InsightsService {
   private graph: Graph | null = null;
   private elements: Element[] = [];
+  private links: Link[] = [];
 
   /**
    * Build the graph from elements and links
    */
   buildGraph(elements: Element[], links: Link[]): void {
     this.elements = elements;
+    this.links = links;
     this.graph = new Graph({ type: 'undirected', multi: true });
 
     // Add nodes (exclude visual groups - they're containers, not graph nodes)
@@ -77,16 +97,20 @@ class InsightsService {
         bridges: [],
         isolated: [],
         similarLabels: [],
+        roles: { facts: [], clusterLeads: {} },
         computedAt: new Date(),
       };
     }
 
+    const betweenness = this.getBetweenness();
+    const clusters = this.getClusters();
     return {
-      clusters: this.getClusters(),
-      centrality: this.getCentrality(),
+      clusters,
+      centrality: this.getCentrality(betweenness),
       bridges: this.getBridges(),
       isolated: this.getIsolated(),
       similarLabels: this.detectSimilarLabels(),
+      roles: computeStructuralRoles(this.graph, clusters, betweenness),
       computedAt: new Date(),
     };
   }
@@ -96,50 +120,25 @@ class InsightsService {
    */
   getClusters(): Cluster[] {
     if (!this.graph || this.graph.order === 0) return [];
+    // Seeded, as in the worker: the fallback finds the same groups
+    return computeCommunities(this.graph);
+  }
 
+  /** Normalized betweenness of each node (empty on graphs it cannot measure) */
+  getBetweenness(): Record<string, number> {
+    if (!this.graph || this.graph.order === 0) return {};
     try {
-      // Run Louvain algorithm
-      const communities = louvain(this.graph);
-
-      // Group nodes by community
-      const clusterMap = new Map<number, ElementId[]>();
-
-      for (const [nodeId, communityId] of Object.entries(communities)) {
-        const existing = clusterMap.get(communityId) || [];
-        existing.push(nodeId);
-        clusterMap.set(communityId, existing);
-      }
-
-      // Convert to Cluster array
-      const clusters: Cluster[] = [];
-      let id = 0;
-      for (const [, elementIds] of clusterMap) {
-        if (elementIds.length > 1) {
-          clusters.push({
-            id: id++,
-            elementIds,
-            size: elementIds.length,
-          });
-        }
-      }
-
-      // Sort by size descending
-      return clusters.sort((a, b) => b.size - a.size);
+      return betweennessCentrality(this.graph, { normalized: true });
     } catch {
-      return [];
+      return {};
     }
   }
 
   /**
    * Calculate degree + betweenness centrality for each node
    */
-  getCentrality(): CentralityResult[] {
+  getCentrality(betweennessMap: Record<string, number> = this.getBetweenness()): CentralityResult[] {
     if (!this.graph || this.graph.order === 0) return [];
-
-    let betweennessMap: Record<string, number> = {};
-    try {
-      betweennessMap = betweennessCentrality(this.graph, { normalized: true });
-    } catch { /* empty */ }
 
     const results: CentralityResult[] = [];
     const maxDegree = Math.max(1, this.graph.order - 1);
@@ -194,83 +193,43 @@ class InsightsService {
   }
 
   /**
-   * Find shortest paths between two elements
+   * The k shortest loopless paths between two elements through the links the
+   * constraints admit (label, tag, period, confidence or grading, direction).
    */
+  searchPaths(fromId: ElementId, toId: ElementId, options: PathSearchOptions): PathSearchResult {
+    if (!this.graph || !this.graph.hasNode(fromId) || !this.graph.hasNode(toId) || fromId === toId) {
+      return { paths: [], blockedByConstraints: false };
+    }
+    const linkById = new Map(this.links.map((l) => [l.id, l]));
+    const result = findConstrainedPaths(this.elements, this.links, fromId, toId, {
+      k: options.k,
+      maxDepth: options.maxDepth,
+      constraints: options.constraints,
+      model: options.model ?? 'zeroneurone',
+    });
+    return {
+      blockedByConstraints: result.blockedByConstraints,
+      paths: result.paths.map((p) => ({
+        path: p.path,
+        length: p.length,
+        steps: p.linkIds.map((ids, i) =>
+          ids.map((linkId) => ({ linkId, forward: linkById.get(linkId)?.fromId === p.path[i] })),
+        ),
+      })),
+    };
+  }
+
+  /** Shortest path between two elements (none when unreachable) */
   findPaths(fromId: ElementId, toId: ElementId): PathResult[] {
-    if (!this.graph) return [];
-
-    // Check if both nodes exist
-    if (!this.graph.hasNode(fromId) || !this.graph.hasNode(toId)) {
-      return [];
-    }
-
-    try {
-      // Find shortest path
-      const path = bidirectional(this.graph, fromId, toId);
-
-      if (path) {
-        return [
-          {
-            path,
-            length: path.length - 1,
-          },
-        ];
-      }
-
-      return [];
-    } catch {
-      return [];
-    }
+    return this.searchPaths(fromId, toId, { k: 1, maxDepth: Number.MAX_SAFE_INTEGER }).paths;
   }
 
   /**
-   * Enumerate all simple paths (no repeated node) between two elements, bounded
-   * by a maximum number of edges (`maxDepth`) and capped in count (`maxPaths`)
-   * to avoid combinatorial explosion on dense graphs. Results are sorted by
-   * length (shortest first). Traversal is undirected, like {@link findPaths}.
+   * Simple paths (no repeated node) between two elements, at most `maxDepth`
+   * edges long and `maxPaths` in number, shortest first. Undirected.
    */
-  findAllPaths(
-    fromId: ElementId,
-    toId: ElementId,
-    maxDepth = 5,
-    maxPaths = 200
-  ): PathResult[] {
-    if (!this.graph) return [];
-    const graph = this.graph;
-    if (!graph.hasNode(fromId) || !graph.hasNode(toId) || fromId === toId) {
-      return [];
-    }
-
-    const results: PathResult[] = [];
-    const visited = new Set<ElementId>();
-    const stack: ElementId[] = [];
-
-    const dfs = (node: ElementId): void => {
-      if (results.length >= maxPaths) return;
-      visited.add(node);
-      stack.push(node);
-
-      if (node === toId) {
-        // Reached target (stack has at least 2 nodes since fromId !== toId).
-        results.push({ path: [...stack], length: stack.length - 1 });
-      } else if (stack.length - 1 < maxDepth) {
-        graph.forEachNeighbor(node, (neighbor: string) => {
-          if (results.length >= maxPaths) return;
-          if (!visited.has(neighbor)) dfs(neighbor);
-        });
-      }
-
-      stack.pop();
-      visited.delete(node);
-    };
-
-    try {
-      dfs(fromId);
-    } catch {
-      return results.sort((a, b) => a.length - b.length);
-    }
-
-    return results.sort((a, b) => a.length - b.length);
+  findAllPaths(fromId: ElementId, toId: ElementId, maxDepth = 5, maxPaths = 200): PathResult[] {
+    return this.searchPaths(fromId, toId, { k: maxPaths, maxDepth }).paths;
   }
 
   /**

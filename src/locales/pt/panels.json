@@ -523,6 +523,25 @@
       "isolated": "Isolados",
       "similar": "Semelhantes"
     },
+    "roles": {
+      "title": "Papéis",
+      "soleConnector": "{{x}} é a única ligação entre {{groups}}",
+      "bridgeLink": "A ligação {{x}} – {{y}} é a única passagem entre {{groups}}",
+      "cutOff": "{{x}} é o único acesso a {{count}} elementos, incluindo {{y}}",
+      "cutOffNamed": "{{x}} é o único acesso a {{names}}",
+      "broker": "{{x}} liga {{groups}}",
+      "group": "o grupo de {{lead}} ({{size}})",
+      "target": "Secção do relatório",
+      "newSection": "Nova secção",
+      "addAll": "Adicionar tudo ({{count}})",
+      "addToReport": "Adicionar ao relatório",
+      "sectionTitle": "Papéis estruturais",
+      "analyzedOn": "Análise de {{date}}",
+      "added": "Adicionado ao relatório: {{section}}",
+      "addFailed": "Não foi possível adicionar ao relatório",
+      "search": "Procurar um nome",
+      "clearSearch": "Limpar"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Grupos de elementos fortemente conectados",
@@ -593,7 +612,26 @@
       "maxDepth": "Profundidade máx.",
       "highlightThisPath": "Realçar este caminho",
       "noPath": "Nenhum caminho encontrado entre estes elementos",
-      "pathLength": "{{count}} passo(s)"
+      "pathLength": "{{count}} passo(s)",
+      "blockedByConstraints": "Caminho excluído pelas restrições",
+      "constraints": {
+        "title": "Restrições",
+        "reset": "Remover as restrições",
+        "include": "Incluir",
+        "exclude": "Excluir",
+        "labels": "Rótulos",
+        "tags": "Tags",
+        "period": "Período",
+        "periodStart": "Início",
+        "periodEnd": "Fim",
+        "keepUndated": "Manter as ligações sem data",
+        "minConfidence": "Confiança mínima",
+        "evaluationAtLeast": "Este código ou melhor",
+        "keepUngraded": "Manter as ligações não avaliadas",
+        "keepNoConfidence": "Manter as ligações sem confiança",
+        "respectDirection": "Respeitar o sentido das ligações",
+        "applied": "restrições aplicadas"
+      }
     },
     "cycles": {
       "button": "Detetar ciclos",

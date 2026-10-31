@@ -21,6 +21,7 @@ import {
   Search,
   Group,
   Ungroup,
+  Waypoints,
 } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore, useUIStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
@@ -35,10 +36,27 @@ import { useProgressStore } from '../../stores/progressStore';
 import { dateLocale } from '../../utils/dates';
 import { revealElement, revealElements } from '../../utils/revealElement';
 import { groupElements } from '../../utils/groupElements';
+import { getEvaluationModel } from '../../utils/evaluation';
+import { PathConstraintsEditor } from './insights/PathConstraintsEditor';
+import { RolesSection } from './insights/RolesSection';
+import { readPathConstraints, writePathConstraints } from '../../utils/pathConstraintsStorage';
+import type { PathConstraints } from '../../services/graph/constrainedPaths';
+
+/** Says a path result went through the constraints, so a missing path is read as such */
+function ConstrainedMark() {
+  const { t } = useTranslation('panels');
+  return (
+    <span className="ml-1.5 font-normal text-text-secondary" data-testid="path-constrained">
+      · {t('insights.paths.constraints.applied')}
+    </span>
+  );
+}
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
   const { elements, links, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
+  const dossierId = useDossierStore((s) => s.currentDossier?.id ?? null);
+  const evaluationModel = useDossierStore((s) => getEvaluationModel(s.currentDossier));
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore(useShallow((s) => ({ hideElements: s.hideElements, hiddenElementIds: s.hiddenElementIds, showElement: s.showElement, setFilters: s.setFilters, clearFilters: s.clearFilters })));
@@ -48,6 +66,7 @@ export function InsightsPanel() {
     bridges,
     isolated,
     similarLabels,
+    structuralRoles,
     computedAt,
     isComputing,
     highlightType,
@@ -56,6 +75,8 @@ export function InsightsPanel() {
     pathFromId,
     pathToId,
     pathSearchMode,
+    pathBlockedByConstraints,
+    pathConstrained,
     computeInsights,
     highlightCluster,
     highlightCentralElement,
@@ -85,7 +106,7 @@ export function InsightsPanel() {
 
   // Local state for expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['clusters', 'centrality'])
+    new Set(['roles', 'clusters', 'centrality'])
   );
 
   // Path finding state
@@ -97,6 +118,14 @@ export function InsightsPanel() {
   // All-paths mode: enumerate every simple path (bounded depth) instead of the shortest
   const [allPathsMode, setAllPathsMode] = useState(false);
   const [pathMaxDepth, setPathMaxDepth] = useState(5);
+  // Constraints of the searches run from this panel, kept per dossier. The
+  // context menu searches without them: its result is never silently narrowed.
+  const [pathConstraints, setPathConstraints] = useState<PathConstraints>(() => readPathConstraints(dossierId));
+  const [constraintsDossierId, setConstraintsDossierId] = useState(dossierId);
+  if (constraintsDossierId !== dossierId) {
+    setConstraintsDossierId(dossierId);
+    setPathConstraints(readPathConstraints(dossierId));
+  }
   // Cycle detection
   const [cycleMode, setCycleMode] = useState(false);
   /** Row of the element picked in the cycle list (an element can sit in several cycles) */
@@ -437,14 +466,33 @@ export function InsightsPanel() {
 
   // Run shortest-path or all-paths search depending on the active mode.
   const runPathSearch = useCallback(
-    (fromId: string, toId: string) => {
-      if (allPathsMode) {
-        findAllPaths(fromId, toId, pathMaxDepth);
+    (fromId: string, toId: string, overrides: { all?: boolean; depth?: number; constraints?: PathConstraints } = {}) => {
+      const options = { constraints: overrides.constraints ?? pathConstraints, model: evaluationModel };
+      if (overrides.all ?? allPathsMode) {
+        findAllPaths(fromId, toId, overrides.depth ?? pathMaxDepth, options);
       } else {
-        findPaths(fromId, toId);
+        findPaths(fromId, toId, options);
       }
     },
-    [allPathsMode, pathMaxDepth, findAllPaths, findPaths]
+    [allPathsMode, pathMaxDepth, findAllPaths, findPaths, pathConstraints, evaluationModel]
+  );
+
+  // Re-run on the user's own changes only (mode, depth, constraints): a search
+  // adopted from the context menu stays as it was run, without the constraints.
+  const rerunPathSearch = useCallback(
+    (overrides: { all?: boolean; depth?: number; constraints?: PathConstraints }) => {
+      if (pathFrom && pathTo) runPathSearch(pathFrom, pathTo, overrides);
+    },
+    [pathFrom, pathTo, runPathSearch]
+  );
+
+  const handlePathConstraintsChange = useCallback(
+    (constraints: PathConstraints) => {
+      setPathConstraints(constraints);
+      writePathConstraints(dossierId, constraints);
+      rerunPathSearch({ constraints });
+    },
+    [dossierId, rerunPathSearch]
   );
 
   const handleSelectPathElement = useCallback(
@@ -458,14 +506,6 @@ export function InsightsPanel() {
     },
     [pathFrom, pathTo, runPathSearch]
   );
-
-  // Re-run the search when the mode or depth changes and both endpoints are set.
-  useEffect(() => {
-    if (pathFrom && pathTo) {
-      runPathSearch(pathFrom, pathTo);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allPathsMode, pathMaxDepth]);
 
   // Reflect a path search triggered from outside the panel (e.g. the canvas
   // context menu): open the path UI with the right mode and endpoints so the
@@ -507,7 +547,8 @@ export function InsightsPanel() {
     centrality.length > 0 ||
     bridges.length > 0 ||
     isolated.length > 0 ||
-    similarLabels.length > 0;
+    similarLabels.length > 0 ||
+    structuralRoles.facts.length > 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -616,7 +657,10 @@ export function InsightsPanel() {
                     <input
                       type="checkbox"
                       checked={allPathsMode}
-                      onChange={(e) => setAllPathsMode(e.target.checked)}
+                      onChange={(e) => {
+                        setAllPathsMode(e.target.checked);
+                        rerunPathSearch({ all: e.target.checked });
+                      }}
                       className="accent-accent"
                     />
                     {t('insights.paths.allPaths')}
@@ -629,20 +673,30 @@ export function InsightsPanel() {
                         min={1}
                         max={8}
                         value={pathMaxDepth}
-                        onChange={(e) =>
-                          setPathMaxDepth(Math.max(1, Math.min(8, Number(e.target.value) || 1)))
-                        }
+                        onChange={(e) => {
+                          const depth = Math.max(1, Math.min(8, Number(e.target.value) || 1));
+                          setPathMaxDepth(depth);
+                          rerunPathSearch({ depth });
+                        }}
                         className="w-12 px-1 py-0.5 rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
                       />
                     </label>
                   )}
                 </div>
 
+                <PathConstraintsEditor
+                  constraints={pathConstraints}
+                  onChange={handlePathConstraintsChange}
+                  links={analyzed.links}
+                  model={evaluationModel}
+                />
+
                 {/* Path results — all-paths mode: list every route (click to highlight) */}
                 {pathResults.length > 0 && allPathsMode && (
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded space-y-1">
                     <div className="text-xs text-accent font-medium mb-1">
                       {t('insights.paths.pathsFound', { count: pathResults.length })}
+                      {pathConstrained && <ConstrainedMark />}
                     </div>
                     <div className="max-h-40 overflow-y-auto space-y-1">
                       {pathResults.map((result, pathIdx) => (
@@ -676,6 +730,7 @@ export function InsightsPanel() {
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded">
                     <div className="text-xs text-accent font-medium mb-1">
                       {t('insights.paths.pathFound', { count: pathResults[0].length })}
+                      {pathConstrained && <ConstrainedMark />}
                     </div>
                     <div className="flex flex-wrap items-center gap-1 text-xs text-text-secondary">
                       {pathResults[0].path.map((nodeId, idx) => (
@@ -698,7 +753,8 @@ export function InsightsPanel() {
                 {pathFrom && pathTo && pathResults.length === 0 && (
                   <div className="mt-2 p-2 bg-warning/10 border border-warning/30 rounded">
                     <div className="text-xs text-warning">
-                      {t('insights.paths.noPath')}
+                      {t(pathBlockedByConstraints ? 'insights.paths.blockedByConstraints' : 'insights.paths.noPath')}
+                      {pathConstrained && !pathBlockedByConstraints && <ConstrainedMark />}
                     </div>
                   </div>
                 )}
@@ -814,6 +870,28 @@ export function InsightsPanel() {
         {/* Insights sections */}
         {hasInsights && !isComputing && (
           <div className="divide-y divide-border-default">
+            {/* Structural roles, in sentences */}
+            {structuralRoles.facts.length > 0 && (
+              <InsightSection
+                id="roles"
+                title={t('insights.roles.title')}
+                icon={<Waypoints size={12} />}
+                count={structuralRoles.facts.length}
+                isExpanded={expandedSections.has('roles')}
+                onToggle={() => toggleSection('roles')}
+              >
+                {/* A new analysis starts with no sentence picked */}
+                <RolesSection
+                  key={computedAt?.getTime() ?? 0}
+                  roles={structuralRoles}
+                  clusters={clusters}
+                  elements={elements}
+                  computedAt={computedAt}
+                  dossierId={dossierId}
+                />
+              </InsightSection>
+            )}
+
             {/* Clusters */}
             {clusters.length > 0 && (
               <InsightSection

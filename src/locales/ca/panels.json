@@ -523,6 +523,25 @@
       "isolated": "Aïllats",
       "similar": "Similars"
     },
+    "roles": {
+      "title": "Rols",
+      "soleConnector": "{{x}} és l'únic vincle entre {{groups}}",
+      "bridgeLink": "El vincle {{x}} – {{y}} és l'únic pas entre {{groups}}",
+      "cutOff": "{{x}} és l'únic accés a {{count}} elements, entre ells {{y}}",
+      "cutOffNamed": "{{x}} és l'únic accés a {{names}}",
+      "broker": "{{x}} connecta {{groups}}",
+      "group": "el grup de {{lead}} ({{size}})",
+      "target": "Secció de l'informe",
+      "newSection": "Secció nova",
+      "addAll": "Afegeix-ho tot ({{count}})",
+      "addToReport": "Afegeix a l'informe",
+      "sectionTitle": "Rols estructurals",
+      "analyzedOn": "Anàlisi del {{date}}",
+      "added": "Afegit a l'informe: {{section}}",
+      "addFailed": "No s'ha pogut afegir a l'informe",
+      "search": "Cerca un nom",
+      "clearSearch": "Esborra"
+    },
     "clusters": {
       "title": "Clústers",
       "description": "Grups d'elements fortament connectats",
@@ -593,7 +612,26 @@
       "maxDepth": "Profunditat màx.",
       "highlightThisPath": "Ressaltar aquest camí",
       "noPath": "Cap camí trobat entre aquests elements",
-      "pathLength": "{{count}} pas(sos)"
+      "pathLength": "{{count}} pas(sos)",
+      "blockedByConstraints": "Camí exclòs per les restriccions",
+      "constraints": {
+        "title": "Restriccions",
+        "reset": "Treu les restriccions",
+        "include": "Inclou",
+        "exclude": "Exclou",
+        "labels": "Etiquetes",
+        "tags": "Tags",
+        "period": "Període",
+        "periodStart": "Inici",
+        "periodEnd": "Fi",
+        "keepUndated": "Conserva els vincles sense data",
+        "minConfidence": "Confiança mínima",
+        "evaluationAtLeast": "Aquest codi o millor",
+        "keepUngraded": "Conserva els vincles sense avaluar",
+        "keepNoConfidence": "Conserva els vincles sense confiança",
+        "respectDirection": "Respecta el sentit dels vincles",
+        "applied": "restriccions aplicades"
+      }
     },
     "cycles": {
       "button": "Detectar cicles",

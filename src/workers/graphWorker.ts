@@ -7,9 +7,9 @@
  */
 
 import Graph from 'graphology';
-import louvain from 'graphology-communities-louvain';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import { findArticulationPoints, detectSimilarLabels } from '../services/graph/algorithms';
+import { computeCommunities, computeStructuralRoles, type StructuralRoles } from '../services/graph/structuralRoles';
 import { computeLayout, type LayoutNode, type LayoutEdge, type LayoutOptions } from '../services/graph/layouts';
 
 // ============================================================================
@@ -25,6 +25,7 @@ interface InsightsData {
   bridges: string[];
   isolated: string[];
   similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
+  roles: StructuralRoles;
 }
 
 // Every request carries an id, echoed by its responses (progress included),
@@ -73,30 +74,14 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
   const graph = buildGraph(elements, links);
 
   if (graph.order === 0) {
-    return { clusters: [], centrality: [], bridges: [], isolated: [], similarLabels: [] };
+    return { clusters: [], centrality: [], bridges: [], isolated: [], similarLabels: [], roles: { facts: [], clusterLeads: {} } };
   }
 
   // Report progress
   postProgress(10, 'clusters');
 
-  // Clusters (Louvain)
-  const clusters: InsightsData['clusters'] = [];
-  try {
-    const communities = louvain(graph);
-    const clusterMap = new Map<number, string[]>();
-    for (const [nodeId, communityId] of Object.entries(communities)) {
-      const existing = clusterMap.get(communityId) || [];
-      existing.push(nodeId);
-      clusterMap.set(communityId, existing);
-    }
-    let id = 0;
-    for (const [, elementIds] of clusterMap) {
-      if (elementIds.length > 1) {
-        clusters.push({ id: id++, elementIds, size: elementIds.length });
-      }
-    }
-    clusters.sort((a, b) => b.size - a.size);
-  } catch { /* empty */ }
+  // Clusters (Louvain, seeded: the same graph gives the same groups)
+  const clusters: InsightsData['clusters'] = computeCommunities(graph);
 
   postProgress(25, 'centrality');
 
@@ -140,6 +125,11 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
     }
   });
 
+  postProgress(75, 'roles');
+
+  // Structural roles: who holds the network together
+  const roles = computeStructuralRoles(graph, clusters, betweennessMap);
+
   postProgress(85, 'similar labels');
 
   // Similar labels (sorted + sliding window)
@@ -147,7 +137,7 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
 
   postProgress(100, 'done');
 
-  return { clusters, centrality, bridges, isolated, similarLabels };
+  return { clusters, centrality, bridges, isolated, similarLabels, roles };
 }
 
 // ============================================================================

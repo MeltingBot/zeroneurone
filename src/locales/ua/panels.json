@@ -525,6 +525,25 @@
       "isolated": "Ізольовані",
       "similar": "Схожі"
     },
+    "roles": {
+      "title": "Ролі",
+      "soleConnector": "{{x}} — єдиний зв'язок між {{groups}}",
+      "bridgeLink": "Зв'язок {{x}} – {{y}} — єдиний прохід між {{groups}}",
+      "cutOff": "{{x}} — єдиний доступ до елементів: {{count}}, зокрема {{y}}",
+      "cutOffNamed": "{{x}} — єдиний доступ до: {{names}}",
+      "broker": "{{x}} з'єднує {{groups}}",
+      "group": "групою навколо {{lead}} ({{size}})",
+      "target": "Розділ звіту",
+      "newSection": "Новий розділ",
+      "addAll": "Додати все ({{count}})",
+      "addToReport": "Додати до звіту",
+      "sectionTitle": "Структурні ролі",
+      "analyzedOn": "Аналіз від {{date}}",
+      "added": "Додано до звіту: {{section}}",
+      "addFailed": "Не вдалося додати до звіту",
+      "search": "Шукати ім'я",
+      "clearSearch": "Очистити"
+    },
     "clusters": {
       "title": "Кластери",
       "description": "Групи сильно пов'язаних елементів",
@@ -595,7 +614,26 @@
       "maxDepth": "Макс. глибина",
       "highlightThisPath": "Підсвітити цей шлях",
       "noPath": "Шлях між цими елементами не знайдено",
-      "pathLength": "{{count}} кроків"
+      "pathLength": "{{count}} кроків",
+      "blockedByConstraints": "Шлях виключено обмеженнями",
+      "constraints": {
+        "title": "Обмеження",
+        "reset": "Скинути обмеження",
+        "include": "Включити",
+        "exclude": "Виключити",
+        "labels": "Підписи",
+        "tags": "Теги",
+        "period": "Період",
+        "periodStart": "Початок",
+        "periodEnd": "Кінець",
+        "keepUndated": "Залишити зв'язки без дати",
+        "minConfidence": "Мінімальна довіра",
+        "evaluationAtLeast": "Цей код або кращий",
+        "keepUngraded": "Залишити неоцінені зв'язки",
+        "keepNoConfidence": "Залишити зв'язки без довіри",
+        "respectDirection": "Враховувати напрямок зв'язків",
+        "applied": "обмеження застосовано"
+      }
     },
     "cycles": {
       "button": "Виявити цикли",

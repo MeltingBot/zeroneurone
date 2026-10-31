@@ -524,6 +524,25 @@
       "isolated": "Isolati",
       "similar": "Simili"
     },
+    "roles": {
+      "title": "Ruoli",
+      "soleConnector": "{{x}} è l'unico legame tra {{groups}}",
+      "bridgeLink": "Il legame {{x}} – {{y}} è l'unico passaggio tra {{groups}}",
+      "cutOff": "{{x}} è l'unico accesso a {{count}} elementi, tra cui {{y}}",
+      "cutOffNamed": "{{x}} è l'unico accesso a {{names}}",
+      "broker": "{{x}} collega {{groups}}",
+      "group": "il gruppo di {{lead}} ({{size}})",
+      "target": "Sezione del rapporto",
+      "newSection": "Nuova sezione",
+      "addAll": "Aggiungi tutto ({{count}})",
+      "addToReport": "Aggiungi al rapporto",
+      "sectionTitle": "Ruoli strutturali",
+      "analyzedOn": "Analisi del {{date}}",
+      "added": "Aggiunto al rapporto: {{section}}",
+      "addFailed": "Impossibile aggiungere al rapporto",
+      "search": "Cerca un nome",
+      "clearSearch": "Cancella"
+    },
     "clusters": {
       "title": "Cluster",
       "description": "Gruppi di elementi fortemente connessi",
@@ -594,7 +613,26 @@
       "maxDepth": "Profondità max",
       "highlightThisPath": "Evidenzia questo percorso",
       "noPath": "Nessun percorso trovato tra questi elementi",
-      "pathLength": "{{count}} passo/i"
+      "pathLength": "{{count}} passo/i",
+      "blockedByConstraints": "Percorso escluso dai vincoli",
+      "constraints": {
+        "title": "Vincoli",
+        "reset": "Rimuovi i vincoli",
+        "include": "Includi",
+        "exclude": "Escludi",
+        "labels": "Etichette",
+        "tags": "Tag",
+        "period": "Periodo",
+        "periodStart": "Inizio",
+        "periodEnd": "Fine",
+        "keepUndated": "Mantieni i collegamenti senza data",
+        "minConfidence": "Affidabilità minima",
+        "evaluationAtLeast": "Questo codice o migliore",
+        "keepUngraded": "Mantieni i collegamenti non valutati",
+        "keepNoConfidence": "Mantieni i collegamenti senza affidabilità",
+        "respectDirection": "Rispetta il verso dei collegamenti",
+        "applied": "vincoli applicati"
+      }
     },
     "cycles": {
       "button": "Rileva cicli",

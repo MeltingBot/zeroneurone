@@ -523,6 +523,25 @@
       "isolated": "Geïsoleerd",
       "similar": "Vergelijkbaar"
     },
+    "roles": {
+      "title": "Rollen",
+      "soleConnector": "{{x}} is de enige verbinding tussen {{groups}}",
+      "bridgeLink": "De verbinding {{x}} – {{y}} is de enige doorgang tussen {{groups}}",
+      "cutOff": "{{x}} is de enige toegang tot {{count}} elementen, waaronder {{y}}",
+      "cutOffNamed": "{{x}} is de enige toegang tot {{names}}",
+      "broker": "{{x}} verbindt {{groups}}",
+      "group": "de groep van {{lead}} ({{size}})",
+      "target": "Rapportsectie",
+      "newSection": "Nieuwe sectie",
+      "addAll": "Alles toevoegen ({{count}})",
+      "addToReport": "Aan rapport toevoegen",
+      "sectionTitle": "Structurele rollen",
+      "analyzedOn": "Analyse van {{date}}",
+      "added": "Toegevoegd aan rapport: {{section}}",
+      "addFailed": "Toevoegen aan rapport mislukt",
+      "search": "Naam zoeken",
+      "clearSearch": "Wissen"
+    },
     "clusters": {
       "title": "Clusters",
       "description": "Groepen van sterk verbonden elementen",
@@ -593,7 +612,26 @@
       "maxDepth": "Max. diepte",
       "highlightThisPath": "Dit pad markeren",
       "noPath": "Geen pad gevonden tussen deze elementen",
-      "pathLength": "{{count}} stap(pen)"
+      "pathLength": "{{count}} stap(pen)",
+      "blockedByConstraints": "Pad uitgesloten door de beperkingen",
+      "constraints": {
+        "title": "Beperkingen",
+        "reset": "Beperkingen wissen",
+        "include": "Opnemen",
+        "exclude": "Uitsluiten",
+        "labels": "Labels",
+        "tags": "Tags",
+        "period": "Periode",
+        "periodStart": "Begin",
+        "periodEnd": "Einde",
+        "keepUndated": "Ongedateerde verbanden behouden",
+        "minConfidence": "Minimaal vertrouwen",
+        "evaluationAtLeast": "Deze code of beter",
+        "keepUngraded": "Onbeoordeelde verbanden behouden",
+        "keepNoConfidence": "Verbanden zonder vertrouwen behouden",
+        "respectDirection": "Richting van verbanden volgen",
+        "applied": "beperkingen toegepast"
+      }
     },
     "cycles": {
       "button": "Cycli detecteren",
