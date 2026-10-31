@@ -189,10 +189,10 @@ export interface StructuralRoles {
   clusterLeads: Record<number, string>;
 }
 
-export const MAX_FACTS = 200;
+export const MAX_FACTS = 100;
 const MAX_BROKERS = 10;
 /** Cuts described in full: ranking first needs the sizes only */
-const CANDIDATES = 300;
+const CANDIDATES = 150;
 const MAX_CUT_IDS = 500;
 
 interface Part { start: number; end: number; skip?: [number, number][] }
@@ -226,31 +226,56 @@ export function computeStructuralRoles(
 
   const partSize = (p: Part) =>
     p.end - p.start - (p.skip ?? []).reduce((sum, [s, e]) => sum + e - s, 0);
-  const partNodes = function* (p: Part) {
+  // Per DFS position: cluster (-1 for none) and degree, read in tight loops
+  const clusterAt = new Int32Array(order.length).fill(-1);
+  const degreeAt = new Int32Array(order.length);
+  order.forEach((id, i) => {
+    const c = clusterOf.get(id);
+    if (c !== undefined) clusterAt[i] = c;
+    degreeAt[i] = graph.degree(id);
+  });
+  const tally = new Int32Array(clusters.reduce((m, c) => Math.max(m, c.id + 1), 0));
+
+  /** Visit the DFS positions of a part; stop when the visitor returns false */
+  const visit = (p: Part, fn: (i: number) => boolean | void) => {
     const skip = p.skip ?? [];
     let k = 0;
     for (let i = p.start; i < p.end; i++) {
       while (k < skip.length && skip[k][1] <= i) k++;
       if (k < skip.length && i >= skip[k][0]) { i = skip[k][1] - 1; continue; }
-      yield order[i];
+      if (fn(i) === false) return;
     }
   };
-  const describe = (p: Part): RoleSide => {
-    const counts = new Map<number, number>();
-    let lead: string | null = null;
+  const inPart = (p: Part, i: number) =>
+    i >= p.start && i < p.end && !(p.skip ?? []).some(([a, b]) => i >= a && i < b);
+
+  /**
+   * A side of a cut: its size, its best-linked member, and the group it is
+   * named after: the group of the elements the cut point (or link) touches on
+   * that side. A side mixes groups once past them; what the point joins is
+   * what it touches. A side of one element is no group.
+   */
+  const describe = (p: Part, touching: readonly number[]): RoleSide => {
+    let lead = -1;
     let n = 0;
-    for (const id of partNodes(p)) {
+    visit(p, (i) => {
       n++;
-      const c = clusterOf.get(id);
-      if (c !== undefined) counts.set(c, (counts.get(c) ?? 0) + 1);
-      if (lead === null || better(id, lead)) lead = id;
+      if (lead < 0 || degreeAt[i] > degreeAt[lead] || (degreeAt[i] === degreeAt[lead] && order[i] < order[lead])) lead = i;
+    });
+    const used: number[] = [];
+    for (const i of touching) {
+      const c = clusterAt[i];
+      if (c < 0) continue;
+      if (tally[c] === 0) used.push(c);
+      tally[c]++;
     }
     let clusterId: number | null = null;
     let best = 0;
-    for (const [c, count] of counts) {
-      if (count > best || (count === best && clusterId !== null && c < clusterId)) { clusterId = c; best = count; }
+    for (const c of used) {
+      if (tally[c] > best || (tally[c] === best && clusterId !== null && c < clusterId)) { clusterId = c; best = tally[c]; }
+      tally[c] = 0;
     }
-    return { clusterId: best * 2 >= n && n >= 2 ? clusterId : null, size: n, leadId: lead! };
+    return { clusterId: n >= 2 ? clusterId : null, size: n, leadId: order[lead] };
   };
   const subtree = (v: string): Part => ({ start: disc.get(v)!, end: disc.get(v)! + size.get(v)! });
 
@@ -273,7 +298,10 @@ export function computeStructuralRoles(
   const facts: StructuralFact[] = [];
   const taken = new Set<string>();
   for (const { u, parts, weight } of articulations.slice(0, CANDIDATES)) {
-    const sides = parts.map((p) => ({ part: p, side: describe(p) })).sort((a, b) => b.side.size - a.side.size);
+    const near = graph.neighbors(u).map((v) => disc.get(v)!);
+    const sides = parts
+      .map((p) => ({ part: p, side: describe(p, near.filter((i) => inPart(p, i))) }))
+      .sort((a, b) => b.side.size - a.side.size);
     const named = new Map<number, RoleSide>();
     for (const { side } of sides) {
       if (side.clusterId !== null && !named.has(side.clusterId)) named.set(side.clusterId, side);
@@ -287,10 +315,10 @@ export function computeStructuralRoles(
       const cut = sides.slice(1);
       const cutIds: string[] = [];
       for (const { part } of cut) {
-        for (const id of partNodes(part)) {
-          if (cutIds.length >= MAX_CUT_IDS) break;
-          cutIds.push(id);
-        }
+        visit(part, (i) => {
+          if (cutIds.length >= MAX_CUT_IDS) return false;
+          cutIds.push(order[i]);
+        });
       }
       facts.push({ kind: 'cutOff', elementId: u, size: weight, leadId: cut[0].side.leadId, cutIds, weight });
       taken.add(u);
@@ -303,13 +331,15 @@ export function computeStructuralRoles(
       const root = rootOf.get(b.childId)!;
       const inner = subtree(b.childId);
       const outer: Part = { start: disc.get(root)!, end: disc.get(root)! + size.get(root)!, skip: [[inner.start, inner.end]] };
-      return { b, inner, outer, weight: Math.min(partSize(inner), partSize(outer)) };
+      // Less one: each side counts the link's end, a cut element counts in neither
+      // side; both weights then compare (a tie goes to the element, see below)
+      return { b, inner, outer, weight: Math.min(partSize(inner), partSize(outer)) - 1 };
     })
-    .filter((x) => x.weight >= 2)
+    .filter((x) => x.weight >= 1)
     .sort((a, b) => b.weight - a.weight || (a.b.linkId < b.b.linkId ? -1 : 1));
   for (const { b, inner, outer, weight } of bridges.slice(0, CANDIDATES)) {
-    const a = describe(outer);
-    const c = describe(inner);
+    const a = describe(outer, [disc.get(b.parentId)!]);
+    const c = describe(inner, [disc.get(b.childId)!]);
     if (a.clusterId === null || c.clusterId === null || a.clusterId === c.clusterId) continue;
     facts.push({ kind: 'bridgeLink', linkId: b.linkId, fromId: b.parentId, toId: b.childId, sides: [a, c], weight });
     taken.add(b.parentId);
@@ -323,12 +353,20 @@ export function computeStructuralRoles(
     (f.kind === 'soleConnector' && f.sides.length === 2) || f.kind === 'bridgeLink'
       ? [f.sides[0].clusterId, f.sides[1].clusterId].sort().join('|')
       : null;
+  // A link whose two ends each sit in their group (two links in it or more)
+  // is what joins the groups: its sentence wins. Otherwise the element does
+  // (Victor, one link on each side, is the go-between, not his links)
+  const anchored = (end: string, other: string, clusterId: number | null) =>
+    clusterId !== null && graph.neighbors(end).filter((n) => n !== other && clusterOf.get(n) === clusterId).length >= 2;
+  const rank = (f: StructuralFact) =>
+    f.kind === 'bridgeLink' && anchored(f.fromId, f.toId, f.sides[0].clusterId) && anchored(f.toId, f.fromId, f.sides[1].clusterId)
+      ? 2 : f.kind === 'soleConnector' ? 1 : 0;
   const bestOfPair = new Map<string, StructuralFact>();
   for (const f of facts) {
     const key = pairOf(f);
     if (key === null) continue;
     const seen = bestOfPair.get(key);
-    if (!seen || f.weight > seen.weight || (f.weight === seen.weight && f.kind === 'soleConnector' && seen.kind !== 'soleConnector')) {
+    if (!seen || rank(f) > rank(seen) || (rank(f) === rank(seen) && f.weight > seen.weight)) {
       bestOfPair.set(key, f);
     }
   }

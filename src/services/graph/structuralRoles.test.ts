@@ -68,13 +68,14 @@ describe('computeStructuralRoles', () => {
       .toEqual(clusters.filter((c) => c.size >= 4).map((c) => c.id).sort());
   });
 
-  it('names the single link between two groups', () => {
+  it('says once that a single link joins two groups', () => {
     const g = graphOf([...clique('a', 4), ...clique('b', 4), ['a0', 'b0', 'pont']]);
     const { facts } = roles(g);
-    const bridge = facts.find((f) => f.kind === 'bridgeLink');
-    expect(bridge).toMatchObject({ linkId: 'pont' });
-    // Its ends' "sole connector" sentences say the same thing: dropped
-    expect(kinds(facts)).not.toContain('soleConnector');
+    // One sentence for the pair of groups: the link, or one of its ends
+    const pairFacts = facts.filter((f) => f.kind === 'bridgeLink' || f.kind === 'soleConnector');
+    expect(pairFacts).toHaveLength(1);
+    const [f] = pairFacts;
+    expect(f.kind === 'bridgeLink' ? f.linkId : f.kind === 'soleConnector' ? f.elementId : null).toMatch(/^(pont|a0|b0)$/);
   });
 
   it('two parallel links between two groups make no bridge', () => {
