@@ -588,17 +588,7 @@
     },
     "similar": {
       "title": "Potential duplicates",
-      "mode": {
-        "fuzzy": "Broad",
-        "exact": "Strict",
-        "fuzzyDesc": "Close names, typos included",
-        "exactDesc": "Same name, case and number writing aside"
-      },
-      "description": "Elements with similar names",
-      "count": "{{count}} similar pair(s)",
-      "noSimilar": "No similar labels",
-      "select": "Select",
-      "merge": "Merge"
+      "openSuggestions": "Compare in Suggestions"
     },
     "paths": {
       "title": "Path finder",
@@ -840,7 +830,9 @@
       "zones": "Zones",
       "valuesHint": "Same value under the same property (phone, IBAN…)",
       "sourcesHint": "Same attached file or cited web page",
-      "zonesHint": "Point or small zone inside a larger zone"
+      "zonesHint": "Point or small zone inside a larger zone",
+      "duplicates": "Duplicates",
+      "duplicatesHint": "Same phone, IBAN, plate or email, or close names"
     },
     "keys": {
       "all": "all",
@@ -848,6 +840,25 @@
       "search": "Filter",
       "selectAll": "All",
       "selectNone": "None"
+    },
+    "merge": {
+      "action": "Merge",
+      "threshold": "Minimum score",
+      "kind": {
+        "phone": "phone",
+        "iban": "IBAN",
+        "plate": "plate",
+        "email": "email"
+      },
+      "reason": {
+        "sameIdentifier": "Same {{kind}}: {{value}}",
+        "sameName": "Same name",
+        "phonetic": "Sounds the same",
+        "similarName": "Close names ({{value}} %)",
+        "sharedTags": "Shared tags: {{count}}",
+        "conflict": "{{kind}}: different values",
+        "differentNumbers": "Different numbers"
+      }
     }
   }
 }

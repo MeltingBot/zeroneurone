@@ -588,17 +588,7 @@
     },
     "similar": {
       "title": "Duplicats potencials",
-      "mode": {
-        "fuzzy": "Ampli",
-        "exact": "Estricte",
-        "fuzzyDesc": "Noms propers, errors tipogràfics inclosos",
-        "exactDesc": "Mateix nom, llevat de majúscules i escriptura dels números"
-      },
-      "description": "Elements amb noms similars",
-      "count": "{{count}} parella(es) similar(s)",
-      "noSimilar": "Cap etiqueta similar",
-      "select": "Seleccionar",
-      "merge": "Fusionar"
+      "openSuggestions": "Compara a Suggeriments"
     },
     "paths": {
       "title": "Cerca de camí",
@@ -840,7 +830,9 @@
       "zones": "Zones",
       "valuesHint": "Mateix valor a la mateixa propietat (telèfon, IBAN…)",
       "sourcesHint": "Mateix fitxer adjunt o mateixa pàgina web citada",
-      "zonesHint": "Punt o zona petita dins d'una zona més gran"
+      "zonesHint": "Punt o zona petita dins d'una zona més gran",
+      "duplicates": "Duplicats",
+      "duplicatesHint": "Mateix telèfon, IBAN, matrícula o correu, o noms semblants"
     },
     "keys": {
       "all": "totes",
@@ -848,6 +840,25 @@
       "search": "Filtra",
       "selectAll": "Totes",
       "selectNone": "Cap"
+    },
+    "merge": {
+      "action": "Fusiona",
+      "threshold": "Puntuació mínima",
+      "kind": {
+        "phone": "telèfon",
+        "iban": "IBAN",
+        "plate": "matrícula",
+        "email": "correu"
+      },
+      "reason": {
+        "sameIdentifier": "Mateix {{kind}}: {{value}}",
+        "sameName": "Mateix nom",
+        "phonetic": "Mateixa pronúncia",
+        "similarName": "Noms semblants ({{value}} %)",
+        "sharedTags": "Etiquetes comunes: {{count}}",
+        "conflict": "{{kind}}: valors diferents",
+        "differentNumbers": "Nombres diferents"
+      }
     }
   }
 }

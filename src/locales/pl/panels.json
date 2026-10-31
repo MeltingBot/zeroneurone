@@ -590,17 +590,7 @@
     },
     "similar": {
       "title": "Potencjalne duplikaty",
-      "mode": {
-        "fuzzy": "Szeroki",
-        "exact": "Ścisły",
-        "fuzzyDesc": "Podobne nazwy, łącznie z literówkami",
-        "exactDesc": "Ta sama nazwa, pomijając wielkość liter i zapis numerów"
-      },
-      "description": "Elementy o podobnych nazwach",
-      "count": "{{count}} podobnych par",
-      "noSimilar": "Brak podobnych etykiet",
-      "select": "Wybierz",
-      "merge": "Połącz"
+      "openSuggestions": "Porównaj w Sugestiach"
     },
     "paths": {
       "title": "Wyszukiwanie ścieżki",
@@ -864,7 +854,9 @@
       "zones": "Strefy",
       "valuesHint": "Ta sama wartość tej samej właściwości (telefon, IBAN…)",
       "sourcesHint": "Ten sam załącznik lub cytowana strona",
-      "zonesHint": "Punkt lub mała strefa wewnątrz większej strefy"
+      "zonesHint": "Punkt lub mała strefa wewnątrz większej strefy",
+      "duplicates": "Duplikaty",
+      "duplicatesHint": "Ten sam telefon, IBAN, tablica lub e-mail albo podobne nazwy"
     },
     "keys": {
       "all": "wszystkie",
@@ -872,6 +864,25 @@
       "search": "Filtruj",
       "selectAll": "Wszystkie",
       "selectNone": "Żadne"
+    },
+    "merge": {
+      "action": "Scal",
+      "threshold": "Minimalny wynik",
+      "kind": {
+        "phone": "telefon",
+        "iban": "IBAN",
+        "plate": "tablica",
+        "email": "e-mail"
+      },
+      "reason": {
+        "sameIdentifier": "Ten sam {{kind}}: {{value}}",
+        "sameName": "Ta sama nazwa",
+        "phonetic": "Ta sama wymowa",
+        "similarName": "Podobne nazwy ({{value}} %)",
+        "sharedTags": "Wspólne tagi: {{count}}",
+        "conflict": "{{kind}}: różne wartości",
+        "differentNumbers": "Różne liczby"
+      }
     }
   }
 }

@@ -589,17 +589,7 @@
     },
     "similar": {
       "title": "Doublons potentiels",
-      "mode": {
-        "fuzzy": "Large",
-        "exact": "Strict",
-        "fuzzyDesc": "Noms proches, fautes de frappe comprises",
-        "exactDesc": "Même nom, à la casse et à l'écriture des numéros près"
-      },
-      "description": "Éléments avec des noms similaires",
-      "count": "{{count}} paire(s) similaire(s)",
-      "noSimilar": "Aucun label similaire",
-      "select": "Sélectionner",
-      "merge": "Fusionner"
+      "openSuggestions": "Comparer dans Suggestions"
     },
     "paths": {
       "title": "Recherche de chemin",
@@ -841,7 +831,9 @@
       "zones": "Zones",
       "valuesHint": "Même valeur pour la même propriété (téléphone, IBAN…)",
       "sourcesHint": "Même pièce jointe ou même page web citée",
-      "zonesHint": "Point ou petite zone à l'intérieur d'une zone plus grande"
+      "zonesHint": "Point ou petite zone à l'intérieur d'une zone plus grande",
+      "duplicates": "Doublons",
+      "duplicatesHint": "Même téléphone, IBAN, plaque ou e-mail, ou noms proches"
     },
     "keys": {
       "all": "toutes",
@@ -849,6 +841,25 @@
       "search": "Filtrer",
       "selectAll": "Toutes",
       "selectNone": "Aucune"
+    },
+    "merge": {
+      "action": "Fusionner",
+      "threshold": "Score minimal",
+      "kind": {
+        "phone": "téléphone",
+        "iban": "IBAN",
+        "plate": "plaque",
+        "email": "e-mail"
+      },
+      "reason": {
+        "sameIdentifier": "Même {{kind}} : {{value}}",
+        "sameName": "Même nom",
+        "phonetic": "Même prononciation",
+        "similarName": "Noms proches ({{value}} %)",
+        "sharedTags": "Tags communs : {{count}}",
+        "conflict": "{{kind}} : valeurs différentes",
+        "differentNumbers": "Nombres différents"
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Network,
@@ -17,7 +17,6 @@ import {
   RotateCw,
   X,
   ArrowRight,
-  Merge,
   Search,
   Group,
   Ungroup,
@@ -27,7 +26,6 @@ import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, use
 import { useShallow } from 'zustand/react/shallow';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
-import { MergeElementsModal } from '../modals/MergeElementsModal';
 import type { Element } from '../../types';
 import { DEFAULT_FILTERS } from '../../types';
 import { graphStructureSignature } from '../../services/graph/structureSignature';
@@ -39,6 +37,8 @@ import { groupElements } from '../../utils/groupElements';
 import { getEvaluationModel } from '../../utils/evaluation';
 import { PathConstraintsEditor } from './insights/PathConstraintsEditor';
 import { RolesSection } from './insights/RolesSection';
+import { useSuggestionsStore } from '../../stores/suggestionsStore';
+import { loadPhoneParser } from '../../services/dedup/phoneLib';
 import { readPathConstraints, writePathConstraints } from '../../utils/pathConstraintsStorage';
 import type { PathConstraints } from '../../services/graph/constrainedPaths';
 
@@ -54,7 +54,7 @@ function ConstrainedMark() {
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
-  const { elements, links, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
+  const { elements, links, dissolveGroup } = useDossierStore();
   const dossierId = useDossierStore((s) => s.currentDossier?.id ?? null);
   const evaluationModel = useDossierStore((s) => getEvaluationModel(s.currentDossier));
   const pushAction = useHistoryStore((s) => s.pushAction);
@@ -82,7 +82,6 @@ export function InsightsPanel() {
     highlightCentralElement,
     highlightBridges,
     highlightIsolated,
-    highlightSimilarPair,
     findPaths,
     findAllPaths,
     highlightPath,
@@ -95,23 +94,12 @@ export function InsightsPanel() {
     clearHighlight,
     clearPaths,
   } = useInsightsStore();
-  // Potential duplicates: close names, or the same name only (case and the
-  // writing of a number aside)
-  const similarMode = useUIStore((s) => s.similarMode);
-  const setSimilarMode = useUIStore((s) => s.setSimilarMode);
-  const shownSimilar = useMemo(
-    () => (similarMode === 'exact' ? similarLabels.filter((p) => p.similarity >= 1) : similarLabels),
-    [similarLabels, similarMode],
-  );
-
   // Local state for expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['roles', 'clusters', 'centrality'])
   );
 
   // Path finding state
-  const [mergePair, setMergePair] = useState<{ el1: Element; el2: Element } | null>(null);
-  const elementMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
   const [pathMode, setPathMode] = useState(false);
   const [pathFrom, setPathFrom] = useState<string | null>(null);
   const [pathTo, setPathTo] = useState<string | null>(null);
@@ -209,6 +197,14 @@ export function InsightsPanel() {
     });
   }, []);
 
+  // Possible duplicates are reviewed in the Suggestions panel (score, reasons, merge)
+  const openDuplicates = useCallback(() => {
+    const suggestions = useSuggestionsStore.getState();
+    suggestions.setRuleEnabled('duplicates', true);
+    useUIStore.getState().setSidePanelTab('suggestions');
+    void loadPhoneParser().then(() => useSuggestionsStore.getState().analyze(null));
+  }, []);
+
   // Handle stat click from overview
   const handleStatClick = useCallback((stat: string) => {
     switch (stat) {
@@ -224,10 +220,10 @@ export function InsightsPanel() {
         setExpandedSections((prev) => new Set([...prev, 'bridges']));
         break;
       case 'duplicates':
-        setExpandedSections((prev) => new Set([...prev, 'similar']));
+        openDuplicates();
         break;
     }
-  }, [highlightIsolated, highlightBridges]);
+  }, [highlightIsolated, highlightBridges, openDuplicates]);
 
   // Cluster actions
   const handleClusterClick = useCallback(
@@ -402,31 +398,6 @@ export function InsightsPanel() {
   const handleToggleHideIsolated = useCallback(() => {
     toggleHideElements(isolated);
   }, [isolated, toggleHideElements]);
-
-  // Similar labels actions
-  const handleSimilarClick = useCallback(
-    (elementId1: string, elementId2: string) => {
-      // Toggle: if this pair is already selected, deselect
-      if (selectedElementIds.has(elementId1) && selectedElementIds.has(elementId2) && selectedElementIds.size === 2) {
-        clearSelection();
-        clearHighlight();
-        return;
-      }
-      highlightSimilarPair(elementId1, elementId2);
-      selectElements([elementId1, elementId2]);
-      revealElements([elementId1, elementId2]);
-    },
-    [highlightSimilarPair, selectElements, selectedElementIds, clearSelection, clearHighlight]
-  );
-  // A name of the pair: that element alone, zoomed on, the pair still highlighted
-  const handleSimilarElementClick = useCallback(
-    (elementId: string, elementId1: string, elementId2: string) => {
-      highlightSimilarPair(elementId1, elementId2);
-      selectElement(elementId);
-      revealElement(elementId);
-    },
-    [highlightSimilarPair, selectElement]
-  );
 
   // Path finding
   const handleStartPathFinding = useCallback(() => {
@@ -1145,86 +1116,20 @@ export function InsightsPanel() {
               </InsightSection>
             )}
 
-            {/* Similar labels */}
+            {/* Possible duplicates: compared and merged in Suggestions */}
             {similarLabels.length > 0 && (
               <InsightSection
                 id="similar"
                 title={t('insights.similar.title')}
                 icon={<Copy size={12} />}
-                count={shownSimilar.length}
+                count={similarLabels.length}
                 isExpanded={expandedSections.has('similar')}
                 onToggle={() => toggleSection('similar')}
-                description={t('insights.similar.description')}
               >
-                <div className="flex items-center mb-2 w-fit rounded border border-border-default overflow-hidden" data-testid="similar-mode">
-                  {(['fuzzy', 'exact'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setSimilarMode(mode)}
-                      aria-pressed={similarMode === mode}
-                      title={t(`insights.similar.mode.${mode}Desc`)}
-                      className={`px-2 py-0.5 text-[10px] ${
-                        similarMode === mode
-                          ? 'bg-bg-tertiary text-text-primary font-medium'
-                          : 'text-text-tertiary hover:text-text-primary'
-                      }`}
-                    >
-                      {t(`insights.similar.mode.${mode}`)}
-                    </button>
-                  ))}
-                </div>
-                {shownSimilar.length === 0 && (
-                  <p className="text-[10px] text-text-tertiary">{t('insights.similar.noSimilar')}</p>
-                )}
-                <ProgressiveList
-                  items={shownSimilar}
-                  initialCount={10}
-                  increment={10}
-                  className="space-y-1"
-                  renderItem={(pair, index) => (
-                    <div
-                      key={index}
-                      className="p-2 rounded hover:bg-bg-secondary transition-colors"
-                    >
-                      <div
-                        className="flex items-center gap-1 text-xs text-text-primary cursor-pointer"
-                        onClick={() => handleSimilarClick(pair.elementId1, pair.elementId2)}
-                      >
-                        {[pair.elementId1, pair.elementId2].map((id, i) => (
-                          <Fragment key={id}>
-                            {i === 1 && <span className="text-text-tertiary">≈</span>}
-                            <span
-                              className="truncate max-w-[100px] hover:underline"
-                              title={getElementLabel(id)}
-                              onClick={(e) => { e.stopPropagation(); handleSimilarElementClick(id, pair.elementId1, pair.elementId2); }}
-                              data-testid="similar-element"
-                            >
-                              {getElementLabel(id)}
-                            </span>
-                          </Fragment>
-                        ))}
-                        <span className="ml-auto text-[10px] text-text-tertiary tabular-nums">
-                          {Math.round(pair.similarity * 100)}%
-                        </span>
-                      </div>
-                      <div className="flex gap-1 mt-1">
-                        <ActionButton
-                          icon={<MousePointer2 size={10} />}
-                          label={t('insights.similar.select')}
-                          onClick={() => handleSimilarClick(pair.elementId1, pair.elementId2)}
-                        />
-                        <ActionButton
-                          icon={<Merge size={10} />}
-                          label={t('insights.similar.merge')}
-                          onClick={() => {
-                            const el1 = elementMap.get(pair.elementId1);
-                            const el2 = elementMap.get(pair.elementId2);
-                            if (el1 && el2) setMergePair({ el1, el2 });
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                <ActionButton
+                  icon={<ArrowRight size={10} />}
+                  label={t('insights.similar.openSuggestions')}
+                  onClick={openDuplicates}
                 />
               </InsightSection>
             )}
@@ -1256,23 +1161,6 @@ export function InsightsPanel() {
         )}
       </div>
 
-      {/* Merge modal for similar pairs */}
-      {mergePair && (
-        <MergeElementsModal
-          isOpen={true}
-          onClose={() => setMergePair(null)}
-          elements={[mergePair.el1, mergePair.el2]}
-          onMerge={async (targetId, [sourceId]) => {
-            const snapshot = await mergeElementsAction(targetId, sourceId);
-            pushAction({
-              type: 'merge-elements',
-              undo: { snapshot },
-              redo: { snapshot },
-            });
-            clearSelection();
-          }}
-        />
-      )}
     </div>
   );
 }

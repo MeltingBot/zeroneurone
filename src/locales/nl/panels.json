@@ -588,17 +588,7 @@
     },
     "similar": {
       "title": "Potentiële duplicaten",
-      "mode": {
-        "fuzzy": "Ruim",
-        "exact": "Strikt",
-        "fuzzyDesc": "Gelijkende namen, typfouten inbegrepen",
-        "exactDesc": "Zelfde naam, hoofdletters en schrijfwijze van nummers buiten beschouwing"
-      },
-      "description": "Elementen met vergelijkbare namen",
-      "count": "{{count}} vergelijkbare paren",
-      "noSimilar": "Geen vergelijkbare labels",
-      "select": "Selecteren",
-      "merge": "Samenvoegen"
+      "openSuggestions": "Vergelijken in Suggesties"
     },
     "paths": {
       "title": "Pad zoeken",
@@ -840,7 +830,9 @@
       "zones": "Zones",
       "valuesHint": "Zelfde waarde voor dezelfde eigenschap (telefoon, IBAN…)",
       "sourcesHint": "Zelfde bijlage of geciteerde webpagina",
-      "zonesHint": "Punt of kleine zone binnen een grotere zone"
+      "zonesHint": "Punt of kleine zone binnen een grotere zone",
+      "duplicates": "Duplicaten",
+      "duplicatesHint": "Zelfde telefoon, IBAN, kenteken of e-mail, of gelijkende namen"
     },
     "keys": {
       "all": "alle",
@@ -848,6 +840,25 @@
       "search": "Filteren",
       "selectAll": "Alle",
       "selectNone": "Geen"
+    },
+    "merge": {
+      "action": "Samenvoegen",
+      "threshold": "Minimale score",
+      "kind": {
+        "phone": "telefoon",
+        "iban": "IBAN",
+        "plate": "kenteken",
+        "email": "e-mail"
+      },
+      "reason": {
+        "sameIdentifier": "Zelfde {{kind}}: {{value}}",
+        "sameName": "Zelfde naam",
+        "phonetic": "Zelfde uitspraak",
+        "similarName": "Gelijkende namen ({{value}} %)",
+        "sharedTags": "Gedeelde tags: {{count}}",
+        "conflict": "{{kind}}: verschillende waarden",
+        "differentNumbers": "Verschillende nummers"
+      }
     }
   }
 }

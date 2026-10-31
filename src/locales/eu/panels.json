@@ -588,17 +588,7 @@
     },
     "similar": {
       "title": "Bikoiztu potentzialak",
-      "mode": {
-        "fuzzy": "Zabala",
-        "exact": "Zorrotza",
-        "fuzzyDesc": "Izen antzekoak, idazketa-akatsak barne",
-        "exactDesc": "Izen bera, maiuskulak eta zenbakien idazkera alde batera"
-      },
-      "description": "Izen antzekodun elementuak",
-      "count": "{{count}} bikote antzeko",
-      "noSimilar": "Ez dago etiketa antzekorik",
-      "select": "Hautatu",
-      "merge": "Batu"
+      "openSuggestions": "Konparatu Iradokizunetan"
     },
     "paths": {
       "title": "Bide bilaketa",
@@ -840,7 +830,9 @@
       "zones": "Eremuak",
       "valuesHint": "Balio bera propietate berean (telefonoa, IBAN…)",
       "sourcesHint": "Erantsitako fitxategi bera edo aipatutako web orri bera",
-      "zonesHint": "Puntua edo eremu txikia eremu handiago baten barruan"
+      "zonesHint": "Puntua edo eremu txikia eremu handiago baten barruan",
+      "duplicates": "Bikoiztuak",
+      "duplicatesHint": "Telefono, IBAN, matrikula edo posta bera, edo antzeko izenak"
     },
     "keys": {
       "all": "guztiak",
@@ -848,6 +840,25 @@
       "search": "Iragazi",
       "selectAll": "Guztiak",
       "selectNone": "Bat ere ez"
+    },
+    "merge": {
+      "action": "Bateratu",
+      "threshold": "Gutxieneko puntuazioa",
+      "kind": {
+        "phone": "telefonoa",
+        "iban": "IBAN",
+        "plate": "matrikula",
+        "email": "posta"
+      },
+      "reason": {
+        "sameIdentifier": "{{kind}} bera: {{value}}",
+        "sameName": "Izen bera",
+        "phonetic": "Ahoskera bera",
+        "similarName": "Antzeko izenak (% {{value}})",
+        "sharedTags": "Etiketa komunak: {{count}}",
+        "conflict": "{{kind}}: balio desberdinak",
+        "differentNumbers": "Zenbaki desberdinak"
+      }
     }
   }
 }

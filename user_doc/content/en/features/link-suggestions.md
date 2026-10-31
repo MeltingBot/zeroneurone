@@ -39,6 +39,7 @@ Each rule can be ticked or unticked in the panel. To look only for place and tim
 |------|---------------|----------|
 | **Properties** | Same value under the same property (phone, IBAN, email, plate…) | Compared properties |
 | **Sources** | Same attached file, or same web page cited as source | — |
+| **Duplicates** | Two elements that may be one: to **merge**, not to link | Minimum score |
 | **Zones** | A point or small zone inside a larger zone (a site in its town) | — |
 | **Places within** | Two elements placed closer than a distance, dates ignored | Radius |
 | **Meetings within** | Two elements at the same place **at the same time** | Radius, time window, stay length |
@@ -67,6 +68,29 @@ The button next to **Properties** ("all", or "3/12") unfolds the list of the dos
 | 2 elements | A **link** between them |
 | 3 elements or more | A **pivot**: create an element for the value (the phone, the IBAN, the document) and link it to all of them |
 | — | If an element already carries the value as its name, the suggestion is to **link to that element** instead of creating a second one |
+
+### Duplicates
+
+The **Duplicates** rule offers to merge two elements that likely stand for the same thing. Each proposal shows a **score** from 0 to 100 and its reasons:
+
+| Reason | What is compared |
+|--------|------------------|
+| **Same phone, IBAN, plate or email** | In the name or the properties, however written. Phones in international format (`06 12 34 56 78` = `+33 6 12 34 56 78`, foreign numbers included; a number without a country code is read as French); IBANs whose check digits are valid; plates `AB-123-CD`, and `1234 AB 56` under a "plate" or "registration" property |
+| **Same name** | Case, accents, punctuation and word order aside ("DUPONT Jean" = "Jean Dupont") |
+| **Sounds the same** | French phonetic key derived from Phonex ("Dupont" / "Dupond", "Martin" / "Martain") |
+| **Close names** | Jaro-Winkler distance, for typos |
+| **Shared tags** | Small bonus |
+
+Two reasons lower the score, shown in the warning colour:
+
+- **Different phones (or IBANs…)**: both elements have this kind of identifier but no common value. Two people of one name, or one person with two lines: the pair is still offered, lower.
+- **Different numbers** in the names ("Lot 3" / "Lot 4"): two things, not a typo.
+
+Duplicates are searched in **the whole dossier**: a pair is offered as soon as one of its two elements is shown, even when the other is in another tab, filtered out or hidden (two imports each in its own tab, for instance).
+
+The list next to the box sets the **minimum score** (60 by default). Duplicates come first, highest score first. Two linked elements are still offered: a link does not prove they are two people.
+
+The phone number library loads only the first time the rule is used.
 
 ### Places and Meetings
 
@@ -109,9 +133,9 @@ Examples: offences near sites imported from GeoJSON; offences close in space and
 - **Click "Create and link N elements"** (or "Link N elements") on a pivot: unfolds the list of its elements, each name clickable as below
 - **Click an element's name**: it is selected alone and centered in the current view (canvas, map or timeline), and a summary shows under the row (tags, first 6 properties, **Open details** link to the Detail tab). Click the name again to hide it. Each element is on its own line; a long name wraps (2 lines at most)
 - **Relevance / Distance / Date**, next to the count (shown when suggestions have distances or dates): sorted by distance, places, meetings and zones come first, nearest first (a point in a zone counts as 0 m); sorted by date, meetings come first, latest first (date of the first meeting); the others follow in their order. The button next to it reverses the order, whatever the sort; suggestions without a distance or a date stay at the end
-- **✓** accepts, **✕** dismisses
+- **✓** accepts, **✕** dismisses. For a duplicate, the merge icon opens the merge dialog: pick the element kept; the other's tags, properties, attachments and links move to it. Ctrl+Z undoes the merge
 - **Ticking a row** frames the canvas on its elements and keeps the proposed link dashed, even on another tab of the panel, until it is unticked, accepted or dismissed. This link is not created in the dossier
-- **Ticking several rows** (or the header box to tick all) shows **Accept (N)** and **Dismiss (N)**
+- **Ticking several rows** (or the header box to tick all) shows **Accept (N)** and **Dismiss (N)**. Duplicates are merged one by one: **Accept (N)** leaves them out
 - The **Search** field filters the list by element name or reason text
 
 Accepting and dismissing can be undone with **Ctrl+Z**, including a bulk acceptance (a single Ctrl+Z).

@@ -665,3 +665,47 @@ describe('pairs joined through a hub', () => {
     expect(computeLinkSuggestions(elements, links, [])).toHaveLength(1);
   });
 });
+
+describe('possible duplicates', () => {
+  const dupes = { threshold: 60, parsePhone: null };
+  const pair = () => [
+    el('a', { label: 'Jean Dupont', properties: props({ téléphone: '06 12 34 56 78' }) }),
+    el('b', { label: 'Jean Dupond', properties: props({ tel: '+33 6 12 34 56 78' }) }),
+  ];
+
+  it('proposes a merge, first, without a value in its id', () => {
+    const { suggestions } = analyzeLinkSuggestions(pair(), [], [], { duplicates: dupes, rules: { sharedValue: false } });
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]).toMatchObject({ kind: 'merge', id: 'merge:a|b', elementIds: ['a', 'b'] });
+    expect(dismissalIds(suggestions[0])).toEqual(['merge:a|b']);
+  });
+
+  it('only when the rule is on', () => {
+    const { suggestions } = analyzeLinkSuggestions(pair(), [], [], { rules: { sharedValue: false } });
+    expect(suggestions).toEqual([]);
+  });
+
+  it('keeps a dismissed merge while both elements exist, even with the rule off', () => {
+    const dismissed = new Set(['merge:a|b']);
+    const on = analyzeLinkSuggestions(pair(), [], [], { duplicates: dupes, dismissed, rules: { sharedValue: false } });
+    expect(on.suggestions).toEqual([]);
+    expect(on.dismissedSuggestions).toHaveLength(1);
+    expect(on.staleDismissalIds.size).toBe(0);
+    const off = analyzeLinkSuggestions(pair(), [], [], { dismissed });
+    expect(off.staleDismissalIds.size).toBe(0);
+    const gone = analyzeLinkSuggestions([pair()[0]], [], [], { duplicates: dupes, dismissed });
+    expect([...gone.staleDismissalIds]).toEqual(['merge:a|b']);
+  });
+
+  it('finds the double of a shown element outside the shown set (another tab)', () => {
+    const shownA = analyzeLinkSuggestions(pair(), [], [], { duplicates: dupes, rules: { sharedValue: false }, candidateIds: new Set(['a']) });
+    expect(shownA.suggestions.map(s => s.id)).toEqual(['merge:a|b']);
+    const neither = analyzeLinkSuggestions(pair(), [], [], { duplicates: dupes, rules: { sharedValue: false }, candidateIds: new Set(['z']) });
+    expect(neither.suggestions).toEqual([]);
+  });
+
+  it('rewrites a dismissed merge for imported ids', () => {
+    const map = new Map([['a', 'x'], ['b', 'y']]);
+    expect(remapDismissedSuggestions(['merge:a|b', 'merge:a|z'], map)).toEqual(['merge:x|y']);
+  });
+});
