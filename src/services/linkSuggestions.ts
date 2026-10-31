@@ -28,7 +28,7 @@ import type { Asset, Element, Link } from '../types';
 import { closestPointOnPolygon, computePolygonAreaKm2, getGeoCenter, isGeoPolygon, pointInPolygon } from '../utils/geo';
 import { assetHashOf, findAssetByHash, isWebScheme, parseSourceLinks } from '../utils/sourceLinks';
 import { propertyDateSpans, type DatePropertyRulesLike } from '../utils/temporalUtils';
-import { findMergeCandidates, type MergeReason } from './dedup/candidates';
+import { findMergeCandidates, type MergeLevel, type MergeReason } from './dedup/candidates';
 import type { PhoneParser } from './dedup/normalizers';
 
 export type { MergeReason } from './dedup/candidates';
@@ -79,6 +79,9 @@ export interface MergeSuggestion {
   id: string;
   elementIds: [string, string];
   /** 0-100 */
+  /** How sure the pair is, from the evidence */
+  level: MergeLevel;
+  /** Orders the pairs within a level (never shown) */
   score: number;
   reasons: MergeReason[];
 }
@@ -110,7 +113,7 @@ export interface SuggestionOptions {
    */
   candidateIds?: ReadonlySet<string> | null;
   /** Possible duplicates (merge suggestions); absent or null turns the rule off */
-  duplicates?: { threshold: number; parsePhone: PhoneParser | null } | null;
+  duplicates?: { minRank: number; parsePhone: PhoneParser | null } | null;
   /** Rules without settings, each on unless set to false */
   rules?: { sharedValue?: boolean; sharedSource?: boolean; inZone?: boolean };
   /** Property keys left out of the shared values rule, folded (see foldKey) */
@@ -893,9 +896,9 @@ export function analyzeLinkSuggestions(
   const shownIds = candidateIds ?? null;
   const merges: MergeSuggestion[] = options.duplicates
     ? findMergeCandidates(between ? linkable.filter(el => hasTag(el.id, between.a) || hasTag(el.id, between.b)) : linkable,
-      { threshold: options.duplicates.threshold, parsePhone: options.duplicates.parsePhone })
+      { minRank: options.duplicates.minRank, parsePhone: options.duplicates.parsePhone })
       .filter(c => !shownIds || shownIds.has(c.elementIds[0]) || shownIds.has(c.elementIds[1]))
-      .map(c => ({ kind: 'merge', id: mergeSuggestionId(c.elementIds[0], c.elementIds[1]), elementIds: c.elementIds, score: c.score, reasons: c.reasons }))
+      .map(c => ({ kind: 'merge', id: mergeSuggestionId(c.elementIds[0], c.elementIds[1]), elementIds: c.elementIds, level: c.level, score: c.score, reasons: c.reasons }))
     : [];
 
   const all: Suggestion[] = [...merges, ...sortedPivots, ...sortedLinks];
@@ -925,8 +928,8 @@ export function analyzeLinkSuggestions(
   // Property keys left out count as a rule that did not run, for their key
   const keysNarrowed = valuesOn && !!options.excludedKeys?.size;
   for (const id of dismissed ?? []) {
-    // A set-aside duplicate goes only with one of its elements: its score
-    // moves with the threshold each viewer picks, it tells nothing
+    // A set-aside duplicate goes only with one of its elements: whether it is
+    // produced depends on the level each viewer picks, it tells nothing
     if (id.startsWith('merge:')) {
       const [a, b] = id.slice('merge:'.length).split('|');
       if (!existing.has(a) || !existing.has(b)) staleDismissalIds.add(id);

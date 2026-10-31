@@ -86,14 +86,4 @@ test('possible duplicates: scored, merged from Suggestions, undone with Ctrl+Z',
   await expect.poll(() => labels(page).then((l) => l.length)).toBe(5);
   await page.locator('[data-testid="suggestions-analyze"]').click();
   await expect(reasons).toHaveCount(2);
-
-  // From the Insights panel: the duplicates counter leads here
-  await page.evaluate(async () => {
-    const { useUIStore } = await window.__znImport('/src/stores/uiStore.ts');
-    useUIStore.getState().setSidePanelTab('insights');
-  });
-  // The section is folded by default
-  await page.getByRole('button', { name: /Doublons potentiels|Potential duplicates/ }).click({ timeout: 30_000 });
-  await page.getByRole('button', { name: /Comparer dans Suggestions|Compare in Suggestions/ }).click();
-  await expect(reasons).toHaveCount(2, { timeout: 15_000 });
 });

@@ -1,10 +1,7 @@
 import Graph from 'graphology';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
-import type { Element, Link, ElementId, LinkId, Cluster, CentralityResult, SimilarPair, EvaluationModel } from '../types';
-import {
-  findArticulationPoints,
-  detectSimilarLabels as detectSimilarLabelsShared,
-} from './graph/algorithms';
+import type { Element, Link, ElementId, LinkId, Cluster, CentralityResult, EvaluationModel } from '../types';
+import { findArticulationPoints } from './graph/algorithms';
 import { findConstrainedPaths, type PathConstraints } from './graph/constrainedPaths';
 import { computeCommunities, computeStructuralRoles, type StructuralRoles } from './graph/structuralRoles';
 
@@ -13,7 +10,6 @@ export interface InsightsResult {
   centrality: CentralityResult[];
   bridges: ElementId[];
   isolated: ElementId[];
-  similarLabels: SimilarPair[];
   roles: StructuralRoles;
   computedAt: Date;
 }
@@ -96,7 +92,6 @@ class InsightsService {
         centrality: [],
         bridges: [],
         isolated: [],
-        similarLabels: [],
         roles: { facts: [], clusterLeads: {} },
         computedAt: new Date(),
       };
@@ -109,7 +104,6 @@ class InsightsService {
       centrality: this.getCentrality(betweenness),
       bridges: this.getBridges(),
       isolated: this.getIsolated(),
-      similarLabels: this.detectSimilarLabels(),
       roles: computeStructuralRoles(this.graph, clusters, betweenness),
       computedAt: new Date(),
     };
@@ -185,12 +179,6 @@ class InsightsService {
     return isolated;
   }
 
-  /**
-   * Detect elements with similar labels (potential duplicates)
-   */
-  detectSimilarLabels(): SimilarPair[] {
-    return detectSimilarLabelsShared(this.elements) as SimilarPair[];
-  }
 
   /**
    * The k shortest loopless paths between two elements through the links the

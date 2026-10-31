@@ -586,10 +586,6 @@
       "hideAll": "Ocultar todos",
       "showAll": "Mostrar todos"
     },
-    "similar": {
-      "title": "Duplicados potenciales",
-      "openSuggestions": "Comparar en Sugerencias"
-    },
     "paths": {
       "title": "Búsqueda de camino",
       "button": "Encontrar un camino entre dos elementos",
@@ -843,7 +839,7 @@
     },
     "merge": {
       "action": "Fusionar",
-      "threshold": "Puntuación mínima",
+      "threshold": "Nivel mínimo",
       "kind": {
         "phone": "teléfono",
         "iban": "IBAN",
@@ -854,10 +850,20 @@
         "sameIdentifier": "Mismo {{kind}}: {{value}}",
         "sameName": "Mismo nombre",
         "phonetic": "Misma pronunciación",
-        "similarName": "Nombres parecidos ({{value}} %)",
+        "similarName": "Nombres parecidos ({{value}} %)",
         "sharedTags": "Etiquetas comunes: {{count}}",
         "conflict": "{{kind}}: valores distintos",
         "differentNumbers": "Números distintos"
+      },
+      "level": {
+        "veryLikely": "Muy probable",
+        "likely": "Probable",
+        "possible": "Posible"
+      },
+      "minLevel": {
+        "possible": "Todos",
+        "likely": "Probables y muy probables",
+        "veryLikely": "Solo muy probables"
       }
     }
   }

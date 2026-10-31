@@ -586,10 +586,6 @@
       "hideAll": "Amagar tots",
       "showAll": "Mostrar tots"
     },
-    "similar": {
-      "title": "Duplicats potencials",
-      "openSuggestions": "Compara a Suggeriments"
-    },
     "paths": {
       "title": "Cerca de camí",
       "button": "Trobar un camí entre dos elements",
@@ -843,7 +839,7 @@
     },
     "merge": {
       "action": "Fusiona",
-      "threshold": "Puntuació mínima",
+      "threshold": "Nivell mínim",
       "kind": {
         "phone": "telèfon",
         "iban": "IBAN",
@@ -854,10 +850,20 @@
         "sameIdentifier": "Mateix {{kind}}: {{value}}",
         "sameName": "Mateix nom",
         "phonetic": "Mateixa pronúncia",
-        "similarName": "Noms semblants ({{value}} %)",
+        "similarName": "Noms semblants ({{value}} %)",
         "sharedTags": "Etiquetes comunes: {{count}}",
         "conflict": "{{kind}}: valors diferents",
         "differentNumbers": "Nombres diferents"
+      },
+      "level": {
+        "veryLikely": "Molt probable",
+        "likely": "Probable",
+        "possible": "Possible"
+      },
+      "minLevel": {
+        "possible": "Tots",
+        "likely": "Probables i molt probables",
+        "veryLikely": "Només molt probables"
       }
     }
   }

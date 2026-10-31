@@ -586,10 +586,6 @@
       "hideAll": "Alles verbergen",
       "showAll": "Alles tonen"
     },
-    "similar": {
-      "title": "Potentiële duplicaten",
-      "openSuggestions": "Vergelijken in Suggesties"
-    },
     "paths": {
       "title": "Pad zoeken",
       "button": "Pad vinden tussen twee elementen",
@@ -843,7 +839,7 @@
     },
     "merge": {
       "action": "Samenvoegen",
-      "threshold": "Minimale score",
+      "threshold": "Minimaal niveau",
       "kind": {
         "phone": "telefoon",
         "iban": "IBAN",
@@ -854,10 +850,20 @@
         "sameIdentifier": "Zelfde {{kind}}: {{value}}",
         "sameName": "Zelfde naam",
         "phonetic": "Zelfde uitspraak",
-        "similarName": "Gelijkende namen ({{value}} %)",
+        "similarName": "Gelijkende namen ({{value}} %)",
         "sharedTags": "Gedeelde tags: {{count}}",
         "conflict": "{{kind}}: verschillende waarden",
         "differentNumbers": "Verschillende nummers"
+      },
+      "level": {
+        "veryLikely": "Zeer waarschijnlijk",
+        "likely": "Waarschijnlijk",
+        "possible": "Mogelijk"
+      },
+      "minLevel": {
+        "possible": "Alle",
+        "likely": "Waarschijnlijk en zeer waarschijnlijk",
+        "veryLikely": "Alleen zeer waarschijnlijk"
       }
     }
   }

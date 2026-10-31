@@ -39,7 +39,7 @@ Each rule can be ticked or unticked in the panel. To look only for place and tim
 |------|---------------|----------|
 | **Properties** | Same value under the same property (phone, IBAN, email, plate…) | Compared properties |
 | **Sources** | Same attached file, or same web page cited as source | — |
-| **Duplicates** | Two elements that may be one: to **merge**, not to link | Minimum score |
+| **Duplicates** | Two elements that may be one: to **merge**, not to link | Minimum level |
 | **Zones** | A point or small zone inside a larger zone (a site in its town) | — |
 | **Places within** | Two elements placed closer than a distance, dates ignored | Radius |
 | **Meetings within** | Two elements at the same place **at the same time** | Radius, time window, stay length |
@@ -71,7 +71,15 @@ The button next to **Properties** ("all", or "3/12") unfolds the list of the dos
 
 ### Duplicates
 
-The **Duplicates** rule offers to merge two elements that likely stand for the same thing. Each proposal shows a **score** from 0 to 100 and its reasons:
+The **Duplicates** rule offers to merge two elements that likely stand for the same thing. Each proposal shows a **level** and its reasons. The level depends on what was found:
+
+| Level | Evidence |
+|-------|----------|
+| **Very likely** | The same identifier **and** close names (or two names that are the same number written apart) |
+| **Likely** | The same identifier alone, or the same name |
+| **Possible** | Close names, or names that sound the same, only |
+
+The possible reasons:
 
 | Reason | What is compared |
 |--------|------------------|
@@ -81,14 +89,16 @@ The **Duplicates** rule offers to merge two elements that likely stand for the s
 | **Close names** | Jaro-Winkler distance, for typos |
 | **Shared tags** | Small bonus |
 
-Two reasons lower the score, shown in the warning colour:
+Two reasons take a level off, shown in the warning colour:
 
-- **Different phones (or IBANs…)**: both elements have this kind of identifier but no common value. Two people of one name, or one person with two lines: the pair is still offered, lower.
+- **Different phones (or IBANs…)**: both elements have this kind of identifier but no common value. Two people of one name, or one person with two lines: the pair is still offered, one level lower.
 - **Different numbers** in the names ("Lot 3" / "Lot 4"): two things, not a typo.
+
+An element whose name is a number ("06 12 34 56 78"), an IBAN, a plate or an email is compared only with elements of the same kind. A record carrying that number as a property is not its double: the **Properties** rule offers to link them.
 
 Duplicates are searched in **the whole dossier**: a pair is offered as soon as one of its two elements is shown, even when the other is in another tab, filtered out or hidden (two imports each in its own tab, for instance).
 
-The list next to the box sets the **minimum score** (60 by default). Duplicates come first, highest score first. Two linked elements are still offered: a link does not prove they are two people.
+The list next to the box picks what is shown: **All** (by default), **Likely and very likely**, **Very likely only**. Duplicates come first, most likely first. Two linked elements are still offered: a link does not prove they are two people.
 
 The phone number library loads only the first time the rule is used.
 

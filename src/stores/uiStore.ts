@@ -108,9 +108,6 @@ interface UIState {
 
   /** Search (Ctrl+K): 'fuzzy' tolerates typos and matches any word, 'exact' needs every word */
   searchMode: 'fuzzy' | 'exact';
-  /** Potential duplicates in Insights: close names (fuzzy) or the same name only (exact) */
-  similarMode: 'fuzzy' | 'exact';
-  setSimilarMode: (mode: 'fuzzy' | 'exact') => void;
 
   /** Side panel tab ids in the order the user arranged them; tabs not listed follow */
   panelTabOrder: string[];
@@ -262,7 +259,6 @@ export const useUIStore = create<UIState>()(
   showMinimap: true,
   canvasOverviewLayer: CANVAS_OVERVIEW_DEFAULT,
   searchMode: 'fuzzy',
-  similarMode: 'fuzzy',
   panelTabOrder: [],
   snapToGrid: false,
   showAlignGuides: true,
@@ -409,7 +405,6 @@ export const useUIStore = create<UIState>()(
 
   // Minimap
   setSearchMode: (mode) => set({ searchMode: mode }),
-  setSimilarMode: (mode) => set({ similarMode: mode }),
   setPanelTabOrder: (order) => set({ panelTabOrder: order }),
 
   toggleMinimap: () => {
@@ -481,7 +476,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, sidePanelTab: state.sidePanelTab, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, similarMode: state.similarMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
+      partialize: (state) => ({ themeMode: state.themeMode, sidePanelTab: state.sidePanelTab, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
       onRehydrateStorage: () => (state) => {
         // v2.76.2 saved this flag: drop what it stored, the default applies
         if (state) state.canvasOverviewLayer = CANVAS_OVERVIEW_DEFAULT;

@@ -667,7 +667,7 @@ describe('pairs joined through a hub', () => {
 });
 
 describe('possible duplicates', () => {
-  const dupes = { threshold: 60, parsePhone: null };
+  const dupes = { minRank: 1, parsePhone: null };
   const pair = () => [
     el('a', { label: 'Jean Dupont', properties: props({ téléphone: '06 12 34 56 78' }) }),
     el('b', { label: 'Jean Dupond', properties: props({ tel: '+33 6 12 34 56 78' }) }),

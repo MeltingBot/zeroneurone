@@ -647,12 +647,6 @@ export interface CentralityResult {
   score: number;
 }
 
-export interface SimilarPair {
-  elementId1: ElementId;
-  elementId2: ElementId;
-  similarity: number;
-}
-
 // ============================================================================
 // UI TYPES
 // ============================================================================

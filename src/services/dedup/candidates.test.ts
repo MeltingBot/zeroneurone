@@ -16,7 +16,7 @@ describe('findMergeCandidates', () => {
     ]);
     expect(rest).toEqual([]);
     expect(c.elementIds).toEqual(['a', 'b']);
-    expect(c.score).toBeGreaterThanOrEqual(95);
+    expect(c.level).toBe('veryLikely');
     expect(rules(c)).toEqual(expect.arrayContaining(['sameIdentifier', 'phonetic']));
   });
 
@@ -26,12 +26,22 @@ describe('findMergeCandidates', () => {
       el('c', 'Société Générale Immobilière'), el('d', 'Societe Generale Imobiliere'),
     ]);
     expect(found.map((c) => c.elementIds.join('')).sort()).toEqual(['ab', 'cd']);
-    expect(rules(found.find((c) => c.elementIds[0] === 'a')!)).toContain('sameName');
+    const sameName = found.find((c) => c.elementIds[0] === 'a')!;
+    expect(rules(sameName)).toContain('sameName');
+    expect(sameName.level).toBe('likely');
+    expect(found.find((c) => c.elementIds[0] === 'c')!.level).toBe('possible');
   });
 
   it('takes a phone number as a name for an identifier', () => {
     const [c] = findMergeCandidates([el('a', '06 12 34 56 78'), el('b', '+33 6 12 34 56 78')]);
-    expect(c).toMatchObject({ elementIds: ['a', 'b'], reasons: [{ rule: 'sameIdentifier', kind: 'phone' }] });
+    expect(c).toMatchObject({ elementIds: ['a', 'b'], level: 'veryLikely', reasons: [{ rule: 'sameIdentifier', kind: 'phone' }] });
+  });
+
+  it('never merges a number with the record that carries it', () => {
+    expect(findMergeCandidates([
+      el('a', 'Jean Dupont', [['tel', '06 12 34 56 78']]),
+      el('b', '06 12 34 56 78'),
+    ])).toEqual([]);
   });
 
   it('holds back what tells two things apart', () => {
@@ -41,16 +51,18 @@ describe('findMergeCandidates', () => {
       el('a', 'Peugeot 308', [['Plaque', 'AB-123-CD']]),
       el('b', 'Véhicule suspect', [['Immatriculation', 'ab 123 cd']]),
     ]);
-    expect(plate.score).toBe(85);
+    expect(plate.level).toBe('likely');
     // Same name, two phones: one person with two lines, or two of one name.
-    // Proposed, the conflict shown, scored lower than without it
+    // Proposed, the conflict shown, one level lower than the same name alone
     const [twoLines] = findMergeCandidates([
       el('a', 'Jean Martin', [['tel', '06 12 34 56 78']]),
       el('b', 'Jean Martin', [['tel', '07 98 76 54 32']]),
     ]);
-    expect(twoLines.score).toBe(65);
+    expect(twoLines.level).toBe('possible');
     expect(twoLines.reasons).toContainEqual({ rule: 'conflict', kind: 'phone' });
-    expect(findMergeCandidates([el('a', 'Martin'), el('b', 'Marin')], { threshold: 90 })).toEqual([]);
+    // Close names only: possible, left out once likely ones only are asked
+    expect(findMergeCandidates([el('a', 'Martin'), el('b', 'Marin')])[0].level).toBe('possible');
+    expect(findMergeCandidates([el('a', 'Martin'), el('b', 'Marin')], { minRank: 2 })).toEqual([]);
   });
 
   it('uses the phone library when given', () => {

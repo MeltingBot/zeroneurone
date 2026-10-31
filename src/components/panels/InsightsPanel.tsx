@@ -5,7 +5,6 @@ import {
   Star,
   GitBranch,
   CircleOff,
-  Copy,
   Loader2,
   ChevronRight,
   ChevronDown,
@@ -22,7 +21,7 @@ import {
   Ungroup,
   Waypoints,
 } from 'lucide-react';
-import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore, useUIStore } from '../../stores';
+import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
@@ -37,8 +36,6 @@ import { groupElements } from '../../utils/groupElements';
 import { getEvaluationModel } from '../../utils/evaluation';
 import { PathConstraintsEditor } from './insights/PathConstraintsEditor';
 import { RolesSection } from './insights/RolesSection';
-import { useSuggestionsStore } from '../../stores/suggestionsStore';
-import { loadPhoneParser } from '../../services/dedup/phoneLib';
 import { readPathConstraints, writePathConstraints } from '../../utils/pathConstraintsStorage';
 import type { PathConstraints } from '../../services/graph/constrainedPaths';
 
@@ -65,7 +62,6 @@ export function InsightsPanel() {
     centrality,
     bridges,
     isolated,
-    similarLabels,
     structuralRoles,
     computedAt,
     isComputing,
@@ -197,14 +193,6 @@ export function InsightsPanel() {
     });
   }, []);
 
-  // Possible duplicates are reviewed in the Suggestions panel (score, reasons, merge)
-  const openDuplicates = useCallback(() => {
-    const suggestions = useSuggestionsStore.getState();
-    suggestions.setRuleEnabled('duplicates', true);
-    useUIStore.getState().setSidePanelTab('suggestions');
-    void loadPhoneParser().then(() => useSuggestionsStore.getState().analyze(null));
-  }, []);
-
   // Handle stat click from overview
   const handleStatClick = useCallback((stat: string) => {
     switch (stat) {
@@ -219,11 +207,8 @@ export function InsightsPanel() {
         highlightBridges();
         setExpandedSections((prev) => new Set([...prev, 'bridges']));
         break;
-      case 'duplicates':
-        openDuplicates();
-        break;
     }
-  }, [highlightIsolated, highlightBridges, openDuplicates]);
+  }, [highlightIsolated, highlightBridges]);
 
   // Cluster actions
   const handleClusterClick = useCallback(
@@ -518,7 +503,6 @@ export function InsightsPanel() {
     centrality.length > 0 ||
     bridges.length > 0 ||
     isolated.length > 0 ||
-    similarLabels.length > 0 ||
     structuralRoles.facts.length > 0;
 
   return (
@@ -1116,23 +1100,6 @@ export function InsightsPanel() {
               </InsightSection>
             )}
 
-            {/* Possible duplicates: compared and merged in Suggestions */}
-            {similarLabels.length > 0 && (
-              <InsightSection
-                id="similar"
-                title={t('insights.similar.title')}
-                icon={<Copy size={12} />}
-                count={similarLabels.length}
-                isExpanded={expandedSections.has('similar')}
-                onToggle={() => toggleSection('similar')}
-              >
-                <ActionButton
-                  icon={<ArrowRight size={10} />}
-                  label={t('insights.similar.openSuggestions')}
-                  onClick={openDuplicates}
-                />
-              </InsightSection>
-            )}
           </div>
         )}
 

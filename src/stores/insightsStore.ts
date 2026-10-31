@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
+import type { Element, Link, ElementId, Cluster, CentralityResult } from '../types';
 import { insightsService, type PathResult, type CycleResult, type PathSearchOptions } from '../services/insightsService';
 import { graphWorkerService, SupersededError } from '../services/graphWorkerService';
 import { useProgressStore } from './progressStore';
@@ -12,7 +12,6 @@ interface InsightsState {
   centrality: CentralityResult[];
   bridges: ElementId[];
   isolated: ElementId[];
-  similarLabels: SimilarPair[];
   /** Who holds the network together, as structured facts */
   structuralRoles: StructuralRoles;
   computedAt: Date | null;
@@ -28,7 +27,7 @@ interface InsightsState {
   computeProgress: number;
   computePhase: string;
   highlightedElementIds: Set<ElementId>;
-  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | 'suggestion' | 'between' | 'role' | null;
+  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'path' | 'cycle' | 'suggestion' | 'between' | 'role' | null;
   selectedClusterId: number | null;
 
   // Path finding
@@ -68,7 +67,6 @@ interface InsightsState {
   highlightCentralElement: (elementId: ElementId, neighborIds?: Iterable<ElementId>) => void;
   highlightBridges: () => void;
   highlightIsolated: () => void;
-  highlightSimilarPair: (elementId1: ElementId, elementId2: ElementId) => void;
   /** Highlight the elements of a link suggestion (panel hover) */
   highlightSuggestion: (elementIds: ElementId[]) => void;
   /** What links two combined tabs: shared elements, direct links or relays */
@@ -136,7 +134,6 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   centrality: [],
   bridges: [],
   isolated: [],
-  similarLabels: [],
   structuralRoles: EMPTY_ROLES,
   computedAt: null,
   computedKey: null,
@@ -186,7 +183,6 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         centrality: results.centrality,
         bridges: results.bridges,
         isolated: results.isolated,
-        similarLabels: results.similarLabels,
         structuralRoles: results.roles,
         computedAt: new Date(),
         isComputing: false,
@@ -210,8 +206,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
           centrality: results.centrality,
           bridges: results.bridges,
           isolated: results.isolated,
-          similarLabels: results.similarLabels,
-          structuralRoles: results.roles,
+            structuralRoles: results.roles,
           computedAt: results.computedAt,
           isComputing: false,
         });
@@ -284,14 +279,6 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     set({
       highlightedElementIds: new Set(elementIds),
       highlightType: 'suggestion',
-      selectedClusterId: null,
-    });
-  },
-
-  highlightSimilarPair: (elementId1, elementId2) => {
-    set({
-      highlightedElementIds: new Set([elementId1, elementId2]),
-      highlightType: 'similar',
       selectedClusterId: null,
     });
   },
@@ -451,8 +438,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       centrality: [],
       bridges: [],
       isolated: [],
-      similarLabels: [],
-      structuralRoles: EMPTY_ROLES,
+          structuralRoles: EMPTY_ROLES,
       computedAt: null,
       computedKey: null,
       isComputing: false,

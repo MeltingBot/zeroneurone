@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Link2, Network, CircleOff, GitBranch, Copy } from 'lucide-react';
+import { Box, Link2, Network, CircleOff, GitBranch } from 'lucide-react';
 import { useDossierStore, useInsightsStore } from '../../stores';
 
 interface StatItemProps {
@@ -37,7 +37,7 @@ function StatItem({ icon, value, label, onClick, highlight }: StatItemProps) {
 }
 
 interface StatsOverviewProps {
-  onStatClick?: (stat: 'elements' | 'links' | 'clusters' | 'isolated' | 'bridges' | 'duplicates') => void;
+  onStatClick?: (stat: 'elements' | 'links' | 'clusters' | 'isolated' | 'bridges') => void;
   activeStat?: string | null;
   /** Elements and links analysed (the open tab or combined tabs); the dossier by default */
   counts?: { elements: number; links: number };
@@ -48,7 +48,7 @@ export function StatsOverview({ onStatClick, activeStat, counts }: StatsOverview
   const { elements: dossierElements, links: dossierLinks } = useDossierStore();
   const elements = { length: counts?.elements ?? dossierElements.length };
   const links = { length: counts?.links ?? dossierLinks.length };
-  const { clusters, isolated, bridges, similarLabels } = useInsightsStore();
+  const { clusters, isolated, bridges } = useInsightsStore();
 
   const stats = useMemo(() => ({
     elements: elements.length,
@@ -56,8 +56,7 @@ export function StatsOverview({ onStatClick, activeStat, counts }: StatsOverview
     clusters: clusters.length,
     isolated: isolated.length,
     bridges: bridges.length,
-    duplicates: similarLabels.length,
-  }), [elements.length, links.length, clusters.length, isolated.length, bridges.length, similarLabels.length]);
+  }), [elements.length, links.length, clusters.length, isolated.length, bridges.length]);
 
   return (
     <div className="grid grid-cols-3 gap-1 p-2 bg-bg-secondary border-b border-border-default">
@@ -95,13 +94,6 @@ export function StatsOverview({ onStatClick, activeStat, counts }: StatsOverview
         label={t('stats.bridges')}
         onClick={onStatClick ? () => onStatClick('bridges') : undefined}
         highlight={activeStat === 'bridges'}
-      />
-      <StatItem
-        icon={<Copy size={12} />}
-        value={stats.duplicates}
-        label={t('stats.duplicates')}
-        onClick={onStatClick ? () => onStatClick('duplicates') : undefined}
-        highlight={activeStat === 'duplicates'}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Element, Link } from '../types';
 import { analyzeLinkSuggestions, dismissalIds, evidenceOf, DEFAULT_MAX_PRESENCE_MS, type Suggestion, type SuggestionReason } from '../services/linkSuggestions';
-import { DEFAULT_MERGE_THRESHOLD } from '../services/dedup/candidates';
+import { DEFAULT_MERGE_RANK, MERGE_LEVELS } from '../services/dedup/candidates';
 import { getPhoneParser } from '../services/dedup/phoneLib';
 import { useDossierStore } from './dossierStore';
 import { useHistoryStore } from './historyStore';
@@ -40,9 +40,9 @@ const ZONES_KEY = 'zn:suggestions:zones';
 const PLACES_KEY = 'zn:suggestions:places';
 const MEETINGS_KEY = 'zn:suggestions:meetings';
 const DUPLICATES_KEY = 'zn:suggestions:duplicates';
-const DUPLICATE_THRESHOLD_KEY = 'zn:suggestions:duplicateThreshold';
-/** Lowest score of a possible duplicate the analyst can pick */
-export const DUPLICATE_THRESHOLDS = [50, 60, 70, 80, 90] as const;
+const DUPLICATE_THRESHOLD_KEY = 'zn:suggestions:duplicateLevel';
+/** Lowest level of a possible duplicate the analyst can pick, as its rank */
+const DUPLICATE_RANKS = MERGE_LEVELS.map((l) => l.rank);
 /** Property keys left out, per dossier (keys differ from one dossier to the next) */
 const EXCLUDED_KEYS_PREFIX = 'zn:suggestions:excludedKeys:';
 
@@ -132,7 +132,7 @@ interface SuggestionsState {
   valuesEnabled: boolean;
   sourcesEnabled: boolean;
   zonesEnabled: boolean;
-  /** Possible duplicates rule on, and the lowest score it keeps */
+  /** Possible duplicates rule on, and the lowest level it keeps (its rank) */
   duplicatesEnabled: boolean;
   duplicateThreshold: number;
   /** Places rule (points close to each other) on */
@@ -165,7 +165,7 @@ interface SuggestionsState {
   setMeetingRadius: (radius: number) => void;
   setMaxStay: (ms: number) => void;
   setRuleEnabled: (rule: 'values' | 'sources' | 'zones' | 'duplicates', on: boolean) => void;
-  setDuplicateThreshold: (score: number) => void;
+  setDuplicateThreshold: (rank: number) => void;
   /** Merge a possible duplicate (one undo step); the suggestion leaves the list */
   merge: (suggestionId: string, targetId: string, sourceId: string) => Promise<void>;
   setPlacesEnabled: (on: boolean) => void;
@@ -232,7 +232,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   zonesEnabled: readFlag(ZONES_KEY),
   placesEnabled: readFlag(PLACES_KEY),
   duplicatesEnabled: readFlag(DUPLICATES_KEY),
-  duplicateThreshold: readChoice(DUPLICATE_THRESHOLD_KEY, DUPLICATE_THRESHOLDS, DEFAULT_MERGE_THRESHOLD),
+  duplicateThreshold: readChoice(DUPLICATE_THRESHOLD_KEY, DUPLICATE_RANKS, DEFAULT_MERGE_RANK),
   meetingsEnabled: readFlag(MEETINGS_KEY),
   shownCount: null,
   meetingsTruncated: false,
@@ -267,7 +267,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
         : null,
       candidateIds: shown,
       // French numbers only until the phone library is loaded (the panel loads it)
-      duplicates: get().duplicatesEnabled ? { threshold: get().duplicateThreshold, parsePhone: getPhoneParser() } : null,
+      duplicates: get().duplicatesEnabled ? { minRank: get().duplicateThreshold, parsePhone: getPhoneParser() } : null,
       between: get().between,
       excludedKeys: new Set(get().excludedKeys),
     });
@@ -314,9 +314,9 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     saveChoice(key, on ? 1 : 0);
   },
 
-  setDuplicateThreshold: (score) => {
-    set({ duplicateThreshold: score });
-    saveChoice(DUPLICATE_THRESHOLD_KEY, score);
+  setDuplicateThreshold: (rank) => {
+    set({ duplicateThreshold: rank });
+    saveChoice(DUPLICATE_THRESHOLD_KEY, rank);
   },
 
   merge: async (suggestionId, targetId, sourceId) => {

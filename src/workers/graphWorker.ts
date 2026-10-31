@@ -3,12 +3,12 @@
  *
  * Offloads heavy graph computations (insights, layout) from the main thread.
  * Bridges are articulation points (Tarjan, O(n+m), see graph/algorithms);
- * similar labels use a sorted sliding window (O(n log n)).
+ * 
  */
 
 import Graph from 'graphology';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
-import { findArticulationPoints, detectSimilarLabels } from '../services/graph/algorithms';
+import { findArticulationPoints } from '../services/graph/algorithms';
 import { computeCommunities, computeStructuralRoles, type StructuralRoles } from '../services/graph/structuralRoles';
 import { computeLayout, type LayoutNode, type LayoutEdge, type LayoutOptions } from '../services/graph/layouts';
 
@@ -24,7 +24,6 @@ interface InsightsData {
   centrality: { elementId: string; degree: number; betweenness: number; score: number }[];
   bridges: string[];
   isolated: string[];
-  similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
   roles: StructuralRoles;
 }
 
@@ -74,7 +73,7 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
   const graph = buildGraph(elements, links);
 
   if (graph.order === 0) {
-    return { clusters: [], centrality: [], bridges: [], isolated: [], similarLabels: [], roles: { facts: [], clusterLeads: {} } };
+    return { clusters: [], centrality: [], bridges: [], isolated: [], roles: { facts: [], clusterLeads: {} } };
   }
 
   // Report progress
@@ -130,14 +129,9 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
   // Structural roles: who holds the network together
   const roles = computeStructuralRoles(graph, clusters, betweennessMap);
 
-  postProgress(85, 'similar labels');
-
-  // Similar labels (sorted + sliding window)
-  const similarLabels = detectSimilarLabels(elements);
-
   postProgress(100, 'done');
 
-  return { clusters, centrality, bridges, isolated, similarLabels, roles };
+  return { clusters, centrality, bridges, isolated, roles };
 }
 
 // ============================================================================

@@ -588,10 +588,6 @@
       "hideAll": "Сховати всі",
       "showAll": "Показати всі"
     },
-    "similar": {
-      "title": "Потенційні дублікати",
-      "openSuggestions": "Порівняти в Пропозиціях"
-    },
     "paths": {
       "title": "Пошук шляху",
       "button": "Знайти шлях між двома елементами",
@@ -867,7 +863,7 @@
     },
     "merge": {
       "action": "Об'єднати",
-      "threshold": "Мінімальна оцінка",
+      "threshold": "Мінімальний рівень",
       "kind": {
         "phone": "телефон",
         "iban": "IBAN",
@@ -878,10 +874,20 @@
         "sameIdentifier": "Той самий {{kind}}: {{value}}",
         "sameName": "Те саме ім'я",
         "phonetic": "Однакова вимова",
-        "similarName": "Схожі імена ({{value}} %)",
+        "similarName": "Схожі імена ({{value}} %)",
         "sharedTags": "Спільні теги: {{count}}",
         "conflict": "{{kind}}: різні значення",
         "differentNumbers": "Різні числа"
+      },
+      "level": {
+        "veryLikely": "Дуже ймовірно",
+        "likely": "Ймовірно",
+        "possible": "Можливо"
+      },
+      "minLevel": {
+        "possible": "Усі",
+        "likely": "Ймовірні й дуже ймовірні",
+        "veryLikely": "Лише дуже ймовірні"
       }
     }
   }

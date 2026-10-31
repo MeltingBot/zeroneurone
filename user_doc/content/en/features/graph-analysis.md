@@ -132,12 +132,6 @@ List of elements **without any connection**.
 
 ---
 
-## Potential duplicates
-
-The counter gives the number of pairs with close names. **Compare in Suggestions** opens the [Suggestions]({{< relref "link-suggestions" >}}) panel with the **Duplicates** rule: each pair there has a score, its reasons (same phone, sounds the same, close names…) and merges in one click.
-
----
-
 ## Paths
 
 Find the **shortest path** between two elements.

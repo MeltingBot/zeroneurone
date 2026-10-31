@@ -586,10 +586,6 @@
       "hideAll": "Guztiak ezkutatu",
       "showAll": "Guztiak erakutsi"
     },
-    "similar": {
-      "title": "Bikoiztu potentzialak",
-      "openSuggestions": "Konparatu Iradokizunetan"
-    },
     "paths": {
       "title": "Bide bilaketa",
       "button": "Bi elementuren arteko bidea aurkitu",
@@ -843,7 +839,7 @@
     },
     "merge": {
       "action": "Bateratu",
-      "threshold": "Gutxieneko puntuazioa",
+      "threshold": "Gutxieneko maila",
       "kind": {
         "phone": "telefonoa",
         "iban": "IBAN",
@@ -854,10 +850,20 @@
         "sameIdentifier": "{{kind}} bera: {{value}}",
         "sameName": "Izen bera",
         "phonetic": "Ahoskera bera",
-        "similarName": "Antzeko izenak (% {{value}})",
+        "similarName": "Antzeko izenak (% {{value}})",
         "sharedTags": "Etiketa komunak: {{count}}",
         "conflict": "{{kind}}: balio desberdinak",
         "differentNumbers": "Zenbaki desberdinak"
+      },
+      "level": {
+        "veryLikely": "Oso litekeena",
+        "likely": "Litekeena",
+        "possible": "Posiblea"
+      },
+      "minLevel": {
+        "possible": "Guztiak",
+        "likely": "Litekeenak eta oso litekeenak",
+        "veryLikely": "Oso litekeenak soilik"
       }
     }
   }

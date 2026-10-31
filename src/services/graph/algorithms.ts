@@ -1,4 +1,3 @@
-import { matchKey } from '../../utils/numericText';
 import type Graph from 'graphology';
 
 /**
@@ -85,79 +84,4 @@ export function findArticulationPoints(graph: Graph): string[] {
   });
 
   return Array.from(articulationPoints);
-}
-
-export interface SimilarPair {
-  elementId1: string;
-  elementId2: string;
-  similarity: number;
-}
-
-/**
- * Near-duplicate labels.
- *
- * Comparing every pair is O(n²) Levenshtein — 19 s on 5 000 elements. Sorting
- * the labels first puts near-identical ones next to each other, so comparing
- * each label with the following `windowSize` finds the same duplicates in
- * O(n log n).
- */
-export function detectSimilarLabels(
-  elements: { id: string; label: string; isGroup?: boolean }[],
-  threshold = 0.7,
-  windowSize = 5,
-  maxResults = 20
-): SimilarPair[] {
-  const labeled = elements
-    .filter((el) => el.label && el.label.trim().length > 0 && !el.isGroup)
-    // A phone number is compared whatever its writing ("06 39 98 33 17" = "0639983317")
-    .map((el) => ({ id: el.id, normalized: matchKey(el.label, true).toLowerCase() }));
-
-  if (labeled.length < 2) return [];
-
-  labeled.sort((a, b) => a.normalized.localeCompare(b.normalized));
-
-  const pairs: SimilarPair[] = [];
-  for (let i = 0; i < labeled.length; i++) {
-    const limit = Math.min(i + windowSize + 1, labeled.length);
-    for (let j = i + 1; j < limit; j++) {
-      // Two different numbers (phones, ids) are two things, not a typo
-      if (labeled[i].normalized !== labeled[j].normalized
-        && /^\+?\d+$/.test(labeled[i].normalized) && /^\+?\d+$/.test(labeled[j].normalized)) continue;
-      const similarity = labelSimilarity(labeled[i].normalized, labeled[j].normalized);
-      if (similarity >= threshold) {
-        pairs.push({ elementId1: labeled[i].id, elementId2: labeled[j].id, similarity });
-      }
-    }
-  }
-
-  return pairs.sort((a, b) => b.similarity - a.similarity).slice(0, maxResults);
-}
-
-/** 1 for identical strings, 0 for entirely different ones. */
-export function labelSimilarity(s1: string, s2: string): number {
-  const longer = s1.length > s2.length ? s1 : s2;
-  const shorter = s1.length > s2.length ? s2 : s1;
-  if (longer.length === 0) return 1.0;
-  return (longer.length - levenshteinDistance(longer, shorter)) / longer.length;
-}
-
-function levenshteinDistance(s1: string, s2: string): number {
-  const costs: number[] = [];
-  for (let i = 0; i <= s1.length; i++) {
-    let lastValue = i;
-    for (let j = 0; j <= s2.length; j++) {
-      if (i === 0) {
-        costs[j] = j;
-      } else if (j > 0) {
-        let newValue = costs[j - 1];
-        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-          newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-        }
-        costs[j - 1] = lastValue;
-        lastValue = newValue;
-      }
-    }
-    if (i > 0) costs[s2.length] = lastValue;
-  }
-  return costs[s2.length];
 }

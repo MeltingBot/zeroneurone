@@ -587,10 +587,6 @@
       "hideAll": "Masquer tous",
       "showAll": "Afficher tous"
     },
-    "similar": {
-      "title": "Doublons potentiels",
-      "openSuggestions": "Comparer dans Suggestions"
-    },
     "paths": {
       "title": "Recherche de chemin",
       "button": "Trouver un chemin entre deux éléments",
@@ -844,7 +840,7 @@
     },
     "merge": {
       "action": "Fusionner",
-      "threshold": "Score minimal",
+      "threshold": "Niveau minimal",
       "kind": {
         "phone": "téléphone",
         "iban": "IBAN",
@@ -855,10 +851,20 @@
         "sameIdentifier": "Même {{kind}} : {{value}}",
         "sameName": "Même nom",
         "phonetic": "Même prononciation",
-        "similarName": "Noms proches ({{value}} %)",
+        "similarName": "Noms proches ({{value}} %)",
         "sharedTags": "Tags communs : {{count}}",
         "conflict": "{{kind}} : valeurs différentes",
         "differentNumbers": "Nombres différents"
+      },
+      "level": {
+        "veryLikely": "Très probable",
+        "likely": "Probable",
+        "possible": "Possible"
+      },
+      "minLevel": {
+        "possible": "Toutes",
+        "likely": "Probables et très probables",
+        "veryLikely": "Très probables seulement"
       }
     }
   }

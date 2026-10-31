@@ -4,8 +4,9 @@ import { TagCombobox } from '../modals/TagCombobox';
 import { revealElement } from '../../utils/revealElement';
 import { ArrowDownUp, Check, ChevronDown, ChevronUp, Loader2, Merge, RotateCcw, Search, X } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
-import { DUPLICATE_THRESHOLDS, MAX_STAYS } from '../../stores/suggestionsStore';
+import { MAX_STAYS } from '../../stores/suggestionsStore';
 import { loadPhoneParser } from '../../services/dedup/phoneLib';
+import { MERGE_LEVELS } from '../../services/dedup/candidates';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { foldKey, suggestionElementIds, type MergeReason, type MergeSuggestion, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
 import type { Element } from '../../types';
@@ -500,17 +501,12 @@ export function SuggestionsPanel() {
             ['values', valuesEnabled, 'suggestions.rules.values', 'suggestions.rules.valuesHint'],
             ['sources', sourcesEnabled, 'suggestions.rules.sources', 'suggestions.rules.sourcesHint'],
             ['zones', zonesEnabled, 'suggestions.rules.zones', 'suggestions.rules.zonesHint'],
-            ['duplicates', duplicatesEnabled, 'suggestions.rules.duplicates', 'suggestions.rules.duplicatesHint'],
           ] as const).map(([rule, on, labelKey, hintKey]) => (
             <label key={rule} className="flex items-center gap-1.5 h-6" title={t(hintKey)}>
               <input
                 type="checkbox"
                 checked={on}
-                onChange={(e) => {
-                  setRuleEnabled(rule, e.target.checked);
-                  if (rule === 'duplicates' && e.target.checked) void loadPhoneParser().then(() => refresh());
-                  else refresh();
-                }}
+                onChange={(e) => { setRuleEnabled(rule, e.target.checked); refresh(); }}
                 data-testid={`suggestions-rule-${rule}`}
                 className="rounded border-border-default"
               />
@@ -528,19 +524,6 @@ export function SuggestionsPanel() {
                   {keptCount === propertyKeys.length ? t('suggestions.keys.all') : `${keptCount}/${propertyKeys.length}`}
                   {keysOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
-              )}
-              {rule === 'duplicates' && (
-                <select
-                  value={duplicateThreshold}
-                  onChange={(e) => { setDuplicateThreshold(Number(e.target.value)); refresh(); }}
-                  disabled={!duplicatesEnabled}
-                  aria-label={t('suggestions.merge.threshold')}
-                  title={t('suggestions.merge.threshold')}
-                  data-testid="suggestions-duplicate-threshold"
-                  className={SELECT_CLASS}
-                >
-                  {DUPLICATE_THRESHOLDS.map((v) => <option key={v} value={v}>≥ {v}</option>)}
-                </select>
               )}
             </label>
           ))}
@@ -593,7 +576,35 @@ export function SuggestionsPanel() {
             </ul>
           </div>
         )}
+        {/* Rules with a setting: one per row, their settings in one column */}
         <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs text-text-secondary">
+          <label className="flex items-center gap-1.5 h-6" title={t('suggestions.rules.duplicatesHint')}>
+            <input
+              type="checkbox"
+              checked={duplicatesEnabled}
+              onChange={(e) => {
+                setRuleEnabled('duplicates', e.target.checked);
+                if (e.target.checked) void loadPhoneParser().then(() => refresh());
+                else refresh();
+              }}
+              data-testid="suggestions-rule-duplicates"
+              className="rounded border-border-default"
+            />
+            {t('suggestions.rules.duplicates')}
+          </label>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={duplicateThreshold}
+              onChange={(e) => { setDuplicateThreshold(Number(e.target.value)); refresh(); }}
+              disabled={!duplicatesEnabled}
+              aria-label={t('suggestions.merge.threshold')}
+              title={t('suggestions.merge.threshold')}
+              data-testid="suggestions-duplicate-threshold"
+              className={SELECT_CLASS}
+            >
+              {MERGE_LEVELS.map((l) => <option key={l.rank} value={l.rank}>{t(`suggestions.merge.minLevel.${l.level}`)}</option>)}
+            </select>
+          </div>
           <label className="flex items-center gap-1.5 h-6" title={t('suggestions.placesHint')}>
             <input
               type="checkbox"
@@ -661,39 +672,39 @@ export function SuggestionsPanel() {
               ))}
             </select>
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-secondary" data-testid="suggestions-between">
-          <span className="shrink-0">{t('suggestions.between')}</span>
-          <TagCombobox
-            value={betweenA}
-            onChange={setBetweenA}
-            onPick={(a) => applyBetween(a, betweenB)}
-            allowNew={false}
-            options={tabTags}
-            aria-label={t('suggestions.betweenFirst')}
-            className={`${SELECT_CLASS} w-28`}
-          />
-          <span className="shrink-0">{t('suggestions.and')}</span>
-          <TagCombobox
-            value={betweenB}
-            onChange={setBetweenB}
-            onPick={(b) => applyBetween(betweenA, b)}
-            allowNew={false}
-            options={tabTags}
-            placeholder={between && between.a === between.b ? t('suggestions.betweenSame') : undefined}
-            aria-label={t('suggestions.betweenSecond')}
-            className={`${SELECT_CLASS} w-28`}
-          />
-          {between && (
-            <button
-              onClick={() => { setBetweenA(''); setBetweenB(''); setBetween(null); }}
-              title={t('suggestions.betweenClear')}
-              aria-label={t('suggestions.betweenClear')}
-              className="p-0.5 rounded text-text-tertiary hover:text-text-primary"
-            >
-              <X size={12} />
-            </button>
-          )}
+          <span>{t('suggestions.between')}</span>
+          <div className="flex items-center gap-1.5 min-w-0" data-testid="suggestions-between">
+            <TagCombobox
+              value={betweenA}
+              onChange={setBetweenA}
+              onPick={(a) => applyBetween(a, betweenB)}
+              allowNew={false}
+              options={tabTags}
+              aria-label={t('suggestions.betweenFirst')}
+              className={`${SELECT_CLASS} w-28`}
+            />
+            <span className="shrink-0">{t('suggestions.and')}</span>
+            <TagCombobox
+              value={betweenB}
+              onChange={setBetweenB}
+              onPick={(b) => applyBetween(betweenA, b)}
+              allowNew={false}
+              options={tabTags}
+              placeholder={between && between.a === between.b ? t('suggestions.betweenSame') : undefined}
+              aria-label={t('suggestions.betweenSecond')}
+              className={`${SELECT_CLASS} w-28`}
+            />
+            {between && (
+              <button
+                onClick={() => { setBetweenA(''); setBetweenB(''); setBetween(null); }}
+                title={t('suggestions.betweenClear')}
+                aria-label={t('suggestions.betweenClear')}
+                className="p-0.5 rounded text-text-tertiary hover:text-text-primary"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
         </div>
         {visible && !between && crowdedCount > 0 && (
           <p className="text-xs text-text-tertiary" data-testid="suggestions-crowded">{t('suggestions.crowded', { count: crowdedCount })}</p>
@@ -862,7 +873,7 @@ export function SuggestionsPanel() {
                       </span>
                     ))}
                     <span className="block text-xs text-text-tertiary break-words" data-testid="suggestion-merge-reasons">
-                      <span className="font-medium text-text-secondary tabular-nums">{s.score}</span>
+                      <span className="font-medium text-text-secondary">{t(`suggestions.merge.level.${s.level}`)}</span>
                       {s.reasons.map((r, i) => (
                         <Fragment key={i}>
                           {' · '}

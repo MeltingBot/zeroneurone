@@ -40,7 +40,7 @@ Chaque règle se coche ou se décoche dans le panneau. Par exemple, pour ne cher
 | **Propriétés** | Même valeur pour la même propriété (téléphone, IBAN, email, plaque…) | Propriétés comparées |
 | **Sources** | Même pièce jointe, ou même page web citée en source | — |
 | **Zones** | Un point ou une petite zone à l'intérieur d'une zone plus grande (un site dans sa commune) | — |
-| **Doublons** | Deux éléments qui sont peut-être le même : à **fusionner**, pas à relier | Score minimal |
+| **Doublons** | Deux éléments qui sont peut-être le même : à **fusionner**, pas à relier | Niveau minimal |
 | **Lieux à moins de** | Deux éléments placés à moins d'une distance, sans tenir compte des dates | Rayon |
 | **Rencontres à moins de** | Deux éléments au même endroit **au même moment** | Rayon, fenêtre de temps, durée des séjours |
 
@@ -71,7 +71,15 @@ Le bouton à côté de **Propriétés** (« toutes », ou « 3/12 ») déplie la
 
 ### Doublons
 
-La règle **Doublons** propose de fusionner deux éléments qui désignent sans doute la même chose. Chaque proposition affiche un **score** de 0 à 100 et ses raisons :
+La règle **Doublons** propose de fusionner deux éléments qui désignent sans doute la même chose. Chaque proposition affiche un **niveau** et ses raisons. Le niveau dépend de ce qui a été trouvé :
+
+| Niveau | Preuves |
+|--------|---------|
+| **Très probable** | Même identifiant **et** nom proche (ou deux noms qui sont le même numéro écrit autrement) |
+| **Probable** | Même identifiant seul, ou même nom |
+| **Possible** | Noms proches, ou même prononciation, seulement |
+
+Les raisons possibles :
 
 | Raison | Ce qui est comparé |
 |--------|--------------------|
@@ -81,14 +89,16 @@ La règle **Doublons** propose de fusionner deux éléments qui désignent sans 
 | **Noms proches** | Distance de Jaro-Winkler, pour les fautes de frappe |
 | **Tags communs** | Léger bonus |
 
-Deux raisons font baisser le score, affichées en couleur d'avertissement :
+Deux raisons font descendre d'un niveau, affichées en couleur d'avertissement :
 
-- **Téléphones (ou IBAN…) différents** : les deux éléments ont ce type d'identifiant mais aucune valeur commune. Deux homonymes, ou une même personne avec deux lignes : la paire reste proposée, plus bas.
+- **Téléphones (ou IBAN…) différents** : les deux éléments ont ce type d'identifiant mais aucune valeur commune. Deux homonymes, ou une même personne avec deux lignes : la paire reste proposée, un niveau plus bas.
 - **Nombres différents** dans les noms (« Lot 3 » / « Lot 4 ») : deux choses, pas une faute de frappe.
+
+Un élément dont le nom est un numéro (« 06 12 34 56 78 »), un IBAN, une plaque ou un e-mail n'est comparé qu'aux éléments du même genre. Une fiche qui porte ce numéro en propriété n'est pas son double : la règle **Propriétés** propose de les relier.
 
 Les doublons sont cherchés dans **tout le dossier** : une paire est proposée dès qu'un des deux éléments est affiché, même si l'autre est dans un autre onglet, filtré ou masqué (deux imports rangés chacun dans son onglet, par exemple).
 
-La liste à côté de la case règle le **score minimal** (60 par défaut). Les doublons passent en tête de liste, du score le plus haut au plus bas. Deux éléments déjà reliés restent proposés : un lien ne prouve pas qu'il s'agit de deux personnes.
+La liste à côté de la case choisit ce qui est montré : **Toutes** (par défaut), **Probables et très probables**, **Très probables seulement**. Les doublons passent en tête de liste, des plus probables aux moins probables. Deux éléments déjà reliés restent proposés : un lien ne prouve pas qu'il s'agit de deux personnes.
 
 La bibliothèque des numéros de téléphone n'est chargée qu'au premier usage de la règle.
 

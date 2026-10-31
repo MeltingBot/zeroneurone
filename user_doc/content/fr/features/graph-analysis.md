@@ -132,12 +132,6 @@ Liste des éléments **sans aucune connexion**.
 
 ---
 
-## Doublons potentiels
-
-Le compteur donne le nombre de paires aux noms proches. **Comparer dans Suggestions** ouvre le panneau [Suggestions]({{< relref "link-suggestions" >}}) avec la règle **Doublons** : chaque paire y a un score, ses raisons (même téléphone, même prononciation, noms proches…) et se fusionne d'un clic.
-
----
-
 ## Chemins
 
 Trouvez le **plus court chemin** entre deux éléments.

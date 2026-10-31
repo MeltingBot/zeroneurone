@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import Graph from 'graphology';
-import { findArticulationPoints, detectSimilarLabels, labelSimilarity } from './algorithms';
+import { findArticulationPoints } from './algorithms';
 
 function graphOf(edges: [string, string][], isolated: string[] = []): Graph {
   const g = new Graph({ type: 'undirected', multi: false });
@@ -65,71 +65,5 @@ describe('findArticulationPoints', () => {
     for (let i = 0; i < 50_000; i++) edges.push([`n${i}`, `n${i + 1}`]);
 
     expect(() => findArticulationPoints(graphOf(edges))).not.toThrow();
-  });
-});
-
-describe('detectSimilarLabels', () => {
-  it('pairs one phone number written two ways, however many numbers sit between', () => {
-    const numbers = Array.from({ length: 30 }, (_, i) => ({ id: `n${i}`, label: `06 39 98 ${String(10 + i)} 00` }));
-    const pairs = detectSimilarLabels([...numbers, { id: 'a', label: '06 39 98 33 17' }, { id: 'b', label: '0639983317' }]);
-    expect(pairs.some((p) => [p.elementId1, p.elementId2].sort().join() === 'a,b' && p.similarity === 1)).toBe(true);
-  });
-
-  it('pairs near-identical labels', () => {
-    const pairs = detectSimilarLabels([
-      { id: '1', label: 'Jean Dupont' },
-      { id: '2', label: 'Jean Dupond' },
-      { id: '3', label: 'Sophie Bernard' },
-    ]);
-
-    expect(pairs).toHaveLength(1);
-    expect([pairs[0].elementId1, pairs[0].elementId2].sort()).toEqual(['1', '2']);
-  });
-
-  it('ignores labels that are merely different', () => {
-    expect(detectSimilarLabels([
-      { id: '1', label: 'Jean Dupont' },
-      { id: '2', label: 'Sophie Bernard' },
-    ])).toEqual([]);
-  });
-
-  it('skips groups and empty labels', () => {
-    expect(detectSimilarLabels([
-      { id: '1', label: 'Jean Dupont', isGroup: true },
-      { id: '2', label: 'Jean Dupond', isGroup: true },
-      { id: '3', label: '   ' },
-    ])).toEqual([]);
-  });
-
-  it('returns the strongest matches first, capped', () => {
-    const elements = Array.from({ length: 40 }, (_, i) => ({ id: `${i}`, label: `Nom ${i % 20}` }));
-
-    const pairs = detectSimilarLabels(elements, 0.7, 5, 10);
-
-    expect(pairs.length).toBeLessThanOrEqual(10);
-    for (let i = 1; i < pairs.length; i++) {
-      expect(pairs[i - 1].similarity).toBeGreaterThanOrEqual(pairs[i].similarity);
-    }
-  });
-});
-
-describe('labelSimilarity', () => {
-  it('scores identical, close and unrelated strings', () => {
-    expect(labelSimilarity('dupont', 'dupont')).toBe(1);
-    expect(labelSimilarity('dupont', 'dupond')).toBeGreaterThan(0.8);
-    expect(labelSimilarity('dupont', 'zzzzzz')).toBeLessThan(0.3);
-    expect(labelSimilarity('', '')).toBe(1);
-  });
-});
-
-describe('detectSimilarLabels — numbers', () => {
-  it('does not pair two different numbers, however close', () => {
-    const pairs = detectSimilarLabels([
-      { id: 'a', label: '0639985018' },
-      { id: 'b', label: '0639985078' },
-      { id: 'c', label: '06 39 98 50 18' },
-    ]);
-    expect(pairs).toEqual([{ elementId1: expect.any(String), elementId2: expect.any(String), similarity: 1 }]);
-    expect([pairs[0].elementId1, pairs[0].elementId2].sort()).toEqual(['a', 'c']);
   });
 });

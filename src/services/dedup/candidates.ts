@@ -1,6 +1,7 @@
 /**
  * Merge candidates: pairs of elements that may be one and the same, each with
- * a score (0-100) and the reasons behind it.
+ * a level read from the evidence found, and that evidence (the reasons). A
+ * score orders the pairs within a level; it is never shown.
  *
  * Comparing every pair is out of reach on a large dossier, so pairs are first
  * drawn from blocks (blocking): elements sharing an identifier, a phonetic
@@ -27,27 +28,44 @@ export type MergeReason =
   /** Names carrying different numbers ("Lot 3" / "Lot 4") */
   | { rule: 'differentNumbers' };
 
+/**
+ * How sure a pair is, from what was found:
+ *   - veryLikely : the same identifier, and close names (or two names that are
+ *                  the same number written apart)
+ *   - likely     : the same identifier alone, or the very same name
+ *   - possible   : close names, or names that sound the same, only
+ * A conflict (two phones, two numbers in the names) takes a level off.
+ */
+export type MergeLevel = 'veryLikely' | 'likely' | 'possible';
+/** Levels weakest first, with their rank (the minimum the analyst picks) */
+export const MERGE_LEVELS: readonly { level: MergeLevel; rank: number }[] = [
+  { level: 'possible', rank: 1 },
+  { level: 'likely', rank: 2 },
+  { level: 'veryLikely', rank: 3 },
+];
+export const DEFAULT_MERGE_RANK = 1;
+const LEVEL_OF_RANK: Record<number, MergeLevel> = { 1: 'possible', 2: 'likely', 3: 'veryLikely' };
+
 export interface MergeCandidate {
   elementIds: [string, string];
+  level: MergeLevel;
+  /** Orders the pairs within a level (never shown) */
   score: number;
   reasons: MergeReason[];
 }
 
 export interface MergeOptions {
-  /** Lowest score kept (default 60) */
-  threshold?: number;
+  /** Lowest level kept, as its rank (1 = all) */
+  minRank?: number;
   /** libphonenumber, once loaded; French numbers only without it */
   parsePhone?: PhoneParser | null;
 }
-
-export const DEFAULT_MERGE_THRESHOLD = 60;
 /** An identifier or name word shared by more elements than this tells nothing */
 const MAX_BLOCK = 50;
 /** Neighbours compared once names are sorted */
 const WINDOW = 5;
 /** Close-name threshold (Jaro-Winkler) */
 const NAME_FLOOR = 0.88;
-const MAX_CANDIDATES = 500;
 
 interface Profile {
   id: string;
@@ -117,7 +135,11 @@ function wordsMatch(a: readonly string[], b: readonly string[]): boolean {
 }
 
 /** Score and reasons of one pair, null below any interest */
-function scorePair(a: Profile, b: Profile): { score: number; reasons: MergeReason[] } | null {
+function scorePair(a: Profile, b: Profile): { level: MergeLevel; score: number; reasons: MergeReason[] } | null {
+  // A number as an element and a person carrying it are two things: the
+  // person's record points to the number, it is not its double (a link, which
+  // the shared values rule offers)
+  if (a.labelIsIdentifier !== b.labelIsIdentifier) return null;
   const reasons: MergeReason[] = [];
 
   // Identifiers in common, and kinds both have without a common value
@@ -163,6 +185,13 @@ function scorePair(a: Profile, b: Profile): { score: number; reasons: MergeReaso
   let score = identScore > 0 && nameScore >= 55 ? Math.min(100, identScore + 10) : Math.max(identScore, nameScore);
   if (score === 0) return null;
 
+  // The level, from the evidence
+  const nameEvidence = reasons.some((r) => r.rule === 'sameName' || r.rule === 'similarName' || r.rule === 'phonetic');
+  const sameNumberAsName = a.labelIsIdentifier && b.labelIsIdentifier && shared > 0;
+  let rank = shared > 0 && (nameEvidence || sameNumberAsName) ? 3
+    : shared > 0 || reasons.some((r) => r.rule === 'sameName') ? 2
+      : nameEvidence ? 1 : 0;
+
   let common = 0;
   for (const tag of a.tags) if (b.tags.has(tag)) common++;
   if (common > 0) {
@@ -175,12 +204,15 @@ function scorePair(a: Profile, b: Profile): { score: number; reasons: MergeReaso
     score -= 15;
     reasons.push({ rule: 'conflict', kind });
   }
+  if (conflicts.length > 0) rank--;
   // Two numbers in the names: two things, not a typo ("Lot 3" / "Lot 4")
   if (comparable && a.numbers && b.numbers && a.numbers !== b.numbers) {
     score -= 40;
     reasons.push({ rule: 'differentNumbers' });
+    rank--;
   }
-  return { score: Math.max(0, score), reasons };
+  if (rank < 1) return null;
+  return { level: LEVEL_OF_RANK[rank], score: Math.max(0, score), reasons };
 }
 
 /**
@@ -189,7 +221,8 @@ function scorePair(a: Profile, b: Profile): { score: number; reasons: MergeReaso
  * does not make two records two people.
  */
 export function findMergeCandidates(elements: readonly Element[], options: MergeOptions = {}): MergeCandidate[] {
-  const threshold = options.threshold ?? DEFAULT_MERGE_THRESHOLD;
+  const minRank = options.minRank ?? DEFAULT_MERGE_RANK;
+  const rankOf = (level: MergeLevel) => MERGE_LEVELS.find((l) => l.level === level)!.rank;
   const profiles = elements.map((el) => profileOf(el, options.parsePhone ?? null));
   const pairs = new Set<string>();
   const addPair = (i: number, j: number) => {
@@ -231,11 +264,10 @@ export function findMergeCandidates(elements: readonly Element[], options: Merge
   for (const pair of pairs) {
     const [i, j] = pair.split(':').map(Number);
     const result = scorePair(profiles[i], profiles[j]);
-    if (!result || result.score < threshold) continue;
+    if (!result || rankOf(result.level) < minRank) continue;
     const ids = [profiles[i].id, profiles[j].id].sort() as [string, string];
     found.push({ elementIds: ids, ...result });
   }
   return found
-    .sort((x, y) => y.score - x.score || (x.elementIds.join() < y.elementIds.join() ? -1 : 1))
-    .slice(0, MAX_CANDIDATES);
+    .sort((x, y) => rankOf(y.level) - rankOf(x.level) || y.score - x.score || (x.elementIds.join() < y.elementIds.join() ? -1 : 1));
 }
