@@ -16,6 +16,7 @@ import { db } from '../db/database';
 import { fileService } from './fileService';
 import type { ImportResult } from './importService';
 import { dataUrlMimeType, dataUrlToFile } from '../utils/dataUrl';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // Excalidraw Format Types
@@ -185,7 +186,7 @@ export async function importExcalidraw(
     const data: ExcalidrawData = JSON.parse(content);
 
     if (!data.elements || !Array.isArray(data.elements)) {
-      result.errors.push('Format Excalidraw invalide: pas d\'éléments');
+      result.errors.push(importMessage('excalidraw.noElements'));
       return result;
     }
 
@@ -323,7 +324,7 @@ export async function importExcalidraw(
           result.assetsImported++;
         }
       } catch {
-        result.warnings.push(`Image non importée: ${img.fileId?.substring(0, 12)}...`);
+        result.warnings.push(importMessage('excalidraw.imageNotImported', { id: img.fileId?.substring(0, 12) }));
       }
 
       // Get bound text for image (if any)
@@ -500,13 +501,13 @@ export async function importExcalidraw(
     const skippedArrows = arrows.length - links.length;
     if (skippedArrows > 0) {
       result.warnings.push(
-        `${skippedArrows} flèche(s) ignorée(s) (non connectées à des formes)`
+        importMessage('excalidraw.skippedArrows', { count: skippedArrows })
       );
     }
 
     if (imageDownloadCount > 0) {
       result.warnings.push(
-        `${imageDownloadCount} image(s) importée(s) depuis le fichier Excalidraw`
+        importMessage('excalidraw.imagesImported', { count: imageDownloadCount })
       );
     }
 
@@ -515,14 +516,14 @@ export async function importExcalidraw(
     ).length;
     if (orphanArrows > 0) {
       result.warnings.push(
-        `${orphanArrows} flèche(s) libre(s) ignorée(s) (sans connexion)`
+        importMessage('excalidraw.orphanArrows', { count: orphanArrows })
       );
     }
 
     result.success = result.elementsImported > 0;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import Excalidraw: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'Excalidraw', message: errorText(error) })
     );
   }
 

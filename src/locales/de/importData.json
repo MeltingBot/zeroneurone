@@ -96,7 +96,8 @@
       "marriage": "Ehe",
       "filiation": "Abstammung",
       "siblinghood": "Geschwisterschaft"
-    }
+    },
+    "importError": "Genealogie-Importfehler: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,107 @@
     "parseError": "Fehler beim Lesen von Mermaid: {{message}}",
     "skippedLines_one": "{{count}} nicht erkannte Mermaid-Zeile übersprungen",
     "skippedLines_other": "{{count}} nicht erkannte Mermaid-Zeilen übersprungen"
+  },
+  "common": {
+    "importError": "Importfehler: {{message}}",
+    "formatImportError": "{{format}}-Importfehler: {{message}}",
+    "unknownError": "Unbekannter Fehler",
+    "error": "Fehler",
+    "cancelled": "Import abgebrochen",
+    "lineError": "Zeile {{row}}: {{message}}",
+    "linkMissingEndpoints": "Verbindung übersprungen: Quelle oder Ziel fehlt",
+    "linkMissingElements": "Verbindung übersprungen: Quell-/Zielelemente nicht gefunden ({{label}})",
+    "imageConversionFailed": "Bild für „{{label}}“ übersprungen: Konvertierungsfehler",
+    "imageNotImported": "Bild nicht importiert ({{name}})",
+    "reportExists": "Für diese Akte existiert bereits ein Bericht: Bericht nicht importiert",
+    "reportFailed": "Bericht nicht importiert: {{message}}",
+    "assetError": "Angehängte Datei übersprungen: {{name}} - {{message}}",
+    "skippedElements": "{{count}} Element(e) übersprungen (ohne Position)",
+    "skippedLinks": "{{count}} Verbindung(en) übersprungen (ungültige Elemente)",
+    "nodeNoId": "Knoten ohne ID übersprungen"
+  },
+  "archive": {
+    "tooLarge": "Archiv zu groß. Maximale Größe: {{max}} MB",
+    "tooManyFiles": "Zu viele Dateien im Archiv. Max.: {{max}}",
+    "missingDossierJson": "Ungültiges Archiv: dossier.json fehlt",
+    "jsonTooLarge": "JSON-Datei zu groß. Maximale Größe: {{max}} MB",
+    "invalidJson": "Ungültiges JSON-Format: Felder fehlen",
+    "tooManyElements": "Zu viele Elemente. Max.: {{max}}",
+    "tooManyLinks": "Zu viele Verbindungen. Max.: {{max}}",
+    "tooManyAssets": "Zu viele angehängte Dateien. Max.: {{max}}",
+    "assetMissing": "Angehängte Datei im Archiv nicht gefunden: {{name}}",
+    "assetTooLarge": "Angehängte Datei übersprungen (zu groß, max. {{max}} MB): {{name}}",
+    "totalTooLarge": "Entpackte Gesamtgröße zu groß. Max.: {{max}} GB",
+    "suspiciousRatio": "Verdächtige Kompressionsrate (mögliche ZIP-Bombe)"
+  },
+  "json": {
+    "unrecognized": "JSON-Format nicht erkannt. Unterstützte Formate: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Ungültiges Archiv: backup.json fehlt",
+    "backupTooLarge": "Ungültiges Archiv: backup.json zu groß",
+    "invalidFormat": "Ungültiges Sicherungsformat",
+    "incompatibleVersion": "Sicherung in Version {{version}}, nicht kompatibel mit dieser Version der Anwendung (Format {{expected}}). Aktualisieren Sie ZeroNeurone vor der Wiederherstellung."
+  },
+  "csv": {
+    "empty": "Leere CSV-Datei",
+    "emptyLabel": "Zeile {{row}}: leere Bezeichnung, Element übersprungen",
+    "emptyLabelRow": "Zeile {{row}}: leere Bezeichnung, Zeile übersprungen",
+    "emptyEndpoints": "Zeile {{row}}: from/to leer, Verbindung übersprungen",
+    "emptyEndpointsRow": "Zeile {{row}}: from/to leer, Zeile übersprungen",
+    "elementsNotFound": "Zeile {{row}}: Element(e) nicht gefunden: {{names}}",
+    "emptyParent": "Zeile {{row}}: übergeordnetes Element (from) leer, Ereignis übersprungen",
+    "parentNotFound": "Zeile {{row}}: übergeordnetes Element nicht gefunden: {{name}}",
+    "invalidDate": "Zeile {{row}}: Datum fehlt oder ungültig, Ereignis übersprungen",
+    "missingLabelColumn": "Erforderliche Spalte „label“ nicht gefunden",
+    "missingFromToColumns": "Erforderliche Spalten „from“ und „to“ (oder „de“ und „vers“) nicht gefunden"
+  },
+  "graphml": {
+    "parseError": "Ungültiges GraphML-Format: XML-Lesefehler",
+    "missingGraphml": "Ungültiges GraphML-Format: Element <graphml> fehlt",
+    "missingGraph": "Ungültiges GraphML-Format: Element <graph> fehlt",
+    "linkNoEndpoints": "Verbindung {{id}} übersprungen: Quelle oder Ziel fehlt",
+    "linkMissingNode": "Verbindung {{id}} übersprungen: Quell- oder Zielknoten nicht gefunden",
+    "noId": "ohne ID"
+  },
+  "excalidraw": {
+    "noElements": "Ungültiges Excalidraw-Format: keine Elemente",
+    "imageNotImported": "Bild nicht importiert: {{id}}…",
+    "skippedArrows": "{{count}} Pfeil(e) übersprungen (nicht mit Formen verbunden)",
+    "imagesImported": "{{count}} Bild(er) aus der Excalidraw-Datei importiert",
+    "orphanArrows": "{{count}} freie(r) Pfeil(e) übersprungen (ohne Verbindung)"
+  },
+  "predicagraph": {
+    "missingNodes": "Ungültiges PredicaGraph-Format: Feld „nodes“ fehlt",
+    "nodeSkipped": "Knoten übersprungen: ID oder Position fehlt",
+    "linkMissingNode": "Verbindung übersprungen: Quellknoten ({{source}}) oder Zielknoten ({{target}}) nicht gefunden"
+  },
+  "graphPalette": {
+    "missingNodes": "Ungültiges Graph Palette-Format: Feld „nodes“ fehlt",
+    "nodeTypeSkipped": "Knotentyp übersprungen: {{type}} ({{label}})",
+    "unsupportedType": "Nicht unterstützter Typ: {{type}}",
+    "unexpectedNode": "Knoten übersprungen: unerwartetes Format ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Seite {{page}} unlesbar (ungültiger komprimierter Inhalt)",
+    "pagesStacked": "{{count}} Seiten importiert, vertikal gestapelt",
+    "connectorsSkipped": "{{count}} Verbinder übersprungen (nicht mit zwei Formen verbunden)",
+    "empty": "draw.io-Diagramm leer oder nicht erkannt"
+  },
+  "osintIndustries": {
+    "invalid": "Ungültiges OSINT Industries-Format: leeres Array oder falsches Format",
+    "noFound": "Kein Modul mit dem Status „found“ gefunden"
+  },
+  "geojson": {
+    "invalid": "Ungültiges GeoJSON-Format: FeatureCollection erwartet",
+    "noGeometry": "Feature ohne Geometrie übersprungen",
+    "polygonTooSmall": "\"{{label}}\": Polygon mit weniger als 3 Punkten, übersprungen",
+    "multiPointReduced": "\"{{label}}\": MultiPoint auf den ersten Punkt reduziert",
+    "unsupportedGeometry": "\"{{label}}\": Geometrie \"{{type}}\" nicht unterstützt, übersprungen",
+    "invalidCoordinates": "\"{{label}}\": ungültige Koordinaten, übersprungen",
+    "outOfRange": "{{count}} Objekt(e) mit Koordinaten außerhalb von WGS 84 (Breite/Länge in Grad). Datei vor dem Import nach EPSG:4326 (WGS 84) umprojizieren.",
+    "outOfRangeCrs": "{{count}} Objekt(e) mit Koordinaten außerhalb von WGS 84 (Breite/Länge in Grad), angegebene Projektion: {{crs}}. Datei vor dem Import nach EPSG:4326 (WGS 84) umprojizieren.",
+    "outOfRangeSkipped": "{{message}} Diese Objekte werden übersprungen.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon(e) auf das jeweils größte Polygon reduziert"
   }
 }

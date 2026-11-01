@@ -11,6 +11,7 @@ import type {
 import { db } from '../db/database';
 import type { ImportResult } from './importService';
 import { ImportedRows } from './importedRows';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // PredicaGraph Format Types
@@ -129,7 +130,7 @@ export async function importPredicaGraph(
     const data = JSON.parse(content) as PredicaGraphData;
 
     if (!data.nodes || !Array.isArray(data.nodes)) {
-      result.errors.push('Format PredicaGraph invalide: champ "nodes" manquant');
+      result.errors.push(importMessage('predicagraph.missingNodes'));
       return result;
     }
 
@@ -139,7 +140,7 @@ export async function importPredicaGraph(
     // Import nodes
     for (const node of data.nodes) {
       if (!node.id || !node.position) {
-        result.warnings.push(`Noeud ignoré: ID ou position manquant`);
+        result.warnings.push(importMessage('predicagraph.nodeSkipped'));
         continue;
       }
 
@@ -251,7 +252,7 @@ export async function importPredicaGraph(
     if (data.edges && Array.isArray(data.edges)) {
       for (const edge of data.edges) {
         if (!edge.source || !edge.target) {
-          result.warnings.push(`Lien ignoré: source ou target manquant`);
+          result.warnings.push(importMessage('common.linkMissingEndpoints'));
           continue;
         }
 
@@ -260,7 +261,7 @@ export async function importPredicaGraph(
 
         if (!fromId || !toId) {
           result.warnings.push(
-            `Lien ignoré: noeud source (${edge.source}) ou target (${edge.target}) non trouvé`
+            importMessage('predicagraph.linkMissingNode', { source: edge.source, target: edge.target })
           );
           continue;
         }
@@ -316,7 +317,7 @@ export async function importPredicaGraph(
     result.success = result.elementsImported > 0;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import PredicaGraph: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'PredicaGraph', message: errorText(error) })
     );
   }
 

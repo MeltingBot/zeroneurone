@@ -12,6 +12,7 @@ import { sanitizeEvaluation } from '../utils/evaluation';
 import type { CSVImportOptions, ImportResult, ImportService } from './importService';
 import { isValidLinkStyle, isValidShape } from './importValidators';
 import { importedDate, importedPrecision, importedTimeZone } from './importDates';
+import { errorText, importMessage } from './importMessages';
 
 /**
  * Properties of a CSV row from its free columns. A column whose every value
@@ -64,7 +65,7 @@ export async function importFromCSV(
   try {
     const lines = splitCSVRecords(content);
     if (lines.length === 0) {
-      result.errors.push('Fichier CSV vide');
+      result.errors.push(importMessage('csv.empty'));
       return result;
     }
 
@@ -173,7 +174,7 @@ export async function importFromCSV(
 
       const label = labelIdx >= 0 ? values[labelIdx]?.trim() : '';
       if (!label) {
-        result.warnings.push(`Ligne ${rowNum}: label vide, élément ignoré`);
+        result.warnings.push(importMessage('csv.emptyLabel', { row: rowNum }));
         rowNum++;
         continue;
       }
@@ -288,7 +289,7 @@ export async function importFromCSV(
       const versValue = versIdx >= 0 ? values[versIdx]?.trim().toLowerCase() : '';
 
       if (!deValue || !versValue) {
-        result.warnings.push(`Ligne ${rowNum}: de/vers vide, lien ignoré`);
+        result.warnings.push(importMessage('csv.emptyEndpoints', { row: rowNum }));
         rowNum++;
         continue;
       }
@@ -358,7 +359,7 @@ export async function importFromCSV(
       }
 
       if (!fromElement || !toElement) {
-        result.warnings.push(`Ligne ${rowNum}: élément(s) non trouvé(s): ${!fromElement ? deValue : ''} ${!toElement ? versValue : ''}`);
+        result.warnings.push(importMessage('csv.elementsNotFound', { row: rowNum, names: `${!fromElement ? deValue : ''} ${!toElement ? versValue : ''}` }));
         rowNum++;
         continue;
       }
@@ -447,7 +448,7 @@ export async function importFromCSV(
 
       const parentValue = deIdx >= 0 ? values[deIdx]?.trim().toLowerCase() : '';
       if (!parentValue) {
-        result.warnings.push(`Ligne ${rowNum}: élément parent (de) vide, événement ignoré`);
+        result.warnings.push(importMessage('csv.emptyParent', { row: rowNum }));
         rowNum++;
         continue;
       }
@@ -484,7 +485,7 @@ export async function importFromCSV(
       }
 
       if (!parentElement) {
-        result.warnings.push(`Ligne ${rowNum}: élément parent introuvable: ${parentValue}`);
+        result.warnings.push(importMessage('csv.parentNotFound', { row: rowNum, name: parentValue }));
         rowNum++;
         continue;
       }
@@ -501,7 +502,7 @@ export async function importFromCSV(
         if (!isNaN(parsed.getTime())) { eventDate = parsed; eventDateText = values[dateStartIdx]; }
       }
       if (!eventDate) {
-        result.warnings.push(`Ligne ${rowNum}: date manquante ou invalide, événement ignoré`);
+        result.warnings.push(importMessage('csv.invalidDate', { row: rowNum }));
         rowNum++;
         continue;
       }
@@ -566,7 +567,7 @@ export async function importFromCSV(
       await svc.applyImportDisplaySettings(targetDossierId);
     }
   } catch (error) {
-    result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    result.errors.push(importMessage('common.importError', { message: errorText(error) }));
   }
 
   return result;
@@ -604,7 +605,7 @@ async function importElementsFromCSV(
   try {
     const lines = splitCSVRecords(content);
     if (lines.length === 0) {
-      result.errors.push('Fichier CSV vide');
+      result.errors.push(importMessage('csv.empty'));
       return result;
     }
 
@@ -635,7 +636,7 @@ async function importElementsFromCSV(
     const shapeIdx = headers.findIndex((h) => ['shape', 'forme'].includes(h.toLowerCase()));
 
     if (labelIdx === -1) {
-      result.errors.push('Colonne "label" requise non trouvée');
+      result.errors.push(importMessage('csv.missingLabelColumn'));
       return result;
     }
 
@@ -655,7 +656,7 @@ async function importElementsFromCSV(
 
         const label = values[labelIdx]?.trim();
         if (!label) {
-          result.warnings.push(`Ligne ${rowNum}: label vide, ligne ignoree`);
+          result.warnings.push(importMessage('csv.emptyLabelRow', { row: rowNum }));
           rowNum++;
           continue;
         }
@@ -731,7 +732,7 @@ async function importElementsFromCSV(
         await db.elements.add(element);
         result.elementsImported++;
       } catch (error) {
-        result.warnings.push(`Ligne ${rowNum}: ${error instanceof Error ? error.message : 'Erreur'}`);
+        result.warnings.push(importMessage('common.lineError', { row: rowNum, message: error instanceof Error ? error.message : importMessage('common.error') }));
       }
       rowNum++;
     }
@@ -746,7 +747,7 @@ async function importElementsFromCSV(
       await svc.applyImportDisplaySettings(targetDossierId);
     }
   } catch (error) {
-    result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    result.errors.push(importMessage('common.importError', { message: errorText(error) }));
   }
 
   return result;
@@ -782,7 +783,7 @@ async function importLinksFromCSV(
   try {
     const lines = splitCSVRecords(content);
     if (lines.length === 0) {
-      result.errors.push('Fichier CSV vide');
+      result.errors.push(importMessage('csv.empty'));
       return result;
     }
 
@@ -825,7 +826,7 @@ async function importLinksFromCSV(
     const rowTimeZone = (values: string[]) => (timeZoneIdx >= 0 ? importedTimeZone(values[timeZoneIdx]) : undefined);
 
     if (fromIdx === -1 || toIdx === -1) {
-      result.errors.push('Colonnes "de" et "vers" (ou "from" et "to") requises non trouvées');
+      result.errors.push(importMessage('csv.missingFromToColumns'));
       return result;
     }
 
@@ -840,7 +841,7 @@ async function importLinksFromCSV(
         const toValue = values[toIdx]?.trim().toLowerCase();
 
         if (!fromValue || !toValue) {
-          result.warnings.push(`Ligne ${rowNum}: from/to vide, ligne ignoree`);
+          result.warnings.push(importMessage('csv.emptyEndpointsRow', { row: rowNum }));
           rowNum++;
           continue;
         }
@@ -912,7 +913,7 @@ async function importLinksFromCSV(
 
         if (!fromElement || !toElement) {
           result.warnings.push(
-            `Ligne ${rowNum}: element(s) non trouve(s): ${!fromElement ? fromValue : ''} ${!toElement ? toValue : ''}`
+            importMessage('csv.elementsNotFound', { row: rowNum, names: `${!fromElement ? fromValue : ''} ${!toElement ? toValue : ''}` })
           );
           rowNum++;
           continue;
@@ -978,7 +979,7 @@ async function importLinksFromCSV(
         await db.links.add(link);
         result.linksImported++;
       } catch (error) {
-        result.warnings.push(`Ligne ${rowNum}: ${error instanceof Error ? error.message : 'Erreur'}`);
+        result.warnings.push(importMessage('common.lineError', { row: rowNum, message: error instanceof Error ? error.message : importMessage('common.error') }));
       }
       rowNum++;
     }
@@ -993,7 +994,7 @@ async function importLinksFromCSV(
       await svc.applyImportDisplaySettings(targetDossierId);
     }
   } catch (error) {
-    result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    result.errors.push(importMessage('common.importError', { message: errorText(error) }));
   }
 
   return result;

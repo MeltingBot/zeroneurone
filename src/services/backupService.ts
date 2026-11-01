@@ -16,6 +16,7 @@ import type {
   LinkId,
 } from '../types';
 import { replaceReportRefs } from '../utils/reportRefs';
+import { errorText, importMessage } from './importMessages';
 
 const BACKUP_VERSION = '1.0.0';
 
@@ -163,7 +164,7 @@ class BackupService {
       // Read the JSON metadata
       const jsonFile = zip.file('backup.json');
       if (!jsonFile) {
-        result.errors.push('Archive invalide: backup.json manquant');
+        result.errors.push(importMessage('backup.missingBackupJson'));
         return result;
       }
 
@@ -174,7 +175,7 @@ class BackupService {
         jsonContent = await readZipEntryText(jsonFile, ZIP_LIMITS.MAX_ZIP_SIZE);
       } catch (error) {
         if (!(error instanceof ZipEntryTooLargeError)) throw error;
-        result.errors.push('Archive invalide: backup.json trop volumineux');
+        result.errors.push(importMessage('backup.backupTooLarge'));
         return result;
       }
       const rawData = JSON.parse(jsonContent);
@@ -189,14 +190,13 @@ class BackupService {
 
       // Validate structure
       if (!data.version || !data.dossiers) {
-        result.errors.push('Format de sauvegarde invalide');
+        result.errors.push(importMessage('backup.invalidFormat'));
         return result;
       }
 
       if (!isSupportedBackupVersion(data.version)) {
         result.errors.push(
-          `Sauvegarde en version ${data.version}, incompatible avec cette version de l'application ` +
-          `(format ${BACKUP_VERSION}). Mettez à jour ZeroNeurone avant de restaurer.`
+          importMessage('backup.incompatibleVersion', { version: data.version, expected: BACKUP_VERSION })
         );
         return result;
       }
@@ -367,7 +367,7 @@ class BackupService {
       onProgress?.('Import terminé');
     } catch (error) {
       result.errors.push(
-        `Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+        importMessage('common.importError', { message: errorText(error) })
       );
     }
 

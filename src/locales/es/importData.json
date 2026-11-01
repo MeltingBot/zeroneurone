@@ -96,7 +96,8 @@
       "marriage": "Matrimonio",
       "filiation": "Filiación",
       "siblinghood": "Hermandad"
-    }
+    },
+    "importError": "Error de importación de genealogía: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,107 @@
     "parseError": "Error al leer Mermaid: {{message}}",
     "skippedLines_one": "{{count}} línea Mermaid no reconocida omitida",
     "skippedLines_other": "{{count}} líneas Mermaid no reconocidas omitidas"
+  },
+  "common": {
+    "importError": "Error de importación: {{message}}",
+    "formatImportError": "Error de importación {{format}}: {{message}}",
+    "unknownError": "Error desconocido",
+    "error": "Error",
+    "cancelled": "Importación cancelada",
+    "lineError": "Línea {{row}}: {{message}}",
+    "linkMissingEndpoints": "Enlace omitido: falta el origen o el destino",
+    "linkMissingElements": "Enlace omitido: elementos de origen/destino no encontrados ({{label}})",
+    "imageConversionFailed": "Imagen omitida para «{{label}}»: error de conversión",
+    "imageNotImported": "Imagen no importada ({{name}})",
+    "reportExists": "Ya existe un informe para este expediente: informe no importado",
+    "reportFailed": "Informe no importado: {{message}}",
+    "assetError": "Archivo adjunto omitido: {{name}} - {{message}}",
+    "skippedElements": "{{count}} elemento(s) omitido(s) (sin posición)",
+    "skippedLinks": "{{count}} enlace(s) omitido(s) (elementos no válidos)",
+    "nodeNoId": "Nodo sin ID omitido"
+  },
+  "archive": {
+    "tooLarge": "Archivo comprimido demasiado grande. Tamaño máx.: {{max}} MB",
+    "tooManyFiles": "Demasiados archivos en el archivo comprimido. Máx.: {{max}}",
+    "missingDossierJson": "Archivo comprimido no válido: falta dossier.json",
+    "jsonTooLarge": "Archivo JSON demasiado grande. Tamaño máx.: {{max}} MB",
+    "invalidJson": "Formato JSON no válido: faltan campos",
+    "tooManyElements": "Demasiados elementos. Máx.: {{max}}",
+    "tooManyLinks": "Demasiados enlaces. Máx.: {{max}}",
+    "tooManyAssets": "Demasiados archivos adjuntos. Máx.: {{max}}",
+    "assetMissing": "Archivo adjunto no encontrado en el archivo comprimido: {{name}}",
+    "assetTooLarge": "Archivo adjunto omitido (demasiado grande, máx. {{max}} MB): {{name}}",
+    "totalTooLarge": "Tamaño total descomprimido demasiado grande. Máx.: {{max}} GB",
+    "suspiciousRatio": "Tasa de compresión sospechosa (posible bomba ZIP)"
+  },
+  "json": {
+    "unrecognized": "Formato JSON no reconocido. Formatos admitidos: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Archivo comprimido no válido: falta backup.json",
+    "backupTooLarge": "Archivo comprimido no válido: backup.json demasiado grande",
+    "invalidFormat": "Formato de copia de seguridad no válido",
+    "incompatibleVersion": "Copia de seguridad en versión {{version}}, incompatible con esta versión de la aplicación (formato {{expected}}). Actualice ZeroNeurone antes de restaurar."
+  },
+  "csv": {
+    "empty": "Archivo CSV vacío",
+    "emptyLabel": "Línea {{row}}: etiqueta vacía, elemento omitido",
+    "emptyLabelRow": "Línea {{row}}: etiqueta vacía, línea omitida",
+    "emptyEndpoints": "Línea {{row}}: from/to vacío, enlace omitido",
+    "emptyEndpointsRow": "Línea {{row}}: from/to vacío, línea omitida",
+    "elementsNotFound": "Línea {{row}}: elemento(s) no encontrado(s): {{names}}",
+    "emptyParent": "Línea {{row}}: elemento padre (from) vacío, evento omitido",
+    "parentNotFound": "Línea {{row}}: elemento padre no encontrado: {{name}}",
+    "invalidDate": "Línea {{row}}: fecha ausente o no válida, evento omitido",
+    "missingLabelColumn": "No se encontró la columna obligatoria «label»",
+    "missingFromToColumns": "No se encontraron las columnas obligatorias «from» y «to» (o «de» y «vers»)"
+  },
+  "graphml": {
+    "parseError": "Formato GraphML no válido: error de lectura XML",
+    "missingGraphml": "Formato GraphML no válido: falta el elemento <graphml>",
+    "missingGraph": "Formato GraphML no válido: falta el elemento <graph>",
+    "linkNoEndpoints": "Enlace {{id}} omitido: falta el origen o el destino",
+    "linkMissingNode": "Enlace {{id}} omitido: nodo de origen o destino no encontrado",
+    "noId": "sin ID"
+  },
+  "excalidraw": {
+    "noElements": "Formato Excalidraw no válido: no hay elementos",
+    "imageNotImported": "Imagen no importada: {{id}}…",
+    "skippedArrows": "{{count}} flecha(s) omitida(s) (no conectadas a formas)",
+    "imagesImported": "{{count}} imagen(es) importada(s) desde el archivo Excalidraw",
+    "orphanArrows": "{{count}} flecha(s) libre(s) omitida(s) (sin conexión)"
+  },
+  "predicagraph": {
+    "missingNodes": "Formato PredicaGraph no válido: falta el campo «nodes»",
+    "nodeSkipped": "Nodo omitido: falta el ID o la posición",
+    "linkMissingNode": "Enlace omitido: nodo de origen ({{source}}) o de destino ({{target}}) no encontrado"
+  },
+  "graphPalette": {
+    "missingNodes": "Formato Graph Palette no válido: falta el campo «nodes»",
+    "nodeTypeSkipped": "Tipo de nodo omitido: {{type}} ({{label}})",
+    "unsupportedType": "Tipo no admitido: {{type}}",
+    "unexpectedNode": "Nodo omitido: formato inesperado ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Página {{page}} ilegible (contenido comprimido no válido)",
+    "pagesStacked": "{{count}} páginas importadas, apiladas verticalmente",
+    "connectorsSkipped": "{{count}} conector(es) omitido(s) (no unidos a dos formas)",
+    "empty": "Diagrama draw.io vacío o no reconocido"
+  },
+  "osintIndustries": {
+    "invalid": "Formato OSINT Industries no válido: tabla vacía o formato incorrecto",
+    "noFound": "No se encontró ningún módulo con el estado «found»"
+  },
+  "geojson": {
+    "invalid": "Formato GeoJSON no válido: se esperaba una FeatureCollection",
+    "noGeometry": "Feature sin geometría omitida",
+    "polygonTooSmall": "\"{{label}}\": polígono con menos de 3 puntos, omitido",
+    "multiPointReduced": "\"{{label}}\": MultiPoint reducido al primer punto",
+    "unsupportedGeometry": "\"{{label}}\": geometría \"{{type}}\" no admitida, omitida",
+    "invalidCoordinates": "\"{{label}}\": coordenadas no válidas, omitido",
+    "outOfRange": "{{count}} entidad(es) con coordenadas fuera de WGS 84 (latitud/longitud en grados). Reproyecte el archivo a EPSG:4326 (WGS 84) antes de importar.",
+    "outOfRangeCrs": "{{count}} entidad(es) con coordenadas fuera de WGS 84 (latitud/longitud en grados), proyección declarada: {{crs}}. Reproyecte el archivo a EPSG:4326 (WGS 84) antes de importar.",
+    "outOfRangeSkipped": "{{message}} Estas entidades se omiten.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon reducido(s) a su polígono más grande"
   }
 }

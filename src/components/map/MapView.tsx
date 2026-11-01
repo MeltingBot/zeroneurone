@@ -12,6 +12,7 @@ import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, isGeoInRange, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
 import { MapPin, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route, Flame } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
+import { DropdownPortal } from '../common/DropdownPortal';
 
 import { ZoneDrawTool } from './ZoneDrawTool';
 import { ZoneEditTool } from './ZoneEditTool';
@@ -100,6 +101,8 @@ export function MapView() {
   const activeBaseLayer = useUIStore((s) => s.mapBaseLayer);
   const ofmVariant = useUIStore((s) => s.mapOfmVariant);
   const [showOfmMenu, setShowOfmMenu] = useState(false);
+  const ofmMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeOfmMenu = useCallback(() => setShowOfmMenu(false), []);
   const setActiveBaseLayer = (id: string) => useUIStore.setState({ mapBaseLayer: id });
   const setOfmVariant = (v: typeof OFM_VARIANTS[number]['id']) =>
     useUIStore.setState({ mapOfmVariant: v, mapBaseLayer: 'ofm' });
@@ -122,6 +125,8 @@ export function MapView() {
   // Zone drawing mode
   const [isDrawingZone, setIsDrawingZone] = useState(false);
   const [showZoneShapeMenu, setShowZoneShapeMenu] = useState(false);
+  const zoneShapeButtonRef = useRef<HTMLButtonElement>(null);
+  const closeZoneShapeMenu = useCallback(() => setShowZoneShapeMenu(false), []);
   const zoneShape = useUIStore((s) => s.zoneShape);
   const setZoneShape = useUIStore((s) => s.setZoneShape);
   // Zone editing mode (editing polygon vertices)
@@ -2343,6 +2348,7 @@ export function MapView() {
                     </button>
                     {layer.id === 'ofm' && (
                       <button
+                        ref={ofmMenuButtonRef}
                         onClick={() => setShowOfmMenu(v => !v)}
                         title={t('map.ofmVariant', 'Variante de rendu')}
                         className={`h-6 px-1 border-r border-border-default ${activeBaseLayer === 'ofm' ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
@@ -2353,10 +2359,7 @@ export function MapView() {
                   </Fragment>
                 ))}
               </div>
-              {showOfmMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowOfmMenu(false)} />
-                  <div className="absolute top-7 left-0 bg-bg-primary border border-border-default rounded shadow-md z-50 min-w-[130px]">
+              <DropdownPortal anchorRef={ofmMenuButtonRef} isOpen={showOfmMenu} onClose={closeOfmMenu} className="min-w-[130px]">
                     {OFM_VARIANTS.map(({ id, labelKey, fallback }) => (
                       <button
                         key={id}
@@ -2366,9 +2369,7 @@ export function MapView() {
                         {t(labelKey, fallback)}
                       </button>
                     ))}
-                  </div>
-                </>
-              )}
+              </DropdownPortal>
             </div>
 
             {/* 3D toggle */}
@@ -2403,16 +2404,14 @@ export function MapView() {
                   {t('map.zone')}
                 </button>
                 <button
+                  ref={zoneShapeButtonRef}
                   onClick={() => setShowZoneShapeMenu(v => !v)}
                   className={`h-6 px-1 border border-l-0 border-border-default rounded-r ${isDrawingZone ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
                 >
                   <ChevronDown size={10} />
                 </button>
               </div>
-              {showZoneShapeMenu && (
-                <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowZoneShapeMenu(false)} />
-                <div className="absolute top-7 left-0 bg-bg-primary border border-border-default rounded shadow-md z-50 min-w-[120px]">
+              <DropdownPortal anchorRef={zoneShapeButtonRef} isOpen={showZoneShapeMenu} onClose={closeZoneShapeMenu} className="min-w-[120px]">
                   {([
                     { shape: 'polygon' as const, icon: Pentagon, label: t('map.zonePolygon', 'Polygone') },
                     { shape: 'circle' as const, icon: Circle, label: t('map.zoneCircle', 'Cercle') },
@@ -2431,9 +2430,7 @@ export function MapView() {
                       {label}
                     </button>
                   ))}
-                </div>
-                </>
-              )}
+              </DropdownPortal>
             </div>
 
             {/* Density overlay, fed by the elements shown or by their events */}

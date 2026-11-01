@@ -7,6 +7,7 @@ import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import { isValidLinkStyle, isValidShape } from './importValidators';
 import { importedDate } from './importDates';
 import type { ImportResult, ImportService } from './importService';
+import { errorText, importMessage } from './importMessages';
 
 /**
  * Import from GraphML file (graph format compatible with Gephi, yEd, etc.)
@@ -34,14 +35,14 @@ export async function importFromGraphML(
     // Check for parsing errors
     const parseError = doc.querySelector('parsererror');
     if (parseError) {
-      result.errors.push('Format GraphML invalide: erreur de parsing XML');
+      result.errors.push(importMessage('graphml.parseError'));
       return result;
     }
 
     // Get the graphml root element
     const graphml = doc.querySelector('graphml');
     if (!graphml) {
-      result.errors.push('Format GraphML invalide: element <graphml> manquant');
+      result.errors.push(importMessage('graphml.missingGraphml'));
       return result;
     }
 
@@ -59,7 +60,7 @@ export async function importFromGraphML(
     // Get the graph element
     const graph = graphml.querySelector('graph');
     if (!graph) {
-      result.errors.push('Format GraphML invalide: element <graph> manquant');
+      result.errors.push(importMessage('graphml.missingGraph'));
       return result;
     }
 
@@ -81,7 +82,7 @@ export async function importFromGraphML(
     for (const node of Array.from(nodes)) {
       const graphmlId = node.getAttribute('id');
       if (!graphmlId) {
-        result.warnings.push('Noeud sans ID ignoré');
+        result.warnings.push(importMessage('common.nodeNoId'));
         continue;
       }
 
@@ -175,7 +176,7 @@ export async function importFromGraphML(
       const targetId = edge.getAttribute('target');
 
       if (!sourceId || !targetId) {
-        result.warnings.push(`Lien ${edgeId || 'sans ID'} ignoré: source ou target manquant`);
+        result.warnings.push(importMessage('graphml.linkNoEndpoints', { id: edgeId || importMessage('graphml.noId') }));
         continue;
       }
 
@@ -183,7 +184,7 @@ export async function importFromGraphML(
       const toId = nodeIdMap.get(targetId);
 
       if (!fromId || !toId) {
-        result.warnings.push(`Lien ${edgeId || 'sans ID'} ignoré: noeud source ou target non trouvé`);
+        result.warnings.push(importMessage('graphml.linkMissingNode', { id: edgeId || importMessage('graphml.noId') }));
         continue;
       }
 
@@ -282,7 +283,7 @@ export async function importFromGraphML(
       await svc.applyImportDisplaySettings(targetDossierId);
     }
   } catch (error) {
-    result.errors.push(`Erreur d'import GraphML: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    result.errors.push(importMessage('common.formatImportError', { format: 'GraphML', message: errorText(error) }));
   }
 
   return result;

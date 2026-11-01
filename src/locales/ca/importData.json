@@ -96,7 +96,8 @@
       "marriage": "Matrimoni",
       "filiation": "Filiació",
       "siblinghood": "Germandat"
-    }
+    },
+    "importError": "Error d'importació de genealogia: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,107 @@
     "parseError": "Error de lectura Mermaid: {{message}}",
     "skippedLines_one": "{{count}} línia Mermaid no reconeguda omesa",
     "skippedLines_other": "{{count}} línies Mermaid no reconegudes omeses"
+  },
+  "common": {
+    "importError": "Error d'importació: {{message}}",
+    "formatImportError": "Error d'importació {{format}}: {{message}}",
+    "unknownError": "Error desconegut",
+    "error": "Error",
+    "cancelled": "Importació cancel·lada",
+    "lineError": "Línia {{row}}: {{message}}",
+    "linkMissingEndpoints": "Enllaç omès: manca l'origen o la destinació",
+    "linkMissingElements": "Enllaç omès: no s'han trobat els elements d'origen/destinació ({{label}})",
+    "imageConversionFailed": "Imatge omesa per a «{{label}}»: error de conversió",
+    "imageNotImported": "Imatge no importada ({{name}})",
+    "reportExists": "Ja existeix un informe per a aquest expedient: informe no importat",
+    "reportFailed": "Informe no importat: {{message}}",
+    "assetError": "Fitxer adjunt omès: {{name}} - {{message}}",
+    "skippedElements": "{{count}} element(s) omès(os) (sense posició)",
+    "skippedLinks": "{{count}} enllaç(os) omès(os) (elements no vàlids)",
+    "nodeNoId": "Node sense ID omès"
+  },
+  "archive": {
+    "tooLarge": "Arxiu massa gran. Mida màx.: {{max}} MB",
+    "tooManyFiles": "Massa fitxers a l'arxiu. Màx.: {{max}}",
+    "missingDossierJson": "Arxiu no vàlid: manca dossier.json",
+    "jsonTooLarge": "Fitxer JSON massa gran. Mida màx.: {{max}} MB",
+    "invalidJson": "Format JSON no vàlid: manquen camps",
+    "tooManyElements": "Massa elements. Màx.: {{max}}",
+    "tooManyLinks": "Massa enllaços. Màx.: {{max}}",
+    "tooManyAssets": "Massa fitxers adjunts. Màx.: {{max}}",
+    "assetMissing": "No s'ha trobat el fitxer adjunt a l'arxiu: {{name}}",
+    "assetTooLarge": "Fitxer adjunt omès (massa gran, màx. {{max}} MB): {{name}}",
+    "totalTooLarge": "Mida total descomprimida massa gran. Màx.: {{max}} GB",
+    "suspiciousRatio": "Taxa de compressió sospitosa (possible bomba ZIP)"
+  },
+  "json": {
+    "unrecognized": "Format JSON no reconegut. Formats admesos: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Arxiu no vàlid: manca backup.json",
+    "backupTooLarge": "Arxiu no vàlid: backup.json massa gran",
+    "invalidFormat": "Format de còpia de seguretat no vàlid",
+    "incompatibleVersion": "Còpia de seguretat en versió {{version}}, incompatible amb aquesta versió de l'aplicació (format {{expected}}). Actualitzeu ZeroNeurone abans de restaurar."
+  },
+  "csv": {
+    "empty": "Fitxer CSV buit",
+    "emptyLabel": "Línia {{row}}: etiqueta buida, element omès",
+    "emptyLabelRow": "Línia {{row}}: etiqueta buida, línia omesa",
+    "emptyEndpoints": "Línia {{row}}: from/to buit, enllaç omès",
+    "emptyEndpointsRow": "Línia {{row}}: from/to buit, línia omesa",
+    "elementsNotFound": "Línia {{row}}: element(s) no trobat(s): {{names}}",
+    "emptyParent": "Línia {{row}}: element pare (from) buit, esdeveniment omès",
+    "parentNotFound": "Línia {{row}}: no s'ha trobat l'element pare: {{name}}",
+    "invalidDate": "Línia {{row}}: data absent o no vàlida, esdeveniment omès",
+    "missingLabelColumn": "No s'ha trobat la columna obligatòria «label»",
+    "missingFromToColumns": "No s'han trobat les columnes obligatòries «from» i «to» (o «de» i «vers»)"
+  },
+  "graphml": {
+    "parseError": "Format GraphML no vàlid: error de lectura XML",
+    "missingGraphml": "Format GraphML no vàlid: manca l'element <graphml>",
+    "missingGraph": "Format GraphML no vàlid: manca l'element <graph>",
+    "linkNoEndpoints": "Enllaç {{id}} omès: manca l'origen o la destinació",
+    "linkMissingNode": "Enllaç {{id}} omès: no s'ha trobat el node d'origen o de destinació",
+    "noId": "sense ID"
+  },
+  "excalidraw": {
+    "noElements": "Format Excalidraw no vàlid: no hi ha elements",
+    "imageNotImported": "Imatge no importada: {{id}}…",
+    "skippedArrows": "{{count}} fletxa/es omesa/es (no connectades a formes)",
+    "imagesImported": "{{count}} imatge/s importada/es des del fitxer Excalidraw",
+    "orphanArrows": "{{count}} fletxa/es lliure/s omesa/es (sense connexió)"
+  },
+  "predicagraph": {
+    "missingNodes": "Format PredicaGraph no vàlid: manca el camp «nodes»",
+    "nodeSkipped": "Node omès: manca l'ID o la posició",
+    "linkMissingNode": "Enllaç omès: no s'ha trobat el node d'origen ({{source}}) o de destinació ({{target}})"
+  },
+  "graphPalette": {
+    "missingNodes": "Format Graph Palette no vàlid: manca el camp «nodes»",
+    "nodeTypeSkipped": "Tipus de node omès: {{type}} ({{label}})",
+    "unsupportedType": "Tipus no admès: {{type}}",
+    "unexpectedNode": "Node omès: format inesperat ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Pàgina {{page}} il·legible (contingut comprimit no vàlid)",
+    "pagesStacked": "{{count}} pàgines importades, apilades verticalment",
+    "connectorsSkipped": "{{count}} connector(s) omès(os) (no units a dues formes)",
+    "empty": "Diagrama draw.io buit o no reconegut"
+  },
+  "osintIndustries": {
+    "invalid": "Format OSINT Industries no vàlid: taula buida o format incorrecte",
+    "noFound": "No s'ha trobat cap mòdul amb l'estat «found»"
+  },
+  "geojson": {
+    "invalid": "Format GeoJSON no vàlid: s'esperava una FeatureCollection",
+    "noGeometry": "Feature sense geometria omesa",
+    "polygonTooSmall": "\"{{label}}\": polígon amb menys de 3 punts, omès",
+    "multiPointReduced": "\"{{label}}\": MultiPoint reduït al primer punt",
+    "unsupportedGeometry": "\"{{label}}\": geometria \"{{type}}\" no admesa, omesa",
+    "invalidCoordinates": "\"{{label}}\": coordenades no vàlides, omès",
+    "outOfRange": "{{count}} entitat(s) amb coordenades fora de WGS 84 (latitud/longitud en graus). Reprojecteu el fitxer a EPSG:4326 (WGS 84) abans d'importar.",
+    "outOfRangeCrs": "{{count}} entitat(s) amb coordenades fora de WGS 84 (latitud/longitud en graus), projecció declarada: {{crs}}. Reprojecteu el fitxer a EPSG:4326 (WGS 84) abans d'importar.",
+    "outOfRangeSkipped": "{{message}} Aquestes entitats s'ometen.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon reduït(s) al seu polígon més gran"
   }
 }

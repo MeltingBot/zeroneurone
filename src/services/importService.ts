@@ -35,6 +35,7 @@ import { reportRefRegex } from '../utils/reportRefs';
 import { importFromCSV } from './importCsv';
 import { analyzeGeoJSONFields as analyzeGeoJSONFieldsImpl, importFromGeoJSON as importFromGeoJSONImpl } from './importGeoJSON';
 import { importFromGraphML as importFromGraphMLImpl } from './importGraphML';
+import { errorText, importMessage } from './importMessages';
 
 /**
  * Date / datetime property values of a ZeroNeurone archive, as Dates. An
@@ -210,7 +211,7 @@ export class ImportService {
       // ========== SECURITY CHECK: ZIP file size ==========
       if (file.size > ZIP_LIMITS.MAX_ZIP_SIZE) {
         const maxMB = (ZIP_LIMITS.MAX_ZIP_SIZE / 1024 / 1024).toFixed(0);
-        result.errors.push(`Archive trop volumineuse. Taille max: ${maxMB} Mo`);
+        result.errors.push(importMessage('archive.tooLarge', { max: maxMB }));
         return result;
       }
 
@@ -219,14 +220,14 @@ export class ImportService {
       // ========== SECURITY CHECK: File count in ZIP ==========
       const fileCount = Object.keys(zip.files).length;
       if (fileCount > ZIP_LIMITS.MAX_FILES_IN_ZIP) {
-        result.errors.push(`Trop de fichiers dans l'archive. Max: ${ZIP_LIMITS.MAX_FILES_IN_ZIP}`);
+        result.errors.push(importMessage('archive.tooManyFiles', { max: ZIP_LIMITS.MAX_FILES_IN_ZIP }));
         return result;
       }
 
       // Read the JSON metadata (or legacy investigation.json)
       const jsonFile = zip.file('dossier.json') || zip.file('investigation.json');
       if (!jsonFile) {
-        result.errors.push('Archive invalide: dossier.json manquant');
+        result.errors.push(importMessage('archive.missingDossierJson'));
         return result;
       }
 
@@ -237,7 +238,7 @@ export class ImportService {
       } catch (error) {
         if (!(error instanceof ZipEntryTooLargeError)) throw error;
         const maxMB = (ZIP_LIMITS.MAX_JSON_SIZE / 1024 / 1024).toFixed(0);
-        result.errors.push(`Fichier JSON trop volumineux. Taille max: ${maxMB} Mo`);
+        result.errors.push(importMessage('archive.jsonTooLarge', { max: maxMB }));
         return result;
       }
 
@@ -253,7 +254,7 @@ export class ImportService {
 
       // Validate structure
       if (!data.version || !data.elements || !data.links) {
-        result.errors.push('Format JSON invalide: champs manquants');
+        result.errors.push(importMessage('archive.invalidJson'));
         return result;
       }
 
@@ -278,15 +279,15 @@ export class ImportService {
 
       // ========== SECURITY CHECK: Element/Link/Asset counts ==========
       if (data.elements.length > ZIP_LIMITS.MAX_ELEMENTS) {
-        result.errors.push(`Trop d'elements. Max: ${ZIP_LIMITS.MAX_ELEMENTS}`);
+        result.errors.push(importMessage('archive.tooManyElements', { max: ZIP_LIMITS.MAX_ELEMENTS }));
         return result;
       }
       if (data.links.length > ZIP_LIMITS.MAX_LINKS) {
-        result.errors.push(`Trop de liens. Max: ${ZIP_LIMITS.MAX_LINKS}`);
+        result.errors.push(importMessage('archive.tooManyLinks', { max: ZIP_LIMITS.MAX_LINKS }));
         return result;
       }
       if (data.assets && data.assets.length > ZIP_LIMITS.MAX_ASSETS) {
-        result.errors.push(`Trop de fichiers joints. Max: ${ZIP_LIMITS.MAX_ASSETS}`);
+        result.errors.push(importMessage('archive.tooManyAssets', { max: ZIP_LIMITS.MAX_ASSETS }));
         return result;
       }
 
@@ -308,7 +309,7 @@ export class ImportService {
           try {
             const assetFile = zip.file(assetMeta.archivePath);
             if (!assetFile) {
-              result.warnings.push(`Asset introuvable dans l'archive: ${assetMeta.filename}`);
+              result.warnings.push(importMessage('archive.assetMissing', { name: assetMeta.filename }));
               continue;
             }
 
@@ -319,7 +320,7 @@ export class ImportService {
             } catch (error) {
               if (!(error instanceof ZipEntryTooLargeError)) throw error;
               const maxMB = (ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP / 1024 / 1024).toFixed(0);
-              result.warnings.push(`Asset ignore (trop volumineux, max ${maxMB} Mo): ${assetMeta.filename}`);
+              result.warnings.push(importMessage('archive.assetTooLarge', { max: maxMB, name: assetMeta.filename }));
               continue;
             }
 
@@ -327,7 +328,7 @@ export class ImportService {
             totalDecompressedSize += arrayBuffer.byteLength;
             if (totalDecompressedSize > ZIP_LIMITS.MAX_DECOMPRESSED_SIZE) {
               const maxGB = (ZIP_LIMITS.MAX_DECOMPRESSED_SIZE / 1024 / 1024 / 1024).toFixed(1);
-              result.errors.push(`Taille totale decompresse trop importante. Max: ${maxGB} Go`);
+              result.errors.push(importMessage('archive.totalTooLarge', { max: maxGB }));
               return result;
             }
 
@@ -336,7 +337,7 @@ export class ImportService {
             if (file.size > 1024) {
               const compressionRatio = totalDecompressedSize / file.size;
               if (compressionRatio > ZIP_LIMITS.MAX_COMPRESSION_RATIO) {
-                result.errors.push(`Ratio de compression suspect (possible ZIP bomb)`);
+                result.errors.push(importMessage('archive.suspiciousRatio'));
                 return result;
               }
             }
@@ -351,10 +352,10 @@ export class ImportService {
           } catch (error) {
             // Handle file validation errors specifically
             if (error instanceof FileValidationError) {
-              result.warnings.push(`Asset ignore: ${assetMeta.filename} - ${error.message}`);
+              result.warnings.push(importMessage('common.assetError', { name: assetMeta.filename, message: error.message }));
             } else {
               result.warnings.push(
-                `Asset ignore: ${assetMeta.filename} - ${error instanceof Error ? error.message : 'Erreur'}`
+                importMessage('common.assetError', { name: assetMeta.filename, message: error instanceof Error ? error.message : importMessage('common.error') })
               );
             }
           } finally {
@@ -364,7 +365,7 @@ export class ImportService {
       }
 
       if (signal?.aborted) {
-        result.errors.push('Import annulé');
+        result.errors.push(importMessage('common.cancelled'));
         return result;
       }
 
@@ -418,7 +419,7 @@ export class ImportService {
       if (error instanceof ImportValidationError) {
         result.errors.push(error.message);
       } else {
-        result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        result.errors.push(importMessage('common.importError', { message: errorText(error) }));
       }
     }
 
@@ -474,7 +475,7 @@ export class ImportService {
           importResult = await this.importFromGeoJSON(content, targetDossierId);
           break;
         default:
-          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1, Gephi Lite, GeoJSON');
+          result.errors.push(importMessage('json.unrecognized', { formats: 'ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1, Gephi Lite, GeoJSON' }));
           return result;
       }
 
@@ -483,7 +484,7 @@ export class ImportService {
       }
       return importResult;
     } catch (error) {
-      result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      result.errors.push(importMessage('common.importError', { message: errorText(error) }));
     }
 
     return result;
@@ -746,7 +747,7 @@ export class ImportService {
     try {
       // Validate structure
       if (!data.version || !data.elements || !data.links) {
-        result.errors.push('Format JSON invalide: champs manquants');
+        result.errors.push(importMessage('archive.invalidJson'));
         return result;
       }
 
@@ -773,7 +774,7 @@ export class ImportService {
 
       result.success = true;
     } catch (error) {
-      result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      result.errors.push(importMessage('common.importError', { message: errorText(error) }));
     }
 
     return result;
@@ -813,7 +814,7 @@ export class ImportService {
           result.assetsImported++;
         } catch (error) {
           result.warnings.push(
-            `Asset ignoré: ${assetData.filename} - ${error instanceof Error ? error.message : 'Erreur'}`
+            importMessage('common.assetError', { name: assetData.filename, message: error instanceof Error ? error.message : importMessage('common.error') })
           );
         }
       }
@@ -862,7 +863,7 @@ export class ImportService {
 
         if (!fromId || !toId) {
           result.warnings.push(
-            `Lien ignoré: éléments source/cible non trouvés (${parsedLink.label})`
+            importMessage('common.linkMissingElements', { label: parsedLink.label })
           );
           continue;
         }
@@ -903,10 +904,10 @@ export class ImportService {
 
       // Add stats to warnings if there were skipped items
       if (parsed.stats.skippedElements > 0) {
-        result.warnings.push(`${parsed.stats.skippedElements} élément(s) ignoré(s) (sans position)`);
+        result.warnings.push(importMessage('common.skippedElements', { count: parsed.stats.skippedElements }));
       }
       if (parsed.stats.skippedLinks > 0) {
-        result.warnings.push(`${parsed.stats.skippedLinks} lien(s) ignoré(s) (éléments invalides)`);
+        result.warnings.push(importMessage('common.skippedLinks', { count: parsed.stats.skippedLinks }));
       }
 
       result.success = true;
@@ -915,7 +916,7 @@ export class ImportService {
       }
     } catch (error) {
       result.errors.push(
-        `Erreur d'import OSINTracker: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+        importMessage('common.formatImportError', { format: 'OSINTracker', message: errorText(error) })
       );
     }
 
@@ -1051,7 +1052,7 @@ export class ImportService {
 
       if (!newFromId || !newToId) {
         result.warnings.push(
-          `Lien ignore: elements source/cible non trouves (${importedLink.label})`
+          importMessage('common.linkMissingElements', { label: importedLink.label })
         );
         continue;
       }
@@ -1204,7 +1205,7 @@ export class ImportService {
 
       if (existingReports.length > 0) {
         // Report already exists, skip import but add warning
-        result.warnings.push('Un rapport existe déjà pour cette dossier, rapport non importé');
+        result.warnings.push(importMessage('common.reportExists'));
         return;
       }
 
@@ -1233,7 +1234,7 @@ export class ImportService {
       result.reportImported = true;
     } catch (error) {
       result.warnings.push(
-        `Rapport non importé: ${error instanceof Error ? error.message : 'Erreur'}`
+        importMessage('common.reportFailed', { message: error instanceof Error ? error.message : importMessage('common.error') })
       );
     }
   }
@@ -1362,7 +1363,7 @@ export class ImportService {
         await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
-      result.errors.push(`Erreur d'import généalogie: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      result.errors.push(importMessage('genealogy.importError', { message: errorText(error) }));
     }
 
     return result;

@@ -96,7 +96,8 @@
       "marriage": "Huwelijk",
       "filiation": "Afstamming",
       "siblinghood": "Broeder-/zusterschap"
-    }
+    },
+    "importError": "Importfout genealogie: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,107 @@
     "parseError": "Fout bij het lezen van Mermaid: {{message}}",
     "skippedLines_one": "{{count}} onherkende Mermaid-regel overgeslagen",
     "skippedLines_other": "{{count}} onherkende Mermaid-regels overgeslagen"
+  },
+  "common": {
+    "importError": "Importfout: {{message}}",
+    "formatImportError": "{{format}}-importfout: {{message}}",
+    "unknownError": "Onbekende fout",
+    "error": "Fout",
+    "cancelled": "Import geannuleerd",
+    "lineError": "Regel {{row}}: {{message}}",
+    "linkMissingEndpoints": "Verbinding overgeslagen: bron of doel ontbreekt",
+    "linkMissingElements": "Verbinding overgeslagen: bron-/doelelementen niet gevonden ({{label}})",
+    "imageConversionFailed": "Afbeelding overgeslagen voor ‘{{label}}’: conversiefout",
+    "imageNotImported": "Afbeelding niet geïmporteerd ({{name}})",
+    "reportExists": "Er bestaat al een rapport voor dit dossier: rapport niet geïmporteerd",
+    "reportFailed": "Rapport niet geïmporteerd: {{message}}",
+    "assetError": "Bijlage overgeslagen: {{name}} - {{message}}",
+    "skippedElements": "{{count}} element(en) overgeslagen (geen positie)",
+    "skippedLinks": "{{count}} verbinding(en) overgeslagen (ongeldige elementen)",
+    "nodeNoId": "Knooppunt zonder ID overgeslagen"
+  },
+  "archive": {
+    "tooLarge": "Archief te groot. Max. grootte: {{max}} MB",
+    "tooManyFiles": "Te veel bestanden in het archief. Max.: {{max}}",
+    "missingDossierJson": "Ongeldig archief: dossier.json ontbreekt",
+    "jsonTooLarge": "JSON-bestand te groot. Max. grootte: {{max}} MB",
+    "invalidJson": "Ongeldig JSON-formaat: velden ontbreken",
+    "tooManyElements": "Te veel elementen. Max.: {{max}}",
+    "tooManyLinks": "Te veel verbindingen. Max.: {{max}}",
+    "tooManyAssets": "Te veel bijlagen. Max.: {{max}}",
+    "assetMissing": "Bijlage niet gevonden in het archief: {{name}}",
+    "assetTooLarge": "Bijlage overgeslagen (te groot, max. {{max}} MB): {{name}}",
+    "totalTooLarge": "Totale uitgepakte grootte te groot. Max.: {{max}} GB",
+    "suspiciousRatio": "Verdachte compressieverhouding (mogelijke ZIP-bom)"
+  },
+  "json": {
+    "unrecognized": "JSON-formaat niet herkend. Ondersteunde formaten: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Ongeldig archief: backup.json ontbreekt",
+    "backupTooLarge": "Ongeldig archief: backup.json te groot",
+    "invalidFormat": "Ongeldig back-upformaat",
+    "incompatibleVersion": "Back-up in versie {{version}}, niet compatibel met deze versie van de applicatie (formaat {{expected}}). Werk ZeroNeurone bij voordat u herstelt."
+  },
+  "csv": {
+    "empty": "Leeg CSV-bestand",
+    "emptyLabel": "Regel {{row}}: leeg label, element overgeslagen",
+    "emptyLabelRow": "Regel {{row}}: leeg label, regel overgeslagen",
+    "emptyEndpoints": "Regel {{row}}: from/to leeg, verbinding overgeslagen",
+    "emptyEndpointsRow": "Regel {{row}}: from/to leeg, regel overgeslagen",
+    "elementsNotFound": "Regel {{row}}: element(en) niet gevonden: {{names}}",
+    "emptyParent": "Regel {{row}}: bovenliggend element (from) leeg, gebeurtenis overgeslagen",
+    "parentNotFound": "Regel {{row}}: bovenliggend element niet gevonden: {{name}}",
+    "invalidDate": "Regel {{row}}: datum ontbreekt of is ongeldig, gebeurtenis overgeslagen",
+    "missingLabelColumn": "Vereiste kolom ‘label’ niet gevonden",
+    "missingFromToColumns": "Vereiste kolommen ‘from’ en ‘to’ (of ‘de’ en ‘vers’) niet gevonden"
+  },
+  "graphml": {
+    "parseError": "Ongeldig GraphML-formaat: XML-leesfout",
+    "missingGraphml": "Ongeldig GraphML-formaat: element <graphml> ontbreekt",
+    "missingGraph": "Ongeldig GraphML-formaat: element <graph> ontbreekt",
+    "linkNoEndpoints": "Verbinding {{id}} overgeslagen: bron of doel ontbreekt",
+    "linkMissingNode": "Verbinding {{id}} overgeslagen: bron- of doelknooppunt niet gevonden",
+    "noId": "zonder ID"
+  },
+  "excalidraw": {
+    "noElements": "Ongeldig Excalidraw-formaat: geen elementen",
+    "imageNotImported": "Afbeelding niet geïmporteerd: {{id}}…",
+    "skippedArrows": "{{count}} pijl(en) overgeslagen (niet verbonden met vormen)",
+    "imagesImported": "{{count}} afbeelding(en) geïmporteerd uit het Excalidraw-bestand",
+    "orphanArrows": "{{count}} losse pijl(en) overgeslagen (geen verbinding)"
+  },
+  "predicagraph": {
+    "missingNodes": "Ongeldig PredicaGraph-formaat: veld ‘nodes’ ontbreekt",
+    "nodeSkipped": "Knooppunt overgeslagen: ID of positie ontbreekt",
+    "linkMissingNode": "Verbinding overgeslagen: bronknooppunt ({{source}}) of doelknooppunt ({{target}}) niet gevonden"
+  },
+  "graphPalette": {
+    "missingNodes": "Ongeldig Graph Palette-formaat: veld ‘nodes’ ontbreekt",
+    "nodeTypeSkipped": "Knooppunttype overgeslagen: {{type}} ({{label}})",
+    "unsupportedType": "Niet-ondersteund type: {{type}}",
+    "unexpectedNode": "Knooppunt overgeslagen: onverwacht formaat ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Pagina {{page}} onleesbaar (ongeldige gecomprimeerde inhoud)",
+    "pagesStacked": "{{count}} pagina's geïmporteerd, verticaal gestapeld",
+    "connectorsSkipped": "{{count}} connector(en) overgeslagen (niet aan twee vormen gekoppeld)",
+    "empty": "draw.io-diagram leeg of niet herkend"
+  },
+  "osintIndustries": {
+    "invalid": "Ongeldig OSINT Industries-formaat: lege array of onjuist formaat",
+    "noFound": "Geen module met de status ‘found’ gevonden"
+  },
+  "geojson": {
+    "invalid": "Ongeldig GeoJSON-formaat: FeatureCollection verwacht",
+    "noGeometry": "Feature zonder geometrie overgeslagen",
+    "polygonTooSmall": "\"{{label}}\": polygoon met minder dan 3 punten, overgeslagen",
+    "multiPointReduced": "\"{{label}}\": MultiPoint teruggebracht tot het eerste punt",
+    "unsupportedGeometry": "\"{{label}}\": geometrie \"{{type}}\" niet ondersteund, overgeslagen",
+    "invalidCoordinates": "\"{{label}}\": ongeldige coördinaten, overgeslagen",
+    "outOfRange": "{{count}} object(en) met coördinaten buiten WGS 84 (breedte/lengte in graden). Herprojecteer het bestand naar EPSG:4326 (WGS 84) vóór het importeren.",
+    "outOfRangeCrs": "{{count}} object(en) met coördinaten buiten WGS 84 (breedte/lengte in graden), opgegeven projectie: {{crs}}. Herprojecteer het bestand naar EPSG:4326 (WGS 84) vóór het importeren.",
+    "outOfRangeSkipped": "{{message}} Deze objecten worden overgeslagen.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon(s) teruggebracht tot hun grootste polygoon"
   }
 }

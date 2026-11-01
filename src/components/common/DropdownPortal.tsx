@@ -99,6 +99,20 @@ export function DropdownPortal({
     };
   }, [isOpen, onClose, anchorRef]);
 
+  // Escape closes. Listened on document, after the dropdown's own fields
+  // (a field that handles Escape calls preventDefault), and stopped there so
+  // the page shortcuts on window (Escape deselects on the canvas) do not act.
+  useEffect(() => {
+    if (!isOpen || !onClose) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.stopPropagation();
+      onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return createPortal(

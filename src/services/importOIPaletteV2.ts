@@ -14,6 +14,7 @@ import { db } from '../db/database';
 import { fileService } from './fileService';
 import { dataUrlToFile } from '../utils/dataUrl';
 import type { ImportResult } from './importService';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // Graph Palette v2 (OSINT Industries) Format Types
@@ -457,7 +458,7 @@ export function convertPaletteV2(data: PaletteV2Graph, dossierId: DossierId): Pa
 
   for (const node of data.nodes) {
     if (!node || typeof node.id !== 'string' || !isEntity(node.entity)) {
-      warnings.push(`Noeud ignoré: format inattendu (${node?.id ?? '?'})`);
+      warnings.push(importMessage('graphPalette.unexpectedNode', { id: node?.id ?? '?' }));
       continue;
     }
     const { element, imageDataUrl } = convertNode(node, dossierId);
@@ -539,7 +540,7 @@ export async function importOIPaletteV2(
         element.visual = { ...element.visual, image: asset.id };
         result.assetsImported++;
       } catch {
-        result.warnings.push(`Image ignorée pour "${element.label}": erreur de conversion`);
+        result.warnings.push(importMessage('common.imageConversionFailed', { label: element.label }));
       }
     }
 
@@ -552,7 +553,7 @@ export async function importOIPaletteV2(
     result.success = result.elementsImported > 0;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import Graph Palette: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'Graph Palette', message: errorText(error) })
     );
   }
 

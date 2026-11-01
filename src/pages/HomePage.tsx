@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Download, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive, GraduationCap } from 'lucide-react';
+import { Plus, FolderOpen, Download, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive, GraduationCap, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
+import { Layout, Button, EmptyState, LanguageSwitcher, DropdownPortal } from '../components/common';
 import { DossierCard, LandingSection } from '../components/home';
 import {
   CreateDossierModal,
@@ -72,6 +72,8 @@ export function HomePage() {
   const [sortMode, setSortMode] = useState<SortMode>('updated');
   const [allTags, setAllTags] = useState<string[]>([]);
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
+  const tagFilterButtonRef = useRef<HTMLButtonElement>(null);
+  const closeTagFilter = useCallback(() => setIsTagFilterOpen(false), []);
   const [showArchived, setShowArchived] = useState(false);
 
   // Load all tags used across dossiers
@@ -468,6 +470,7 @@ export function HomePage() {
                   {allTags.length > 0 && (
                     <div className="relative">
                       <button
+                        ref={tagFilterButtonRef}
                         onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded transition-colors ${
                           selectedTags.length > 0
@@ -484,13 +487,7 @@ export function HomePage() {
                         <ChevronDown size={14} />
                       </button>
 
-                      {isTagFilterOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setIsTagFilterOpen(false)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-bg-primary border border-border-default rounded shadow-lg py-1">
+                      <DropdownPortal anchorRef={tagFilterButtonRef} isOpen={isTagFilterOpen} onClose={closeTagFilter} className="w-48 py-1">
                             {allTags.map((tag) => (
                               <button
                                 key={tag}
@@ -500,14 +497,10 @@ export function HomePage() {
                                 }`}
                               >
                                 <span>{tag}</span>
-                                {selectedTags.includes(tag) && (
-                                  <span className="text-accent">✓</span>
-                                )}
+                                {selectedTags.includes(tag) && <Check size={14} />}
                               </button>
                             ))}
-                          </div>
-                        </>
-                      )}
+                      </DropdownPortal>
                     </div>
                   )}
 

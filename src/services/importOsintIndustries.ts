@@ -12,6 +12,7 @@ import { db } from '../db/database';
 import { fileService } from './fileService';
 import { dataUrlToFile } from '../utils/dataUrl';
 import type { ImportResult } from './importService';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // OSINT Industries Format Types
@@ -106,7 +107,7 @@ export async function importOsintIndustries(
     const modules = JSON.parse(content) as OIModule[];
 
     if (!Array.isArray(modules) || modules.length === 0) {
-      result.errors.push('Format OSINT Industries invalide: tableau vide ou format incorrect');
+      result.errors.push(importMessage('osintIndustries.invalid'));
       return result;
     }
 
@@ -158,7 +159,7 @@ export async function importOsintIndustries(
     const foundModules = modules.filter(m => m.status === 'found');
 
     if (foundModules.length === 0) {
-      result.warnings.push('Aucun module avec status "found" trouvé');
+      result.warnings.push(importMessage('osintIndustries.noFound'));
       result.success = true;
       return result;
     }
@@ -215,7 +216,7 @@ export async function importOsintIndustries(
                   moduleImageId = asset.id;
                   result.assetsImported++;
                 } catch {
-                  result.warnings.push(`Image ignorée pour "${label}": erreur de conversion`);
+                  result.warnings.push(importMessage('common.imageConversionFailed', { label }));
                 }
               } else if (picValue.startsWith('http')) {
                 properties.push({ key: field.proper_key || 'Image', value: picValue, type: 'link' });
@@ -352,7 +353,7 @@ export async function importOsintIndustries(
     result.success = true;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import OSINT Industries: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'OSINT Industries', message: errorText(error) })
     );
   }
 

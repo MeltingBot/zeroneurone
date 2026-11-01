@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Check } from 'lucide-react';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { useTagSetStore, useUIStore } from '../../stores';
 import type { Property, PropertyDefinition, SuggestedProperty } from '../../types';
 
@@ -106,14 +107,18 @@ export function SaveToTagSetPopup({ tags, properties, definitions, onClose }: Sa
     }
   }, [tagName, selected, definitions, onClose, t]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(true, dialogRef, onClose);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
 
-      <div className="relative bg-bg-primary border border-border-default rounded shadow-lg max-w-sm w-full mx-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative bg-bg-primary border border-border-default rounded shadow-lg max-w-sm w-full mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
-          <span className="text-xs font-medium text-text-primary">
+          <span id={titleId} className="text-xs font-medium text-text-primary">
             {t('detail.properties.saveToTag')}
           </span>
           <button onClick={onClose} className="p-1 hover:bg-bg-secondary rounded transition-colors">
