@@ -13,8 +13,6 @@
     "lightMode": "Світлий режим",
     "noDossiers": "Немає справ",
     "createFirst": "Створіть своє перше справа, щоб почати",
-    "viewDossiers": "Переглянути справа",
-    "dossierCount": "{{count}} справа",
     "loading": "Завантаження...",
     "searchPlaceholder": "Шукати за назвою або описом...",
     "filterByTag": "Фільтрувати за тегом",
@@ -24,7 +22,6 @@
     "activeFilters": "Активні фільтри",
     "clearFilters": "Очистити",
     "noResults": "Розслідувань не знайдено",
-    "noResultsHint": "Спробуйте інші терміни або очистіть фільтри",
     "resultsCount": "{{count}} / {{total}} справ",
     "card": {
       "modified": "Змінено {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Вибір",
-      "pan": "Переміщення",
-      "addElement": "Додати елемент",
-      "addGroup": "Додати групу",
-      "addAnnotation": "Додати анотацію",
-      "autoLayout": "Автоматичне розташування",
       "fitView": "Підігнати вид",
       "zoomIn": "Збільшити",
       "zoomOut": "Зменшити",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Приховати без дати",
       "temporalUndatedShow": "Показати без дати (сірим)",
       "hideMinimap": "Сховати мінікарту",
-      "closeEsc": "Закрити (Esc)",
-      "close": "Закрити",
-      "loading": "Завантаження...",
       "oneElement": "1 елемент",
       "oneLink": "1 зв'язок",
       "selectedCount": "{{count}} вибрано"
@@ -226,17 +215,6 @@
       "matrix": "Матриця",
       "report": "Звіт"
     },
-    "panels": {
-      "detail": "Деталі",
-      "filters": "Фільтри",
-      "insights": "Аналітика",
-      "views": "Види"
-    },
-    "emptyCanvas": {
-      "title": "Порожня дошка",
-      "hint": "Подвійний клік для створення елемента",
-      "orDrop": "або перетягніть файли"
-    },
     "importPlacement": {
       "instructions": "Клацніть, щоб розмістити імпортовані елементи",
       "importing": "Імпортування...",
@@ -304,25 +282,15 @@
       "noKeyObjectHint": "Ctrl+клік щоб обрати елемент прив'язки"
     },
     "toast": {
-      "elementCreated": "Елемент створено",
-      "elementsDeleted": "{{count}} елементів видалено",
-      "linkCreated": "Зв'язок створено",
-      "copied": "Скопійовано до буфера обміну",
-      "pasted": "{{count}} елементів вставлено",
-      "saved": "Збережено",
-      "exportSuccess": "Експорт завершено",
-      "exportError": "Помилка під час експорту",
       "assetTooLargeToShare": "Файл завеликий для синхронізації ({{size}}, максимум {{max}}). Він залишається доступним локально, але не надсилається іншим.",
       "assetLargeToShare": "Великий файл ({{size}}): синхронізація може бути повільною."
     },
     "notFound": "Справа не знайдено",
     "header": {
-      "report": "Синтез",
       "generateReport": "Синтез",
       "export": "Експортувати",
       "search": "Пошук",
       "clearFilters": "Очистити фільтри",
-      "activeFilters": "Активні фільтри",
       "shortcuts": "Клавіатурні скорочення",
       "documentation": "Документація",
       "supportKofi": "Підтримати на Ko-fi",
@@ -347,9 +315,6 @@
       "moveHere": "Перемістити в цю вкладку",
       "addToTab": "Додати до вкладки...",
       "removeFromTab": "Видалити з вкладки",
-      "emptyState": "Немає елементів у цій вкладці",
-      "emptyHint": "Клацніть правою кнопкою на елементах, щоб додати",
-      "ghostBadge": "У {{tabs}}",
       "navigateTo": "Перейти до вкладки {{name}}",
       "combine": "Поєднати",
       "uncombine": "Не поєднувати",
@@ -360,7 +325,6 @@
     "retentionExpiredBanner": "Зберігання закінчилось {{days}} днів тому",
     "retentionDeleteConfirm": "Це справа буде остаточно видалено. Цю дію неможливо скасувати.",
     "retentionDeleteAction": "Видалити назавжди",
-    "retentionReadonly": "Справа лише для читання (зберігання закінчилось)",
     "retentionRedactConfirm": "Редагування назавжди видалить весь текстовий вміст (імена, примітки, властивості). Структура графа буде збережена. Ця дія є незворотною.",
     "retentionRedactAction": "Редагувати назавжди",
     "opfsUnavailable": "Цей браузер (або приватний режим) блокує локальне зберігання медіа: зображення не відображатимуться. Відкрийте справу у звичайному вікні.",
@@ -378,7 +342,6 @@
     "offMapLinked": "Пов’язані елементи без розташування: {{count}}",
     "offMapSelectRest": "Вибрати решту ({{count}})",
     "addLocation": "Додайте координати до елементів, щоб побачити їх на карті",
-    "pickLocation": "Клацніть на карті, щоб встановити позицію",
     "elementsLocated": "{{count}} елементів локалізовано",
     "elementsLocatedFiltered": "{{kept}} / {{count}} елементів локалізовано",
     "density": "Щільність",
@@ -423,11 +386,7 @@
     "deleteSelection": "Видалити вибране",
     "editZone": "Редагувати форму",
     "geometry": "Геометрія",
-    "vertices": "Вершини",
-    "area": "Площа",
-    "center": "Центр",
     "viewOnMap": "Показати на карті",
-    "deleteVertex": "Видалити вершину",
     "geoJsonSave": "Застосувати",
     "geoJsonParseError": "Невалідний JSON",
     "geoJsonMinVertices": "Мінімум 3 вершини",
@@ -446,14 +405,10 @@
     "zoneSquare": "Квадрат"
   },
   "timeline": {
-    "noEvents": "Немає датованих подій",
-    "addDates": "Додайте дати до елементів або створіть події",
     "noTemporalData": "Немає часових даних",
     "howToAddTimeline": "Щоб побачити елементи на хронології:",
     "addPeriodToLinks": "Додайте період до зв'язків (дата початку/кінця)",
     "addEventsToHistory": "Додайте події в історію елементів",
-    "eventsCount": "{{count}} подій",
-    "zoomHint": "Ctrl+колесо: масштаб | Перетягування: переміщення",
     "zoomPresetCentury": "Століття",
     "zoomPresetDecade": "10 років",
     "zoomPreset1Year": "1 рік",
@@ -499,7 +454,6 @@
     "relation": "зв'язок",
     "newElement": "Новий елемент",
     "filter": "Фільтр",
-    "filteredEventsCount": "{{filtered}}/{{total}} подія/й",
     "temporalFilter": "Період",
     "temporalFilterHint": "Фільтрувати за часовим періодом",
     "stepBackward": "На місяць назад",
@@ -532,7 +486,6 @@
     "source": "Джерело",
     "count": "{{count}}/{{total}} елементів",
     "properties": "{{count}} властивостей",
-    "search": "Пошук...",
     "columns": "Показати/приховати стовпці",
     "noResults": "Немає результатів",
     "empty": "Немає елементів з властивостями",
@@ -555,19 +508,11 @@
   },
   "report": {
     "title": "Звіт",
-    "untitled": "Без назви",
     "addSection": "Додати розділ",
     "sections": {
-      "title": "Заголовок",
-      "text": "Текст",
-      "canvas": "Дошка",
-      "map": "Карта",
-      "timeline": "Хронологія",
-      "table": "Таблиця",
-      "insights": "Аналітика"
+      "map": "Карта"
     },
-    "export": "Експортувати в PDF",
-    "print": "Друкувати"
+    "export": "Експортувати в PDF"
   },
   "join": {
     "title": "Приєднатися до сеансу",
@@ -620,12 +565,9 @@
   },
   "tutorial": {
     "start": "Покроковий посібник",
-    "restart": "Перезапустити посібник",
-    "progress": "Крок {{current}}/{{total}}",
     "next": "Далі",
     "skip": "Пропустити",
     "quit": "Вийти",
-    "finish": "Завершити",
     "deleteDossier": "Видалити справу посібника",
     "keepDossier": "Залишити її",
     "offTrack": {

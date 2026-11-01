@@ -1,10 +1,10 @@
 /**
- * EncryptionModal — Paramètres de chiffrement at-rest
+  * EncryptionModal — at-rest encryption settings
  *
- * Trois états :
- * - Chiffrement désactivé : toggle pour activer + saisie mot de passe
- * - Chiffrement activé : toggle pour désactiver + changement de mot de passe
- * - Migration en cours : barre de progression
+  * Three states:
+  * - Encryption disabled: toggle to enable + password entry
+  * - Encryption enabled: toggle to disable + password change
+  * - Migration in progress: progress bar
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
@@ -17,6 +17,7 @@ import { changePassword } from '../../services/encryption/encryptionService';
 import type { WebAuthnCredentialEntry } from '../../services/encryption/encryptionService';
 import { isWebAuthnAvailable, registerWebAuthnCredential } from '../../services/encryption/webauthnService';
 import { db } from '../../db/database';
+import { useShallow } from 'zustand/react/shallow';
 
 interface EncryptionModalProps {
   isOpen: boolean;
@@ -32,24 +33,24 @@ interface MigrationState {
 }
 
 // ============================================================================
-// COMPOSANT PRINCIPAL
+// MAIN COMPONENT
 // ============================================================================
 
 export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
   const { t } = useTranslation('modals');
-  const { isEnabled, dek, setDek, setEnabled, lock: lockStore, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore();
+  const { isEnabled, dek, setDek, setEnabled, lock: lockStore, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore(useShallow((s) => ({ isEnabled: s.isEnabled, dek: s.dek, setDek: s.setDek, setEnabled: s.setEnabled, lock: s.lock, autoLockMinutes: s.autoLockMinutes, setAutoLockMinutes: s.setAutoLockMinutes })));
   const [view, setView] = useState<View>('main');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [migration, setMigration] = useState<MigrationState | null>(null);
-  // Désactivation en attente de confirmation : des updates sont indéchiffrables
-  // et seraient effacés. Rien n'a encore été écrit à ce stade.
+  // Disabling awaits confirmation: some updates cannot be decrypted
+  // and would be erased. Nothing has been written yet at this point.
   const [pendingLoss, setPendingLoss] = useState<
     { undecryptable: number; total: number; password: string } | null
   >(null);
 
-  // Réinitialiser à l'ouverture
+  // Reset on open
   useEffect(() => {
     if (isOpen) {
       setView('main');
@@ -65,11 +66,11 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
     setIsBusy(true);
     setError(null);
     try {
-      // Vérifier le mot de passe avant de désactiver
+      // Check the password before disabling
       const meta = await db._encryptionMeta.get('main');
       if (!meta) throw new Error(t('encryption.errorMetaNotFound'));
       const { unlockEncryption } = await import('../../services/encryption/encryptionService');
-      await unlockEncryption(meta, password); // lance si incorrect
+      await unlockEncryption(meta, password); // throws if wrong
 
       await disableEncryption(dek, (p) => setMigration(p), { acceptDataLoss });
       setPendingLoss(null);
@@ -77,11 +78,11 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
       lockStore();
       setSuccess(t('encryption.successDisabled'));
       setView('main');
-      // Recharger pour rouvrir Dexie sans middleware
+      // Reload to reopen Dexie without middleware
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       if (err instanceof UndecryptableDataError) {
-        // Aucune donnée n'a été touchée : on demande l'accord explicite.
+        // No data was touched: ask for explicit consent.
         setPendingLoss({ undecryptable: err.undecryptable, total: err.total, password });
       } else {
         setError(err instanceof Error ? err.message : t('encryption.errorDeactivation'));
@@ -138,9 +139,9 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
               setSuccess(t('encryption.successEnabled'));
               setView('main');
             } catch (err) {
-              // Migration partielle : le chiffrement est bel et bien actif, seule
-              // une partie des données n'a pas pu etre migree. L'etat doit donc
-              // refleter "active", avec l'avertissement affiche.
+              // Partial migration: encryption is indeed active, only part
+              // of the data could not be migrated. The state must therefore
+              // show "active", with the warning displayed.
               if (err instanceof PartialMigrationError && err.dek) {
                 setDek(err.dek);
                 setEnabled(true);
@@ -210,7 +211,7 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
 }
 
 // ============================================================================
-// SOUS-VUES
+// SUB-VIEWS
 // ============================================================================
 
 function MainView({
@@ -271,7 +272,7 @@ function MainView({
         </span>
       </div>
 
-      {/* Avertissement si activé mais non déverrouillé */}
+      {/* Warning when enabled but not unlocked */}
       {isEnabled && !hasDek && (
         <p className="text-xs text-warning flex items-center gap-1.5">
           <AlertTriangle size={12} />
@@ -354,7 +355,7 @@ function MainView({
           </>
         )}
 
-        {/* Lock session — distinct du disable chiffrement */}
+        {/* Lock session — distinct from disabling encryption */}
         {isEnabled && hasDek && (
           <button
             data-testid="lock-session-button"
@@ -368,7 +369,7 @@ function MainView({
         )}
       </div>
 
-      {/* Note sécurité */}
+      {/* Security note */}
       {!isEnabled && (
         <p className="text-xs text-text-tertiary border-t border-border-default pt-3">
           {t('encryption.securityNote')}
@@ -470,7 +471,7 @@ function EnableView({
         </div>
       </div>
 
-      {/* Progression migration */}
+      {/* Migration progress */}
       {migration && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs text-text-secondary">
@@ -659,7 +660,7 @@ function WebAuthnView({
   const [pendingRemove, setPendingRemove] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Charger les credentials existants
+  // Load existing credentials
   useEffect(() => {
     db._encryptionMeta.get('main').then(meta => {
       if (meta?.webauthnCredentials) {
@@ -677,7 +678,7 @@ function WebAuthnView({
       const entry = await registerWebAuthnCredential(dek, label.trim(), existingIds);
       const updated = [...credentials, entry];
 
-      // Persister dans _encryptionMeta
+      // Persist in _encryptionMeta
       const meta = await db._encryptionMeta.get('main');
       if (meta) {
         await db._encryptionMeta.put({ ...meta, webauthnCredentials: updated });
@@ -721,7 +722,7 @@ function WebAuthnView({
         {t('encryption.webauthn.description')}
       </p>
 
-      {/* Liste des clés existantes */}
+      {/* Existing keys */}
       {credentials.length > 0 ? (
         <div className="space-y-2">
           {credentials.map((cred, i) => (
@@ -767,7 +768,7 @@ function WebAuthnView({
         </p>
       )}
 
-      {/* Ajouter une clé */}
+      {/* Add a key */}
       <div className="space-y-2">
         <label className="block text-xs font-medium text-text-primary">
           {t('encryption.webauthn.label')}

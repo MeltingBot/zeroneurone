@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Delete",
-    "message": "This action is irreversible.",
     "confirm": "Delete",
     "deleting": "Deleting...",
     "deleteDossier": "Delete dossier",
@@ -19,8 +18,7 @@
     "rename": "Rename",
     "renaming": "Renaming...",
     "label": "Name",
-    "renameDossier": "Rename dossier",
-    "namePlaceholder": "New name"
+    "renameDossier": "Rename dossier"
   },
   "importIntoCurrent": {
     "title": "Import into dossier",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Import dossier",
-    "dropzone": "Drop a file or click to select",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogy: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -160,10 +157,6 @@
       "folderByTag": "One folder per main tag",
       "folderFlat": "Flat folder"
     },
-    "options": {
-      "includeAssets": "Include attached files",
-      "highResolution": "High resolution (2x)"
-    },
     "resolution": "Resolution",
     "scale": {
       "1x": "Normal size",
@@ -218,12 +211,6 @@
     },
     "placeholder": "Search elements and links...",
     "noResults": "No results for \"{{query}}\"",
-    "resultsCount": "{{count}} result(s)",
-    "filters": {
-      "all": "All",
-      "elements": "Elements",
-      "links": "Links"
-    },
     "noName": "Unnamed",
     "link": "Link",
     "element": "Element",
@@ -282,18 +269,6 @@
       "lockSession": "Lock session"
     }
   },
-  "tagSetManager": {
-    "title": "Manage tags",
-    "description": "Create reusable tag palettes",
-    "newTagSet": "New palette",
-    "editTagSet": "Edit palette",
-    "deleteTagSet": "Delete palette",
-    "tagSetName": "Palette name",
-    "tags": "Tags",
-    "addTag": "Add tag",
-    "noTagSets": "No tag palettes",
-    "createFirst": "Create your first palette"
-  },
   "tagSetEditor": {
     "applyTitle": "Apply to the open dossier",
     "applyVisual": "Appearance (elements whose main tag it is)",
@@ -303,9 +278,6 @@
     "title": "Tag palette",
     "titleNew": "New tag",
     "titleEdit": "Edit \"{{name}}\"",
-    "namePlaceholder": "Palette name",
-    "tagsPlaceholder": "Add a tag...",
-    "colorLabel": "Default color",
     "nameLabel": "Name",
     "nameExample": "E.g., Person, Company...",
     "nameRequired": "Name is required",
@@ -391,7 +363,6 @@
       "opfs": "Files (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Y.js history",
-      "other": "Other",
       "measured": "Measured data"
     },
     "persistent": {
@@ -423,18 +394,9 @@
       "exportAll": "Export all",
       "import": "Import",
       "description": "All dossiers, files and tags. Import adds without replacing.",
-      "exporting": "Exporting...",
-      "importing": "Importing...",
       "exportSuccess": "Export complete",
       "importSuccess": "Import successful: {{dossiers}} dossier(s), {{elements}} element(s), {{links}} link(s)",
       "error": "Error"
-    },
-    "purge": {
-      "description": "Y.js history stores changes for undo. Purging frees up space.",
-      "confirm": "Purge Y.js history?\n\nThis will free up space but delete undo history. Data will be preserved.",
-      "success": "{{count}} database(s) deleted",
-      "successWithErrors": "{{deleted}} database(s) deleted, {{errors}} error(s)",
-      "error": "Purge error"
     },
     "purgeAll": {
       "title": "Delete all dossiers",
@@ -442,7 +404,6 @@
       "button": "Delete all",
       "confirm": "Delete ALL dossiers and their data?\n\nThis action is irreversible.",
       "confirmAgain": "Final confirmation: all data will be lost. Continue?",
-      "success": "All dossiers have been deleted.",
       "error": "Deletion error"
     },
     "compact": {
@@ -497,19 +458,6 @@
     "sortByName": "Name",
     "sortByDate": "Date",
     "sortByConfidence": "Confidence",
-    "preview": "Preview:",
-    "previewContent": "The report will contain",
-    "previewDescription": "the description",
-    "previewSummary": "a summary",
-    "previewInsights": "graph analysis",
-    "previewTimeline": "the timeline",
-    "previewElements": "{{count}} elements",
-    "previewLinks": "{{count}} links",
-    "previewProperties": "properties",
-    "previewFiles": "{{count}} files",
-    "previewFiches": "detailed sheets",
-    "previewGraphCapture": "graph capture",
-    "previewNoContent": "no content",
     "jsonDescription": "JSON+: structured data with graph analysis",
     "jsonTooltip": "Structured JSON export with enriched data",
     "print": "Print",
@@ -596,10 +544,6 @@
     "sortByEvaluation": "Grading"
   },
   "metadataImport": {
-    "title": "Import metadata",
-    "description": "Extract file metadata (EXIF, PDF, etc.)",
-    "noMetadata": "No metadata found",
-    "import": "Import selected metadata",
     "detected": "Metadata found",
     "gps": "GPS coordinates",
     "ignore": "Ignore",
@@ -644,7 +588,6 @@
   "tagSets": {
     "title": "Manage tags",
     "newTag": "New tag",
-    "editTag": "Edit \"{{name}}\"",
     "deleteConfirm": "Delete tag \"{{name}}\"? Existing tags on elements will remain but will no longer be associated with this TagSet.",
     "csvEmptyOrInvalid": "CSV file empty or invalid",
     "csvMissingNameColumn": "Missing \"name\" column in CSV",
@@ -725,7 +668,6 @@
     "errorDeactivation": "Error during deactivation",
     "errorPasswordChange": "Error during password change",
     "enable": {
-      "warning": "Without this password, your data will be unrecoverable. Export a backup before continuing.",
       "passwordLabel": "Password (8 characters minimum)",
       "confirmLabel": "Confirm password",
       "mismatch": "Passwords do not match",
@@ -773,7 +715,6 @@
       "successRemoved": "Security key removed",
       "errorPrfNotSupported": "This key does not support passwordless unlock (PRF)",
       "errorRegistration": "Error registering the key",
-      "errorUnlock": "Security key unlock failed",
       "addedOn": "Added on"
     }
   },

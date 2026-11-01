@@ -10,6 +10,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { useSyncStore, useDossierStore } from '../../stores';
 import { syncService } from '../../services/syncService';
+import { useShallow } from 'zustand/react/shallow';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 const DEFAULT_SERVER_URL = ''; // Empty = not configured
@@ -21,7 +22,7 @@ interface ShareModalProps {
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const { t } = useTranslation('modals');
-  const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore();
+  const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore(useShallow((s) => ({ mode: s.mode, share: s.share, unshare: s.unshare, localUser: s.localUser, updateLocalUserName: s.updateLocalUserName })));
   const currentDossier = useDossierStore((state) => state.currentDossier);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 

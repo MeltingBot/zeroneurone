@@ -346,11 +346,9 @@ export function linkToEdge(
       confidenceBadge: confidenceDisplay
         ? getEvaluationBadge(link.confidence, link.evaluation, confidenceDisplay)
         : null,
-      // Displayed properties
       displayedPropertyValues,
       // Remote user presence (passed from Canvas, not subscribed per-edge)
       remoteLinkSelectors,
-      // Font size
       fontSize: link.visual.fontSize,
     },
     selected: isSelected,

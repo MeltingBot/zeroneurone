@@ -6,7 +6,7 @@ interface CreateDossierModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (name: string, description: string) => Promise<void>;
-  /** Nom pré-rempli (tutoriel guidé). */
+  /** Pre-filled name (guided tutorial). */
   initialName?: string;
 }
 
@@ -19,7 +19,7 @@ export function CreateDossierModal({
   const { t } = useTranslation('modals');
   const [name, setName] = useState('');
 
-  // Pré-remplit le nom à l'ouverture (sans écraser une saisie en cours).
+  // Pre-fills the name on open (without overwriting text being typed).
   useEffect(() => {
     if (isOpen && initialName) {
       setName((current) => (current === '' ? initialName : current));

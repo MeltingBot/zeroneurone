@@ -128,7 +128,6 @@ export function AlignmentGuides({ draggedNodeId, dragPosition, nodes }: Alignmen
 
   const viewport = getViewport();
 
-  // Convert flow coordinates to screen coordinates
   const toScreen = (flowX: number, flowY: number) => ({
     x: flowX * viewport.zoom + viewport.x,
     y: flowY * viewport.zoom + viewport.y,

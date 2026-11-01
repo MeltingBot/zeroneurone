@@ -72,14 +72,12 @@ export function DossierTagsModal({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -87,7 +85,6 @@ export function DossierTagsModal({
         aria-labelledby={titleId}
         className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow flex flex-col max-h-[calc(100dvh-2rem)]"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <div className="flex items-center gap-2">
             <Tag size={16} className="text-text-secondary" />
@@ -104,7 +101,6 @@ export function DossierTagsModal({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-4 overflow-y-auto min-h-0 space-y-4">
           {/* Dossier name */}
           <div className="text-xs text-text-secondary">
@@ -188,7 +184,6 @@ export function DossierTagsModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default">
           <button
             onClick={onClose}

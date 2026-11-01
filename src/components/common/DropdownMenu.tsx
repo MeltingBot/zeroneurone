@@ -13,7 +13,6 @@ export function DropdownMenu({ trigger, children, align = 'right', direction = '
   const menuRef = useRef<HTMLDivElement>(null);
   const menuListRef = useRef<HTMLDivElement>(null);
 
-  // Get array of menu item children
   const menuItems = Children.toArray(children).filter(isValidElement) as ReactElement[];
 
   // Close menu and reset focus

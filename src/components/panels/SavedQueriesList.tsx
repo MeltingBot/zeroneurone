@@ -54,7 +54,6 @@ export function SavedQueriesList() {
 
   return (
     <div className="border-t border-border-default">
-      {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center gap-1.5 w-full px-3 py-2 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
@@ -110,7 +109,6 @@ export function SavedQueriesList() {
             </div>
           )}
 
-          {/* List */}
           {savedQueries.length === 0 ? (
             <p className="text-[10px] text-text-tertiary text-center py-2">
               {t('query.noSavedQueries')}

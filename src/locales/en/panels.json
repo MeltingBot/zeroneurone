@@ -75,9 +75,6 @@
     }
   },
   "detail": {
-    "noSelection": "No element selected",
-    "multipleSelection": "{{count}} elements selected",
-    "element": "Element",
     "link": {
       "linkedElements": "Linked elements",
       "deletedElement": "Deleted element",
@@ -86,8 +83,6 @@
       "periodStart": "Start",
       "periodEnd": "End (leave empty if ongoing)"
     },
-    "group": "Group",
-    "annotation": "Annotation",
     "sections": {
       "identity": "Identity",
       "content": "Content",
@@ -105,9 +100,7 @@
       "linkLabel": "Unnamed link",
       "notes": "Notes...",
       "source": "Information source...",
-      "markdown": "Markdown: **bold**, *italic*, [link](url), lists...",
-      "keyName": "Name...",
-      "keyValue": "Value..."
+      "markdown": "Markdown: **bold**, *italic*, [link](url), lists..."
     },
     "labels": {
       "name": "Name",
@@ -154,7 +147,6 @@
       "goToTab": "Go to tab {{name}}"
     },
     "events": {
-      "title": "Events",
       "description": "Dated event history (visible on timeline)",
       "add": "Add event",
       "labelPlaceholder": "Label (e.g., Stop in Marseille, Site hacked...)",
@@ -164,7 +156,6 @@
       "delete": "Delete",
       "dateFrom": "From",
       "dateTo": "To",
-      "dateEndOptional": "End (optional)",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Detailed description...",
       "sourceLabel": "Source",
@@ -185,7 +176,6 @@
       "geoJsonMinPoints": "3 points minimum"
     },
     "location": {
-      "title": "Location",
       "description": "Fixed element position (visible on map)",
       "gpsCoordinates": "GPS Coordinates",
       "latitude": "Latitude",
@@ -196,7 +186,6 @@
       "clearLocation": "Clear",
       "removeLocation": "Remove location",
       "saveLocation": "Save",
-      "noLocation": "No location set",
       "altitude": "Altitude",
       "altUnit": "meters",
       "extrude": "3D Extrusion",
@@ -210,7 +199,6 @@
       "selectAll": "Select all",
       "deselectAll": "Deselect all",
       "ignore": "Ignore",
-      "keyPlaceholder": "Key",
       "valuePlaceholder": "Value",
       "typePlaceholder": "Type",
       "optionsPlaceholder": "Options separated by commas",
@@ -255,13 +243,11 @@
       "saveToTagError": "Could not save to tag"
     },
     "appearance": {
-      "title": "Appearance",
       "color": "Color",
       "borderColor": "Border color",
       "defaultGray": "Default gray",
       "customColor": "Custom color",
       "shape": "Shape",
-      "size": "Size",
       "style": "Style",
       "thickness": "Thickness",
       "textSize": "Text size",
@@ -273,11 +259,6 @@
       "borderStyle": "Border style"
     },
     "files": {
-      "title": "Files",
-      "drop": "Drop files here",
-      "noFiles": "No files",
-      "delete": "Delete file",
-      "download": "Download",
       "preview": "Preview",
       "defaultThumbnail": "Default thumbnail",
       "closeEsc": "Close (Esc)",
@@ -351,7 +332,6 @@
     }
   },
   "filters": {
-    "title": "Filters",
     "elementsCount": "{{matching}}/{{total}} elements",
     "countBreakdown": "Filters {{filters}} · Query {{query}}",
     "queryBadge": "Query",
@@ -371,11 +351,7 @@
       "quickFilters": "Quick filters",
       "textSearch": "Text search",
       "tags": "Tags",
-      "tabs": "Tabs",
-      "types": "Types",
-      "confidence": "Confidence",
-      "property": "Property",
-      "date": "Date"
+      "tabs": "Tabs"
     },
     "placeholders": {
       "textSearch": "Filter by name or notes...",
@@ -427,9 +403,7 @@
     },
     "hiddenElements": {
       "title": "Hidden",
-      "count": "{{count}} hidden element(s)",
-      "showAll": "Show all",
-      "noHidden": "No hidden elements"
+      "showAll": "Show all"
     },
     "evaluation": {
       "hint": "Only elements graded in the active model with a selected code stay visible."
@@ -497,7 +471,6 @@
     "syntaxExample5": "WITHIN 2 HOPS OF tag = \"suspect\""
   },
   "insights": {
-    "title": "Insights",
     "computing": "Computing...",
     "between": {
       "title": "Between {{a}} and {{b}}",
@@ -511,18 +484,9 @@
     "noData": "Add elements and links to see insights.",
     "noInsights": "No insights detected. Add more links between elements.",
     "lastComputed": "Last computed:",
-    "refresh": "Refresh",
     "noName": "Unnamed",
     "noResults": "No results",
     "links": "{{count}} links",
-    "elements": "{{count}} elements",
-    "sections": {
-      "clusters": "Clusters",
-      "bridges": "Bridges",
-      "centrality": "Centrality",
-      "isolated": "Isolated",
-      "similar": "Similar"
-    },
     "roles": {
       "title": "Roles",
       "soleConnector": "{{x}} is the only link between {{groups}}",
@@ -544,9 +508,7 @@
     },
     "clusters": {
       "title": "Clusters",
-      "description": "Groups of strongly connected elements",
       "name": "Cluster {{id}}",
-      "count": "{{count}} cluster(s)",
       "elements": "{{count}} elements",
       "actions": {
         "select": "Select",
@@ -561,8 +523,6 @@
     "bridges": {
       "title": "Bridges",
       "description": "Elements connecting different parts of the graph",
-      "count": "{{count}} bridge(s)",
-      "noBridges": "No bridges detected",
       "showBridges": "Show bridges",
       "hideBridges": "Hide highlight",
       "selectAll": "Select all",
@@ -571,15 +531,11 @@
     },
     "centrality": {
       "title": "Most connected",
-      "description": "Most connected elements",
-      "degree": "Degree",
       "betweenness": "Betweenness"
     },
     "isolated": {
       "title": "Isolated",
       "description": "Elements without any connection",
-      "count": "{{count}} isolated element(s)",
-      "noIsolated": "No isolated elements",
       "showIsolated": "Show isolated",
       "hideIsolated": "Hide highlight",
       "selectAll": "Select all",
@@ -598,7 +554,6 @@
       "maxDepth": "Max depth",
       "highlightThisPath": "Highlight this path",
       "noPath": "No path found between these elements",
-      "pathLength": "{{count}} step(s)",
       "blockedByConstraints": "Path excluded by the constraints",
       "constraints": {
         "title": "Constraints",
@@ -630,7 +585,6 @@
     }
   },
   "views": {
-    "title": "Views",
     "canvasDisplay": "Canvas display",
     "tags": "Tags",
     "tagSize": "Size:",
@@ -660,9 +614,7 @@
     "noPropertiesDefined": "No properties defined on elements",
     "savedViews": "Saved views",
     "save": "Save view",
-    "load": "Load",
     "delete": "Delete",
-    "rename": "Rename",
     "noViews": "No saved views",
     "namePlaceholder": "View name...",
     "includePositions": "Include positions ({{count}} elements)",
@@ -672,32 +624,20 @@
     "savedPositions": "Saved positions",
     "deleteView": "Delete view",
     "activeView": "View active. Filters and viewport have been restored.",
-    "positionsRestored": "Positions of {{count}} elements restored.",
-    "saveDescription": "Saves filters, zoom and hidden elements"
+    "positionsRestored": "Positions of {{count}} elements restored."
   },
   "assets": {
-    "title": "Files",
-    "noAssets": "No files",
     "drop": "Drop files",
     "deleteConfirm": "Delete this file?",
-    "usedBy": "Used by {{count}} element(s)",
     "hideMediaOnNode": "Hide media on node",
     "showMediaOnNode": "Show media on node",
     "uploading": "Uploading…",
     "dropOrPaste": "Drop files or press Ctrl+V to paste",
     "browse": "or browse"
   },
-  "history": {
-    "title": "History",
-    "noHistory": "No actions",
-    "undo": "Undo",
-    "redo": "Redo"
-  },
   "collaboration": {
     "title": "Collaboration",
     "connected": "Connected",
-    "disconnected": "Disconnected",
-    "users": "{{count}} user(s)",
     "you": "You",
     "others": "others",
     "local": "Local",

@@ -112,7 +112,6 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-border-default flex-shrink-0">
           <h3 id={titleId} className="text-sm font-medium text-text-primary truncate pr-4">
             {asset.filename}
@@ -141,7 +140,6 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           </div>
         </div>
 
-        {/* Content */}
         <div className={isPdf || isText || isDoc || isEml || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">

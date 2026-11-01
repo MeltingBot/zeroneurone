@@ -9,10 +9,11 @@ import { exportInteractiveReport } from '../../services/exportInteractiveReportS
 import { emitExport } from '../../plugins/pluginEventBus';
 import { stripReportRefs } from '../../utils/reportRefs';
 import { downloadBlob } from '../../utils/download';
+import { useShallow } from 'zustand/react/shallow';
 
 export function ReportPanel() {
   const { t } = useTranslation('panels');
-  const { currentDossier, elements, links, assets } = useDossierStore();
+  const { currentDossier, elements, links, assets } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, assets: s.assets })));
   const {
     currentReport,
     isLoading,
@@ -25,7 +26,21 @@ export function ReportPanel() {
     removeSection,
     reorderSections,
     setActiveSection,
-  } = useReportStore();
+  } = useReportStore(
+    useShallow((s) => ({
+      currentReport: s.currentReport,
+      isLoading: s.isLoading,
+      activeSectionId: s.activeSectionId,
+      loadReport: s.loadReport,
+      createReport: s.createReport,
+      updateReportTitle: s.updateReportTitle,
+      addSection: s.addSection,
+      updateSection: s.updateSection,
+      removeSection: s.removeSection,
+      reorderSections: s.reorderSections,
+      setActiveSection: s.setActiveSection,
+    })),
+  );
 
   // Drag and drop state
   const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
@@ -102,12 +117,10 @@ export function ReportPanel() {
     await createReport(currentDossier.id, t('report.defaultTitle'));
   }, [currentDossier, createReport, t]);
 
-  // Handle adding section
   const handleAddSection = useCallback(async () => {
     await addSection(t('report.defaultSectionTitle'));
   }, [addSection, t]);
 
-  // Handle title change
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       updateReportTitle(e.target.value);
@@ -115,7 +128,6 @@ export function ReportPanel() {
     [updateReportTitle]
   );
 
-  // Export report as Markdown
   const handleExportMarkdown = useCallback(
     (keepLinks: boolean) => {
       if (!currentReport) return;

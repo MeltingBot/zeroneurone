@@ -68,7 +68,6 @@ const EventItem = memo(function EventItem({
   const eventGeoIsPolygon = event.geo && isGeoPolygon(event.geo);
   const eventCenter = event.geo ? getGeoCenter(event.geo) : null;
 
-  // GeoJSON edit mode
   const [geoJsonEditing, setGeoJsonEditing] = useState(false);
   const [geoJsonText, setGeoJsonText] = useState('');
   const [geoJsonError, setGeoJsonError] = useState('');
@@ -695,7 +694,6 @@ export function EventsEditor({
     });
   }, [focusedEventId, sortedEvents, rowVirtualizer]);
 
-  // Add new event
   const handleAdd = useCallback(() => {
     const newEvent: ElementEvent = {
       id: generateUUID(),
@@ -706,7 +704,6 @@ export function EventsEditor({
     setExpandedEventId(newEvent.id);
   }, [events, onChange]);
 
-  // Remove event
   const handleRemove = useCallback(
     (eventId: string) => {
       const newEvents = events.filter((e) => e.id !== eventId);
@@ -718,7 +715,6 @@ export function EventsEditor({
     [events, expandedEventId, onChange]
   );
 
-  // Update event
   const handleUpdate = useCallback(
     (eventId: string, updates: Partial<ElementEvent>) => {
       const newEvents = events.map((e) => {
@@ -783,7 +779,6 @@ export function EventsEditor({
     [onDrawZone, handleUpdate, events]
   );
 
-  // Clear geo from event
   const handleClearGeo = useCallback(
     (eventId: string) => {
       const event = events.find((e) => e.id === eventId);
@@ -796,7 +791,6 @@ export function EventsEditor({
     [events, onChange]
   );
 
-  // Toggle event expansion
   const toggleEventExpand = (eventId: string) => {
     setExpandedEventId(expandedEventId === eventId ? null : eventId);
   };

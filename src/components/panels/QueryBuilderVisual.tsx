@@ -113,7 +113,6 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
 
   const handleValueChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const raw = e.target.value;
-    // Try to parse as number
     const num = parseFloat(raw);
     if (!isNaN(num) && String(num) === raw) {
       onChange({ ...condition, value: num });
@@ -177,7 +176,6 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
     return '';
   }, [condition.value]);
 
-  // Render the appropriate value input
   const renderValueInput = () => {
     if (isExistence) return null;
 
@@ -226,7 +224,6 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
       return <input type="date" value={dateInputValue} onChange={handleDateChange} className={inputClass} />;
     }
 
-    // Number: numeric input
     if (isNumberField) {
       return <input type="number" step="any" value={String(condition.value ?? '')} onChange={handleNumberChange} placeholder={t('query.valuePlaceholder')} className={inputClass} />;
     }

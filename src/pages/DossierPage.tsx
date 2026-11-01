@@ -224,7 +224,6 @@ export function DossierPage() {
       if (!hadViewport) {
         requestFitView();
       }
-      // Load canvas tabs
       loadTabs(id);
     }
     return () => {
@@ -584,7 +583,6 @@ export function DossierPage() {
         </div>
       </Modal>
 
-      {/* Header */}
       <header className="h-10 flex items-center justify-between px-3 border-b border-border-default bg-bg-primary gap-1">
         <div className="flex items-center gap-2 min-w-0 shrink">
           <IconButton onClick={handleGoHome} data-testid="back-to-home" aria-label={t('home.backToHome')}>
@@ -797,7 +795,6 @@ export function DossierPage() {
         panelSide === 'left' ? 'flex-row-reverse' :
         'flex-row'
       }`}>
-        {/* Main view */}
         <main className="flex-1 relative bg-bg-secondary flex flex-col min-h-0 min-w-0">
           <TabBar dossierId={currentDossier.id} />
           <div className="flex-1 relative min-h-0">
@@ -812,10 +809,8 @@ export function DossierPage() {
       </div>
 
 
-      {/* Search modal */}
       <SearchModal isOpen={searchOpen} onClose={closeSearch} />
 
-      {/* Export modal */}
       <ExportModal
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
@@ -843,19 +838,16 @@ export function DossierPage() {
         initialName={jsonMappingName}
       />
 
-      {/* Synthesis modal */}
       <SynthesisModal
         isOpen={synthesisOpen}
         onClose={() => setSynthesisOpen(false)}
       />
 
-      {/* Shortcuts modal */}
       <ShortcutsModal
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
       />
 
-      {/* Metadata import modal */}
       <MetadataImportModal />
 
       <TagSetManagerModal

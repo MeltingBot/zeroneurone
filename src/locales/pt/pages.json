@@ -13,8 +13,6 @@
     "lightMode": "Modo claro",
     "noDossiers": "Sem dossiês",
     "createFirst": "Crie a sua primeiro dossiê para começar",
-    "viewDossiers": "Ver dossiês",
-    "dossierCount": "{{count}} dossiê(s)",
     "loading": "A carregar...",
     "searchPlaceholder": "Pesquisar por nome ou descrição...",
     "filterByTag": "Filtrar por tag",
@@ -24,7 +22,6 @@
     "activeFilters": "Filtros ativos",
     "clearFilters": "Limpar",
     "noResults": "Nenhum dossiê encontrada",
-    "noResultsHint": "Tente outros termos ou limpe os filtros",
     "resultsCount": "{{count}} / {{total}} dossiê(s)",
     "card": {
       "modified": "Modificado {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Seleção",
-      "pan": "Deslocamento",
-      "addElement": "Adicionar um elemento",
-      "addGroup": "Adicionar um grupo",
-      "addAnnotation": "Adicionar uma anotação",
-      "autoLayout": "Disposição automática",
       "fitView": "Ajustar vista",
       "zoomIn": "Aumentar zoom",
       "zoomOut": "Diminuir zoom",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Ocultar os não datados",
       "temporalUndatedShow": "Mostrar os não datados (a cinzento)",
       "hideMinimap": "Ocultar minimapa",
-      "closeEsc": "Fechar (Esc)",
-      "close": "Fechar",
-      "loading": "A carregar...",
       "oneElement": "1 elemento",
       "oneLink": "1 ligação",
       "selectedCount": "{{count}} selecionados"
@@ -226,17 +215,6 @@
       "matrix": "Matriz",
       "report": "Relatório"
     },
-    "panels": {
-      "detail": "Detalhe",
-      "filters": "Filtros",
-      "insights": "Análises",
-      "views": "Vistas"
-    },
-    "emptyCanvas": {
-      "title": "Tela vazia",
-      "hint": "Duplo clique para criar um elemento",
-      "orDrop": "ou largue ficheiros"
-    },
     "importPlacement": {
       "instructions": "Clique para posicionar os elementos importados",
       "importing": "A importar...",
@@ -302,25 +280,15 @@
       "noKeyObjectHint": "Ctrl+clique para escolher um elemento de referência"
     },
     "toast": {
-      "elementCreated": "Elemento criado",
-      "elementsDeleted": "{{count}} elemento(s) eliminado(s)",
-      "linkCreated": "Ligação criada",
-      "copied": "Copiado para a área de transferência",
-      "pasted": "{{count}} elemento(s) colado(s)",
-      "saved": "Guardado",
-      "exportSuccess": "Exportação concluída",
-      "exportError": "Erro durante a exportação",
       "assetTooLargeToShare": "Ficheiro demasiado grande para sincronizar ({{size}}, máximo {{max}}). Continua disponível localmente, mas não é partilhado.",
       "assetLargeToShare": "Ficheiro grande ({{size}}): a sincronização pode ser lenta."
     },
     "notFound": "Investigação não encontrada",
     "header": {
-      "report": "Síntese",
       "generateReport": "Síntese",
       "export": "Exportar",
       "search": "Pesquisar",
       "clearFilters": "Limpar filtros",
-      "activeFilters": "Filtros ativos",
       "shortcuts": "Atalhos de teclado",
       "documentation": "Documentação",
       "supportKofi": "Apoiar no Ko-fi",
@@ -345,9 +313,6 @@
       "moveHere": "Mover para este separador",
       "addToTab": "Adicionar à aba...",
       "removeFromTab": "Remover da aba",
-      "emptyState": "Nenhum elemento nesta aba",
-      "emptyHint": "Clique direito nos elementos para adicioná-los",
-      "ghostBadge": "Em {{tabs}}",
       "navigateTo": "Ir para aba {{name}}",
       "combine": "Combinar",
       "uncombine": "Deixar de combinar",
@@ -358,7 +323,6 @@
     "retentionExpiredBanner": "Retenção expirada há {{days}} dia(s)",
     "retentionDeleteConfirm": "Esto dossiê será excluída permanentemente, sem possibilidade de anulação.",
     "retentionDeleteAction": "Excluir permanentemente",
-    "retentionReadonly": "Investigação em somente leitura (retenção expirada)",
     "retentionRedactConfirm": "A redação apagará permanentemente todo o conteúdo textual (nomes, notas, propriedades). A estrutura do grafo será preservada. Esta ação é irreversível.",
     "retentionRedactAction": "Redatar definitivamente",
     "opfsUnavailable": "Este navegador (ou o modo privado) impede o armazenamento local de mídia: as imagens não serão exibidas. Abra o dossiê numa janela normal.",
@@ -376,7 +340,6 @@
     "offMapLinked": "{{count}} elemento(s) ligado(s) sem localização",
     "offMapSelectRest": "Selecionar os outros {{count}}",
     "addLocation": "Adicione coordenadas aos elementos para os ver no mapa",
-    "pickLocation": "Clique no mapa para definir a posição",
     "elementsLocated": "{{count}} elemento(s) localizado(s)",
     "elementsLocatedFiltered": "{{kept}} / {{count}} elemento(s) localizado(s)",
     "density": "Densidade",
@@ -419,11 +382,7 @@
     "deleteSelection": "Eliminar seleção",
     "editZone": "Editar forma",
     "geometry": "Geometria",
-    "vertices": "Vértices",
-    "area": "Área",
-    "center": "Centro",
     "viewOnMap": "Ver no mapa",
-    "deleteVertex": "Eliminar vértice",
     "geoJsonSave": "Aplicar",
     "geoJsonParseError": "JSON inválido",
     "geoJsonMinVertices": "Mínimo 3 vértices",
@@ -442,14 +401,10 @@
     "zoneSquare": "Quadrado"
   },
   "timeline": {
-    "noEvents": "Nenhum evento datado",
-    "addDates": "Adicione datas aos elementos ou crie eventos",
     "noTemporalData": "Sem dados temporais",
     "howToAddTimeline": "Para ver elementos na linha do tempo:",
     "addPeriodToLinks": "Adicione um período às ligações (data início/fim)",
     "addEventsToHistory": "Adicione eventos no histórico dos elementos",
-    "eventsCount": "{{count}} evento(s)",
-    "zoomHint": "Ctrl+roda: zoom | Arrastar: mover",
     "zoomPresetCentury": "Século",
     "zoomPresetDecade": "10 anos",
     "zoomPreset1Year": "1 ano",
@@ -495,7 +450,6 @@
     "relation": "relação",
     "newElement": "Novo elemento",
     "filter": "Filtro",
-    "filteredEventsCount": "{{filtered}}/{{total}} evento(s)",
     "temporalFilter": "Período",
     "temporalFilterHint": "Filtrar por período temporal",
     "stepBackward": "Recuar um mês",
@@ -528,7 +482,6 @@
     "source": "Fonte",
     "count": "{{count}}/{{total}} elementos",
     "properties": "{{count}} propriedades",
-    "search": "Pesquisar...",
     "columns": "Mostrar/ocultar colunas",
     "noResults": "Sem resultados",
     "empty": "Nenhum elemento com propriedades",
@@ -551,19 +504,11 @@
   },
   "report": {
     "title": "Relatório",
-    "untitled": "Sem título",
     "addSection": "Adicionar uma secção",
     "sections": {
-      "title": "Título",
-      "text": "Texto",
-      "canvas": "Tela",
-      "map": "Mapa",
-      "timeline": "Linha do tempo",
-      "table": "Tabela",
-      "insights": "Análises"
+      "map": "Mapa"
     },
-    "export": "Exportar para PDF",
-    "print": "Imprimir"
+    "export": "Exportar para PDF"
   },
   "join": {
     "title": "Juntar-se a uma sessão",
@@ -616,12 +561,9 @@
   },
   "tutorial": {
     "start": "Tutorial guiado",
-    "restart": "Reiniciar o tutorial",
-    "progress": "Passo {{current}}/{{total}}",
     "next": "Seguinte",
     "skip": "Ignorar",
     "quit": "Sair",
-    "finish": "Terminar",
     "deleteDossier": "Eliminar o dossiê do tutorial",
     "keepDossier": "Mantê-lo",
     "offTrack": {

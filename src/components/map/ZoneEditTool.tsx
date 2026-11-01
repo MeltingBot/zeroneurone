@@ -277,7 +277,6 @@ export function ZoneEditTool({ map, elementId, coordinates, color: rawColor = '#
         verticesRef.current = newCoords;
         updateSource();
 
-        // Update tooltip
         const label = dist < 1
           ? `${(dist * 1000).toFixed(0)} m`
           : `${dist.toFixed(2)} km`;

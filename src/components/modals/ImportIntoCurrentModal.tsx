@@ -5,17 +5,10 @@ import { importService } from '../../services/importService';
 import type { ZipTabsOverview } from '../../services/zipTabSelection';
 import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
-import {
-  isFECFormat,
-  analyzeFEC,
-  previewFECGraph,
-  DEFAULT_FEC_OPTIONS,
-  suggestMinLinkAmount,
-  type FECAggregate,
-  type FECImportOptions,
-} from '../../services/importFEC';
+import { previewFECGraph } from '../../services/importFEC';
+import { useImportOptionSteps } from '../../hooks/useImportOptionSteps';
 import { FECOptionsPanel } from './FECOptionsPanel';
-import { GeoJSONOptionsPanel, type PendingGeoJSON } from './GeoJSONOptionsPanel';
+import { GeoJSONOptionsPanel } from './GeoJSONOptionsPanel';
 import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
 import { withImportProgress } from '../../services/importProgress';
 import { ImportDropZone, ImportMappingEntry, CsvTemplateCard } from './ImportSections';
@@ -24,6 +17,7 @@ import { startDotPlacement } from '../../services/dotPlacement';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { splitCSVRecords, isNativeCSV } from '../../utils/csv';
+import { useShallow } from 'zustand/react/shallow';
 
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
@@ -125,16 +119,14 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
   const { t, i18n } = useTranslation('modals');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingFEC, setPendingFEC] = useState<{
-    file: File;
-    content: string;
-    aggregate: FECAggregate;
-  } | null>(null);
-  const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
-  const [pendingGeoJSON, setPendingGeoJSON] = useState<(PendingGeoJSON & { file: File }) | null>(null);
-  const [geoJSONLabelField, setGeoJSONLabelField] = useState('');
-  const [geoJSONFields, setGeoJSONFields] = useState<Set<string>>(new Set());
-  const [geoJSONTag, setGeoJSONTag] = useState('');
+  const {
+    pendingFEC, setPendingFEC, fecOptions, setFecOptions,
+    pendingGeoJSON, setPendingGeoJSON,
+    geoJSONLabelField, setGeoJSONLabelField,
+    geoJSONFields, setGeoJSONFields,
+    geoJSONTag, setGeoJSONTag,
+    openOptionStep,
+  } = useImportOptionSteps();
   // ZIP with tabs: the analyst picks the tabs to bring in
   const [pendingZip, setPendingZip] = useState<{ file: File; overview: ZipTabsOverview } | null>(null);
   const [zipTabIds, setZipTabIds] = useState<Set<string>>(new Set());
@@ -144,7 +136,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
   const [zipReport, setZipReport] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentDossier, loadDossier } = useDossierStore();
+  const { currentDossier, loadDossier } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, loadDossier: s.loadDossier })));
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
@@ -255,33 +247,11 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         return;
       }
 
-      // FEC (détection par contenu) → étape d'options avant le mode placement
-      if (/\.(txt|fec)$/i.test(file.name) && isFECFormat(content)) {
-        const aggregate = analyzeFEC(content);
-        setPendingFEC({ file, content, aggregate });
-        const base = {
-          ...DEFAULT_FEC_OPTIONS,
-          dateFrom: aggregate.dateMin,
-          dateTo: aggregate.dateMax,
-        };
-        // Seuil adaptatif : viser ~300 liens quel que soit le volume du FEC.
-        setFecOptions({ ...base, minLinkAmount: suggestMinLinkAmount(aggregate, base) });
+      // FEC and GeoJSON with properties: options step before placement
+      if (openOptionStep(file, content)) {
         setIsProcessing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
-      }
-
-      // GeoJSON avec propriétés → choix du libellé et des champs avant le mode placement
-      if (/\.(geo)?json$/i.test(file.name)) {
-        const analysis = importService.analyzeGeoJSONFields(content);
-        if (analysis && analysis.fields.length > 0) {
-          setPendingGeoJSON({ file, fileName: file.name, content, featureCount: analysis.featureCount, fields: analysis.fields });
-          setGeoJSONLabelField(analysis.suggested ?? analysis.fields[0].key);
-          setGeoJSONFields(new Set(analysis.fields.map((f) => f.key)));
-          setIsProcessing(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          return;
-        }
       }
 
       // Validate content is parseable before entering placement mode
@@ -327,7 +297,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         fileInputRef.current.value = '';
       }
     }
-  }, [currentDossier, enterImportPlacementMode, onClose, onOpenJsonMapping, t, requestFitView, loadDossier]);
+  }, [currentDossier, enterImportPlacementMode, onClose, onOpenJsonMapping, t, requestFitView, loadDossier, openOptionStep]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -342,7 +312,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     processFile(initialFile);
   }, [isOpen, initialFile, processFile]);
 
-  // Confirmation des options FEC → mode placement avec les options choisies.
+  // FEC options confirmed → placement mode with the chosen options.
   const handleFecConfirm = useCallback(() => {
     if (!pendingFEC || !currentDossier) return;
     const preview = previewFECGraph(pendingFEC.aggregate, fecOptions);
@@ -367,9 +337,9 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     });
     setPendingFEC(null);
     onClose();
-  }, [pendingFEC, fecOptions, currentDossier, enterImportPlacementMode, onClose]);
+  }, [pendingFEC, fecOptions, currentDossier, enterImportPlacementMode, onClose, setPendingFEC]);
 
-  // Confirmation des options GeoJSON → mode placement avec le libellé et les champs choisis.
+  // GeoJSON options confirmed → placement mode with the chosen label and fields.
   const handleGeoJSONConfirm = useCallback(() => {
     if (!pendingGeoJSON || !currentDossier) return;
     const gridSize = Math.ceil(Math.sqrt(Math.max(1, pendingGeoJSON.featureCount)));
@@ -391,7 +361,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     });
     setPendingGeoJSON(null);
     onClose();
-  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, currentDossier, enterImportPlacementMode, onClose]);
+  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, currentDossier, enterImportPlacementMode, onClose, setPendingGeoJSON]);
 
   // Chosen tabs → placement, framed on what they hold
   const handleZipConfirm = useCallback(async () => {
@@ -425,7 +395,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     setPendingGeoJSON(null);
     setPendingZip(null);
     onClose();
-  }, [onClose]);
+  }, [onClose, setPendingFEC, setPendingGeoJSON]);
 
   const downloadCSVTemplate = useCallback(() => {
     const template = exportService.generateCSVTemplate();
@@ -441,14 +411,12 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={handleClose}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -456,7 +424,6 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         aria-labelledby={titleId}
         className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow flex flex-col max-h-[calc(100dvh-2rem)]"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 id={titleId} className="text-sm font-semibold text-text-primary">
             {t('importIntoCurrent.title')}
@@ -470,7 +437,6 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-4 overflow-y-auto min-h-0 space-y-4">
           <p className="text-xs text-text-secondary">
             {t('importIntoCurrent.description')}
@@ -485,7 +451,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
             className="hidden"
           />
 
-          {/* Étape d'options FEC */}
+          {/* FEC options step */}
           {pendingFEC && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-text-primary">{t('import.fec.optionsTitle')}</p>
@@ -513,7 +479,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
             </div>
           )}
 
-          {/* Étape d'options GeoJSON */}
+          {/* GeoJSON options step */}
           {pendingGeoJSON && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-text-primary">{t('import.geojson.optionsTitle')}</p>
@@ -645,7 +611,6 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
             </>
           )}
 
-          {/* Error message */}
           {error && (
             <div className="p-3 rounded bg-error/10 border border-error/30">
               <div className="flex items-center gap-2">

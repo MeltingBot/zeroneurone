@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Verwijderen",
-    "message": "Deze actie is onomkeerbaar.",
     "confirm": "Verwijderen",
     "deleting": "Verwijderen...",
     "deleteDossier": "Dossier verwijderen",
@@ -19,8 +18,7 @@
     "rename": "Hernoemen",
     "renaming": "Hernoemen...",
     "label": "Naam",
-    "renameDossier": "Dossier hernoemen",
-    "namePlaceholder": "Nieuwe naam"
+    "renameDossier": "Dossier hernoemen"
   },
   "importIntoCurrent": {
     "title": "Importeren in dossier",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Dossier importeren",
-    "dropzone": "Sleep een bestand of klik om te selecteren",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -160,10 +157,6 @@
       "folderByTag": "Eén map per hoofdtag",
       "folderFlat": "Platte map"
     },
-    "options": {
-      "includeAssets": "Bijlagen opnemen",
-      "highResolution": "Hoge resolutie (2x)"
-    },
     "resolution": "Resolutie",
     "scale": {
       "1x": "Normale grootte",
@@ -218,12 +211,6 @@
     },
     "placeholder": "Elementen en verbindingen zoeken...",
     "noResults": "Geen resultaten voor \"{{query}}\"",
-    "resultsCount": "{{count}} resultaten",
-    "filters": {
-      "all": "Alle",
-      "elements": "Elementen",
-      "links": "Verbindingen"
-    },
     "noName": "Naamloos",
     "link": "Verbinding",
     "element": "Element",
@@ -282,18 +269,6 @@
       "lockSession": "Sessie vergrendelen"
     }
   },
-  "tagSetManager": {
-    "title": "Tags beheren",
-    "description": "Herbruikbare tagpaletten aanmaken",
-    "newTagSet": "Nieuw palet",
-    "editTagSet": "Palet bewerken",
-    "deleteTagSet": "Palet verwijderen",
-    "tagSetName": "Naam van het palet",
-    "tags": "Tags",
-    "addTag": "Tag toevoegen",
-    "noTagSets": "Geen tagpaletten",
-    "createFirst": "Maak uw eerste palet aan"
-  },
   "tagSetEditor": {
     "applyTitle": "Toepassen op het open dossier",
     "applyVisual": "Uiterlijk (elementen met deze hoofdtag)",
@@ -303,9 +278,6 @@
     "title": "Tagpalet",
     "titleNew": "Nieuwe tag",
     "titleEdit": "\"{{name}}\" bewerken",
-    "namePlaceholder": "Naam van het palet",
-    "tagsPlaceholder": "Tag toevoegen...",
-    "colorLabel": "Standaardkleur",
     "nameLabel": "Naam",
     "nameExample": "Bijv.: Persoon, Bedrijf...",
     "nameRequired": "Naam is verplicht",
@@ -391,7 +363,6 @@
       "opfs": "Bestanden (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Y.js-geschiedenis",
-      "other": "Overig",
       "measured": "Gemeten gegevens"
     },
     "persistent": {
@@ -423,18 +394,9 @@
       "exportAll": "Alles exporteren",
       "import": "Importeren",
       "description": "Alle dossiers, bestanden en tags. Import voegt toe zonder te vervangen.",
-      "exporting": "Exporteren...",
-      "importing": "Importeren...",
       "exportSuccess": "Export voltooid",
       "importSuccess": "Import geslaagd: {{dossiers}} dossier(en), {{elements}} element(en), {{links}} verbinding(en)",
       "error": "Fout"
-    },
-    "purge": {
-      "description": "Y.js-geschiedenis slaat wijzigingen op voor ongedaan maken. Opruimen maakt ruimte vrij.",
-      "confirm": "Y.js-geschiedenis opruimen?\n\nDit maakt ruimte vrij maar verwijdert de ongedaan maken-geschiedenis. Gegevens blijven behouden.",
-      "success": "{{count}} database(s) verwijderd",
-      "successWithErrors": "{{deleted}} database(s) verwijderd, {{errors}} fout(en)",
-      "error": "Fout tijdens opruimen"
     },
     "compact": {
       "title": "Y.js-geschiedenis per dossier",
@@ -459,7 +421,6 @@
       "button": "Alles verwijderen",
       "confirm": "ALLE dossiers en hun gegevens verwijderen?\n\nDeze actie is onomkeerbaar.",
       "confirmAgain": "Laatste bevestiging: alle gegevens gaan verloren. Doorgaan?",
-      "success": "Alle dossiers zijn verwijderd.",
       "error": "Fout bij verwijderen"
     }
   },
@@ -497,19 +458,6 @@
     "sortByName": "Naam",
     "sortByDate": "Datum",
     "sortByConfidence": "Betrouwbaarheid",
-    "preview": "Voorbeeld:",
-    "previewContent": "Het rapport bevat",
-    "previewDescription": "de beschrijving",
-    "previewSummary": "een samenvatting",
-    "previewInsights": "de graafanalyse",
-    "previewTimeline": "de chronologie",
-    "previewElements": "{{count}} elementen",
-    "previewLinks": "{{count}} verbindingen",
-    "previewProperties": "de eigenschappen",
-    "previewFiles": "{{count}} bestanden",
-    "previewFiches": "de gedetailleerde fiches",
-    "previewGraphCapture": "graafopname",
-    "previewNoContent": "geen inhoud",
     "jsonDescription": "JSON+: gestructureerde gegevens met graafanalyse",
     "jsonTooltip": "Gestructureerde JSON-export met verrijkte gegevens",
     "print": "Afdrukken",
@@ -596,10 +544,6 @@
     "sortByEvaluation": "Waardering"
   },
   "metadataImport": {
-    "title": "Metadata importeren",
-    "description": "Metadata uit bestand extraheren (EXIF, PDF, enz.)",
-    "noMetadata": "Geen metadata gevonden",
-    "import": "Geselecteerde metadata importeren",
     "detected": "Metadata gevonden",
     "gps": "GPS-coördinaten",
     "ignore": "Negeren",
@@ -644,7 +588,6 @@
   "tagSets": {
     "title": "Tags beheren",
     "newTag": "Nieuwe tag",
-    "editTag": "\"{{name}}\" bewerken",
     "deleteConfirm": "Tag \"{{name}}\" verwijderen? Bestaande tags op elementen blijven behouden maar zijn niet meer gekoppeld aan deze TagSet.",
     "csvEmptyOrInvalid": "CSV-bestand leeg of ongeldig",
     "csvMissingNameColumn": "Kolom \"naam\" ontbreekt in CSV",
@@ -725,7 +668,6 @@
     "errorDeactivation": "Fout tijdens deactivering",
     "errorPasswordChange": "Fout bij wachtwoordwijziging",
     "enable": {
-      "warning": "Zonder dit wachtwoord zijn uw gegevens onherstelbaar verloren. Exporteer een back-up voordat u doorgaat.",
       "passwordLabel": "Wachtwoord (minimaal 8 tekens)",
       "confirmLabel": "Wachtwoord bevestigen",
       "mismatch": "Wachtwoorden komen niet overeen",
@@ -773,7 +715,6 @@
       "successRemoved": "Beveiligingssleutel verwijderd",
       "errorPrfNotSupported": "Deze sleutel ondersteunt geen wachtwoordloze ontgrendeling (PRF)",
       "errorRegistration": "Fout bij het registreren van de sleutel",
-      "errorUnlock": "Ontgrendeling met beveiligingssleutel mislukt",
       "addedOn": "Toegevoegd op"
     }
   },

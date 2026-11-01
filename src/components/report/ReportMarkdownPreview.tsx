@@ -140,11 +140,10 @@ function preprocessElementLinks(text: string): string {
 }
 
 export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdownPreviewProps) {
-  const { elements, links } = useDossierStore();
-  const { selectElement, selectLink, clearSelection } = useSelectionStore();
+  const { elements, links } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links })));
+  const { selectElement, selectLink, clearSelection } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectLink: s.selectLink, clearSelection: s.clearSelection })));
   const { requestViewportChange, setDisplayMode, displayMode } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange, setDisplayMode: s.setDisplayMode, displayMode: s.displayMode })));
 
-  // Build maps for quick lookup
   const elementMap = useMemo(() => new Map(elements.map((el) => [el.id, el])), [elements]);
   const linkMap = useMemo(() => new Map(links.map((link) => [link.id, link])), [links]);
 
@@ -159,7 +158,6 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
   // Pre-process content to protect [[Label|uuid]] from GFM pipe parsing
   const processedContent = useMemo(() => preprocessElementLinks(content), [content]);
 
-  // Handle element/link click
   const handleElementClick = useCallback(
     (id: string) => {
       const element = elementMap.get(id);

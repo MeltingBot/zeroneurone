@@ -75,9 +75,6 @@
     }
   },
   "detail": {
-    "noSelection": "Nie wybrano elementu",
-    "multipleSelection": "{{count}} elementów zaznaczonych",
-    "element": "Element",
     "link": {
       "linkedElements": "Połączone elementy",
       "deletedElement": "Usunięty element",
@@ -86,8 +83,6 @@
       "periodStart": "Początek",
       "periodEnd": "Koniec (puste jeśli trwa)"
     },
-    "group": "Grupa",
-    "annotation": "Adnotacja",
     "sections": {
       "identity": "Tożsamość",
       "content": "Zawartość",
@@ -105,9 +100,7 @@
       "linkLabel": "Relacja bez nazwy",
       "notes": "Notatki...",
       "source": "Źródło informacji...",
-      "markdown": "Markdown: **pogrubienie**, *kursywa*, [link](url), listy...",
-      "keyName": "Nazwa...",
-      "keyValue": "Wartość..."
+      "markdown": "Markdown: **pogrubienie**, *kursywa*, [link](url), listy..."
     },
     "labels": {
       "name": "Nazwa",
@@ -154,7 +147,6 @@
       "goToTab": "Przejdź do karty {{name}}"
     },
     "events": {
-      "title": "Zdarzenia",
       "description": "Historia datowanych zdarzeń (widoczna na osi czasu)",
       "add": "Dodaj zdarzenie",
       "labelPlaceholder": "Etykieta (np.: Postój w Marsylii, Strona zhakowana...)",
@@ -164,7 +156,6 @@
       "delete": "Usuń",
       "dateFrom": "Od",
       "dateTo": "Do",
-      "dateEndOptional": "Koniec (opcjonalnie)",
       "descriptionLabel": "Opis",
       "descriptionPlaceholder": "Szczegółowy opis...",
       "sourceLabel": "Źródło",
@@ -185,7 +176,6 @@
       "geoJsonMinPoints": "Minimum 3 punkty"
     },
     "location": {
-      "title": "Lokalizacja",
       "description": "Stała pozycja elementu (widoczna na mapie)",
       "gpsCoordinates": "Współrzędne GPS",
       "latitude": "Szerokość geogr.",
@@ -196,7 +186,6 @@
       "clearLocation": "Wyczyść",
       "removeLocation": "Usuń lokalizację",
       "saveLocation": "Zapisz",
-      "noLocation": "Nie określono pozycji",
       "copyCoordinates": "Kopiuj współrzędne",
       "coordinatesCopied": "Skopiowano współrzędne",
       "altitude": "Wysokość",
@@ -210,7 +199,6 @@
       "selectAll": "Zaznacz wszystko",
       "deselectAll": "Odznacz wszystko",
       "ignore": "Ignoruj",
-      "keyPlaceholder": "Klucz",
       "valuePlaceholder": "Wartość",
       "typePlaceholder": "Typ",
       "optionsPlaceholder": "Opcje rozdzielone przecinkami",
@@ -255,13 +243,11 @@
       "editChoices": "Edytuj opcje"
     },
     "appearance": {
-      "title": "Wygląd",
       "color": "Kolor",
       "borderColor": "Kolor obramowania",
       "defaultGray": "Domyślny szary",
       "customColor": "Własny kolor",
       "shape": "Kształt",
-      "size": "Rozmiar",
       "style": "Styl",
       "thickness": "Grubość",
       "textSize": "Rozmiar tekstu",
@@ -273,11 +259,6 @@
       "borderStyle": "Styl ramki"
     },
     "files": {
-      "title": "Pliki",
-      "drop": "Upuść pliki tutaj",
-      "noFiles": "Brak plików",
-      "delete": "Usuń plik",
-      "download": "Pobierz",
       "preview": "Podgląd",
       "defaultThumbnail": "Domyślna miniatura",
       "closeEsc": "Zamknij (Esc)",
@@ -351,7 +332,6 @@
     }
   },
   "filters": {
-    "title": "Filtry",
     "elementsCount": "{{matching}}/{{total}} elementów",
     "countBreakdown": "Filtry {{filters}} · Zapytanie {{query}}",
     "queryBadge": "Zapytanie",
@@ -371,11 +351,7 @@
       "quickFilters": "Szybkie filtry",
       "textSearch": "Wyszukiwanie tekstu",
       "tags": "Tagi",
-      "tabs": "Karty",
-      "types": "Typy",
-      "confidence": "Pewność",
-      "property": "Właściwość",
-      "date": "Data"
+      "tabs": "Karty"
     },
     "placeholders": {
       "textSearch": "Filtruj po nazwie lub notatkach...",
@@ -427,9 +403,7 @@
     },
     "hiddenElements": {
       "title": "Ukryte",
-      "count": "{{count}} ukrytych elementów",
-      "showAll": "Pokaż wszystko",
-      "noHidden": "Brak ukrytych elementów"
+      "showAll": "Pokaż wszystko"
     },
     "evaluation": {
       "hint": "Widoczne pozostają tylko elementy ocenione w aktywnym modelu wybranym kodem."
@@ -499,7 +473,6 @@
     "syntaxExample5": "WITHIN 2 HOPS OF tag = \"podejrzany\""
   },
   "insights": {
-    "title": "Analizy",
     "computing": "Analiza w toku...",
     "between": {
       "title": "Między {{a}} a {{b}}",
@@ -513,18 +486,9 @@
     "noData": "Dodaj elementy i połączenia, aby zobaczyć analizy.",
     "noInsights": "Nie wykryto analiz. Dodaj więcej połączeń między elementami.",
     "lastComputed": "Ostatnia analiza:",
-    "refresh": "Odśwież",
     "noName": "Bez nazwy",
     "noResults": "Brak wyników",
     "links": "{{count}} połączeń",
-    "elements": "{{count}} elementów",
-    "sections": {
-      "clusters": "Klastry",
-      "bridges": "Mosty",
-      "centrality": "Centralność",
-      "isolated": "Izolowane",
-      "similar": "Podobne"
-    },
     "roles": {
       "title": "Role",
       "soleConnector": "{{x}} jest jedynym powiązaniem między {{groups}}",
@@ -546,9 +510,7 @@
     },
     "clusters": {
       "title": "Klastry",
-      "description": "Grupy silnie połączonych elementów",
       "name": "Klaster {{id}}",
-      "count": "{{count}} klastrów",
       "elements": "{{count}} elementów",
       "actions": {
         "select": "Wybierz",
@@ -563,8 +525,6 @@
     "bridges": {
       "title": "Mosty",
       "description": "Elementy łączące różne części grafu",
-      "count": "{{count}} mostów",
-      "noBridges": "Nie wykryto mostów",
       "showBridges": "Pokaż mosty",
       "hideBridges": "Ukryj podświetlenie",
       "selectAll": "Zaznacz wszystkie",
@@ -573,15 +533,11 @@
     },
     "centrality": {
       "title": "Najbardziej połączone",
-      "description": "Elementy z największą liczbą połączeń",
-      "degree": "Stopień",
       "betweenness": "Pośrednictwo"
     },
     "isolated": {
       "title": "Izolowane",
       "description": "Elementy bez żadnych połączeń",
-      "count": "{{count}} izolowanych elementów",
-      "noIsolated": "Brak izolowanych elementów",
       "showIsolated": "Pokaż izolowane",
       "hideIsolated": "Ukryj podświetlenie",
       "selectAll": "Zaznacz wszystkie",
@@ -600,7 +556,6 @@
       "maxDepth": "Maks. głębokość",
       "highlightThisPath": "Podświetl tę ścieżkę",
       "noPath": "Nie znaleziono ścieżki między tymi elementami",
-      "pathLength": "{{count}} kroków",
       "blockedByConstraints": "Ścieżka wykluczona przez ograniczenia",
       "constraints": {
         "title": "Ograniczenia",
@@ -632,7 +587,6 @@
     }
   },
   "views": {
-    "title": "Widoki",
     "canvasDisplay": "Wyświetlanie na tablicy",
     "tags": "Tagi",
     "tagSize": "Rozmiar:",
@@ -662,9 +616,7 @@
     "noPropertiesDefined": "Brak zdefiniowanych właściwości na elementach",
     "savedViews": "Zapisane widoki",
     "save": "Zapisz widok",
-    "load": "Wczytaj",
     "delete": "Usuń",
-    "rename": "Zmień nazwę",
     "noViews": "Brak zapisanych widoków",
     "namePlaceholder": "Nazwa widoku...",
     "includePositions": "Uwzględnij pozycje ({{count}} elementów)",
@@ -674,32 +626,20 @@
     "savedPositions": "Zapisane pozycje",
     "deleteView": "Usuń widok",
     "activeView": "Aktywny widok. Filtry i widok przywrócone.",
-    "positionsRestored": "Przywrócono pozycje {{count}} elementów.",
-    "saveDescription": "Zapisuje filtry, zoom i ukryte elementy"
+    "positionsRestored": "Przywrócono pozycje {{count}} elementów."
   },
   "assets": {
-    "title": "Pliki",
-    "noAssets": "Brak plików",
     "drop": "Upuść pliki",
     "deleteConfirm": "Usunąć ten plik?",
-    "usedBy": "Używany przez {{count}} elementów",
     "hideMediaOnNode": "Ukryj media na węźle",
     "showMediaOnNode": "Pokaż media na węźle",
     "uploading": "Przesyłanie…",
     "dropOrPaste": "Przeciągnij pliki lub wklej Ctrl+V",
     "browse": "lub przeglądaj"
   },
-  "history": {
-    "title": "Historia",
-    "noHistory": "Brak akcji",
-    "undo": "Cofnij",
-    "redo": "Ponów"
-  },
   "collaboration": {
     "title": "Współpraca",
     "connected": "Połączony",
-    "disconnected": "Rozłączony",
-    "users": "{{count}} użytkowników",
     "you": "Ty",
     "others": "innych",
     "local": "Lokalnie",

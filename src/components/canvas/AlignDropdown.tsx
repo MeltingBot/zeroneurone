@@ -17,6 +17,7 @@ import { useReactFlow } from '@xyflow/react';
 import { DropdownPortal } from '../common/DropdownPortal';
 import { useDossierStore, useHistoryStore, useSelectionStore } from '../../stores';
 import type { Position } from '../../types';
+import { useShallow } from 'zustand/react/shallow';
 
 type AlignAction = 'left' | 'centerH' | 'right' | 'top' | 'centerV' | 'bottom' | 'distributeH' | 'distributeV';
 
@@ -115,8 +116,8 @@ export function AlignDropdown() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setIsOpen(false), []);
 
-  const { elements, updateElementPositions } = useDossierStore();
-  const { pushAction } = useHistoryStore();
+  const { elements, updateElementPositions } = useDossierStore(useShallow((s) => ({ elements: s.elements, updateElementPositions: s.updateElementPositions })));
+  const { pushAction } = useHistoryStore(useShallow((s) => ({ pushAction: s.pushAction })));
   const selectedElementIds = useSelectionStore(s => s.selectedElementIds);
   const lastClickedElementId = useSelectionStore(s => s.lastClickedElementId);
   const { getNodes } = useReactFlow();

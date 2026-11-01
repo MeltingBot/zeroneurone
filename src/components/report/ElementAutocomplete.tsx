@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link2 } from 'lucide-react';
 import { useDossierStore } from '../../stores';
 import type { ElementShape } from '../../types';
+import { useShallow } from 'zustand/react/shallow';
 
 interface AutocompleteItem {
   type: 'element' | 'link';
@@ -12,8 +13,8 @@ interface AutocompleteItem {
   // Additional info for disambiguation
   subtitle?: string;      // First property or context info
   shortId: string;        // Last 6 chars of ID for technical distinction
-  color?: string;         // Element color
-  shape?: ElementShape;   // Element shape
+  color?: string;
+  shape?: ElementShape;
 }
 
 interface ElementAutocompleteProps {
@@ -30,7 +31,7 @@ export function ElementAutocomplete({
   onClose,
 }: ElementAutocompleteProps) {
   const { t } = useTranslation('panels');
-  const { elements, links } = useDossierStore();
+  const { elements, links } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links })));
   const [selectedIndex, setSelectedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -51,7 +52,6 @@ export function ElementAutocomplete({
       return `${prop.key}: ${valueStr}`;
     };
 
-    // Filter elements
     for (const element of elements) {
       if (element.label.toLowerCase().includes(queryLower)) {
         results.push({
@@ -83,7 +83,7 @@ export function ElementAutocomplete({
       }
     }
 
-    return results.slice(0, 10); // Limit to 10 results
+    return results.slice(0, 10);
   }, [query, elements, links]);
 
   // Track if user has explicitly navigated with arrows
@@ -246,7 +246,6 @@ export function ElementAutocomplete({
                   <p className="text-xs text-text-secondary truncate mt-0.5">{item.subtitle}</p>
                 )}
 
-                {/* Tags */}
                 {item.tags && item.tags.length > 0 && (
                   <div className="flex gap-1 mt-1">
                     {item.tags.map((tag) => (

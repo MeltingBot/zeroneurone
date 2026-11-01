@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Undo2, Redo2, Image, ImageOff, Eye, EyeOff, MessageCircle, MessageCircleOff } from 'lucide-react';
 import { useUIStore, useHistoryStore } from '../../stores';
 import { ActivityBar } from './ActivityBar';
+import { useShallow } from 'zustand/react/shallow';
 
 interface ViewToolbarProps {
   /** Left side content (e.g., element count) */
@@ -26,11 +27,10 @@ export function ViewToolbar({
   showCommentBadgesToggle = true,
 }: ViewToolbarProps) {
   const { t } = useTranslation('pages');
-  const { hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
-  const { canUndo, canRedo, undo, redo } = useHistoryStore();
-
-  const canUndoNow = canUndo();
-  const canRedoNow = canRedo();
+  const { hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore(useShallow((s) => ({ hideMedia: s.hideMedia, toggleHideMedia: s.toggleHideMedia, anonymousMode: s.anonymousMode, toggleAnonymousMode: s.toggleAnonymousMode, showCommentBadges: s.showCommentBadges, toggleShowCommentBadges: s.toggleShowCommentBadges })));
+  const { undo, redo } = useHistoryStore(useShallow((s) => ({ undo: s.undo, redo: s.redo })));
+  const canUndoNow = useHistoryStore((s) => s.past.length > 0);
+  const canRedoNow = useHistoryStore((s) => s.future.length > 0);
 
   return (
     <div className="relative min-h-10 flex items-center flex-wrap px-3 py-1 border-b border-border-default bg-bg-primary shrink-0 gap-x-2 gap-y-1">

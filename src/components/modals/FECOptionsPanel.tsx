@@ -54,7 +54,7 @@ export function FECOptionsPanel({ fileName, aggregate, options, onChange }: FECO
 
   return (
     <div className="p-3 border border-border-default rounded bg-bg-secondary space-y-3">
-      {/* Résumé du fichier */}
+      {/* File summary */}
       <div className="space-y-1">
         <p className="text-xs font-medium text-text-primary font-mono truncate">{fileName}</p>
         <p className="text-xs text-text-secondary">
@@ -73,7 +73,7 @@ export function FECOptionsPanel({ fileName, aggregate, options, onChange }: FECO
         )}
       </div>
 
-      {/* Plafond + seuil */}
+      {/* Cap + threshold */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -104,7 +104,7 @@ export function FECOptionsPanel({ fileName, aggregate, options, onChange }: FECO
         </div>
       </div>
 
-      {/* Période */}
+      {/* Period */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -130,7 +130,7 @@ export function FECOptionsPanel({ fileName, aggregate, options, onChange }: FECO
         </div>
       </div>
 
-      {/* Familles */}
+      {/* Account families */}
       <div>
         <span className="block text-xs font-medium text-text-secondary mb-1">
           {t('import.fec.familiesTitle')}
@@ -154,7 +154,7 @@ export function FECOptionsPanel({ fileName, aggregate, options, onChange }: FECO
         </div>
       </div>
 
-      {/* Flux techniques */}
+      {/* Technical flows */}
       <label className="flex items-center gap-2 text-xs text-text-primary">
         <input
           type="checkbox"
@@ -164,7 +164,7 @@ export function FECOptionsPanel({ fileName, aggregate, options, onChange }: FECO
         {t('import.fec.includeGenToGen')}
       </label>
 
-      {/* Aperçu */}
+      {/* Preview */}
       <div className="pt-2 border-t border-border-default">
         <p className="text-xs font-medium text-text-primary">
           {t('import.fec.preview', {

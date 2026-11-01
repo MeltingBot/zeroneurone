@@ -13,8 +13,6 @@
     "lightMode": "Tryb jasny",
     "noDossiers": "Brak teczek",
     "createFirst": "Utwórz swoje pierwsze teczka, aby rozpocząć",
-    "viewDossiers": "Zobacz teczki",
-    "dossierCount": "{{count}} teczka/i",
     "loading": "Ładowanie...",
     "searchPlaceholder": "Szukaj po nazwie lub opisie...",
     "filterByTag": "Filtruj według tagu",
@@ -24,7 +22,6 @@
     "activeFilters": "Aktywne filtry",
     "clearFilters": "Wyczyść",
     "noResults": "Nie znaleziono śledztw",
-    "noResultsHint": "Spróbuj innych terminów lub wyczyść filtry",
     "resultsCount": "{{count}} / {{total}} teczka/i",
     "card": {
       "modified": "Zmodyfikowano {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Zaznaczanie",
-      "pan": "Przesuwanie",
-      "addElement": "Dodaj element",
-      "addGroup": "Dodaj grupę",
-      "addAnnotation": "Dodaj adnotację",
-      "autoLayout": "Automatyczny układ",
       "fitView": "Dopasuj widok",
       "zoomIn": "Powiększ",
       "zoomOut": "Pomniejsz",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Ukryj bez daty",
       "temporalUndatedShow": "Pokaż bez daty (wyszarzone)",
       "hideMinimap": "Ukryj minimapę",
-      "closeEsc": "Zamknij (Esc)",
-      "close": "Zamknij",
-      "loading": "Ładowanie...",
       "oneElement": "1 element",
       "oneLink": "1 połączenie",
       "selectedCount": "{{count}} zaznaczonych"
@@ -226,17 +215,6 @@
       "matrix": "Macierz",
       "report": "Raport"
     },
-    "panels": {
-      "detail": "Szczegóły",
-      "filters": "Filtry",
-      "insights": "Analizy",
-      "views": "Widoki"
-    },
-    "emptyCanvas": {
-      "title": "Pusta tablica",
-      "hint": "Kliknij dwukrotnie, aby utworzyć element",
-      "orDrop": "lub upuść pliki"
-    },
     "importPlacement": {
       "instructions": "Kliknij, aby umieścić zaimportowane elementy",
       "importing": "Importowanie...",
@@ -304,25 +282,15 @@
       "noKeyObjectHint": "Ctrl+klik aby wybrać element odniesienia"
     },
     "toast": {
-      "elementCreated": "Element utworzony",
-      "elementsDeleted": "{{count}} element(ów) usunięto",
-      "linkCreated": "Połączenie utworzone",
-      "copied": "Skopiowano do schowka",
-      "pasted": "{{count}} element(ów) wklejono",
-      "saved": "Zapisano",
-      "exportSuccess": "Eksport zakończony",
-      "exportError": "Błąd podczas eksportu",
       "assetTooLargeToShare": "Plik jest za duży do synchronizacji ({{size}}, maksymalnie {{max}}). Pozostaje dostępny lokalnie, ale nie jest udostępniany.",
       "assetLargeToShare": "Duży plik ({{size}}): synchronizacja może być wolna."
     },
     "notFound": "Nie znaleziono teczki",
     "header": {
-      "report": "Synteza",
       "generateReport": "Synteza",
       "export": "Eksportuj",
       "search": "Szukaj",
       "clearFilters": "Wyczyść filtry",
-      "activeFilters": "Aktywne filtry",
       "shortcuts": "Skróty klawiszowe",
       "documentation": "Dokumentacja",
       "supportKofi": "Wesprzyj na Ko-fi",
@@ -347,9 +315,6 @@
       "moveHere": "Przenieś do tej karty",
       "addToTab": "Dodaj do karty...",
       "removeFromTab": "Usuń z karty",
-      "emptyState": "Brak elementów w tej karcie",
-      "emptyHint": "Kliknij prawym przyciskiem na elementy, aby je dodać",
-      "ghostBadge": "W {{tabs}}",
       "navigateTo": "Przejdź do karty {{name}}",
       "combine": "Połącz",
       "uncombine": "Nie łącz",
@@ -360,7 +325,6 @@
     "retentionExpiredBanner": "Retencja wygasła {{days}} dni temu",
     "retentionDeleteConfirm": "To dochodzenie zostanie trwale usunięte. Tej czynności nie można cofnąć.",
     "retentionDeleteAction": "Usuń na stałe",
-    "retentionReadonly": "Dochodzenie tylko do odczytu (retencja wygasła)",
     "retentionRedactConfirm": "Redakcja trwale usunie całą zawartość tekstową (nazwy, notatki, właściwości). Struktura grafu zostanie zachowana. Ta akcja jest nieodwracalna.",
     "retentionRedactAction": "Zredagować na stałe",
     "opfsUnavailable": "Ta przeglądarka (lub tryb prywatny) blokuje lokalne przechowywanie multimediów: obrazy nie będą wyświetlane. Otwórz teczkę w zwykłym oknie.",
@@ -378,7 +342,6 @@
     "offMapLinked": "Powiązane elementy bez lokalizacji: {{count}}",
     "offMapSelectRest": "Zaznacz pozostałe ({{count}})",
     "addLocation": "Dodaj współrzędne do elementów, aby zobaczyć je na mapie",
-    "pickLocation": "Kliknij na mapie, aby ustawić pozycję",
     "elementsLocated": "{{count}} element(ów) zlokalizowanych",
     "elementsLocatedFiltered": "{{kept}} / {{count}} element(ów) zlokalizowanych",
     "density": "Gęstość",
@@ -423,11 +386,7 @@
     "deleteSelection": "Usuń zaznaczenie",
     "editZone": "Edytuj kształt",
     "geometry": "Geometria",
-    "vertices": "Wierzchołki",
-    "area": "Powierzchnia",
-    "center": "Środek",
     "viewOnMap": "Zobacz na mapie",
-    "deleteVertex": "Usuń wierzchołek",
     "geoJsonSave": "Zastosuj",
     "geoJsonParseError": "Nieprawidłowy JSON",
     "geoJsonMinVertices": "Minimum 3 wierzchołki",
@@ -446,14 +405,10 @@
     "zoneSquare": "Kwadrat"
   },
   "timeline": {
-    "noEvents": "Brak datowanych zdarzeń",
-    "addDates": "Dodaj daty do elementów lub utwórz zdarzenia",
     "noTemporalData": "Brak danych czasowych",
     "howToAddTimeline": "Aby zobaczyć elementy na osi czasu:",
     "addPeriodToLinks": "Dodaj okres do połączeń (data rozpoczęcia/zakończenia)",
     "addEventsToHistory": "Dodaj zdarzenia w historii elementów",
-    "eventsCount": "{{count}} zdarzenie(ń)",
-    "zoomHint": "Ctrl+kółko: zoom | Przeciągnij: przesuń",
     "zoomPresetCentury": "Wiek",
     "zoomPresetDecade": "10 lat",
     "zoomPreset1Year": "1 rok",
@@ -499,7 +454,6 @@
     "relation": "relacja",
     "newElement": "Nowy element",
     "filter": "Filtr",
-    "filteredEventsCount": "{{filtered}}/{{total}} wydarzenie/ń",
     "temporalFilter": "Okres",
     "temporalFilterHint": "Filtruj według okresu czasowego",
     "stepBackward": "Miesiąc wstecz",
@@ -532,7 +486,6 @@
     "source": "Źródło",
     "count": "{{count}}/{{total}} elementów",
     "properties": "{{count}} właściwości",
-    "search": "Szukaj...",
     "columns": "Pokaż/ukryj kolumny",
     "noResults": "Brak wyników",
     "empty": "Brak elementów z właściwościami",
@@ -555,19 +508,11 @@
   },
   "report": {
     "title": "Raport",
-    "untitled": "Bez tytułu",
     "addSection": "Dodaj sekcję",
     "sections": {
-      "title": "Tytuł",
-      "text": "Tekst",
-      "canvas": "Tablica",
-      "map": "Mapa",
-      "timeline": "Oś czasu",
-      "table": "Tabela",
-      "insights": "Analizy"
+      "map": "Mapa"
     },
-    "export": "Eksportuj do PDF",
-    "print": "Drukuj"
+    "export": "Eksportuj do PDF"
   },
   "join": {
     "title": "Dołącz do sesji",
@@ -620,12 +565,9 @@
   },
   "tutorial": {
     "start": "Samouczek z przewodnikiem",
-    "restart": "Uruchom samouczek ponownie",
-    "progress": "Krok {{current}}/{{total}}",
     "next": "Dalej",
     "skip": "Pomiń",
     "quit": "Zakończ",
-    "finish": "Zakończ",
     "deleteDossier": "Usuń teczkę samouczka",
     "keepDossier": "Zachowaj ją",
     "offTrack": {

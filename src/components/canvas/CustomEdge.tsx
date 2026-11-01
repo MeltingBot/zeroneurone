@@ -41,11 +41,9 @@ interface CustomEdgeData {
   // Confidence / grading indicator (precomputed by Canvas, null when hidden)
   showConfidenceIndicator?: boolean;
   confidenceBadge?: EvaluationBadge | null;
-  // Displayed properties
   displayedPropertyValues?: { key: string; value: string }[];
   // Remote user presence (passed from Canvas level)
   remoteLinkSelectors?: RemoteLinkPresence[];
-  // Font size for label
   fontSize?: FontSize;
 }
 
@@ -105,7 +103,6 @@ function CustomEdgeComponent(props: EdgeProps) {
   const sourceSlot = edgeData?.sourceSlot ?? 0;
   const targetSlot = edgeData?.targetSlot ?? 0;
 
-  // Dragging state - 2D offset
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>(curveOffset);
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; offsetX: number; offsetY: number } | null>(null);
@@ -118,7 +115,6 @@ function CustomEdgeComponent(props: EdgeProps) {
     }
   }, [curveOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Local state for editing
   const [editValue, setEditValue] = useState(String(label || ''));
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -131,7 +127,6 @@ function CustomEdgeComponent(props: EdgeProps) {
     }
   }, [isEditing, label]);
 
-  // Handle input key events
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.stopPropagation();
     if (e.key === 'Enter') {
@@ -143,7 +138,6 @@ function CustomEdgeComponent(props: EdgeProps) {
     }
   };
 
-  // Handle input blur
   const handleInputBlur = () => {
     onLabelChange?.(editValue);
     onStopEditing?.();
@@ -154,7 +148,6 @@ function CustomEdgeComponent(props: EdgeProps) {
     e.stopPropagation();
     e.preventDefault();
     setIsDragging(true);
-    // Convert screen coordinates to flow coordinates
     const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
     dragStartRef.current = {
       mouseX: flowPos.x,
@@ -170,7 +163,6 @@ function CustomEdgeComponent(props: EdgeProps) {
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragStartRef.current) return;
 
-      // Convert screen coordinates to flow coordinates
       const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
 
       // Calculate new 2D offset: initial offset + mouse delta
@@ -240,7 +232,6 @@ function CustomEdgeComponent(props: EdgeProps) {
   const createEndArrow = (): string => arrowPolygon(targetX, targetY, route.endAngle);
   const createStartArrow = (): string => arrowPolygon(sourceX, sourceY, route.startAngle + Math.PI);
 
-  // Apply dimmed opacity
   const edgeOpacity = isDimmed ? 0.3 : 1;
   // Insights emphasis: glow the links belonging to the highlighted structure
   const edgeFilter = isHighlighted && !isDimmed
@@ -550,10 +541,8 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevProps.targetX !== nextProps.targetX) return false;
   if (prevProps.targetY !== nextProps.targetY) return false;
 
-  // Compare selection state
   if (prevProps.selected !== nextProps.selected) return false;
 
-  // Compare label
   if (prevProps.label !== nextProps.label) return false;
 
   // Compare data

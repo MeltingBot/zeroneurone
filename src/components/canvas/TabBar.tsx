@@ -358,7 +358,6 @@ export function TabBar({ dossierId }: TabBarProps) {
           </button>
         )}
 
-        {/* Add tab button */}
         <button
           onClick={handleCreate}
           className="flex items-center justify-center w-6 h-6 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary transition-colors shrink-0"

@@ -14,6 +14,7 @@ import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { isEmlFile } from '../../utils/fileTypes';
+import { useShallow } from 'zustand/react/shallow';
 
 interface AssetsPanelProps {
   element: Element;
@@ -21,7 +22,7 @@ interface AssetsPanelProps {
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
   const { t } = useTranslation(['panels', 'modals']);
-  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText, updateElement } = useDossierStore();
+  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText, updateElement } = useDossierStore(useShallow((s) => ({ assets: s.assets, addAsset: s.addAsset, removeAsset: s.removeAsset, reorderAssets: s.reorderAssets, clearAssetText: s.clearAssetText, extractAssetText: s.extractAssetText, updateElement: s.updateElement })));
   const pushAction = useHistoryStore((s) => s.pushAction);
 
   // Per-element toggle: hide attached media on the canvas node, keeping the label.
@@ -54,7 +55,6 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Delete confirmation state
   const [deleteAssetId, setDeleteAssetId] = useState<string | null>(null);
 
   // Drag-and-drop reordering state
@@ -92,7 +92,6 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
     [element.id, element.label, pushMetadataImport]
   );
 
-  // Handle paste from clipboard
   const handlePaste = useCallback(
     async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -110,7 +109,6 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
 
       if (files.length === 0) return;
 
-      // Prevent default paste behavior
       e.preventDefault();
 
       setIsUploading(true);
@@ -293,9 +291,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       const dropIndex = currentOrder.indexOf(targetAssetId);
 
       if (dragIndex !== -1 && dropIndex !== -1) {
-        // Remove from old position
         currentOrder.splice(dragIndex, 1);
-        // Insert at new position
         currentOrder.splice(dropIndex, 0, draggingAssetId);
         reorderAssets(element.id, currentOrder);
       }
@@ -423,7 +419,6 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         />
       )}
 
-      {/* Delete confirmation modal */}
       <ConfirmDeleteModal
         isOpen={deleteAssetId !== null}
         onClose={() => setDeleteAssetId(null)}

@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Elimina",
-    "message": "Questa azione è irreversibile.",
     "confirm": "Elimina",
     "deleting": "Eliminazione...",
     "deleteDossier": "Elimina il fascicolo",
@@ -19,8 +18,7 @@
     "rename": "Rinomina",
     "renaming": "Rinominazione...",
     "label": "Nome",
-    "renameDossier": "Rinomina il fascicolo",
-    "namePlaceholder": "Nuovo nome"
+    "renameDossier": "Rinomina il fascicolo"
   },
   "importIntoCurrent": {
     "title": "Importa nelil fascicolo",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Importa un'fascicolo",
-    "dropzone": "Trascina un file o clicca per selezionare",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -160,10 +157,6 @@
       "folderByTag": "Una cartella per tag principale",
       "folderFlat": "Cartella unica"
     },
-    "options": {
-      "includeAssets": "Includi file allegati",
-      "highResolution": "Alta risoluzione (2x)"
-    },
     "resolution": "Risoluzione",
     "scale": {
       "1x": "Dimensione normale",
@@ -218,12 +211,6 @@
     },
     "placeholder": "Cerca elementi e collegamenti...",
     "noResults": "Nessun risultato per \"{{query}}\"",
-    "resultsCount": "{{count}} risultato/i",
-    "filters": {
-      "all": "Tutti",
-      "elements": "Elementi",
-      "links": "Collegamenti"
-    },
     "noName": "Senza nome",
     "link": "Collegamento",
     "element": "Elemento",
@@ -282,18 +269,6 @@
       "lockSession": "Blocca la sessione"
     }
   },
-  "tagSetManager": {
-    "title": "Gestisci tag",
-    "description": "Crea palette di tag riutilizzabili",
-    "newTagSet": "Nuova palette",
-    "editTagSet": "Modifica palette",
-    "deleteTagSet": "Elimina palette",
-    "tagSetName": "Nome della palette",
-    "tags": "Tag",
-    "addTag": "Aggiungi un tag",
-    "noTagSets": "Nessuna palette di tag",
-    "createFirst": "Crea la tua prima palette"
-  },
   "tagSetEditor": {
     "applyTitle": "Applica al fascicolo aperto",
     "applyVisual": "Aspetto (elementi con questo tag principale)",
@@ -303,9 +278,6 @@
     "title": "Palette di tag",
     "titleNew": "Nuovo tag",
     "titleEdit": "Modifica \"{{name}}\"",
-    "namePlaceholder": "Nome della palette",
-    "tagsPlaceholder": "Aggiungi un tag...",
-    "colorLabel": "Colore predefinito",
     "nameLabel": "Nome",
     "nameExample": "Es: Persona, Azienda...",
     "nameRequired": "Il nome è obbligatorio",
@@ -391,7 +363,6 @@
       "opfs": "File (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Cronologia Y.js",
-      "other": "Altro",
       "measured": "Dati misurati"
     },
     "persistent": {
@@ -423,18 +394,9 @@
       "exportAll": "Esporta tutto",
       "import": "Importa",
       "description": "Tutte le fascicoli, file e tag. L'importazione aggiunge senza sostituire.",
-      "exporting": "Esportazione...",
-      "importing": "Importazione...",
       "exportSuccess": "Esportazione completata",
       "importSuccess": "Importazione riuscita: {{dossiers}} fascicolo/i, {{elements}} elemento/i, {{links}} collegamento/i",
       "error": "Errore"
-    },
-    "purge": {
-      "description": "La cronologia Y.js memorizza le modifiche per l'annullamento. Eliminare libera spazio.",
-      "confirm": "Eliminare la cronologia Y.js?\n\nQuesto libererà spazio ma eliminerà la cronologia di annullamento. I dati verranno conservati.",
-      "success": "{{count}} database eliminato/i",
-      "successWithErrors": "{{deleted}} database eliminato/i, {{errors}} errore/i",
-      "error": "Errore durante l'eliminazione"
     },
     "compact": {
       "title": "Cronologia Y.js per fascicolo",
@@ -459,7 +421,6 @@
       "button": "Elimina tutto",
       "confirm": "Eliminare TUTTI i dossier e i loro dati?\n\nQuesta azione è irreversibile.",
       "confirmAgain": "Ultima conferma: tutti i dati andranno persi. Continuare?",
-      "success": "Tutti i dossier sono stati eliminati.",
       "error": "Errore durante l'eliminazione"
     }
   },
@@ -497,19 +458,6 @@
     "sortByName": "Nome",
     "sortByDate": "Data",
     "sortByConfidence": "Affidabilità",
-    "preview": "Anteprima:",
-    "previewContent": "Il report conterrà",
-    "previewDescription": "la descrizione",
-    "previewSummary": "un riepilogo",
-    "previewInsights": "l'analisi del grafo",
-    "previewTimeline": "la cronologia",
-    "previewElements": "{{count}} elementi",
-    "previewLinks": "{{count}} collegamenti",
-    "previewProperties": "le proprietà",
-    "previewFiles": "{{count}} file",
-    "previewFiches": "le schede dettagliate",
-    "previewGraphCapture": "cattura del grafo",
-    "previewNoContent": "nessun contenuto",
     "jsonDescription": "JSON+: dati strutturati con analisi del grafo",
     "jsonTooltip": "Esportazione JSON strutturata con dati arricchiti",
     "print": "Stampa",
@@ -596,10 +544,6 @@
     "sortByEvaluation": "Valutazione"
   },
   "metadataImport": {
-    "title": "Importa metadati",
-    "description": "Estrai metadati dal file (EXIF, PDF, ecc.)",
-    "noMetadata": "Nessun metadato trovato",
-    "import": "Importa i metadati selezionati",
     "detected": "Metadati rilevati",
     "gps": "Coordinate GPS",
     "ignore": "Ignora",
@@ -644,7 +588,6 @@
   "tagSets": {
     "title": "Gestisci tag",
     "newTag": "Nuovo tag",
-    "editTag": "Modifica \"{{name}}\"",
     "deleteConfirm": "Eliminare il tag \"{{name}}\"? I tag esistenti sugli elementi rimarranno ma non saranno più associati a questo TagSet.",
     "csvEmptyOrInvalid": "File CSV vuoto o non valido",
     "csvMissingNameColumn": "Colonna \"nome\" mancante nel CSV",
@@ -725,7 +668,6 @@
     "errorDeactivation": "Errore durante la disattivazione",
     "errorPasswordChange": "Errore durante il cambio password",
     "enable": {
-      "warning": "Senza questa password, i tuoi dati saranno irrecuperabili. Esporta un backup prima di continuare.",
       "passwordLabel": "Password (minimo 8 caratteri)",
       "confirmLabel": "Conferma password",
       "mismatch": "Le password non corrispondono",
@@ -773,7 +715,6 @@
       "successRemoved": "Chiave di sicurezza rimossa",
       "errorPrfNotSupported": "Questa chiave non supporta lo sblocco senza password (PRF)",
       "errorRegistration": "Errore durante la registrazione della chiave",
-      "errorUnlock": "Sblocco con chiave di sicurezza fallito",
       "addedOn": "Aggiunta il"
     }
   },

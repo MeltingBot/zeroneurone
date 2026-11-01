@@ -10,6 +10,7 @@ import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { useProgressStore } from '../../stores/progressStore';
 import { avoidObstacles } from '../../utils/avoidObstacles';
 import { DropdownPortal } from '../common/DropdownPortal';
+import { useShallow } from 'zustand/react/shallow';
 
 export function LayoutDropdown() {
   const { t } = useTranslation('pages');
@@ -18,8 +19,8 @@ export function LayoutDropdown() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setIsOpen(false), []);
 
-  const { elements, links, updateElementPositions } = useDossierStore();
-  const { pushAction } = useHistoryStore();
+  const { elements, links, updateElementPositions } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, updateElementPositions: s.updateElementPositions })));
+  const { pushAction } = useHistoryStore(useShallow((s) => ({ pushAction: s.pushAction })));
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);

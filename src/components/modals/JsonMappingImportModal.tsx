@@ -174,7 +174,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const [filterMode, setFilterMode] = useState<'all' | 'any'>('all');
   const [maxImport, setMaxImport] = useState(2000);
 
-  // Saved templates (phase 2a)
+  // Saved templates
   const allTemplates = useJsonMappingStore((s) => s.templates);
   const loadTemplates = useJsonMappingStore((s) => s.load);
   const saveTemplate = useJsonMappingStore((s) => s.save);
@@ -1151,7 +1151,6 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         data-testid="json-mapping-modal"
         className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[92vw] max-w-4xl max-h-[88vh] flex flex-col"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <div className="flex items-center gap-2">
             <FileJson size={16} className="text-text-secondary" />
@@ -1162,7 +1161,6 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-4 overflow-y-auto flex-1 space-y-4">
           {/* JSON input */}
           <div className="space-y-1.5">
@@ -1653,7 +1651,6 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
           <button onClick={handleClose} className="px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary rounded">
             {t('importJsonMapping.cancel')}

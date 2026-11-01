@@ -75,9 +75,6 @@
     }
   },
   "detail": {
-    "noSelection": "Cap element seleccionat",
-    "multipleSelection": "{{count}} elements seleccionats",
-    "element": "Element",
     "link": {
       "linkedElements": "Elements enllaçats",
       "deletedElement": "Element eliminat",
@@ -86,8 +83,6 @@
       "periodStart": "Inici",
       "periodEnd": "Fi (deixar buit si en curs)"
     },
-    "group": "Grup",
-    "annotation": "Anotació",
     "sections": {
       "identity": "Identitat",
       "content": "Contingut",
@@ -105,9 +100,7 @@
       "linkLabel": "Relació sense nom",
       "notes": "Notes...",
       "source": "Font de la informació...",
-      "markdown": "Markdown: **negreta**, *cursiva*, [enllaç](url), llistes...",
-      "keyName": "Nom...",
-      "keyValue": "Valor..."
+      "markdown": "Markdown: **negreta**, *cursiva*, [enllaç](url), llistes..."
     },
     "labels": {
       "name": "Nom",
@@ -154,7 +147,6 @@
       "goToTab": "Anar a la pestanya {{name}}"
     },
     "events": {
-      "title": "Esdeveniments",
       "description": "Historial d'esdeveniments datats (visibles a la línia de temps)",
       "add": "Afegir un esdeveniment",
       "labelPlaceholder": "Etiqueta (ex: Escala Marsella, Lloc piratejat...)",
@@ -164,7 +156,6 @@
       "delete": "Eliminar",
       "dateFrom": "De",
       "dateTo": "A",
-      "dateEndOptional": "Fi (opcional)",
       "descriptionLabel": "Descripció",
       "descriptionPlaceholder": "Descripció detallada...",
       "sourceLabel": "Font",
@@ -185,7 +176,6 @@
       "geoJsonMinPoints": "Mínim 3 punts"
     },
     "location": {
-      "title": "Localització",
       "description": "Posició fixa de l'element (visible al mapa)",
       "gpsCoordinates": "Coordenades GPS",
       "latitude": "Latitud",
@@ -196,7 +186,6 @@
       "clearLocation": "Esborrar",
       "removeLocation": "Eliminar la localització",
       "saveLocation": "Desar",
-      "noLocation": "Cap posició definida",
       "copyCoordinates": "Copiar les coordenades",
       "coordinatesCopied": "Coordenades copiades",
       "altitude": "Altitud",
@@ -210,7 +199,6 @@
       "selectAll": "Seleccionar tot",
       "deselectAll": "Desseleccionar tot",
       "ignore": "Ignorar",
-      "keyPlaceholder": "Clau",
       "valuePlaceholder": "Valor",
       "typePlaceholder": "Tipus",
       "optionsPlaceholder": "Opcions separades per comes",
@@ -255,13 +243,11 @@
       "editChoices": "Edita les opcions"
     },
     "appearance": {
-      "title": "Aparença",
       "color": "Color",
       "borderColor": "Color de la vora",
       "defaultGray": "Gris per defecte",
       "customColor": "Color personalitzat",
       "shape": "Forma",
-      "size": "Mida",
       "style": "Estil",
       "thickness": "Gruix",
       "textSize": "Mida del text",
@@ -273,11 +259,6 @@
       "borderStyle": "Estil de la vora"
     },
     "files": {
-      "title": "Fitxers",
-      "drop": "Deixeu anar fitxers aquí",
-      "noFiles": "Sense fitxers",
-      "delete": "Eliminar el fitxer",
-      "download": "Descarregar",
       "preview": "Previsualització",
       "defaultThumbnail": "Miniatura per defecte",
       "closeEsc": "Tancar (Esc)",
@@ -351,7 +332,6 @@
     }
   },
   "filters": {
-    "title": "Filtres",
     "elementsCount": "{{matching}}/{{total}} elements",
     "countBreakdown": "Filtres {{filters}} · Consulta {{query}}",
     "queryBadge": "Consulta",
@@ -371,11 +351,7 @@
       "quickFilters": "Filtres ràpids",
       "textSearch": "Cerca de text",
       "tags": "Etiquetes",
-      "tabs": "Pestanyes",
-      "types": "Tipus",
-      "confidence": "Confiança",
-      "property": "Propietat",
-      "date": "Data"
+      "tabs": "Pestanyes"
     },
     "placeholders": {
       "textSearch": "Filtrar per nom o notes...",
@@ -427,9 +403,7 @@
     },
     "hiddenElements": {
       "title": "Amagats",
-      "count": "{{count}} element(s) amagat(s)",
-      "showAll": "Mostrar tot",
-      "noHidden": "Cap element amagat"
+      "showAll": "Mostrar tot"
     },
     "evaluation": {
       "hint": "Només queden visibles els elements valorats en el model actiu amb un codi seleccionat."
@@ -497,7 +471,6 @@
     "syntaxExample5": "WITHIN 2 HOPS OF tag = \"sospitós\""
   },
   "insights": {
-    "title": "Anàlisis",
     "computing": "Anàlisi en curs...",
     "between": {
       "title": "Entre {{a}} i {{b}}",
@@ -511,18 +484,9 @@
     "noData": "Afegiu elements i enllaços per veure les anàlisis.",
     "noInsights": "Cap anàlisi detectada. Afegiu més enllaços entre els elements.",
     "lastComputed": "Última anàlisi:",
-    "refresh": "Actualitzar",
     "noName": "Sense nom",
     "noResults": "Sense resultats",
     "links": "{{count}} enllaços",
-    "elements": "{{count}} elements",
-    "sections": {
-      "clusters": "Clústers",
-      "bridges": "Ponts",
-      "centrality": "Centralitat",
-      "isolated": "Aïllats",
-      "similar": "Similars"
-    },
     "roles": {
       "title": "Rols",
       "soleConnector": "{{x}} és l'únic vincle entre {{groups}}",
@@ -544,9 +508,7 @@
     },
     "clusters": {
       "title": "Clústers",
-      "description": "Grups d'elements fortament connectats",
       "name": "Clúster {{id}}",
-      "count": "{{count}} clúster(s)",
       "elements": "{{count}} elements",
       "actions": {
         "select": "Select.",
@@ -561,8 +523,6 @@
     "bridges": {
       "title": "Ponts",
       "description": "Elements que connecten diferents parts del graf",
-      "count": "{{count}} pont(s)",
-      "noBridges": "Cap pont detectat",
       "showBridges": "Mostrar ponts",
       "hideBridges": "Amagar ressaltat",
       "selectAll": "Seleccionar tots",
@@ -571,15 +531,11 @@
     },
     "centrality": {
       "title": "Més connectats",
-      "description": "Elements més connectats",
-      "degree": "Grau",
       "betweenness": "Intermediació"
     },
     "isolated": {
       "title": "Aïllats",
       "description": "Elements sense cap connexió",
-      "count": "{{count}} element(s) aïllat(s)",
-      "noIsolated": "Cap element aïllat",
       "showIsolated": "Mostrar aïllats",
       "hideIsolated": "Amagar ressaltat",
       "selectAll": "Seleccionar tots",
@@ -598,7 +554,6 @@
       "maxDepth": "Profunditat màx.",
       "highlightThisPath": "Ressaltar aquest camí",
       "noPath": "Cap camí trobat entre aquests elements",
-      "pathLength": "{{count}} pas(sos)",
       "blockedByConstraints": "Camí exclòs per les restriccions",
       "constraints": {
         "title": "Restriccions",
@@ -630,7 +585,6 @@
     }
   },
   "views": {
-    "title": "Vistes",
     "canvasDisplay": "Visualització al llenç",
     "tags": "Etiquetes",
     "tagSize": "Mida:",
@@ -660,9 +614,7 @@
     "noPropertiesDefined": "Cap propietat definida als elements",
     "savedViews": "Vistes desades",
     "save": "Desar vista",
-    "load": "Carregar",
     "delete": "Eliminar",
-    "rename": "Reanomenar",
     "noViews": "Sense vistes desades",
     "namePlaceholder": "Nom de la vista...",
     "includePositions": "Incloure posicions ({{count}} elements)",
@@ -672,32 +624,20 @@
     "savedPositions": "Posicions desades",
     "deleteView": "Eliminar la vista",
     "activeView": "Vista activa. Filtres i vista restaurats.",
-    "positionsRestored": "Posicions de {{count}} elements restaurades.",
-    "saveDescription": "Desa els filtres, el zoom i els elements amagats"
+    "positionsRestored": "Posicions de {{count}} elements restaurades."
   },
   "assets": {
-    "title": "Fitxers",
-    "noAssets": "Sense fitxers",
     "drop": "Deixeu anar fitxers",
     "deleteConfirm": "Eliminar aquest fitxer?",
-    "usedBy": "Utilitzat per {{count}} element(s)",
     "hideMediaOnNode": "Amaga el mèdia al node",
     "showMediaOnNode": "Mostra el mèdia al node",
     "uploading": "S'està pujant…",
     "dropOrPaste": "Arrossega fitxers o prem Ctrl+V per enganxar",
     "browse": "o navega"
   },
-  "history": {
-    "title": "Historial",
-    "noHistory": "Sense accions",
-    "undo": "Desfer",
-    "redo": "Refer"
-  },
   "collaboration": {
     "title": "Col·laboració",
     "connected": "Connectat",
-    "disconnected": "Desconnectat",
-    "users": "{{count}} usuari(s)",
     "you": "Vós",
     "others": "altres",
     "local": "Local",

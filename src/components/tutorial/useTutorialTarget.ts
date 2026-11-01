@@ -13,12 +13,12 @@ export function isTutorialTargetVisible(el: HTMLElement): boolean {
 
 function isVisible(el: HTMLElement): boolean {
   if (el.offsetParent === null && el.getClientRects().length === 0) return false;
-  // checkVisibility couvre display:none, visibility:hidden et opacity:0
-  // (contenu des accordéons repliés : max-h-0 opacity-0 overflow-hidden).
+  // checkVisibility covers display:none, visibility:hidden and opacity:0
+  // (collapsed accordion content: max-h-0 opacity-0 overflow-hidden).
   if (typeof el.checkVisibility === 'function') {
     if (!el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
   }
-  // Rejette aussi les éléments clippés par un ancêtre replié à hauteur nulle.
+  // Also rejects elements clipped by a collapsed zero-height ancestor.
   let node: HTMLElement | null = el.parentElement;
   while (node && node !== document.body) {
     const rect = node.getBoundingClientRect();
@@ -54,8 +54,8 @@ function rectsDiffer(a: TargetRect | null, b: TargetRect | null): boolean {
 }
 
 /**
- * Suit la position d'une cible du tutoriel ([data-tutorial] ou nœud React Flow).
- * Polling léger (250 ms) + resize/scroll : la bulle suit les pans/zooms du canvas.
+  * Tracks the position of a tutorial target ([data-tutorial] or React Flow node).
+  * Light polling (250 ms) + resize/scroll: the bubble follows canvas pans/zooms.
  */
 export function useTutorialTarget(selector: string | null): TargetRect | null {
   const [rect, setRect] = useState<TargetRect | null>(() => measure(selector));

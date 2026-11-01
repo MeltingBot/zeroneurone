@@ -66,7 +66,6 @@ export function HomePage() {
   const [renameTarget, setRenameTarget] = useState<string | null>(null);
   const [tagsTarget, setTagsTarget] = useState<string | null>(null);
 
-  // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>('updated');
@@ -226,7 +225,6 @@ export function HomePage() {
     [dossiers]
   );
 
-  // Filter and sort dossiers
   const filteredDossiers = useMemo(() => {
     let result = [...dossiers];
 
@@ -235,7 +233,6 @@ export function HomePage() {
       result = result.filter((inv) => !inv.isArchived);
     }
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -245,14 +242,12 @@ export function HomePage() {
       );
     }
 
-    // Filter by selected tags
     if (selectedTags.length > 0) {
       result = result.filter((inv) =>
         selectedTags.some((tag) => inv.tags?.includes(tag))
       );
     }
 
-    // Sort
     result.sort((a, b) => {
       // Favorites always first
       if (a.isFavorite && !b.isFavorite) return -1;
@@ -362,7 +357,7 @@ export function HomePage() {
               variant="ghost"
               size="sm"
               onClick={() => setIsEncryptionModalOpen(true)}
-              title={isEncryptionEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
+              title={t(isEncryptionEnabled ? 'modals:encryption.statusActive' : 'modals:encryption.statusInactive')}
               data-testid="encryption-settings-button"
             >
               <Lock size={16} className={isEncryptionEnabled ? 'text-success' : undefined} />

@@ -66,7 +66,6 @@ export function buildTimelineItems({ elements, links, comments, viewHiddenIds, d
   let minTime = Infinity;
   let maxTime = -Infinity;
 
-  // Helper to count unresolved comments for a target
   const getUnresolvedCommentCount = (targetId: string, targetType: 'element' | 'link'): number => {
     return comments.filter(
       c => c.targetId === targetId && c.targetType === targetType && !c.resolved
@@ -181,7 +180,6 @@ export function buildTimelineItems({ elements, links, comments, viewHiddenIds, d
     const toElement = elements.find(el => el.id === link.toId);
     if (!fromElement || !toElement) return;
 
-    // Skip if either element is hidden
     if (viewHiddenIds.has(fromElement.id) || viewHiddenIds.has(toElement.id)) return;
     // Skip if either element is not visible in active tab
     if (activeTabId !== null) {

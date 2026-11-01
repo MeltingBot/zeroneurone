@@ -13,8 +13,6 @@
     "lightMode": "Light mode",
     "noDossiers": "No dossiers",
     "createFirst": "Create your first dossier to get started",
-    "viewDossiers": "View dossiers",
-    "dossierCount": "{{count}} dossier(s)",
     "loading": "Loading...",
     "searchPlaceholder": "Search by name or description...",
     "filterByTag": "Filter by tag",
@@ -24,7 +22,6 @@
     "activeFilters": "Active filters",
     "clearFilters": "Clear",
     "noResults": "No dossiers found",
-    "noResultsHint": "Try other terms or clear the filters",
     "resultsCount": "{{count}} / {{total}} dossier(s)",
     "card": {
       "modified": "Modified {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Select",
-      "pan": "Pan",
-      "addElement": "Add element",
-      "addGroup": "Add group",
-      "addAnnotation": "Add annotation",
-      "autoLayout": "Auto layout",
       "fitView": "Fit view",
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Hide undated",
       "temporalUndatedShow": "Show undated (greyed)",
       "hideMinimap": "Hide minimap",
-      "closeEsc": "Close (Esc)",
-      "close": "Close",
-      "loading": "Loading...",
       "oneElement": "1 element",
       "oneLink": "1 link",
       "selectedCount": "{{count}} selected"
@@ -226,17 +215,6 @@
       "matrix": "Matrix",
       "report": "Report"
     },
-    "panels": {
-      "detail": "Detail",
-      "filters": "Filters",
-      "insights": "Insights",
-      "views": "Views"
-    },
-    "emptyCanvas": {
-      "title": "Empty canvas",
-      "hint": "Double-click to create an element",
-      "orDrop": "or drop files"
-    },
     "importPlacement": {
       "instructions": "Click to place the imported elements",
       "importing": "Importing...",
@@ -302,26 +280,16 @@
       "noKeyObjectHint": "Ctrl+click to set a reference element"
     },
     "toast": {
-      "elementCreated": "Element created",
-      "elementsDeleted": "{{count}} element(s) deleted",
-      "linkCreated": "Link created",
-      "copied": "Copied to clipboard",
-      "pasted": "{{count}} element(s) pasted",
-      "saved": "Saved",
-      "exportSuccess": "Export complete",
-      "exportError": "Export error",
       "assetTooLargeToShare": "File too large to synchronize ({{size}}, maximum {{max}}). It stays available locally but is not shared.",
       "assetLargeToShare": "Large file ({{size}}): synchronization may be slow."
     },
     "notFound": "Dossier not found",
     "header": {
-      "report": "Summary",
       "generateReport": "Summary",
       "import": "Import",
       "export": "Export",
       "search": "Search",
       "clearFilters": "Clear filters",
-      "activeFilters": "Active filters",
       "shortcuts": "Keyboard shortcuts",
       "documentation": "Documentation",
       "supportKofi": "Support on Ko-fi"
@@ -345,9 +313,6 @@
       "moveHere": "Move into this tab",
       "addToTab": "Add to tab...",
       "removeFromTab": "Remove from tab",
-      "emptyState": "No elements in this tab",
-      "emptyHint": "Right-click on elements to add them",
-      "ghostBadge": "On {{tabs}}",
       "navigateTo": "Go to tab {{name}}",
       "combine": "Combine",
       "uncombine": "Uncombine",
@@ -358,7 +323,6 @@
     "retentionExpiredBanner": "Retention expired {{days}} day(s) ago",
     "retentionDeleteConfirm": "This dossier will be permanently deleted. This action cannot be undone.",
     "retentionDeleteAction": "Delete permanently",
-    "retentionReadonly": "Dossier is read-only (retention expired)",
     "retentionRedactConfirm": "Redaction will permanently erase all text content (names, notes, properties). The graph structure will be preserved. This action is irreversible.",
     "retentionRedactAction": "Redact permanently",
     "opfsUnavailable": "This browser (or private mode) blocks local media storage: images won't display. Open the dossier in a normal window.",
@@ -376,7 +340,6 @@
     "offMapLinked": "{{count}} linked element(s) without location",
     "offMapSelectRest": "Select the other {{count}}",
     "addLocation": "Add coordinates to elements to see them on the map",
-    "pickLocation": "Click on the map to set location",
     "elementsLocated": "{{count}} element(s) located",
     "elementsLocatedFiltered": "{{kept}} / {{count}} element(s) located",
     "density": "Density",
@@ -422,11 +385,7 @@
     "deleteSelection": "Delete selection",
     "editZone": "Edit shape",
     "geometry": "Geometry",
-    "vertices": "Vertices",
-    "area": "Area",
-    "center": "Center",
     "viewOnMap": "View on map",
-    "deleteVertex": "Delete vertex",
     "geoJsonSave": "Apply",
     "geoJsonParseError": "Invalid JSON",
     "geoJsonMinVertices": "Minimum 3 vertices",
@@ -442,14 +401,10 @@
     "exportCSV": "Export to CSV"
   },
   "timeline": {
-    "noEvents": "No dated events",
-    "addDates": "Add dates to elements or create events",
     "noTemporalData": "No temporal data",
     "howToAddTimeline": "To see elements on the timeline:",
     "addPeriodToLinks": "Add a period to links (start/end date)",
     "addEventsToHistory": "Add events in element history",
-    "eventsCount": "{{count}} event(s)",
-    "zoomHint": "Ctrl+wheel: zoom | Drag: pan",
     "zoomPresetCentury": "Century",
     "zoomPresetDecade": "10 years",
     "zoomPreset1Year": "1 year",
@@ -495,7 +450,6 @@
     "relation": "relation",
     "newElement": "New element",
     "filter": "Filter",
-    "filteredEventsCount": "{{filtered}}/{{total}} event(s)",
     "temporalFilter": "Period",
     "temporalFilterHint": "Filter by time period",
     "stepBackward": "Step back one month",
@@ -528,7 +482,6 @@
     "source": "Source",
     "count": "{{count}}/{{total}} elements",
     "properties": "{{count}} properties",
-    "search": "Search...",
     "columns": "Show/hide columns",
     "noResults": "No results",
     "empty": "No elements with properties",
@@ -551,19 +504,11 @@
   },
   "report": {
     "title": "Report",
-    "untitled": "Untitled",
     "addSection": "Add section",
     "sections": {
-      "title": "Title",
-      "text": "Text",
-      "canvas": "Canvas",
-      "map": "Map",
-      "timeline": "Timeline",
-      "table": "Table",
-      "insights": "Insights"
+      "map": "Map"
     },
-    "export": "Export to PDF",
-    "print": "Print"
+    "export": "Export to PDF"
   },
   "join": {
     "title": "Join a session",
@@ -616,12 +561,9 @@
   },
   "tutorial": {
     "start": "Guided tutorial",
-    "restart": "Restart the tutorial",
-    "progress": "Step {{current}}/{{total}}",
     "next": "Next",
     "skip": "Skip",
     "quit": "Quit",
-    "finish": "Finish",
     "deleteDossier": "Delete the tutorial dossier",
     "keepDossier": "Keep it",
     "offTrack": {

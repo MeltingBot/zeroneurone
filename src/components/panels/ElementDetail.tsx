@@ -135,7 +135,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
     if (focusedEventId) setEventsSectionOpen(true);
   }, [focusedEventId]);
 
-  // Element's tab membership
   const elementTabs = useMemo(() => {
     return canvasTabs.filter(tab => tab.memberElementIds.includes(element.id));
   }, [canvasTabs, element.id]);
@@ -144,7 +143,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const elementComments = comments.filter(c => c.targetId === element.id);
   const unresolvedCommentCount = elementComments.filter(c => !c.resolved).length;
 
-  // Local state for inputs
   const [geoJsonEditing, setGeoJsonEditing] = useState(false);
   const [label, setLabel] = useState(element.label);
   const [notes, setNotes] = useState(element.notes);
@@ -177,7 +175,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const lastSyncedSourceRef = useRef(element.source);
 
 
-  // Debounced values
   const debouncedLabel = useDebounce(label, 500);
   const debouncedNotes = useDebounce(notes, 500);
   const debouncedSource = useDebounce(source, 500);
@@ -379,7 +376,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const commitDate = useCallback(
     (newDateStr: string, newTimeStr: string) => {
       if (!newDateStr) {
-        // Clear the date
         const oldDate = element.date;
         updateElement(element.id, { date: null });
         pushAction({
@@ -442,16 +438,13 @@ export function ElementDetail({ element }: ElementDetailProps) {
     const latTrimmed = geoLat.trim();
     const lngTrimmed = geoLng.trim();
 
-    // Both must be filled
     if (!latTrimmed || !lngTrimmed) return;
 
     const latNum = parseFloat(latTrimmed);
     const lngNum = parseFloat(lngTrimmed);
 
-    // Both must be valid numbers
     if (isNaN(latNum) || isNaN(lngNum)) return;
 
-    // Both must be in valid range
     if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) return;
 
     const newGeoCenter = { lat: latNum, lng: lngNum };
@@ -491,7 +484,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const pendingGeoPickerCallback = useRef<((lat: number, lng: number) => void) | null>(null);
   const pendingGeoPickerInitialGeo = useRef<{ lat: number; lng: number } | null>(null);
 
-  // Handle geo picker confirmation
   const handleGeoPickerConfirm = useCallback(
     (lat: number, lng: number) => {
       if (pendingGeoPickerCallback.current) {
@@ -720,7 +712,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setSuggestedPropsTagSet(tagSetName);
   }, []);
 
-  // Handle applying suggested properties from popup
   const handleApplySuggestedProperties = useCallback(
     (properties: Element['properties']) => {
       const oldProperties = element.properties || [];
@@ -748,7 +739,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
     [addSuggestedProperty, associatePropertyWithTags, element.tags]
   );
 
-  // Handle visual change
   const handleVisualChange = useCallback(
     (visual: Partial<Element['visual']>) => {
       // Build old values for only the changed keys
@@ -817,7 +807,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
       return !hasGeo;
     }
 
-    // Parse numbers
     const latNum = parseFloat(latTrimmed);
     const lngNum = parseFloat(lngTrimmed);
 
@@ -963,7 +952,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
     // This ensures choices from TagSets are always available, even if the property
     // hasn't been added to tagPropertyAssociations yet
     for (const tag of element.tags) {
-      // Find TagSet with this name
       for (const tagSet of tagSetsMap.values()) {
         if (tagSet.name === tag) {
           for (const suggestedProp of tagSet.suggestedProperties) {

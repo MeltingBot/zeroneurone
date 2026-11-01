@@ -57,7 +57,6 @@ export function DropdownPortal({
     // Second pass once the dropdown has been laid out (real size known)
     const rafId = requestAnimationFrame(updatePosition);
 
-    // Update position on scroll/resize
     window.addEventListener('scroll', updatePosition, true);
     window.addEventListener('resize', updatePosition);
 
@@ -75,12 +74,10 @@ export function DropdownPortal({
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
 
-      // Check if click is inside dropdown
       if (dropdownRef.current?.contains(target)) {
         return;
       }
 
-      // Check if click is inside anchor
       if (anchorRef.current?.contains(target)) {
         return;
       }

@@ -80,14 +80,12 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -95,7 +93,6 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         aria-labelledby={titleId}
         className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-bg-primary sketchy-border-soft modal-shadow max-h-[90vh] overflow-hidden flex flex-col"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
           <h2 id={titleId} className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <Keyboard size={16} />
@@ -110,7 +107,6 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-4 overflow-y-auto flex-1">
           <div className="space-y-6">
             {shortcutsByCategory.map((section) => (
@@ -147,7 +143,6 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-4 py-3 border-t border-border-default bg-bg-secondary text-center shrink-0">
           <p className="text-xs text-text-tertiary">
             {t('shortcuts.helpHint', { key: '?' })}

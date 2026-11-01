@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Usuń",
-    "message": "Ta operacja jest nieodwracalna.",
     "confirm": "Usuń",
     "deleting": "Usuwanie...",
     "deleteDossier": "Usuń teczka",
@@ -19,8 +18,7 @@
     "rename": "Zmień nazwę",
     "renaming": "Zmiana nazwy...",
     "label": "Nazwa",
-    "renameDossier": "Zmień nazwę teczki",
-    "namePlaceholder": "Nowa nazwa"
+    "renameDossier": "Zmień nazwę teczki"
   },
   "importIntoCurrent": {
     "title": "Importuj do teczki",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Importuj teczka",
-    "dropzone": "Upuść plik lub kliknij, aby wybrać",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -162,10 +159,6 @@
       "folderByTag": "Jeden folder na tag główny",
       "folderFlat": "Płaski folder"
     },
-    "options": {
-      "includeAssets": "Dołącz załączniki",
-      "highResolution": "Wysoka rozdzielczość (2x)"
-    },
     "resolution": "Rozdzielczość",
     "scale": {
       "1x": "Normalny rozmiar",
@@ -220,12 +213,6 @@
     },
     "placeholder": "Szukaj elementów i połączeń...",
     "noResults": "Brak wyników dla \"{{query}}\"",
-    "resultsCount": "{{count}} wyników",
-    "filters": {
-      "all": "Wszystkie",
-      "elements": "Elementy",
-      "links": "Połączenia"
-    },
     "noName": "Bez nazwy",
     "link": "Połączenie",
     "element": "Element",
@@ -284,18 +271,6 @@
       "lockSession": "Zablokuj sesję"
     }
   },
-  "tagSetManager": {
-    "title": "Zarządzaj tagami",
-    "description": "Twórz palety tagów do ponownego użycia",
-    "newTagSet": "Nowa paleta",
-    "editTagSet": "Edytuj paletę",
-    "deleteTagSet": "Usuń paletę",
-    "tagSetName": "Nazwa palety",
-    "tags": "Tagi",
-    "addTag": "Dodaj tag",
-    "noTagSets": "Brak palet tagów",
-    "createFirst": "Utwórz swoją pierwszą paletę"
-  },
   "tagSetEditor": {
     "applyTitle": "Zastosuj do otwartej sprawy",
     "applyVisual": "Wygląd (elementy z tym głównym tagiem)",
@@ -305,9 +280,6 @@
     "title": "Paleta tagów",
     "titleNew": "Nowy tag",
     "titleEdit": "Edytuj \"{{name}}\"",
-    "namePlaceholder": "Nazwa palety",
-    "tagsPlaceholder": "Dodaj tag...",
-    "colorLabel": "Domyślny kolor",
     "nameLabel": "Nazwa",
     "nameExample": "Np.: Osoba, Firma...",
     "nameRequired": "Nazwa jest wymagana",
@@ -393,7 +365,6 @@
       "opfs": "Pliki (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Historia Y.js",
-      "other": "Inne",
       "measured": "Zmierzone dane"
     },
     "persistent": {
@@ -425,18 +396,9 @@
       "exportAll": "Eksportuj wszystko",
       "import": "Importuj",
       "description": "Wszystkie teczki, pliki i tagi. Import dodaje bez zastępowania.",
-      "exporting": "Eksportowanie...",
-      "importing": "Importowanie...",
       "exportSuccess": "Eksport zakończony",
       "importSuccess": "Import pomyślny: {{dossiers}} śledztw, {{elements}} elementów, {{links}} połączeń",
       "error": "Błąd"
-    },
-    "purge": {
-      "description": "Historia Y.js przechowuje zmiany do cofania. Czyszczenie zwalnia miejsce.",
-      "confirm": "Wyczyścić historię Y.js?\n\nTo zwolni miejsce, ale usunie historię cofania. Dane zostaną zachowane.",
-      "success": "{{count}} baz usunięto",
-      "successWithErrors": "{{deleted}} baz usunięto, {{errors}} błędów",
-      "error": "Błąd podczas czyszczenia"
     },
     "compact": {
       "title": "Historia Y.js według dossier",
@@ -461,7 +423,6 @@
       "button": "Usuń wszystko",
       "confirm": "Usunąć WSZYSTKIE dossier i ich dane?\n\nTej operacji nie można cofnąć.",
       "confirmAgain": "Ostatnie potwierdzenie: wszystkie dane zostaną utracone. Kontynuować?",
-      "success": "Wszystkie dossier zostały usunięte.",
       "error": "Błąd podczas usuwania"
     }
   },
@@ -499,19 +460,6 @@
     "sortByName": "Nazwa",
     "sortByDate": "Data",
     "sortByConfidence": "Pewność",
-    "preview": "Podgląd:",
-    "previewContent": "Raport będzie zawierał",
-    "previewDescription": "opis",
-    "previewSummary": "podsumowanie",
-    "previewInsights": "analizę grafu",
-    "previewTimeline": "chronologię",
-    "previewElements": "{{count}} elementów",
-    "previewLinks": "{{count}} połączeń",
-    "previewProperties": "właściwości",
-    "previewFiles": "{{count}} plików",
-    "previewFiches": "szczegółowe karty",
-    "previewGraphCapture": "zrzut grafu",
-    "previewNoContent": "brak zawartości",
     "jsonDescription": "JSON+: dane strukturalne z analizą grafu",
     "jsonTooltip": "Strukturalny eksport JSON z wzbogaconymi danymi",
     "print": "Drukuj",
@@ -598,10 +546,6 @@
     "sortByEvaluation": "Ocena"
   },
   "metadataImport": {
-    "title": "Importuj metadane",
-    "description": "Wyodrębnij metadane z pliku (EXIF, PDF, itp.)",
-    "noMetadata": "Nie znaleziono metadanych",
-    "import": "Importuj wybrane metadane",
     "detected": "Wykryte metadane",
     "gps": "Współrzędne GPS",
     "ignore": "Pomiń",
@@ -646,7 +590,6 @@
   "tagSets": {
     "title": "Zarządzaj tagami",
     "newTag": "Nowy tag",
-    "editTag": "Edytuj \"{{name}}\"",
     "deleteConfirm": "Usunąć tag \"{{name}}\"? Istniejące tagi na elementach pozostaną, ale nie będą już powiązane z tym zestawem tagów.",
     "csvEmptyOrInvalid": "Plik CSV pusty lub nieprawidłowy",
     "csvMissingNameColumn": "Brak kolumny \"nazwa\" w CSV",
@@ -735,7 +678,6 @@
     "errorDeactivation": "Błąd podczas dezaktywacji",
     "errorPasswordChange": "Błąd podczas zmiany hasła",
     "enable": {
-      "warning": "Bez tego hasła Twoje dane będą nie do odzyskania. Wyeksportuj kopię zapasową przed kontynuowaniem.",
       "passwordLabel": "Hasło (minimum 8 znaków)",
       "confirmLabel": "Potwierdź hasło",
       "mismatch": "Hasła nie są zgodne",
@@ -783,7 +725,6 @@
       "successRemoved": "Klucz bezpieczeństwa usunięty",
       "errorPrfNotSupported": "Ten klucz nie obsługuje odblokowywania bez hasła (PRF)",
       "errorRegistration": "Błąd podczas rejestracji klucza",
-      "errorUnlock": "Odblokowanie kluczem bezpieczeństwa nie powiodło się",
       "addedOn": "Dodano"
     }
   },

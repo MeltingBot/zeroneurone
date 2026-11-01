@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSyncStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 
 export function LocalUserAvatar() {
   const { t } = useTranslation('panels');
-  const { localUser, updateLocalUserName } = useSyncStore();
+  const { localUser, updateLocalUserName } = useSyncStore(useShallow((s) => ({ localUser: s.localUser, updateLocalUserName: s.updateLocalUserName })));
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(localUser.name);
   const inputRef = useRef<HTMLInputElement>(null);

@@ -61,7 +61,6 @@ export function Modal({
           ${widthStyles[width]}
         `}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 id={titleId} className="text-sm font-semibold text-text-primary">{title}</h2>
           <IconButton onClick={onClose} size="sm" aria-label={t('actions.close')}>
@@ -69,12 +68,10 @@ export function Modal({
           </IconButton>
         </div>
 
-        {/* Body */}
         <div className="p-4 overflow-y-auto flex-1">
           {children}
         </div>
 
-        {/* Footer */}
         {footer && (
           <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
             {footer}

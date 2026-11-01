@@ -51,11 +51,11 @@ function ConstrainedMark() {
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
-  const { elements, links, dissolveGroup } = useDossierStore();
+  const { elements, links, dissolveGroup } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, dissolveGroup: s.dissolveGroup })));
   const dossierId = useDossierStore((s) => s.currentDossier?.id ?? null);
   const evaluationModel = useDossierStore((s) => getEvaluationModel(s.currentDossier));
   const pushAction = useHistoryStore((s) => s.pushAction);
-  const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
+  const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectElements: s.selectElements, clearSelection: s.clearSelection, selectedElementIds: s.selectedElementIds })));
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore(useShallow((s) => ({ hideElements: s.hideElements, hiddenElementIds: s.hiddenElementIds, showElement: s.showElement, setFilters: s.setFilters, clearFilters: s.clearFilters })));
   const {
     clusters,
@@ -89,13 +89,45 @@ export function InsightsPanel() {
     clearCycles,
     clearHighlight,
     clearPaths,
-  } = useInsightsStore();
-  // Local state for expanded sections
+  } = useInsightsStore(
+    useShallow((s) => ({
+      clusters: s.clusters,
+      centrality: s.centrality,
+      bridges: s.bridges,
+      isolated: s.isolated,
+      structuralRoles: s.structuralRoles,
+      computedAt: s.computedAt,
+      isComputing: s.isComputing,
+      highlightType: s.highlightType,
+      selectedClusterId: s.selectedClusterId,
+      pathResults: s.pathResults,
+      pathFromId: s.pathFromId,
+      pathToId: s.pathToId,
+      pathSearchMode: s.pathSearchMode,
+      pathBlockedByConstraints: s.pathBlockedByConstraints,
+      pathConstrained: s.pathConstrained,
+      computeInsights: s.computeInsights,
+      highlightCluster: s.highlightCluster,
+      highlightCentralElement: s.highlightCentralElement,
+      highlightBridges: s.highlightBridges,
+      highlightIsolated: s.highlightIsolated,
+      findPaths: s.findPaths,
+      findAllPaths: s.findAllPaths,
+      highlightPath: s.highlightPath,
+      cycles: s.cycles,
+      findCycles: s.findCycles,
+      highlightCycle: s.highlightCycle,
+      focusCycleElement: s.focusCycleElement,
+      focusedElementId: s.focusedElementId,
+      clearCycles: s.clearCycles,
+      clearHighlight: s.clearHighlight,
+      clearPaths: s.clearPaths,
+    })),
+  );
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['roles', 'clusters', 'centrality'])
   );
 
-  // Path finding state
   const [pathMode, setPathMode] = useState(false);
   const [pathFrom, setPathFrom] = useState<string | null>(null);
   const [pathTo, setPathTo] = useState<string | null>(null);
@@ -110,7 +142,6 @@ export function InsightsPanel() {
     setConstraintsDossierId(dossierId);
     setPathConstraints(readPathConstraints(dossierId));
   }
-  // Cycle detection
   const [cycleMode, setCycleMode] = useState(false);
   /** Row of the element picked in the cycle list (an element can sit in several cycles) */
   const [focusedCycleIdx, setFocusedCycleIdx] = useState<number | null>(null);
@@ -180,7 +211,6 @@ export function InsightsPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structureKey, computeInsights]);
 
-  // Toggle section expansion
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
@@ -193,7 +223,6 @@ export function InsightsPanel() {
     });
   }, []);
 
-  // Handle stat click from overview
   const handleStatClick = useCallback((stat: string) => {
     switch (stat) {
       case 'clusters':
@@ -253,7 +282,6 @@ export function InsightsPanel() {
     [elements, clearFilters, setFilters, pushAction]
   );
 
-  // Create a visual group from cluster elements
   const handleGroupCluster = useCallback(
     async (elementIds: string[], clusterId: number) => {
       await groupElements(elementIds, t('insights.clusters.name', { id: clusterId + 1 }), t('common:empty.unnamed'));
@@ -261,7 +289,6 @@ export function InsightsPanel() {
     [t]
   );
 
-  // Check if all elements in a list are hidden
   const areAllHidden = useCallback(
     (elementIds: string[]) => {
       return elementIds.length > 0 && elementIds.every((id) => hiddenElementIds.has(id));
@@ -269,7 +296,6 @@ export function InsightsPanel() {
     [hiddenElementIds]
   );
 
-  // Check if all elements in a list are selected
   const areAllSelected = useCallback(
     (elementIds: string[]) => {
       return elementIds.length > 0 && elementIds.every((id) => selectedElementIds.has(id));
@@ -295,15 +321,12 @@ export function InsightsPanel() {
     [elements]
   );
 
-  // Toggle visibility for a group of elements
   const toggleHideElements = useCallback(
     (elementIds: string[]) => {
       const allHidden = areAllHidden(elementIds);
       if (allHidden) {
-        // Show all elements
         elementIds.forEach((id) => showElement(id));
       } else {
-        // Hide all elements
         hideElements(elementIds);
       }
     },
@@ -480,7 +503,6 @@ export function InsightsPanel() {
     }
   }
 
-  // Get element label by ID
   const getElementLabel = useCallback(
     (elementId: string) => {
       const element = elements.find((el) => el.id === elementId);
@@ -507,7 +529,6 @@ export function InsightsPanel() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Stats Overview */}
       <StatsOverview
         counts={{ elements: analyzed.elements.length, links: analyzed.links.length }}
         onStatClick={handleStatClick}
@@ -1020,7 +1041,6 @@ export function InsightsPanel() {
                     />
                   </div>
 
-                  {/* List bridge elements */}
                   <ProgressiveList
                     items={bridges}
                     initialCount={20}
@@ -1080,7 +1100,6 @@ export function InsightsPanel() {
                     />
                   </div>
 
-                  {/* List isolated elements */}
                   <ProgressiveList
                     items={isolated}
                     initialCount={20}
@@ -1298,13 +1317,11 @@ function ElementAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Get selected element label
   const selectedElement = useMemo(
     () => elements.find((el) => el.id === value),
     [elements, value]
   );
 
-  // Filter elements based on query
   const filteredElements = useMemo(() => {
     const available = elements.filter((el) => !excludeIds.includes(el.id));
     if (!query.trim()) return available.slice(0, 50); // Show first 50 when no query

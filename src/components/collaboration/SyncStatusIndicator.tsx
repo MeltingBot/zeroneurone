@@ -9,6 +9,7 @@ import { useSyncStore } from '../../stores';
 import type { MediaSyncProgress } from '../../stores/syncStore';
 import { Modal, Button } from '../common';
 import { formatBytes } from '../../utils/formatBytes';
+import { useShallow } from 'zustand/react/shallow';
 
 /** Truncate filename for display */
 function truncateFilename(name: string, maxLen = 20): string {
@@ -66,7 +67,7 @@ function MediaSyncBadge({ progress }: { progress: MediaSyncProgress }) {
 
 export function SyncStatusIndicator() {
   const { t } = useTranslation('panels');
-  const { mode, connected, syncing, reconnecting, error, unshare, mediaSyncProgress } = useSyncStore();
+  const { mode, connected, syncing, reconnecting, error, unshare, mediaSyncProgress } = useSyncStore(useShallow((s) => ({ mode: s.mode, connected: s.connected, syncing: s.syncing, reconnecting: s.reconnecting, error: s.error, unshare: s.unshare, mediaSyncProgress: s.mediaSyncProgress })));
   const [showWarning, setShowWarning] = useState(false);
 
   const handleDisconnect = () => {
@@ -78,7 +79,6 @@ export function SyncStatusIndicator() {
     unshare();
   };
 
-  // Determine connection status content
   let connectionStatus: React.ReactNode;
 
   if (mode === 'local') {

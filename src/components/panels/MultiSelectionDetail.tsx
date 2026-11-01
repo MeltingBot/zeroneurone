@@ -34,6 +34,7 @@ import { EvaluationInput } from './EvaluationInput';
 import { getModelScale } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
+import { useShallow } from 'zustand/react/shallow';
 
 const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'circle', label: '○' },
@@ -99,9 +100,18 @@ export function MultiSelectionDetail() {
     updateLinks,
     currentDossier,
     addExistingTag,
-  } = useDossierStore();
+  } = useDossierStore(
+    useShallow((s) => ({
+      elements: s.elements,
+      links: s.links,
+      updateElements: s.updateElements,
+      updateLinks: s.updateLinks,
+      currentDossier: s.currentDossier,
+      addExistingTag: s.addExistingTag,
+    })),
+  );
 
-  const { selectedElementIds, selectedLinkIds } = useSelectionStore();
+  const { selectedElementIds, selectedLinkIds } = useSelectionStore(useShallow((s) => ({ selectedElementIds: s.selectedElementIds, selectedLinkIds: s.selectedLinkIds })));
   const pushAction = useHistoryStore((s) => s.pushAction);
 
   // Runs a bulk edit as ONE undoable step. `run` receives recording versions of
@@ -173,7 +183,6 @@ export function MultiSelectionDetail() {
     [updateElements, updateLinks, pushAction]
   );
 
-  // Get selected items
   const selectedElements = useMemo(
     () => elements.filter((el) => selectedElementIds.has(el.id)),
     [elements, selectedElementIds]
@@ -316,7 +325,6 @@ export function MultiSelectionDetail() {
     const oldKeys = new Set(mergedProperties.map(p => p.key));
     const newKeys = new Set(newProperties.map(p => p.key));
 
-    // Removed properties
     const removedKeys = [...oldKeys].filter(k => !newKeys.has(k));
 
     // Added or updated properties
@@ -325,7 +333,6 @@ export function MultiSelectionDetail() {
       return !old || old.value !== p.value || old.type !== p.type || old.timeZone !== p.timeZone;
     });
 
-    // Apply removals
     for (const key of removedKeys) {
       for (const el of selectedElements) {
         if (el.properties.some(p => p.key === key)) {
@@ -339,7 +346,6 @@ export function MultiSelectionDetail() {
       }
     }
 
-    // Apply additions/updates
     for (const prop of changedProps) {
       for (const el of selectedElements) {
         const existing = el.properties.find(p => p.key === prop.key);
@@ -520,7 +526,6 @@ export function MultiSelectionDetail() {
 
   return (
     <div className="divide-y divide-border-default">
-      {/* Header */}
       <div className="px-3 py-2 bg-bg-secondary">
         <div className="flex items-center gap-2">
           <Layers size={14} className="text-accent" />

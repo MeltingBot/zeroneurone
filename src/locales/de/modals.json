@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Löschen",
-    "message": "Diese Aktion ist unwiderruflich.",
     "confirm": "Löschen",
     "deleting": "Wird gelöscht...",
     "deleteDossier": "Akte löschen",
@@ -19,8 +18,7 @@
     "rename": "Umbenennen",
     "renaming": "Wird umbenannt...",
     "label": "Name",
-    "renameDossier": "Akte umbenennen",
-    "namePlaceholder": "Neuer Name"
+    "renameDossier": "Akte umbenennen"
   },
   "importIntoCurrent": {
     "title": "In Akte importieren",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Akte importieren",
-    "dropzone": "Datei ablegen oder klicken zum Auswählen",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -160,10 +157,6 @@
       "folderByTag": "Ein Ordner pro Haupt-Tag",
       "folderFlat": "Flacher Ordner"
     },
-    "options": {
-      "includeAssets": "Anhänge einschließen",
-      "highResolution": "Hohe Auflösung (2x)"
-    },
     "resolution": "Auflösung",
     "scale": {
       "1x": "Normale Größe",
@@ -218,12 +211,6 @@
     },
     "placeholder": "Elemente und Verbindungen suchen...",
     "noResults": "Keine Ergebnisse für \"{{query}}\"",
-    "resultsCount": "{{count}} Ergebnis(se)",
-    "filters": {
-      "all": "Alle",
-      "elements": "Elemente",
-      "links": "Verbindungen"
-    },
     "noName": "Unbenannt",
     "link": "Verbindung",
     "element": "Element",
@@ -282,18 +269,6 @@
       "lockSession": "Sitzung sperren"
     }
   },
-  "tagSetManager": {
-    "title": "Tags verwalten",
-    "description": "Wiederverwendbare Tag-Paletten erstellen",
-    "newTagSet": "Neue Palette",
-    "editTagSet": "Palette bearbeiten",
-    "deleteTagSet": "Palette löschen",
-    "tagSetName": "Name der Palette",
-    "tags": "Tags",
-    "addTag": "Tag hinzufügen",
-    "noTagSets": "Keine Tag-Paletten",
-    "createFirst": "Erstellen Sie Ihre erste Palette"
-  },
   "tagSetEditor": {
     "applyTitle": "Auf das offene Dossier anwenden",
     "applyVisual": "Darstellung (Elemente mit diesem Haupt-Tag)",
@@ -303,9 +278,6 @@
     "title": "Tag-Palette",
     "titleNew": "Neuer Tag",
     "titleEdit": "\"{{name}}\" bearbeiten",
-    "namePlaceholder": "Name der Palette",
-    "tagsPlaceholder": "Tag hinzufügen...",
-    "colorLabel": "Standardfarbe",
     "nameLabel": "Name",
     "nameExample": "Z.B.: Person, Unternehmen...",
     "nameRequired": "Name ist erforderlich",
@@ -391,7 +363,6 @@
       "opfs": "Dateien (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Y.js-Verlauf",
-      "other": "Sonstige",
       "measured": "Gemessene Daten"
     },
     "persistent": {
@@ -423,18 +394,9 @@
       "exportAll": "Alles exportieren",
       "import": "Importieren",
       "description": "Alle Akten, Dateien und Tags. Import fügt hinzu, ohne zu ersetzen.",
-      "exporting": "Wird exportiert...",
-      "importing": "Wird importiert...",
       "exportSuccess": "Export abgeschlossen",
       "importSuccess": "Import erfolgreich: {{dossiers}} Akte(n), {{elements}} Element(e), {{links}} Verbindung(en)",
       "error": "Fehler"
-    },
-    "purge": {
-      "description": "Der Y.js-Verlauf speichert Änderungen für Rückgängig. Bereinigen gibt Speicherplatz frei.",
-      "confirm": "Y.js-Verlauf bereinigen?\n\nDies gibt Speicherplatz frei, löscht aber den Rückgängig-Verlauf. Daten werden beibehalten.",
-      "success": "{{count}} Datenbank(en) gelöscht",
-      "successWithErrors": "{{deleted}} Datenbank(en) gelöscht, {{errors}} Fehler",
-      "error": "Fehler beim Bereinigen"
     },
     "compact": {
       "title": "Y.js-Verlauf pro Dossier",
@@ -459,7 +421,6 @@
       "button": "Alle löschen",
       "confirm": "ALLE Dossiers und ihre Daten löschen?\n\nDiese Aktion ist nicht umkehrbar.",
       "confirmAgain": "Letzte Bestätigung: Alle Daten gehen verloren. Fortfahren?",
-      "success": "Alle Dossiers wurden gelöscht.",
       "error": "Fehler beim Löschen"
     }
   },
@@ -497,19 +458,6 @@
     "sortByName": "Name",
     "sortByDate": "Datum",
     "sortByConfidence": "Vertrauen",
-    "preview": "Vorschau:",
-    "previewContent": "Der Bericht wird enthalten",
-    "previewDescription": "die Beschreibung",
-    "previewSummary": "eine Zusammenfassung",
-    "previewInsights": "die Graphenanalyse",
-    "previewTimeline": "die Chronologie",
-    "previewElements": "{{count}} Elemente",
-    "previewLinks": "{{count}} Verbindungen",
-    "previewProperties": "die Eigenschaften",
-    "previewFiles": "{{count}} Dateien",
-    "previewFiches": "die detaillierten Datenblätter",
-    "previewGraphCapture": "Graph-Aufnahme",
-    "previewNoContent": "kein Inhalt",
     "jsonDescription": "JSON+: strukturierte Daten mit Graphenanalyse",
     "jsonTooltip": "Strukturierter JSON-Export mit angereicherten Daten",
     "print": "Drucken",
@@ -596,10 +544,6 @@
     "sortByEvaluation": "Bewertung"
   },
   "metadataImport": {
-    "title": "Metadaten importieren",
-    "description": "Metadaten aus der Datei extrahieren (EXIF, PDF, etc.)",
-    "noMetadata": "Keine Metadaten gefunden",
-    "import": "Ausgewählte Metadaten importieren",
     "detected": "Metadaten gefunden",
     "gps": "GPS-Koordinaten",
     "ignore": "Ignorieren",
@@ -644,7 +588,6 @@
   "tagSets": {
     "title": "Tags verwalten",
     "newTag": "Neuer Tag",
-    "editTag": "\"{{name}}\" bearbeiten",
     "deleteConfirm": "Tag \"{{name}}\" löschen? Vorhandene Tags auf Elementen bleiben erhalten, sind aber nicht mehr mit diesem TagSet verknüpft.",
     "csvEmptyOrInvalid": "CSV-Datei leer oder ungültig",
     "csvMissingNameColumn": "Spalte \"name\" fehlt im CSV",
@@ -725,7 +668,6 @@
     "errorDeactivation": "Fehler bei der Deaktivierung",
     "errorPasswordChange": "Fehler beim Passwortwechsel",
     "enable": {
-      "warning": "Ohne dieses Passwort sind Ihre Daten unwiederbringlich verloren. Exportieren Sie ein Backup, bevor Sie fortfahren.",
       "passwordLabel": "Passwort (mindestens 8 Zeichen)",
       "confirmLabel": "Passwort bestätigen",
       "mismatch": "Passwörter stimmen nicht überein",
@@ -773,7 +715,6 @@
       "successRemoved": "Sicherheitsschlüssel entfernt",
       "errorPrfNotSupported": "Dieser Schlüssel unterstützt kein passwortloses Entsperren (PRF)",
       "errorRegistration": "Fehler beim Registrieren des Schlüssels",
-      "errorUnlock": "Entsperrung per Sicherheitsschlüssel fehlgeschlagen",
       "addedOn": "Hinzugefügt am"
     }
   },
