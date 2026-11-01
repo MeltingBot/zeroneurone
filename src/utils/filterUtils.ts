@@ -117,7 +117,6 @@ export function getDimmedElementIds(
 ): Set<string> {
   const dimmedIds = new Set<string>();
 
-  // Check if any filter is active
   const hasActiveFilters =
     filters.includeTags.length > 0 ||
     filters.excludeTags.length > 0 ||

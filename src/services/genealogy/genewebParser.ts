@@ -119,7 +119,6 @@ export function parseGeneWeb(content: string, fileName: string): GenealogyData {
     }
   }
 
-  // Convert persons map to array
   const persons = Array.from(context.persons.values());
 
   return {
@@ -139,7 +138,6 @@ export function parseGeneWeb(content: string, fileName: string): GenealogyData {
  * Or: LASTNAME FirstName +DATE #tags LASTNAME FirstName (no separator, just wife starts with lastname)
  */
 function parseFamilyLine(line: string, context: ParseContext): GenealogyFamily | null {
-  // Find the separator between husband and wife
   const separator = findSpouseSeparator(line);
   if (separator.index === -1) return null;
 
@@ -160,10 +158,8 @@ function parseFamilyLine(line: string, context: ParseContext): GenealogyFamily |
   const marriageInfo = extractMarriageInfo(husbandPart);
   const husbandClean = marriageInfo.rest;
 
-  // Parse husband
   const husband = parsePersonFromFamLine(husbandClean, 'M', context);
 
-  // Parse wife
   const wife = parsePersonFromFamLine(wifePart, 'F', context);
 
   const familyId = `@F${context.familyIdCounter++}@`;
@@ -278,7 +274,6 @@ function parsePersonFromFamLine(part: string, defaultSex: Sex, context: ParseCon
   const tags = extractTags(part);
   let cleanPart = part;
 
-  // Remove all tags from the string
   for (const [tag] of Object.entries(tags)) {
     const pattern = new RegExp(`#${tag}\\s+\\S+`, 'g');
     cleanPart = cleanPart.replace(pattern, '').trim();
@@ -311,7 +306,6 @@ function parsePersonFromFamLine(part: string, defaultSex: Sex, context: ParseCon
     }
   }
 
-  // Apply tags
   if (tags.bp) birthPlace = { name: tags.bp.replace(/_/g, ' ') };
   if (tags.dp) deathPlace = { name: tags.dp.replace(/_/g, ' ') };
 
@@ -384,7 +378,6 @@ function parseChildren(lines: string[], context: ParseContext): void {
       if (husband) lastName = husband.lastName;
     }
 
-    // Extract additional info
     const tags = extractTags(line);
     const dateMatch = line.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
 
@@ -488,7 +481,6 @@ function applyFamilyEvents(target: string, lines: string[], context: ParseContex
   const person = context.persons.get(personKey);
   if (!person) return;
 
-  // Find family where this person is husband
   const family = context.families.find(f => f.husbandId === person.id);
   if (!family) return;
 
@@ -553,7 +545,6 @@ function parseGwDate(dateStr: string): GenealogyDate {
     year = parseInt(parts[0], 10);
   }
 
-  // Validate
   if (day && (isNaN(day) || day < 1 || day > 31)) day = undefined;
   if (month && (isNaN(month) || month < 1 || month > 12)) month = undefined;
   if (year && isNaN(year)) year = undefined;

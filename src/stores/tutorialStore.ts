@@ -20,7 +20,7 @@ interface TutorialState {
   tutorialDossierId: string | null;
   suggestedDossierName: string | null;
   baseline: TutorialBaseline | null;
-  /** Ids des éléments présents à l'entrée dans le dossier tutoriel (jamais recapturé). */
+  /** Ids of the elements present when entering the tutorial dossier (never recaptured). */
   startElementIds: string[] | null;
   start: () => void;
   next: (totalSteps: number) => void;
@@ -110,9 +110,9 @@ export const useTutorialStore = create<TutorialState>()(
     }),
     }),
     {
-      // Persistance de la progression : un rechargement de page reprend le
-      // tutoriel là où il en était (la carte « pause » guide le retour au
-      // dossier tutoriel si besoin).
+      // Progress is persisted: a page reload resumes the
+      // tutorial where it was (the "pause" card leads back to the
+      // tutorial dossier if needed).
       name: 'zeroneurone-tutorial',
     }
   )

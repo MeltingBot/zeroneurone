@@ -75,7 +75,7 @@ export interface ImportResult {
 }
 
 export interface CSVImportOptions {
-  hasHeaders: boolean;
+  /** Detected from the content when not given */
   delimiter: string;
   createMissingElements: boolean;
 }
@@ -125,7 +125,6 @@ export class ImportService {
       maxY = Math.max(maxY, y + height);
     }
 
-    // Handle empty data
     if (data.elements.length === 0) {
       return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 };
     }
@@ -252,7 +251,6 @@ export class ImportService {
 
       let data = rawData as ExportData;
 
-      // Validate structure
       if (!data.version || !data.elements || !data.links) {
         result.errors.push(importMessage('archive.invalidJson'));
         return result;
@@ -745,13 +743,11 @@ export class ImportService {
     };
 
     try {
-      // Validate structure
       if (!data.version || !data.elements || !data.links) {
         result.errors.push(importMessage('archive.invalidJson'));
         return result;
       }
 
-      // Create ID mappings
       const elementIdMap = new Map<ElementId, ElementId>();
       const assetIdMap = new Map<AssetId, AssetId>(); // Will be empty for JSON import
       const linkIdMap = new Map<LinkId, LinkId>();
@@ -824,7 +820,6 @@ export class ImportService {
         const newId = generateUUID();
         elementIdMap.set(parsedElement.originalId, newId);
 
-        // Get asset ID if this element had an image
         const assetId = assetIdMap.get(parsedElement.originalId);
 
         const element: Element = {
@@ -989,12 +984,10 @@ export class ImportService {
         .map((oldId: AssetId) => assetIdMap.get(oldId))
         .filter((id): id is AssetId => id !== undefined);
 
-      // Map parentGroupId to new ID
       const newParentGroupId = importedElement.parentGroupId
         ? elementIdMap.get(importedElement.parentGroupId) || null
         : null;
 
-      // Map childIds to new IDs
       const newChildIds = (importedElement.childIds || [])
         .map((oldId: ElementId) => elementIdMap.get(oldId))
         .filter((id): id is ElementId => id !== undefined);
@@ -1181,7 +1174,6 @@ export class ImportService {
       useQueryStore.getState().mergeRecentQueries(targetDossierId, data.queryHistory);
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
@@ -1198,7 +1190,6 @@ export class ImportService {
     linkIdMap?: Map<LinkId, LinkId>
   ): Promise<void> {
     try {
-      // Check if a report already exists for this dossier
       const existingReports = await db.reports
         .where({ dossierId: targetDossierId })
         .toArray();
@@ -1291,7 +1282,6 @@ export class ImportService {
     assetMeta: ExportedAssetMeta,
     targetDossierId: DossierId
   ): Promise<AssetId> {
-    // Create a File object from the buffer
     const file = new File([arrayBuffer], assetMeta.filename, {
       type: assetMeta.mimeType,
     });
@@ -1334,7 +1324,6 @@ export class ImportService {
     try {
       const importData = await importGenealogyFile(file, targetDossierId, options);
 
-      // Save elements to database
       for (const element of importData.elements) {
         if (element.id) {
           await db.elements.add(element as Element);
@@ -1342,7 +1331,6 @@ export class ImportService {
         }
       }
 
-      // Save links to database
       for (const link of importData.links) {
         if (link.id && link.fromId && link.toId) {
           await db.links.add(link as Link);
@@ -1350,7 +1338,6 @@ export class ImportService {
         }
       }
 
-      // Update dossier timestamp
       await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
@@ -1384,16 +1371,16 @@ export class ImportService {
 
 export const importService = new ImportService();
 
-/** Retourne true si le File est un .znzip (archive chiffrée) */
+/** True when the File is a .znzip (encrypted archive) */
 export async function isEncryptedZipFile(file: File): Promise<boolean> {
   const slice = await file.slice(0, 4).arrayBuffer();
   return isEncryptedZipBuffer(slice);
 }
 
 /**
- * Déchiffre un fichier .znzip avec le mot de passe fourni.
- * Retourne un File .zip standard prêt à être passé à importService.importFromZip().
- * Lance si le mot de passe est incorrect.
+ * Decrypts a .znzip file with the given password.
+ * Returns a standard .zip File ready for importService.importFromZip().
+ * Throws when the password is wrong.
  */
 export async function decryptZipFile(file: File, password: string): Promise<File> {
   const buf = await file.arrayBuffer();

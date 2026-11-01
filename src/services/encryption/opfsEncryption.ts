@@ -1,14 +1,14 @@
 /**
- * opfsEncryption — Chiffrement AES-256-GCM des fichiers OPFS
+ * opfsEncryption — AES-256-GCM encryption of OPFS files
  *
- * Format d'un fichier chiffré :
+ * Encrypted file layout:
  *   [magic: 2 bytes 0xE3 0xE3] [iv: 12 bytes] [ciphertext]
  *
- * La détection automatique (isEncrypted) permet de lire les deux formes
- * pendant la migration et en cas de fichiers mixtes.
+ * Automatic detection (isEncrypted) reads both forms
+ * during migration and when files are mixed.
  */
 
-/** Magic bytes préfixant tout fichier OPFS chiffré */
+/** Magic bytes prefixing every encrypted OPFS file */
 const OPFS_ENC_MAGIC = new Uint8Array([0xe3, 0xe3]);
 const MAGIC_LEN = 2;
 const IV_LEN = 12;
@@ -21,7 +21,7 @@ function dekToKey(dek: Uint8Array): Promise<CryptoKey> {
   ]);
 }
 
-/** Retourne true si le buffer commence par les magic bytes OPFS */
+/** True when the buffer starts with the OPFS magic bytes */
 export function isOpfsEncrypted(buf: ArrayBuffer): boolean {
   if (buf.byteLength < HEADER_LEN) return false;
   const view = new Uint8Array(buf, 0, MAGIC_LEN);
@@ -29,8 +29,8 @@ export function isOpfsEncrypted(buf: ArrayBuffer): boolean {
 }
 
 /**
- * Chiffre un ArrayBuffer avec la DEK.
- * Retourne : magic (2) + iv (12) + ciphertext
+ * Encrypts an ArrayBuffer with the DEK.
+ * Returns: magic (2) + iv (12) + ciphertext
  */
 export async function encryptOpfsBuffer(
   dek: Uint8Array,
@@ -52,8 +52,8 @@ export async function encryptOpfsBuffer(
 }
 
 /**
- * Déchiffre un ArrayBuffer produit par encryptOpfsBuffer.
- * Lance si le buffer n'a pas le magic header ou si le déchiffrement échoue.
+ * Decrypts an ArrayBuffer produced by encryptOpfsBuffer.
+ * Throws when the buffer lacks the magic header or decryption fails.
  */
 export async function decryptOpfsBuffer(
   dek: Uint8Array,

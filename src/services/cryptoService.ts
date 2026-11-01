@@ -69,7 +69,6 @@ export async function encrypt(key: CryptoKey, data: Uint8Array): Promise<Uint8Ar
  * Input format: IV (12 bytes) + ciphertext + auth tag
  */
 export async function decrypt(key: CryptoKey, encryptedData: Uint8Array): Promise<Uint8Array> {
-  // Extract IV and ciphertext
   const iv = encryptedData.slice(0, IV_LENGTH);
   const ciphertext = encryptedData.slice(IV_LENGTH);
 
@@ -146,9 +145,7 @@ export async function deriveAccessToken(encryptionKey: string, roomId: string): 
  * Convert base64url string to ArrayBuffer
  */
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
-  // Convert base64url to base64
   let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-  // Add padding if needed
   while (base64.length % 4) {
     base64 += '=';
   }

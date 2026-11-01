@@ -5,7 +5,6 @@ import type {
   TabId,
   ElementId,
   DossierId,
-  Link,
 } from '../types';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { assertDossierWritable } from '../utils/dossierLock';
@@ -51,9 +50,6 @@ interface TabState {
   // Actions - Viewport per tab
   saveTabViewport: (tabId: TabId, viewport: { x: number; y: number; zoom: number }) => Promise<void>;
 
-  // Actions - Ghost computation
-  recomputeGhosts: (links: Link[]) => void;
-
   // Actions - Cascade (element deleted)
   removeElementFromAllTabs: (dossierId: DossierId, elementId: ElementId) => Promise<void>;
   /** Batch form: one store update and one Y.Doc transaction for all ids */
@@ -65,7 +61,6 @@ interface TabState {
   // Queries
   getTabsForElement: (elementId: ElementId) => CanvasTab[];
   isGhost: (elementId: ElementId) => boolean;
-  isMember: (elementId: ElementId) => boolean;
 
   // Restore a previously deleted tab (for undo)
   restoreTab: (tab: CanvasTab) => Promise<void>;
@@ -269,7 +264,6 @@ export const useTabStore = create<TabState>((set, get) => ({
     // Re-insert into IndexedDB (bulkUpsert uses put which handles re-insertion with same ID)
     await tabRepository.bulkUpsert([tab]);
 
-    // Add to local state
     set((s) => ({
       tabs: [...s.tabs, tab].sort((a, b) => a.order - b.order),
     }));
@@ -468,27 +462,6 @@ export const useTabStore = create<TabState>((set, get) => ({
     await tabRepository.update(tabId, { viewport });
   },
 
-  // ── Ghost computation ─────────────────────────────────
-
-  recomputeGhosts: (links) => {
-    const { activeTabId, memberSet, excludedSet } = get();
-    if (activeTabId === null || memberSet.size === 0) {
-      set({ ghostIds: new Set() });
-      return;
-    }
-
-    const newGhostIds = new Set<ElementId>();
-    for (const link of links) {
-      if (memberSet.has(link.fromId) && !memberSet.has(link.toId)) {
-        if (!excludedSet.has(link.toId)) newGhostIds.add(link.toId);
-      }
-      if (memberSet.has(link.toId) && !memberSet.has(link.fromId)) {
-        if (!excludedSet.has(link.fromId)) newGhostIds.add(link.fromId);
-      }
-    }
-    set({ ghostIds: newGhostIds });
-  },
-
   // ── Cascade ───────────────────────────────────────────
 
   removeElementFromAllTabs: async (dossierId, elementId) => {
@@ -575,12 +548,6 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   isGhost: (elementId) => {
     return get().ghostIds.has(elementId);
-  },
-
-  isMember: (elementId) => {
-    const { activeTabId, memberSet } = get();
-    if (activeTabId === null) return true; // No tabs = everything visible
-    return memberSet.has(elementId);
   },
 
   // ── Reset ─────────────────────────────────────────────

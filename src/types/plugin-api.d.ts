@@ -191,10 +191,13 @@ export interface TabStoreAPI {
 
 /** Subset of useUIStore relevant to plugins */
 export interface UIStoreAPI {
+  /** @deprecated Always empty: toasts live in the toast store; use `showToast`. */
   toasts: Toast[];
   showToast: (type: Toast['type'], message: string, duration?: number) => string;
   dismissToast: (id: string) => void;
+  /** @deprecated No effect: ZeroNeurone renders no modal from this state. Render your own in the `app:global` slot. */
   openModal: (type: string, data?: unknown) => void;
+  /** @deprecated No effect, see `openModal`. */
   closeModal: () => void;
 }
 

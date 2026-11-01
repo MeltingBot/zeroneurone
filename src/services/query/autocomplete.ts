@@ -404,7 +404,6 @@ export function getAutocompleteSuggestions(
         break;
       }
 
-      // Collect existing values
       const values = collectFieldValues(ctx.field, elements, links);
       for (const v of values) {
         if (!partial || v.toLowerCase().includes(partial)) {

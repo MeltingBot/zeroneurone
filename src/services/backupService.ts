@@ -86,10 +86,8 @@ class BackupService {
         const ext = getExtension(asset.filename);
         const archivePath = `assets/${generateUUID()}.${ext}`;
 
-        // Add file to ZIP
         zip.file(archivePath, arrayBuffer);
 
-        // Store metadata
         assetsMetadata.push({
           id: asset.id,
           dossierId: asset.dossierId,
@@ -104,7 +102,6 @@ class BackupService {
       }
     }
 
-    // Create backup data
     const backupData: BackupData = {
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
@@ -117,10 +114,8 @@ class BackupService {
       tagSets,
     };
 
-    // Add JSON metadata
     zip.file('backup.json', JSON.stringify(backupData, null, 2));
 
-    // Generate ZIP blob
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
   }
 
@@ -164,7 +159,6 @@ class BackupService {
       onProgress?.('Lecture de l\'archive...');
       const zip = await JSZip.loadAsync(file);
 
-      // Read the JSON metadata
       const jsonFile = zip.file('backup.json');
       if (!jsonFile) {
         result.errors.push(importMessage('backup.missingBackupJson'));
@@ -191,7 +185,6 @@ class BackupService {
 
       const data = rawData as BackupData;
 
-      // Validate structure
       if (!data.version || !data.dossiers) {
         result.errors.push(importMessage('backup.invalidFormat'));
         return result;

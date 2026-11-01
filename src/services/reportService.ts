@@ -118,7 +118,6 @@ class ReportService {
 
     this.evaluationModel = getEvaluationModel(dossier);
 
-    // Build insights if needed
     if (options.includeInsights && elements.length > 0) {
       insightsService.buildGraph(elements, links);
     }
@@ -470,7 +469,7 @@ class ReportService {
   </section>\n`;
     }
 
-    // Fiches détaillées
+    // Detailed element sheets
     if (options.includeFiches) {
       const elementsWithData = sortedElements.filter(el =>
         el.properties.length > 0 || el.events.length > 0 || el.notes || el.assetIds.length > 0
@@ -481,7 +480,6 @@ class ReportService {
     <h2>${this.t('detailedSheets')} (${elementsWithData.length})</h2>\n`;
 
         for (const el of elementsWithData) {
-          // Get connections
           const connections = links
             .filter(l => l.fromId === el.id || l.toId === el.id)
             .map(l => {
@@ -491,7 +489,6 @@ class ReportService {
               return { label: otherEl?.label || '?', linkLabel: l.label, direction };
             });
 
-          // Get files
           const elAssets = el.assetIds
             .map(id => assets.find(a => a.id === id))
             .filter((a): a is Asset => a !== undefined);
@@ -623,7 +620,6 @@ class ReportService {
     const insights = options.includeInsights ? insightsService.computeInsights() : null;
     const locale = language || i18next.language || 'fr';
 
-    // Collect all events
     const allEvents = elements.flatMap(el =>
       el.events.map(ev => ({
         ...ev,
@@ -772,7 +768,7 @@ class ReportService {
       md += `\n`;
     }
 
-    // Fiches détaillées
+    // Detailed element sheets
     if (options.includeFiches) {
       const elementsWithData = sortedElements.filter(el =>
         el.properties.length > 0 || el.events.length > 0 || el.notes || el.assetIds.length > 0
@@ -782,7 +778,6 @@ class ReportService {
         md += `## ${this.t('detailedSheets')} (${elementsWithData.length})\n\n`;
 
         for (const el of elementsWithData) {
-          // Get connections
           const connections = links
             .filter(l => l.fromId === el.id || l.toId === el.id)
             .map(l => {
@@ -792,7 +787,6 @@ class ReportService {
               return { label: otherEl?.label || '?', linkLabel: l.label, direction };
             });
 
-          // Get files
           const elAssets = el.assetIds
             .map(id => assets.find(a => a.id === id))
             .filter((a): a is Asset => a !== undefined);
@@ -918,7 +912,6 @@ class ReportService {
   ): string {
     const insights = insightsService.computeInsights();
 
-    // Collect all events from elements
     const allEvents = elements.flatMap(el =>
       el.events.map(ev => ({
         date: ev.date,

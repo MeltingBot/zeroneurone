@@ -193,7 +193,6 @@ export async function importExcalidraw(
     // Filter active elements only
     const activeElements = data.elements.filter(el => !el.isDeleted);
 
-    // Build lookup maps
     const textByContainerId = new Map<string, ExcalidrawElement>();
     const textById = new Map<string, ExcalidrawElement>();
     const elementById = new Map<string, ExcalidrawElement>();
@@ -239,7 +238,6 @@ export async function importExcalidraw(
       const elementId = generateUUID() as ElementId;
       idMap.set(shape.id, elementId);
 
-      // Get bound text label
       const boundText = textByContainerId.get(shape.id);
       const label = boundText
         ? (boundText.originalText || boundText.text || '').replace(/\n/g, ' ').trim()
@@ -310,7 +308,6 @@ export async function importExcalidraw(
       let visualImageId: AssetId | null = null;
 
       try {
-        // Convert dataURL to File
         if (fileData.dataURL.includes(',')) {
           const mimeType = dataUrlMimeType(fileData.dataURL, 'image/png');
           const ext = mimeType.split('/')[1] || 'png';
@@ -327,7 +324,6 @@ export async function importExcalidraw(
         result.warnings.push(importMessage('excalidraw.imageNotImported', { id: img.fileId?.substring(0, 12) }));
       }
 
-      // Get bound text for image (if any)
       const boundText = textByContainerId.get(img.id);
       const label = boundText
         ? (boundText.originalText || boundText.text || '').trim()

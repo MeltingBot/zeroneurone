@@ -34,7 +34,7 @@ type StateListener = (state: SyncState) => void;
 class SyncService {
   private ydoc: Y.Doc | null = null;
   private indexeddbProvider: EncryptedIndexeddbPersistence | null = null;
-  /** DEK pour le chiffrement at-rest des bases y-indexeddb. Null = mode non chiffré. */
+  /** DEK for at-rest encryption of the y-indexeddb databases. Null = unencrypted mode. */
   private atRestDek: Uint8Array | null = null;
   private websocketProvider: WebsocketProvider | null = null;
   private dossierId: string | null = null;
@@ -202,8 +202,8 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Définit la DEK pour le chiffrement at-rest des bases y-indexeddb.
-   * Doit être appelé avant openLocal/openShared si le chiffrement est activé.
+   * Sets the DEK for at-rest encryption of the y-indexeddb databases.
+   * Must be called before openLocal/openShared when encryption is enabled.
    */
   setAtRestDek(dek: Uint8Array | null): void {
     this.atRestDek = dek;
@@ -211,16 +211,15 @@ class SyncService {
 
   /**
    * Open a dossier in local mode (no sync)
-   * Creates/loads Y.Doc with IndexedDB persistence (chiffré si DEK disponible)
+   * Creates/loads Y.Doc with IndexedDB persistence (encrypted when a DEK is available)
    */
   async openLocal(dossierId: string): Promise<Y.Doc> {
-    // Close any existing dossier
     await this.close();
 
     this.dossierId = dossierId;
     this.ydoc = new Y.Doc();
 
-    // Set up IndexedDB persistence (chiffré ou non selon la DEK)
+    // Set up IndexedDB persistence (encrypted or not, depending on the DEK)
     const dbName = ydocDatabaseName(dossierId);
     this.indexeddbProvider = new EncryptedIndexeddbPersistence(
       dbName, this.ydoc, this.atRestDek || undefined
@@ -264,19 +263,17 @@ class SyncService {
       throw new Error('Serveur de synchronisation non configuré');
     }
 
-    // Validate encryption key if provided
     if (encryptionKey && !isValidKeyString(encryptionKey)) {
       throw new Error('Clé de chiffrement invalide');
     }
 
-    // Close any existing dossier
     await this.close();
 
     this.dossierId = dossierId;
     this.encryptionKey = encryptionKey || null;
     this.ydoc = new Y.Doc();
 
-    // Set up IndexedDB persistence (for offline support, chiffré si DEK disponible)
+    // Set up IndexedDB persistence (for offline support, encrypted when a DEK is available)
     // Uses dossierId (UUID) for local storage
     const dbName = ydocDatabaseName(dossierId);
     this.indexeddbProvider = new EncryptedIndexeddbPersistence(
@@ -595,7 +592,6 @@ class SyncService {
       updatePeerCount();
     }
 
-    // Handle connection errors
     this.websocketProvider.on('connection-error', (event: Event | { message?: string }) => {
       // After a key error the socket's own close must not overwrite that error
       if (this.isClosing || this.keyFailed) return;
@@ -607,7 +603,6 @@ class SyncService {
       this.setState({ error: message || 'Erreur de connexion au serveur' });
     });
 
-    // Handle connection close
     this.websocketProvider.on('connection-close', () => {
       // After a key error the socket's own close must not overwrite that error
       if (this.isClosing || this.keyFailed) return;

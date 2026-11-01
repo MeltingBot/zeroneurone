@@ -35,8 +35,6 @@ interface SelectionState {
   selectBoth: (elementIds: ElementId[], linkIds: LinkId[], addToSelection?: boolean) => void;
 
   clearSelection: () => void;
-  clearElementSelection: () => void;
-  clearLinkSelection: () => void;
 
   // Editing
   startEditingElement: (id: ElementId) => void;
@@ -179,14 +177,6 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
       selectedLinkIds: new Set(),
       lastClickedElementId: null,
     });
-  },
-
-  clearElementSelection: () => {
-    set({ selectedElementIds: new Set() });
-  },
-
-  clearLinkSelection: () => {
-    set({ selectedLinkIds: new Set() });
   },
 
   startEditingElement: (id: ElementId) => {

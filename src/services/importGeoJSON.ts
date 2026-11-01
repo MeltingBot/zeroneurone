@@ -138,7 +138,6 @@ export async function importFromGeoJSON(
         feature.id || `Feature ${featureIndex + 1}`
       );
 
-      // Extract metadata from properties
       const notes = String(props.notes || props.description || props.desc || props.NOTES || '');
       const tags: string[] = [];
       if (props.tags) {
@@ -149,10 +148,8 @@ export async function importFromGeoJSON(
         }
       }
 
-      // Extract source
       const source = String(props.source || props.SOURCE || '');
 
-      // Parse confidence
       let confidence: Confidence | null = null;
       const confVal = props.confidence ?? props.confiance;
       if (confVal !== undefined && confVal !== null) {
@@ -188,7 +185,6 @@ export async function importFromGeoJSON(
         }
       }
 
-      // Parse date
       let date: Date | null = null;
       if (props.date) {
         const parsed = importedDate(String(props.date));
@@ -321,7 +317,6 @@ export async function importFromGeoJSON(
       );
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });

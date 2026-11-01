@@ -672,8 +672,6 @@ export interface Toast {
   duration?: number;
 }
 
-export type ToolType = 'select' | 'create-element' | 'create-link';
-
 export type SidePanelTab = 'detail' | 'insights' | 'suggestions' | 'views' | 'filters' | 'query' | 'report' | (string & {});
 
 // ============================================================================

@@ -168,12 +168,10 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   const typeMap = await loadTypeMap();
   const data: OsintrackerData = JSON.parse(jsonContent);
 
-  // Validate format
   if (data.formatName !== 'dexie') {
     throw new Error('Invalid OSINTracker file: expected Dexie format');
   }
 
-  // Extract tables
   const tables: Record<string, unknown[]> = {};
   for (const table of data.data.data) {
     tables[table.tableName] = table.rows;
@@ -199,7 +197,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   // Track valid element IDs for link validation
   const validElementIds = new Set(filteredElements.map(e => e.id));
 
-  // Convert dossier
   const dossier: OsintrackerImportResult['dossier'] = {
     originalId: osintDossier.id,
     name: osintDossier.name || 'Dossier importée',
@@ -220,7 +217,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     },
   };
 
-  // Convert elements
   const elements: OsintrackerImportResult['elements'] = [];
   const assets: OsintrackerImportResult['assets'] = [];
   let skippedElements = 0;
@@ -235,7 +231,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     // Get type info (name + color) from master.json
     const typeInfo = osintEl.typeId ? typeMap.get(osintEl.typeId) : null;
 
-    // Build tags
     const tags: string[] = [];
 
     // Add category from typeId using master.json mapping
@@ -247,7 +242,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       tags.push('Important');
     }
 
-    // Build properties
     const properties: Array<{ key: string; value: string; type: 'text' | 'number' | 'date' | 'link' | 'country' }> = [];
 
     // Add Badge property from progress field

@@ -155,7 +155,6 @@ export async function importOsintIndustries(
     await db.elements.add(queryElement);
     result.elementsImported++;
 
-    // Filter found modules
     const foundModules = modules.filter(m => m.status === 'found');
 
     if (foundModules.length === 0) {
@@ -173,7 +172,6 @@ export async function importOsintIndustries(
       const label = mod.pretty_name || mod.module || `Module ${i + 1}`;
       const categoryTag = mod.category?.name || 'Autre';
 
-      // Calculate position in circle around center
       const angle = i * angleStep - Math.PI / 2; // Start from top
       const position: Position = {
         x: centerPosition.x + radius * Math.cos(angle),
@@ -224,7 +222,6 @@ export async function importOsintIndustries(
               continue;
             }
 
-            // Add as property
             const propType = field.type === 'url' ? 'link' :
                              field.type === 'int' || field.type === 'float' ? 'number' : 'text';
             properties.push({
@@ -282,7 +279,6 @@ export async function importOsintIndustries(
         }
       }
 
-      // Add module name as property
       if (mod.module) {
         properties.push({ key: 'module_id', value: mod.module, type: 'text' });
       }
@@ -317,7 +313,6 @@ export async function importOsintIndustries(
       await db.elements.add(moduleElement);
       result.elementsImported++;
 
-      // Create link from query to module
       const link: Link = {
         id: generateUUID(),
         dossierId: targetDossierId,
@@ -345,7 +340,6 @@ export async function importOsintIndustries(
       result.linksImported++;
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });

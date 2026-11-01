@@ -35,10 +35,8 @@ export const useTagSetStore = create<TagSetState>((set, get) => ({
 
     set({ isLoading: true });
 
-    // Initialize with defaults if empty
     await tagSetRepository.initializeIfEmpty();
 
-    // Load all TagSets
     const tagSets = await tagSetRepository.getAll();
 
     set({

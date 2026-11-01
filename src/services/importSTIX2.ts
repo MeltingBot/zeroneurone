@@ -189,7 +189,6 @@ export function isSTIX2Format(data: unknown): boolean {
   if (!data || typeof data !== 'object') return false;
   const obj = data as Record<string, unknown>;
 
-  // Check for STIX Bundle structure
   if (obj.type === 'bundle' && Array.isArray(obj.objects)) {
     // Verify at least one object has a STIX-like ID
     const objects = obj.objects as Array<{ id?: string; type?: string }>;
@@ -310,7 +309,6 @@ export async function importSTIX2(
       return result;
     }
 
-    // Build marking/TLP lookup
     const markingMap = buildMarkingMap(data.objects);
 
     // Separate objects into SDOs (elements), SROs (relationships), notes, opinions, reports
@@ -366,7 +364,6 @@ export async function importSTIX2(
       const newId = generateUUID();
       idMap.set(sdo.id, newId);
 
-      // Get visual style for this STIX type
       const style = STIX_TYPE_STYLES[sdo.type] || {
         color: DEFAULT_ELEMENT_VISUAL.color,
         shape: 'circle' as ElementShape
@@ -374,7 +371,6 @@ export async function importSTIX2(
 
       const label = buildLabel(sdo);
 
-      // Build notes from description
       let elementNotes = sdo.description || '';
 
       if (sdo.objective) {
@@ -602,11 +598,9 @@ export async function importSTIX2(
         continue;
       }
 
-      // Get translated label for relationship type
       const relType = sro.relationship_type || 'sighting';
       const label = translateRelationship(relType);
 
-      // Build sighting properties
       const linkProperties: Property[] = [
         { key: 'stix_id', value: sro.id, type: 'text' },
       ];
@@ -614,7 +608,6 @@ export async function importSTIX2(
         linkProperties.push({ key: 'count', value: sro.count, type: 'number' });
       }
 
-      // Build sighting date range
       let sroDateRange: { start: Date | null; end: Date | null } | null = null;
       const sroStart = sro.first_seen;
       const sroEnd = sro.last_seen;
@@ -787,7 +780,6 @@ export async function importSTIX2(
 
     await rows.write();
 
-    // Update dossier with bundle info
     const bundleDate = data.created ? new Date(data.created) : new Date();
     await db.dossiers.update(targetDossierId, {
       description: t('stix.meta.importDescription', { bundleId: data.id || 'Bundle' }),

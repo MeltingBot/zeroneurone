@@ -83,7 +83,6 @@ export async function importGEXF(
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, 'application/xml');
 
-    // Check for XML parse errors
     const parseError = doc.querySelector('parsererror');
     if (parseError) {
       result.errors.push(t('errors.parseError'));
@@ -97,7 +96,6 @@ export async function importGEXF(
       return result;
     }
 
-    // Find graph element
     const graph = gexf.querySelector('graph');
     if (!graph) {
       result.errors.push(t('errors.missingGraph'));
@@ -416,7 +414,6 @@ export async function importGEXF(
       }
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, { updatedAt: new Date() });
 
     result.success = result.elementsImported > 0;
@@ -742,7 +739,6 @@ export async function importGephiLiteJSON(
           }
         }
 
-        // Build properties from edgeData
         const linkProperties: Property[] = [];
         const edgeRenderFields = new Set(['label', 'color', 'weight', 'rawWeight']);
         if (edgeData) {
@@ -835,7 +831,6 @@ export async function importGephiLiteJSON(
       }
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, { updatedAt: new Date() });
 
     result.success = result.elementsImported > 0;

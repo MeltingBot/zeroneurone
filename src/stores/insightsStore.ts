@@ -24,8 +24,6 @@ interface InsightsState {
 
   // UI state
   isComputing: boolean;
-  computeProgress: number;
-  computePhase: string;
   highlightedElementIds: Set<ElementId>;
   highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'path' | 'cycle' | 'suggestion' | 'between' | 'role' | null;
   selectedClusterId: number | null;
@@ -139,8 +137,6 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   computedKey: null,
 
   isComputing: false,
-  computeProgress: 0,
-  computePhase: '',
   highlightedElementIds: new Set(),
   highlightType: null,
   selectedClusterId: null,
@@ -162,7 +158,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 
   // Actions
   computeInsights: (elements, links, key) => {
-    set({ isComputing: true, computeProgress: 0, computePhase: 'starting', computedKey: key ?? null });
+    set({ isComputing: true, computedKey: key ?? null });
     const progress = useProgressStore.getState();
     progress.start('insights', 'activity.insights', 0);
 
@@ -170,8 +166,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     graphWorkerService.computeInsights(
       elements,
       links,
-      (percent, phase) => {
-        set({ computeProgress: percent, computePhase: phase });
+      (percent) => {
         useProgressStore.getState().update('insights', percent);
       }
     ).then((results) => {
@@ -186,8 +181,6 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         structuralRoles: results.roles,
         computedAt: new Date(),
         isComputing: false,
-        computeProgress: 100,
-        computePhase: 'done',
       });
       useProgressStore.getState().end('insights');
     }).catch((error) => {
@@ -442,8 +435,6 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       computedAt: null,
       computedKey: null,
       isComputing: false,
-      computeProgress: 0,
-      computePhase: '',
       highlightedElementIds: new Set(),
       highlightType: null,
       selectedClusterId: null,

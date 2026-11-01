@@ -28,18 +28,15 @@ export async function importFromGraphML(
   };
 
   try {
-    // Parse XML
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, 'application/xml');
 
-    // Check for parsing errors
     const parseError = doc.querySelector('parsererror');
     if (parseError) {
       result.errors.push(importMessage('graphml.parseError'));
       return result;
     }
 
-    // Get the graphml root element
     const graphml = doc.querySelector('graphml');
     if (!graphml) {
       result.errors.push(importMessage('graphml.missingGraphml'));
@@ -57,14 +54,12 @@ export async function importFromGraphML(
       }
     });
 
-    // Get the graph element
     const graph = graphml.querySelector('graph');
     if (!graph) {
       result.errors.push(importMessage('graphml.missingGraph'));
       return result;
     }
 
-    // Check if graph is directed by default
     const defaultEdgeDirection = graph.getAttribute('edgedefault') || 'undirected';
     const isDirectedByDefault = defaultEdgeDirection === 'directed';
 
@@ -86,7 +81,6 @@ export async function importFromGraphML(
         continue;
       }
 
-      // Parse node data
       const nodeData = parseGraphMLData(node, keyDefs);
 
       // Generate position if not available
@@ -123,7 +117,6 @@ export async function importFromGraphML(
         }
       }
 
-      // Parse geo coordinates
       let geo: GeoData | null = null;
       const lat = nodeData.lat || nodeData.latitude;
       const lng = nodeData.lng || nodeData.lon || nodeData.longitude;
@@ -188,10 +181,8 @@ export async function importFromGraphML(
         continue;
       }
 
-      // Parse edge data
       const edgeData = parseGraphMLData(edge, keyDefs);
 
-      // Check if this edge has explicit direction
       const edgeDirection = edge.getAttribute('directed');
       const isDirected = edgeDirection === 'true' || (edgeDirection === null && isDirectedByDefault);
 
@@ -273,7 +264,6 @@ export async function importFromGraphML(
       result.linksImported++;
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });

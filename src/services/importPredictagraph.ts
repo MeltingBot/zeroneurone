@@ -197,7 +197,6 @@ export async function importPredicaGraph(
         notes = noteParts.join('\n\n');
       }
 
-      // Parse geo from data if available
       let geo: import('../types').GeoData | null = null;
       if (node.data) {
         const lat = node.data.latitude || node.data.lat;
@@ -266,7 +265,6 @@ export async function importPredicaGraph(
           continue;
         }
 
-        // Parse edge color from style
         const edgeColor = edge.style?.stroke || DEFAULT_LINK_VISUAL.color;
 
         const link: Link = {
@@ -302,7 +300,6 @@ export async function importPredicaGraph(
 
     await rows.write();
 
-    // Update dossier viewport if available
     if (data.viewport) {
       await db.dossiers.update(targetDossierId, {
         viewport: data.viewport,

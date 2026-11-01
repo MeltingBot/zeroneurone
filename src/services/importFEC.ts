@@ -117,7 +117,7 @@ function t(key: string, fallback: string, options?: Record<string, unknown>): st
     ? (i18next.t(`importData:fec.${key}`, { defaultValue: fallback, ...options }) as string)
     : undefined;
   if (translated) return translated;
-  // i18next absent (tests node) : fallback FR avec interpolation minimale.
+  // No i18next (node tests): French fallback with minimal interpolation.
   return fallback.replace(/\{\{(\w+)\}\}/g, (m, name: string) =>
     options && name in options ? String(options[name]) : m
   );
@@ -178,7 +178,7 @@ function familyOf(compteNum: string, isAux: boolean): FECFamily {
 
 interface EntryLine {
   nodeKey: string;
-  net: number; // debit − credit : > 0 débité, < 0 crédité
+  net: number; // debit − credit: > 0 debited, < 0 credited
   date: Date | null;
   journal: string;
 }
@@ -464,7 +464,7 @@ export function suggestMinLinkAmount(
   for (let mag = 1; mag <= maxAmount; mag *= 10) {
     for (const mult of [1, 2, 5]) candidates.push(mult * mag);
   }
-  // amounts est trié décroissant : les montants ≥ nice sont en tête de liste.
+  // amounts is sorted descending: the amounts ≥ nice come first.
   for (const nice of candidates) {
     let count = 0;
     for (const a of amounts) {

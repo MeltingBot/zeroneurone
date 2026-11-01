@@ -281,19 +281,19 @@ class DossierDatabase extends Dexie {
   }
 
   /**
-   * Active le chiffrement at-rest avec la DEK fournie.
+   * Enables at-rest encryption with the given DEK.
    *
-   * Dexie compile la chaîne de middlewares au moment de open(). Si la DB est
-   * déjà ouverte, un simple db.use() n'a aucun effet sur les transactions
-   * suivantes. On ferme donc explicitement la connexion avant d'enregistrer le
-   * middleware : le prochain accès à une table rouvre la DB et recompile la
-   * chaîne avec le middleware de chiffrement inclus.
+   * Dexie compiles the middleware chain at open(). If the DB is
+   * already open, a plain db.use() has no effect on the following
+   * transactions. So the connection is closed explicitly before registering the
+   * middleware: the next table access reopens the DB and recompiles the
+   * chain with the encryption middleware included.
    */
   applyEncryption(dek: Uint8Array | null): void {
     if (dek) {
-      // disableAutoOpen: false → ferme la connexion IDB mais conserve autoOpen=true.
-      // La prochaine opération sur une table rouvre la DB et recompile la chaîne
-      // DBCore avec le middleware fraîchement ajouté via db.use().
+      // disableAutoOpen: false → closes the IDB connection but keeps autoOpen=true.
+      // The next table operation reopens the DB and recompiles the DBCore
+      // chain with the middleware just added via db.use().
       this.close({ disableAutoOpen: false });
       this.use(createEncryptionMiddleware(dek, DEFAULT_ENCRYPTED_TABLES));
     }
@@ -474,7 +474,6 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
       }
     }
 
-    // Sort by size descending
     tableSizes.sort((a, b) => b.size - a.size);
   } catch {
     // Database might not be open
@@ -507,7 +506,6 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
           const tx = ydocDb.transaction(storeName, 'readonly');
           const store = tx.objectStore(storeName);
 
-          // Get count
           const count = await new Promise<number>((resolve) => {
             const req = store.count();
             req.onsuccess = () => resolve(req.result);
@@ -554,7 +552,6 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
       const dossierId = dossierIdOfYdocDatabase(dbName);
       ydocSizes.push({ dbName, dossierId, size: dbSize });
     }
-    // Sort by size descending
     ydocSizes.sort((a, b) => b.size - a.size);
   } catch {
     // databases() not supported in all browsers
@@ -571,7 +568,6 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
     }
   }
 
-  // Calculate Cache Storage size
   let cacheSize = 0;
   try {
     const cacheNames = await caches.keys();

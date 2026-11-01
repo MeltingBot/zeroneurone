@@ -1,19 +1,19 @@
 /**
- * WebAuthnService — Déverrouillage par clé de sécurité (WebAuthn PRF)
+ * WebAuthnService — unlocking with a security key (WebAuthn PRF)
  *
- * Utilise l'extension PRF (Pseudo-Random Function) de WebAuthn Level 3
- * pour dériver une KEK déterministe depuis une clé physique (YubiKey).
- * La DEK est chiffrée en AES-256-GCM avec cette KEK et stockée dans
+ * Uses the WebAuthn Level 3 PRF (Pseudo-Random Function) extension
+ * to derive a deterministic KEK from a hardware key (YubiKey).
+ * The DEK is encrypted with AES-256-GCM under this KEK and stored in
  * `_encryptionMeta.webauthnCredentials[]`.
  *
- * Zéro dépendance externe — Web Authentication API + Web Crypto API uniquement.
+ * No external dependency — Web Authentication API + Web Crypto API only.
  */
 
 import type { WebAuthnCredentialEntry } from './encryptionService';
 import { toBase64Url } from '../../utils/base64url';
 
 // ============================================================================
-// CONSTANTES
+// CONSTANTS
 // ============================================================================
 
 const AES_GCM_IV_LENGTH = 12;
@@ -98,7 +98,7 @@ async function decryptDEK(
 }
 
 // ============================================================================
-// HELPERS INTERNES
+// INTERNAL HELPERS
 // ============================================================================
 
 function getOrCreateUserId(): Uint8Array<ArrayBuffer> {
@@ -124,7 +124,7 @@ function toArrayBuffer(v: unknown): ArrayBuffer {
 }
 
 // ============================================================================
-// ENREGISTREMENT D'UNE CLÉ
+// KEY REGISTRATION
 // ============================================================================
 
 export async function registerWebAuthnCredential(
@@ -176,7 +176,7 @@ export async function registerWebAuthnCredential(
 
   const credentialId = credential.rawId;
 
-  // Petit délai pour laisser l'authenticator se réinitialiser
+  // Short delay to let the authenticator reset
   await new Promise(r => setTimeout(r, 500));
 
   const getOptions: CredentialRequestOptions = {
@@ -220,7 +220,7 @@ export async function registerWebAuthnCredential(
 }
 
 // ============================================================================
-// DÉVERROUILLAGE VIA CLÉ DE SÉCURITÉ
+// UNLOCKING WITH A SECURITY KEY
 // ============================================================================
 
 export async function unlockWithWebAuthn(

@@ -153,7 +153,6 @@ export const reportRepository = {
 
       const { reports: reportsMap } = getYMaps(ydoc);
 
-      // Find report for this dossier
       let foundReport: Report | null = null;
       for (const [, ymap] of reportsMap.entries()) {
         const invId = ymap.get('dossierId');

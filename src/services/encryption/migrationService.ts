@@ -1,18 +1,18 @@
 /**
- * migrationService — Migration des bases existantes vers le chiffrement at-rest
+ * migrationService — migrating existing databases to at-rest encryption
  *
- * Deux opérations :
- * - enableEncryption : base en clair → base chiffrée
- * - disableEncryption : base chiffrée → base en clair
+ * Two operations:
+ * - enableEncryption: plaintext database → encrypted database
+ * - disableEncryption: encrypted database → plaintext database
  *
- * Migration Dexie :
- *   Le middleware est appliqué sur la DB ouverte. La migration lit chaque
- *   enregistrement (en clair, le préfixe __zn_enc__ est absent) et le réécrit
- *   (le middleware chiffre à l'écriture). Simple et atomique par table.
+ * Dexie migration:
+ *   The middleware is applied to the open DB. The migration reads each
+ *   record (plaintext, no __zn_enc__ prefix) and writes it back
+ *   (the middleware encrypts on write). Simple and atomic per table.
  *
- * Migration y-indexeddb :
- *   Pour chaque dossier, on lit les updates Yjs, on les chiffre, on
- *   réécrit. La fonction migrateToEncrypted/migrateToPlaintext est dans
+ * y-indexeddb migration:
+ *   For each dossier, the Yjs updates are read, encrypted and
+ *   written back. migrateToEncrypted/migrateToPlaintext live in
  *   encryptedIndexeddbPersistence.ts.
  */
 
@@ -26,16 +26,16 @@ import {
 } from './encryptedIndexeddbPersistence';
 
 /**
- * Levée quand une migration s'est terminée avec des échecs partiels.
+ * Raised when a migration finished with partial failures.
  *
- * Pour disableEncryption, elle est levée AVANT la suppression de
- * `_encryptionMeta` : la base reste chiffrée, donc récupérable avec le mot de
- * passe. Pour enableEncryption, elle signale que certaines données sont restées
- * en clair alors que le chiffrement est actif.
+ * For disableEncryption, it is raised BEFORE `_encryptionMeta` is
+ * deleted: the database stays encrypted, so recoverable with the
+ * password. For enableEncryption, it reports that some data stayed
+ * in plaintext while encryption is active.
  */
 export class PartialMigrationError extends Error {
   readonly failures: string[];
-  /** Présente pour l'activation : le chiffrement est actif malgré l'échec. */
+  /** Set on enabling: encryption is active despite the failure. */
   readonly dek?: Uint8Array;
 
   constructor(operation: string, failures: string[], dek?: Uint8Array, outcome = '') {
@@ -52,8 +52,8 @@ export class PartialMigrationError extends Error {
 }
 
 /**
- * Levée quand la désactivation du chiffrement détruirait des données.
- * L'appelant doit demander confirmation puis relancer avec acceptDataLoss.
+ * Raised when disabling encryption would destroy data.
+ * The caller must ask for confirmation, then retry with acceptDataLoss.
  */
 export class UndecryptableDataError extends Error {
   readonly undecryptable: number;
@@ -69,7 +69,7 @@ export class UndecryptableDataError extends Error {
   }
 }
 
-/** Passe en lecture seule sur toutes les bases Yjs, avant toute écriture. */
+/** Read-only pass over every Yjs database, before anything is written. */
 async function countUndecryptableData(
   dek: Uint8Array,
   dossiers: Array<{ id: string }>
@@ -87,9 +87,9 @@ async function countUndecryptableData(
         dossierIds.push(dossier.id);
       }
     } catch (err) {
-      // Une base illisible est un risque, pas un zéro : migrateToPlaintext
-      // rencontrera la même erreur et effacera son contenu. La compter comme
-      // indéchiffrable est le seul comptage honnête.
+      // An unreadable database is a risk, not a zero: migrateToPlaintext
+      // will hit the same error and erase its content. Counting it as
+      // undecryptable is the only honest count.
       console.warn(`[migrationService] Comptage impossible pour ${dossier.id}:`, err);
       undecryptable += 1;
       dossierIds.push(dossier.id);
@@ -112,13 +112,13 @@ export interface MigrationProgress {
 type ProgressCallback = (progress: MigrationProgress) => void;
 
 // ============================================================================
-// MIGRATION DEXIE : re-écriture de tous les enregistrements
+// DEXIE MIGRATION: rewriting every record
 // ============================================================================
 
 /**
- * Chiffre toutes les données Dexie existantes.
- * Le middleware doit être déjà appliqué (db.applyEncryption(dek)) avant appel.
- * Lit chaque table en clair et réécrit → le middleware chiffre à l'écriture.
+ * Encrypts all existing Dexie data.
+ * The middleware must already be applied (db.applyEncryption(dek)) before the call.
+ * Reads each table in plaintext and writes it back → the middleware encrypts on write.
  */
 async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<string[]> {
   const tables = Array.from(DEFAULT_ENCRYPTED_TABLES);
@@ -128,7 +128,7 @@ async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<st
   for (const tableName of tables) {
     onProgress({ phase: `Chiffrement ${tableName}`, current: done, total: tables.length });
     try {
-      // @ts-expect-error - accès dynamique aux tables Dexie
+      // @ts-expect-error - dynamic access to Dexie tables
       const table = db[tableName];
       if (!table) { done++; continue; }
 
@@ -148,12 +148,12 @@ async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<st
 }
 
 // ============================================================================
-// MIGRATION OPFS : chiffrement/déchiffrement des fichiers assets
+// OPFS MIGRATION: encrypting/decrypting asset files
 // ============================================================================
 
 /**
- * Chiffre tous les fichiers OPFS des assets Dexie.
- * Lit chaque fichier, le chiffre si ce n'est pas déjà fait, réécrit.
+ * Encrypts every OPFS file of the Dexie assets.
+ * Reads each file, encrypts it unless already done, writes it back.
  */
 async function migrateOpfsToEncrypted(
   dek: Uint8Array,
@@ -177,7 +177,7 @@ async function migrateOpfsToEncrypted(
       const fileHandle = await dir.getFileHandle(pathParts.at(-1)!);
       const rawBuf = await (await fileHandle.getFile()).arrayBuffer();
 
-      if (isOpfsEncrypted(rawBuf)) continue; // déjà chiffré
+      if (isOpfsEncrypted(rawBuf)) continue; // already encrypted
 
       const encrypted = await encryptOpfsBuffer(dek, rawBuf);
       const writable = await fileHandle.createWritable();
@@ -193,7 +193,7 @@ async function migrateOpfsToEncrypted(
 }
 
 /**
- * Déchiffre tous les fichiers OPFS des assets Dexie.
+ * Decrypts every OPFS file of the Dexie assets.
  */
 async function migrateOpfsToPlaintext(
   dek: Uint8Array,
@@ -217,7 +217,7 @@ async function migrateOpfsToPlaintext(
       const fileHandle = await dir.getFileHandle(pathParts.at(-1)!);
       const rawBuf = await (await fileHandle.getFile()).arrayBuffer();
 
-      if (!isOpfsEncrypted(rawBuf)) continue; // déjà en clair
+      if (!isOpfsEncrypted(rawBuf)) continue; // already plaintext
 
       const plainBuf = await decryptOpfsBuffer(dek, rawBuf);
       const writable = await fileHandle.createWritable();
@@ -233,18 +233,18 @@ async function migrateOpfsToPlaintext(
 }
 
 // ============================================================================
-// API PUBLIQUE
+// PUBLIC API
 // ============================================================================
 
 /**
- * Active le chiffrement sur une installation existante.
+ * Enables encryption on an existing installation.
  *
- * Flow :
- * 1. Initialiser DEK/KEK → stocker _encryptionMeta dans Dexie
- * 2. Appliquer le middleware Dexie
- * 3. Re-écrire tous les enregistrements Dexie (middleware chiffre à l'écriture)
- * 4. Pour chaque dossier, migrer la base y-indexeddb
- * 5. Configurer syncService avec la DEK
+ * Flow:
+ * 1. Set up DEK/KEK → store _encryptionMeta in Dexie
+ * 2. Apply the Dexie middleware
+ * 3. Rewrite every Dexie record (the middleware encrypts on write)
+ * 4. For each dossier, migrate the y-indexeddb database
+ * 5. Configure syncService with the DEK
  */
 export async function enableEncryption(
   password: string,
@@ -252,27 +252,27 @@ export async function enableEncryption(
 ): Promise<Uint8Array> {
   onProgress({ phase: 'Génération des clés', current: 0, total: 5 });
 
-  // 1. Générer DEK + stocker _encryptionMeta
+  // 1. Generate DEK + store _encryptionMeta
   const { meta, dek } = await initializeEncryption(password);
   await db._encryptionMeta.put(meta);
 
-  // 2. Appliquer le middleware Dexie (chiffre les futures écritures)
+  // 2. Apply the Dexie middleware (encrypts future writes)
   db.applyEncryption(dek);
   onProgress({ phase: 'Middleware Dexie activé', current: 1, total: 5 });
 
-  // Tout échec partiel est collecté : le silence laissait croire à un
-  // chiffrement complet alors que des données restaient en clair sur le disque,
-  // sans que rien ne repasse jamais dessus (la détection par marqueur les voit
-  // comme déjà traitées).
+  // Every partial failure is collected: silence suggested a complete
+  // encryption while some data stayed in plaintext on disk,
+  // with nothing ever going over it again (marker detection sees it
+  // as already processed).
   const failures: string[] = [];
 
-  // 3. Re-écrire tous les enregistrements Dexie existants
+  // 3. Rewrite every existing Dexie record
   onProgress({ phase: 'Migration données Dexie', current: 2, total: 5 });
   failures.push(...await migrateDexieToEncrypted((p) =>
     onProgress({ phase: p.phase, current: 2, total: 5 })
   ));
 
-  // 4. Migrer les bases y-indexeddb de chaque dossier
+  // 4. Migrate the y-indexeddb database of each dossier
   const dossiers = await db.dossiers.toArray();
   onProgress({ phase: 'Migration bases Yjs', current: 3, total: 5 });
 
@@ -291,22 +291,22 @@ export async function enableEncryption(
     }
   }
 
-  // 5. Migrer les fichiers OPFS
+  // 5. Migrate the OPFS files
   onProgress({ phase: 'Migration fichiers OPFS', current: 4, total: 5 });
   failures.push(...await migrateOpfsToEncrypted(dek, (p) =>
     onProgress({ phase: p.phase, current: 4, total: 5 })
   ));
 
-  // 6. Configurer syncService
+  // 6. Configure syncService
   syncService.setAtRestDek(dek);
 
-  // Le chiffrement est actif et la base utilisable, mais une partie des données
-  // est restée en clair : on le dit plutôt que de recharger sur un succès
-  // apparent. L'utilisateur recharge lui-même une fois informé.
+  // Encryption is active and the database usable, but part of the data
+  // stayed in plaintext: say so rather than reload on an apparent
+  // success. The user reloads once informed.
   if (failures.length > 0) {
-    // Pas de rechargement ici : applyEncryption a déjà refermé puis rouvert la
-    // connexion avec le middleware recompilé, la base est donc utilisable en
-    // l'état. Recharger ferait disparaître le message avant lecture.
+    // No reload here: applyEncryption already closed and reopened the
+    // connection with the recompiled middleware, so the database is usable
+    // as is. Reloading would clear the message before it is read.
     throw new PartialMigrationError(
       'Activation du chiffrement',
       failures,
@@ -317,19 +317,19 @@ export async function enableEncryption(
 
   onProgress({ phase: 'Chiffrement activé — redémarrage', current: 5, total: 5 });
 
-  // La base était déjà ouverte quand applyEncryption a été appelé.
-  // Le rechargement garantit que Dexie réouvre avec le middleware compilé
-  // depuis le début (flow App.tsx → raw IDB check → db.use() → db.open()).
+  // The database was already open when applyEncryption was called.
+  // Reloading guarantees Dexie reopens with the middleware compiled
+  // from the start (App.tsx flow → raw IDB check → db.use() → db.open()).
   window.location.reload();
 
   return dek;
 }
 
 /**
- * Réécrit les données déchiffrées directement via l'API IndexedDB native,
- * sans passer par Dexie. Nécessaire car le middleware Dexie v4 ne peut pas
- * être désinstallé (pas de unuse()) : tout bulkPut via Dexie rechiffrerait
- * les données. On bypasse donc complètement la couche Dexie pour cette étape.
+ * Writes the decrypted data back directly through the native IndexedDB API,
+ * bypassing Dexie. Needed because the Dexie v4 middleware cannot
+ * be uninstalled (no unuse()): any bulkPut through Dexie would encrypt
+ * the data again. So this step bypasses the Dexie layer entirely.
  */
 async function writePlaintextViaRawIDB(data: Record<string, unknown[]>): Promise<void> {
   const tableNames = Object.keys(data).filter(t => data[t].length > 0);
@@ -359,17 +359,17 @@ async function writePlaintextViaRawIDB(data: Record<string, unknown[]>): Promise
 }
 
 /**
- * Désactive le chiffrement.
+ * Disables encryption.
  *
- * Flow :
- * 1. Lire toutes les données déchiffrées en RAM (via Dexie + middleware)
- * 2. Réécrire les données en clair via raw IndexedDB (bypass du middleware)
- * 3. Migrer les bases y-indexeddb vers le clair
- * 4. Supprimer _encryptionMeta
- * 5. Recharger l'app (Dexie réouvrira sans middleware)
+ * Flow:
+ * 1. Read all the decrypted data into RAM (via Dexie + middleware)
+ * 2. Write the data back in plaintext via raw IndexedDB (bypassing the middleware)
+ * 3. Migrate the y-indexeddb databases to plaintext
+ * 4. Delete _encryptionMeta
+ * 5. Reload the app (Dexie reopens without the middleware)
  *
- * Note : le middleware Dexie v4 ne supporte pas unuse(). On contourne en
- * écrivant via raw IDB pour la déchiffrement, puis on recharge.
+ * Note: the Dexie v4 middleware does not support unuse(). Worked around by
+ * writing through raw IDB for decryption, then reloading.
  */
 export async function disableEncryption(
   dek: Uint8Array,
@@ -378,11 +378,11 @@ export async function disableEncryption(
 ): Promise<void> {
   onProgress({ phase: 'Lecture des données déchiffrées', current: 0, total: 5 });
 
-  // 1. Lire toutes les données en clair (le middleware déchiffre à la lecture)
+  // 1. Read all the data in plaintext (the middleware decrypts on read)
   const data: Record<string, unknown[]> = {};
   for (const tableName of DEFAULT_ENCRYPTED_TABLES) {
     try {
-      // @ts-expect-error - accès dynamique
+      // @ts-expect-error - dynamic access
       const table = db[tableName];
       if (table) data[tableName] = await table.toArray();
     } catch { data[tableName] = []; }
@@ -391,9 +391,9 @@ export async function disableEncryption(
   const dossiers = (data['dossiers'] || []) as Array<{ id: string }>;
   const failures: string[] = [];
 
-  // Rien n'a encore été modifié : c'est le dernier moment où l'on peut renoncer
-  // sans conséquence. Si des updates sont indéchiffrables, ils seront effacés
-  // par migrateToPlaintext — l'utilisateur doit l'accepter explicitement.
+  // Nothing has been changed yet: this is the last point where giving up
+  // costs nothing. Undecryptable updates would be erased
+  // by migrateToPlaintext — the user must accept it explicitly.
   if (!options.acceptDataLoss) {
     const loss = await countUndecryptableData(dek, dossiers);
     if (loss.undecryptable > 0) {
@@ -403,14 +403,14 @@ export async function disableEncryption(
 
   onProgress({ phase: 'Écriture en clair', current: 1, total: 5 });
 
-  // 2. Réécrire via raw IndexedDB pour bypasser le middleware Dexie
-  //    (un bulkPut via Dexie rechiffrerait les données car le middleware
-  //    est toujours dans la chaîne — Dexie v4 n'a pas de unuse())
+  // 2. Write back via raw IndexedDB to bypass the Dexie middleware
+  //    (a bulkPut through Dexie would encrypt the data again since the middleware
+  //    is still in the chain — Dexie v4 has no unuse())
   await writePlaintextViaRawIDB(data);
 
   onProgress({ phase: 'Déchiffrement bases Yjs', current: 2, total: 5 });
 
-  // 3. Migrer les bases y-indexeddb vers le clair
+  // 3. Migrate the y-indexeddb databases to plaintext
   for (let i = 0; i < dossiers.length; i++) {
     const inv = dossiers[i];
     onProgress({
@@ -426,16 +426,16 @@ export async function disableEncryption(
     }
   }
 
-  // 4. Déchiffrer les fichiers OPFS
+  // 4. Decrypt the OPFS files
   onProgress({ phase: 'Déchiffrement fichiers OPFS', current: 3, total: 5 });
   failures.push(...await migrateOpfsToPlaintext(dek, (p) =>
     onProgress({ phase: p.phase, current: 3, total: 5 })
   ));
 
-  // Point de non-retour. `_encryptionMeta` porte la seule copie de la DEK
-  // chiffrée : la supprimer alors que des données sont restées chiffrées les
-  // rendrait définitivement illisibles. On s'arrête ici, base toujours
-  // chiffrée et donc entièrement récupérable avec le mot de passe.
+  // Point of no return. `_encryptionMeta` holds the only copy of the encrypted
+  // DEK: deleting it while some data is still encrypted would make that
+  // data unreadable for good. Stop here, with the database still
+  // encrypted and so fully recoverable with the password.
   if (failures.length > 0) {
     throw new PartialMigrationError(
       'Désactivation du chiffrement',
@@ -447,18 +447,18 @@ export async function disableEncryption(
 
   onProgress({ phase: 'Suppression métadonnées', current: 4, total: 5 });
 
-  // 5. Supprimer _encryptionMeta + retirer DEK du syncService
+  // 5. Delete _encryptionMeta + remove the DEK from syncService
   await db._encryptionMeta.delete('main');
   syncService.setAtRestDek(null);
 
   onProgress({ phase: 'Terminé — redémarrage', current: 5, total: 5 });
 
-  // Donner aux plugins la chance de déchiffrer leurs propres données avant reload.
-  // Promise.allSettled dans runBeforeDisableHooks garantit qu'un plugin qui plante
-  // ne bloque pas le redémarrage.
+  // Give plugins a chance to decrypt their own data before the reload.
+  // Promise.allSettled in runBeforeDisableHooks ensures a crashing plugin
+  // does not block the restart.
   await runBeforeDisableHooks(dek);
 
-  // Recharger : au prochain démarrage, _encryptionMeta absent →
-  // isReady = true immédiatement → Dexie ouvre sans middleware ✅
+  // Reload: on the next startup, no _encryptionMeta →
+  // isReady = true immediately → Dexie opens without the middleware
   window.location.reload();
 }

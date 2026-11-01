@@ -46,7 +46,6 @@ export async function importFromCSV(
   if (!useTagSetStore.getState().isLoaded) await useTagSetStore.getState().load();
   content = normalizeCSVContent(content);
   const opts: CSVImportOptions = {
-    hasHeaders: true,
     delimiter: options.delimiter ?? detectCSVDelimiter(content),
     createMissingElements: true,
     ...options,
@@ -586,7 +585,6 @@ async function importElementsFromCSV(
   if (!useTagSetStore.getState().isLoaded) await useTagSetStore.getState().load();
   content = normalizeCSVContent(content);
   const opts: CSVImportOptions = {
-    hasHeaders: true,
     delimiter: options.delimiter ?? detectCSVDelimiter(content),
     createMissingElements: true,
     ...options,
@@ -609,17 +607,8 @@ async function importElementsFromCSV(
       return result;
     }
 
-    let headers: string[];
-    let dataLines: string[];
-
-    if (opts.hasHeaders) {
-      headers = parseCSVLine(lines[0], opts.delimiter);
-      dataLines = lines.slice(1);
-    } else {
-      // Default headers for elements
-      headers = ['label', 'notes', 'tags', 'positionX', 'positionY'];
-      dataLines = lines;
-    }
+    const headers = parseCSVLine(lines[0], opts.delimiter);
+    const dataLines = lines.slice(1);
 
     // Find column indices (accept both French and English column names)
     const labelIdx = headers.findIndex((h) => ['label', 'nom', 'name'].includes(h.toLowerCase()));
@@ -648,7 +637,7 @@ async function importElementsFromCSV(
     const customProperties = csvPropertyReader(freeColumns, dataLines.map((line) => parseCSVLine(line, opts.delimiter)));
 
     // Process each row
-    let rowNum = opts.hasHeaders ? 2 : 1;
+    let rowNum = 2;
     for (const line of dataLines) {
       try {
         const values = parseCSVLine(line, opts.delimiter);
@@ -764,7 +753,6 @@ async function importLinksFromCSV(
 ): Promise<ImportResult> {
   content = normalizeCSVContent(content);
   const opts: CSVImportOptions = {
-    hasHeaders: true,
     delimiter: options.delimiter ?? detectCSVDelimiter(content),
     createMissingElements: false,
     ...options,
@@ -796,16 +784,8 @@ async function importLinksFromCSV(
       elementsByLabel.set(el.label.toLowerCase(), el);
     });
 
-    let headers: string[];
-    let dataLines: string[];
-
-    if (opts.hasHeaders) {
-      headers = parseCSVLine(lines[0], opts.delimiter);
-      dataLines = lines.slice(1);
-    } else {
-      headers = ['from', 'to', 'label'];
-      dataLines = lines;
-    }
+    const headers = parseCSVLine(lines[0], opts.delimiter);
+    const dataLines = lines.slice(1);
 
     // Find column indices (accept both French and English column names)
     const fromIdx = headers.findIndex((h) =>
@@ -831,7 +811,7 @@ async function importLinksFromCSV(
     }
 
     // Process each row
-    let rowNum = opts.hasHeaders ? 2 : 1;
+    let rowNum = 2;
     for (const line of dataLines) {
       try {
         const values = parseCSVLine(line, opts.delimiter);

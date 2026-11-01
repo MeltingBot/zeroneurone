@@ -179,7 +179,6 @@ interface DossierState {
   resolveComment: (id: CommentId, resolverName: string) => Promise<void>;
   unresolveComment: (id: CommentId) => Promise<void>;
   deleteComment: (id: CommentId) => Promise<void>;
-  getCommentsForTarget: (targetId: ElementId | LinkId) => Comment[];
 
   // Actions - Settings (for reusable tags/properties)
   addExistingTag: (tag: string) => Promise<void>;
@@ -555,7 +554,6 @@ export function setupYDocObserver(
   };
   tabsMap.observeDeep(tabsObserver);
 
-  // Return cleanup function
   return () => {
     if (syncRafId) {
       cancelAnimationFrame(syncRafId);
@@ -1476,7 +1474,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     }
 
-    // Add to Y.Doc
     const { elements: elementsMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       const ymap = elementToYMap(element);
@@ -1587,7 +1584,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Use Set for O(1) lookups
     const idsSet = new Set(ids);
 
-    // Find connected links
     const linksToDelete: string[] = [];
     linksMap.forEach((ymap, linkId) => {
       const map = yFields<Pick<Link, 'fromId' | 'toId'>>(ymap);
@@ -1711,7 +1707,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     const link = makeLink(currentDossier.id, fromId, toId, options);
 
-    // Add to Y.Doc
     const { links: linksMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       const ymap = linkToYMap(link);
@@ -2010,7 +2005,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (!child || child.isGroup) continue; // Don't nest groups
       if (child.parentGroupId === groupId) continue; // Already in this group
 
-      // Remove from previous group if any
       if (child.parentGroupId) {
         const prevGroup = elements.find(el => el.id === child.parentGroupId);
         if (prevGroup) {
@@ -2365,7 +2359,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Y.Doc transaction
     ydoc.transact(() => {
-      // Update target element
       const targetYMap = elementsMap.get(targetId) as Y.Map<unknown>;
       if (targetYMap) {
         updateElementYMap(targetYMap, {
@@ -2431,7 +2424,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         linksMap.delete(linkId);
       }
 
-      // Delete source element
       elementsMap.delete(sourceId);
     });
 
@@ -2569,14 +2561,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         ymap.set('assetIds', assetIdsArray.filter((id: string) => id !== assetId));
       }
 
-      // Remove asset from Y.Doc assets map
       assetsMap.delete(assetId);
     }
 
     // Also update Dexie
     await elementRepository.removeAsset(elementId, assetId).catch((err) => onPersistFailure(err, 'element.removeAsset'));
 
-    // Remove from local state
     set((state) => ({
       assets: state.assets.filter((a) => a.id !== assetId),
     }));
@@ -2622,7 +2612,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Also update Dexie
     await elementRepository.update(elementId, { assetIds }).catch((err) => onPersistFailure(err, 'element.update(assets)'));
 
-    // Update local Zustand state
     set((state) => ({
       elements: state.elements.map((el) =>
         el.id === elementId ? { ...el, assetIds } : el
@@ -2665,7 +2654,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       createdAt: new Date(),
     };
 
-    // Add to Y.Doc
     const { comments: commentsMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       const ymap = commentToYMap(comment);
@@ -2732,11 +2720,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     ydoc.transact(() => {
       commentsMap.delete(id);
     });
-  },
-
-  getCommentsForTarget: (targetId) => {
-    const { comments } = get();
-    return comments.filter(c => c.targetId === targetId);
   },
 
   // ============================================================================
@@ -3413,7 +3396,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       });
     }
 
-    // Update Zustand state
     set({
       currentDossier: updatedDossier,
       elements,

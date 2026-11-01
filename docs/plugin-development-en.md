@@ -1392,7 +1392,7 @@ The `api` object passed to `register()` provides:
 | `stores.useQueryStore` | Query applied on the canvas: elements and links found |
 | `stores.useTagSetStore` | TagSets: create, update, suggested properties |
 | `stores.useTabStore` | Canvas tabs: create, rename, members |
-| `stores.useUIStore` | UI state: toasts, modals (prefer `api.toast` for notifications) |
+| `stores.useUIStore` | UI state. Notifications: `api.toast` (`toasts`, `openModal` and `closeModal` have no effect; render a plugin modal in the `app:global` slot) |
 
 **Database repositories (direct DB access):**
 

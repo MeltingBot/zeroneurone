@@ -1,30 +1,30 @@
 /**
- * encryptionStore — État global du chiffrement
+ * encryptionStore — global encryption state
  *
- * Stocke la DEK en mémoire pour la durée de la session.
- * La DEK est effacée à la fermeture de l'app ou sur demande (verrouillage).
+ * Keeps the DEK in memory for the duration of the session.
+ * The DEK is wiped when the app closes or on demand (lock).
  *
- * Note : la DEK ne doit jamais être persistée en localStorage.
- * Elle est déchiffrée depuis `_encryptionMeta` (Dexie) à chaque démarrage.
+ * Note: the DEK must never be persisted in localStorage.
+ * It is decrypted from `_encryptionMeta` (Dexie) at every startup.
  */
 
 import { create } from 'zustand';
 
 interface EncryptionStoreState {
-  /** Chiffrement activé dans les paramètres */
+  /** Encryption enabled in the settings */
   isEnabled: boolean;
-  /** DEK en mémoire (32 bytes). Null si non déverrouillé ou chiffrement désactivé */
+  /** In-memory DEK (32 bytes). Null when locked or when encryption is disabled */
   dek: Uint8Array | null;
-  /** Vrai si l'app attend la saisie du mot de passe */
+  /** True while the app waits for the password */
   isLocked: boolean;
-  /** Message d'erreur (mot de passe incorrect, etc.) */
+  /** Error message (wrong password, etc.) */
   error: string | null;
   /**
-   * Vrai quand il est sûr d'ouvrir Dexie :
-   * - pas de chiffrement → true dès la vérification initiale
-   * - chiffrement activé → true uniquement après déverrouillage (DEK chargée)
-   * Permet de gater toute opération Dexie jusqu'à ce que le middleware
-   * soit installé (ou confirmé absent).
+   * True when it is safe to open Dexie:
+   * - no encryption → true as soon as the initial check is done
+   * - encryption enabled → true only after unlocking (DEK loaded)
+   * Gates every Dexie operation until the middleware
+   * is installed (or confirmed absent).
    */
   isReady: boolean;
 
@@ -34,10 +34,10 @@ interface EncryptionStoreState {
   setLocked: (locked: boolean) => void;
   setError: (error: string | null) => void;
   setReady: () => void;
-  /** Délai d'auto-verrouillage en minutes (null = désactivé) */
+  /** Auto-lock delay in minutes (null = disabled) */
   autoLockMinutes: number | null;
   setAutoLockMinutes: (minutes: number | null) => void;
-  /** Efface la DEK de la mémoire (verrouillage de session) */
+  /** Wipes the DEK from memory (session lock) */
   lock: () => void;
 }
 

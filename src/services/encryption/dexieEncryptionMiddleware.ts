@@ -1,14 +1,14 @@
 /**
- * Middleware de chiffrement pour Dexie v4 (DBCore API)
+ * Encryption middleware for Dexie v4 (DBCore API)
  *
- * Chiffre les champs non-indexés de chaque table avant l'écriture dans IndexedDB
- * et les déchiffre à la lecture. Les index (UUIDs, timestamps) restent en clair
- * pour permettre les requêtes.
+ * Encrypts the non-indexed fields of each table before writing to IndexedDB
+ * and decrypts them on read. Indexes (UUIDs, timestamps) stay in plaintext
+ * so queries keep working.
  *
- * Utilise tweetnacl secretbox (XSalsa20-Poly1305) — synchrone, rapide, compatible
- * avec les transactions IndexedDB (pas d'async dans les transactions IDB).
+ * Uses tweetnacl secretbox (XSalsa20-Poly1305) — synchronous, fast, compatible
+ * with IndexedDB transactions (no async inside IDB transactions).
  *
- * Usage :
+ * Usage:
  *   const middleware = createEncryptionMiddleware(dek, encryptedTableNames);
  *   db.use(middleware);
  */
@@ -17,33 +17,33 @@ import { secretbox, randomBytes } from 'tweetnacl';
 import type { DBCore, DBCoreTable, DBCoreMutateRequest, Middleware } from 'dexie';
 
 // ============================================================================
-// CHIFFREMENT / DÉCHIFFREMENT (tweetnacl secretbox)
+// ENCRYPTION / DECRYPTION (tweetnacl secretbox)
 // ============================================================================
 
 /**
- * Chiffre un objet JSON avec tweetnacl secretbox.
- * Format du résultat : [nonce (24 bytes)] + [ciphertext]
+ * Encrypts a JSON value with tweetnacl secretbox.
+ * Result layout: [nonce (24 bytes)] + [ciphertext]
  */
 function encryptValue(value: unknown, key: Uint8Array): string {
   const nonce = randomBytes(secretbox.nonceLength);
   const data = new TextEncoder().encode(JSON.stringify(value));
   const encrypted = secretbox(data, nonce, key);
 
-  // Stocker nonce + ciphertext dans un seul Uint8Array
+  // nonce + ciphertext in a single Uint8Array
   const combined = new Uint8Array(nonce.length + encrypted.length);
   combined.set(nonce);
   combined.set(encrypted, nonce.length);
 
-  // Encoder en base64 pour le stockage IndexedDB
-  // Note : String.fromCharCode(...combined) planterait (stack overflow) sur de grands payloads.
+  // Base64 for IndexedDB storage
+  // Note: String.fromCharCode(...combined) would overflow the stack on large payloads.
   let binary = '';
   for (let i = 0; i < combined.length; i++) binary += String.fromCharCode(combined[i]);
   return btoa(binary);
 }
 
 /**
- * Déchiffre une valeur chiffrée par encryptValue.
- * Retourne null si le déchiffrement échoue (données corrompues ou non chiffrées).
+ * Decrypts a value encrypted by encryptValue.
+ * Returns null when decryption fails (corrupted or unencrypted data).
  */
 function decryptValue(encrypted: string, key: Uint8Array): unknown {
   try {
@@ -61,11 +61,11 @@ function decryptValue(encrypted: string, key: Uint8Array): unknown {
 }
 
 // ============================================================================
-// MARQUEUR DE CHIFFREMENT
+// ENCRYPTION MARKER
 // ============================================================================
 
-// Préfixe ajouté aux champs chiffrés pour les identifier facilement
-// et éviter de tenter de déchiffrer des données en clair (migration)
+// Prefix added to encrypted fields to identify them
+// and avoid trying to decrypt plaintext data (migration)
 const ENCRYPTED_PREFIX = '__zn_enc__:';
 
 function isEncrypted(value: unknown): boolean {
@@ -81,14 +81,14 @@ function unwrapEncrypted(value: string): string {
 }
 
 // ============================================================================
-// DÉTECTION DES CHAMPS À CHIFFRER
+// FIELDS TO ENCRYPT
 // ============================================================================
 
 /**
- * Détermine quels champs d'un objet doivent être chiffrés.
- * Chiffre tout sauf :
- * - Les champs qui sont des index de la table (passés en excludedFields)
- * - Les champs undefined/null (inutile de chiffrer)
+ * Determines which fields of an object must be encrypted.
+ * Encrypts everything except:
+ * - fields that are table indexes (passed as excludedFields)
+ * - undefined/null fields (nothing to encrypt)
  */
 function getEncryptableFields(
   obj: Record<string, unknown>,
@@ -100,7 +100,7 @@ function getEncryptableFields(
 }
 
 // ============================================================================
-// CHIFFREMENT D'UN OBJET
+// OBJECT ENCRYPTION
 // ============================================================================
 
 function encryptObject(
@@ -131,12 +131,12 @@ export function decryptObject(
 
   for (const field of Object.keys(obj)) {
     let value = obj[field];
-    // Boucle pour gérer le double-chiffrement (artefact migration v8 :
-    // investigations pas dans DEFAULT_ENCRYPTED_TABLES → lecture brute,
-    // écriture vers dossiers → re-chiffrement par le middleware)
+    // Loop to undo double encryption (v8 migration artifact:
+    // investigations not in DEFAULT_ENCRYPTED_TABLES → raw read,
+    // write to dossiers → encrypted again by the middleware)
     while (isEncrypted(value)) {
       const decrypted = decryptValue(unwrapEncrypted(value as string), key);
-      if (decrypted === null) break; // garder chiffré si échec
+      if (decrypted === null) break; // keep encrypted on failure
       value = decrypted;
     }
     result[field] = value;
@@ -146,13 +146,13 @@ export function decryptObject(
 }
 
 // ============================================================================
-// EXTRACTION DES CHAMPS INDEXÉS (excluant la clé primaire et les index)
+// INDEXED FIELDS (primary key and indexes, excluded from encryption)
 // ============================================================================
 
 function extractIndexedFields(schema: { primaryKey: { keyPath: string | string[] | null }; indexes: Array<{ keyPath: string | string[] | null }> }): Set<string> {
   const fields = new Set<string>();
 
-  // Clé primaire
+  // Primary key
   const pk = schema.primaryKey.keyPath;
   if (typeof pk === 'string') {
     fields.add(pk);
@@ -178,11 +178,11 @@ function extractIndexedFields(schema: { primaryKey: { keyPath: string | string[]
 // ============================================================================
 
 /**
- * Crée un middleware DBCore qui chiffre/déchiffre les champs non-indexés
- * des tables spécifiées.
+ * Creates a DBCore middleware that encrypts/decrypts the non-indexed fields
+ * of the given tables.
  *
  * @param dek - Data Encryption Key (Uint8Array 32 bytes, tweetnacl)
- * @param encryptedTables - Noms des tables à chiffrer (toutes si non spécifié)
+ * @param encryptedTables - Names of the tables to encrypt (all when omitted)
  */
 export function createEncryptionMiddleware(
   dek: Uint8Array,
@@ -197,8 +197,8 @@ export function createEncryptionMiddleware(
         table(tableName: string): DBCoreTable {
           const downTable = down.table(tableName);
 
-          // Ne pas chiffrer les tables de métadonnées internes
-          // ou les tables non listées
+          // Do not encrypt the internal metadata tables
+          // or the unlisted tables
           if (
             tableName === '_encryptionMeta' ||
             (encryptedTables && !encryptedTables.has(tableName))
@@ -213,7 +213,7 @@ export function createEncryptionMiddleware(
             ...downTable,
 
             // ----------------------------------------------------------------
-            // ÉCRITURE : chiffrer avant de stocker
+            // WRITE: encrypt before storing
             // ----------------------------------------------------------------
             async mutate(req: DBCoreMutateRequest) {
               if (req.type === 'add' || req.type === 'put') {
@@ -226,7 +226,7 @@ export function createEncryptionMiddleware(
             },
 
             // ----------------------------------------------------------------
-            // LECTURE : déchiffrer après récupération
+            // READ: decrypt after fetching
             // ----------------------------------------------------------------
             async get(req) {
               const result = await downTable.get(req);
@@ -255,9 +255,9 @@ export function createEncryptionMiddleware(
               const cursor = await downTable.openCursor(req);
               if (!cursor) return null;
 
-              // Wrapper sur le curseur pour déchiffrer à la volée.
-              // On utilise un Proxy pour intercepter uniquement 'value'
-              // et laisser toutes les autres propriétés passer au curseur original.
+              // Cursor wrapper that decrypts on the fly.
+              // A Proxy intercepts only 'value'
+              // and passes every other property through to the original cursor.
               return new Proxy(cursor, {
                 get(target, prop) {
                   if (prop === 'value') {
@@ -277,22 +277,22 @@ export function createEncryptionMiddleware(
 }
 
 // ============================================================================
-// TABLES À CHIFFRER (configuration par défaut)
+// TABLES TO ENCRYPT (default configuration)
 // ============================================================================
 
 /**
- * Crée un middleware de chiffrement destiné à être appliqué sur une instance
- * Dexie externe (ex. un plugin). Même algorithme que createEncryptionMiddleware,
- * avec une liste de tables explicite.
+ * Creates an encryption middleware meant for an external Dexie instance
+ * (e.g. a plugin). Same algorithm as createEncryptionMiddleware,
+ * with an explicit table list.
  *
- * La DEK ne transite pas en clair — elle est encapsulée dans la closure du
- * middleware retourné.
+ * The DEK is never exposed — it stays inside the closure of the
+ * returned middleware.
  */
 export { createEncryptionMiddleware as createEncryptionMiddlewareForDexie };
 
 /**
- * Tables qui contiennent des données à caractère personnel.
- * Les tables techniques (_encryptionMeta, tagSets) ne sont pas chiffrées.
+ * Tables holding personal data.
+ * Technical tables (_encryptionMeta, tagSets) are not encrypted.
  */
 export const DEFAULT_ENCRYPTED_TABLES = new Set([
   'dossiers',

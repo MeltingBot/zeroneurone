@@ -1,13 +1,13 @@
 /**
- * EncryptedIndexeddbPersistence — Fork de y-indexeddb avec chiffrement at-rest
+ * EncryptedIndexeddbPersistence — fork of y-indexeddb with at-rest encryption
  *
- * Chiffre chaque update Yjs (Uint8Array) avant stockage dans IndexedDB,
- * et déchiffre à la lecture. Même API que IndexeddbPersistence de y-indexeddb.
+ * Encrypts each Yjs update (Uint8Array) before storing it in IndexedDB,
+ * and decrypts it on read. Same API as y-indexeddb's IndexeddbPersistence.
  *
- * Si aucune clé n'est fournie, se comporte exactement comme y-indexeddb standard.
+ * Without a key, behaves exactly like standard y-indexeddb.
  *
- * Algorithme : tweetnacl secretbox (XSalsa20-Poly1305)
- * Format stocké : [nonce (24 bytes)] + [ciphertext]
+ * Algorithm: tweetnacl secretbox (XSalsa20-Poly1305)
+ * Stored layout: [nonce (24 bytes)] + [ciphertext]
  */
 
 import * as Y from 'yjs';
@@ -22,12 +22,12 @@ const UPDATES_STORE_NAME = 'updates';
 export const PREFERRED_TRIM_SIZE = 50;
 
 // ============================================================================
-// CHIFFREMENT / DÉCHIFFREMENT DES UPDATES YJS
+// YJS UPDATE ENCRYPTION / DECRYPTION
 // ============================================================================
 
 /**
- * Chiffre un update Yjs (Uint8Array) avec tweetnacl secretbox.
- * Format : [nonce (24 bytes)] + [ciphertext]
+ * Encrypts a Yjs update (Uint8Array) with tweetnacl secretbox.
+ * Layout: [nonce (24 bytes)] + [ciphertext]
  */
 function encryptUpdate(update: Uint8Array, key: Uint8Array): Uint8Array {
   const nonce = randomBytes(secretbox.nonceLength);
@@ -40,8 +40,8 @@ function encryptUpdate(update: Uint8Array, key: Uint8Array): Uint8Array {
 }
 
 /**
- * Déchiffre un update Yjs chiffré par encryptUpdate.
- * Retourne null si le déchiffrement échoue (données corrompues ou en clair).
+ * Decrypts a Yjs update encrypted by encryptUpdate.
+ * Returns null when decryption fails (corrupted or plaintext data).
  */
 function decryptUpdate(data: Uint8Array, key: Uint8Array): Uint8Array | null {
   try {
@@ -55,13 +55,13 @@ function decryptUpdate(data: Uint8Array, key: Uint8Array): Uint8Array | null {
 }
 
 // ============================================================================
-// DÉTECTION DES DONNÉES CHIFFRÉES
+// ENCRYPTED DATA DETECTION
 // ============================================================================
 
-// Marqueur magique : premier byte des données chiffrées
-// XSalsa20 produit des bytes aléatoires, on utilise un marqueur dans l'update
-// Pour distinguer les updates chiffrés des updates en clair (migration)
-const MAGIC_BYTE = 0xE2; // arbitraire, peu probable en tête d'un update Yjs valide
+// Magic marker: first byte of the encrypted data
+// XSalsa20 output looks random, so a marker in the update
+// tells encrypted updates from plaintext ones (migration)
+const MAGIC_BYTE = 0xE2; // arbitrary, unlikely as the first byte of a valid Yjs update
 
 function isEncryptedUpdate(data: Uint8Array): boolean {
   return data.length > 1 && data[0] === MAGIC_BYTE && data[1] === MAGIC_BYTE;
@@ -80,7 +80,7 @@ function unwrapEncryptedUpdate(wrapped: Uint8Array): Uint8Array {
 }
 
 // ============================================================================
-// FETCH / STORE AVEC CHIFFREMENT
+// FETCH / STORE WITH ENCRYPTION
 // ============================================================================
 
 type BeforeCallback = (updatesStore: IDBObjectStore) => void;
@@ -146,10 +146,10 @@ function storeStateEncrypted(
     // decrypted would be lost for good.
     if (persistence._undecryptableCount > 0) return;
     if (forceStore || persistence._dbsize >= PREFERRED_TRIM_SIZE) {
-      // Compresser en un seul snapshot
+      // Compact into a single snapshot
       let snapshot = Y.encodeStateAsUpdate(persistence.doc);
 
-      // Chiffrer le snapshot si clé disponible
+      // Encrypt the snapshot when a key is set
       if (persistence._encryptionKey) {
         const encrypted = encryptUpdate(snapshot, persistence._encryptionKey);
         snapshot = wrapEncryptedUpdate(encrypted);
@@ -165,13 +165,13 @@ function storeStateEncrypted(
 }
 
 // ============================================================================
-// CLASSE PRINCIPALE
+// MAIN CLASS
 // ============================================================================
 
 export class EncryptedIndexeddbPersistence extends Observable<string> {
   readonly doc: Y.Doc;
   readonly name: string;
-  /** Clé de chiffrement (32 bytes). Null = mode non chiffré (compatible y-indexeddb) */
+  /** Encryption key (32 bytes). Null = unencrypted mode (y-indexeddb compatible) */
   readonly _encryptionKey: Uint8Array | null;
 
   _dbref: number = 0;
@@ -215,7 +215,7 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
       this.db = db;
 
       const beforeApplyUpdatesCallback = (updatesStore: IDBObjectStore) => {
-        // Stocker l'état courant avant d'appliquer les updates de la DB
+        // Store the current state before applying the updates from the DB
         let currentState = Y.encodeStateAsUpdate(doc);
         if (this._encryptionKey) {
           const encrypted = encryptUpdate(currentState, this._encryptionKey);
@@ -243,7 +243,7 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
           [UPDATES_STORE_NAME]
         );
 
-        // Chiffrer l'update avant stockage
+        // Encrypt the update before storing it
         let dataToStore = update;
         if (this._encryptionKey) {
           const encrypted = encryptUpdate(update, this._encryptionKey);
@@ -323,7 +323,7 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
 }
 
 // ============================================================================
-// MIGRATION : base en clair → base chiffrée
+// MIGRATION: plaintext database → encrypted database
 // ============================================================================
 
 /** Raised when a stored update cannot be read: the rewrite is abandoned. */
@@ -423,11 +423,11 @@ export async function rewriteStoredUpdates(
 }
 
 /**
- * Migre une base y-indexeddb existante en clair vers un format chiffré.
- * Lit tous les updates, les supprime, et les réécrit chiffrés.
+ * Migrates an existing plaintext y-indexeddb database to the encrypted format.
+ * Reads every update, deletes them, and writes them back encrypted.
  *
- * @param dbName - Nom de la base IndexedDB (ex: "zeroneurone-ydoc-{uuid}")
- * @param encryptionKey - Clé de chiffrement (32 bytes)
+ * @param dbName - IndexedDB database name (e.g. "zeroneurone-ydoc-{uuid}")
+ * @param encryptionKey - Encryption key (32 bytes)
  */
 export async function migrateToEncrypted(
   dbName: string,
@@ -448,12 +448,12 @@ export async function migrateToEncrypted(
     getReq.onsuccess = () => {
       const updates: Uint8Array[] = getReq.result;
 
-      // Supprimer tous les updates existants
+      // Delete every existing update
       const clearReq = store.clear();
       clearReq.onsuccess = () => {
-        // Ré-écrire chiffrés
+        // Write them back encrypted
         for (const update of updates) {
-          // Ne pas re-chiffrer si déjà chiffré
+          // Do not encrypt again when already encrypted
           if (!isEncryptedUpdate(update)) {
             const encrypted = encryptUpdate(update, encryptionKey);
             store.add(wrapEncryptedUpdate(encrypted));
@@ -473,11 +473,11 @@ export async function migrateToEncrypted(
 }
 
 /**
- * Compte les updates qui ne pourront pas être déchiffrés, sans rien modifier.
+ * Counts the updates that cannot be decrypted, without changing anything.
  *
- * migrateToPlaintext efface le store avant de réécrire : ce qui n'est pas
- * déchiffrable est perdu définitivement. Ce comptage préalable permet de
- * prévenir l'utilisateur avant toute écriture.
+ * migrateToPlaintext clears the store before rewriting: whatever cannot
+ * be decrypted is lost for good. Counting first lets the user be
+ * warned before anything is written.
  */
 export async function countUndecryptableUpdates(
   dbName: string,
@@ -510,7 +510,7 @@ export async function countUndecryptableUpdates(
 }
 
 /**
- * Migre une base chiffrée vers un format en clair (désactivation du chiffrement).
+ * Migrates an encrypted database to plaintext (encryption disabled).
  */
 export async function migrateToPlaintext(
   dbName: string,

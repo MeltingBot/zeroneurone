@@ -158,7 +158,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
             }
           }
           if (hasAny) action.redo.tabMembership = membership;
-          // Delete created elements
           await store.deleteElements(action.redo.elementIds);
         }
         // Also delete created links (for paste/duplicate operations)
@@ -501,7 +500,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
       case 'move-elements':
       case 'move-element':
-        // Apply new positions
         if (action.redo.positions) {
           await store.updateElementPositions(action.redo.positions);
         }
@@ -530,7 +528,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
             });
           }
         }
-        // Delete the group element
         if (action.redo.elementIds) {
           await store.deleteElements(action.redo.elementIds);
         }

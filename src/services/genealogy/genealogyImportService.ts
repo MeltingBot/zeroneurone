@@ -75,17 +75,14 @@ export async function importGenealogyFile(
     ...options,
   };
 
-  // Parse the file
   const data = await parseGenealogyFile(file);
 
-  // Convert to ZeroNeurone format
   const { elements, links, warnings } = convertToZeroNeurone(
     data,
     dossierId,
     mergedOptions
   );
 
-  // Apply layout if requested
   if (mergedOptions.autoLayout) {
     applyGenealogyLayout(elements, links, mergedOptions);
 
@@ -120,14 +117,12 @@ export async function getGenealogyImportPreview(
 }> {
   const data = await parseGenealogyFile(file);
 
-  // Check for coordinates
   const hasCoordinates = data.persons.some(
     p =>
       (p.birthPlace?.lat != null && p.birthPlace?.lng != null) ||
       (p.deathPlace?.lat != null && p.deathPlace?.lng != null)
   );
 
-  // Find date range
   let earliest: number | undefined;
   let latest: number | undefined;
 

@@ -512,7 +512,6 @@ function yMapToEvent(ymap: Y.Map<unknown>): ElementEvent {
   const geoMap = ymap.get('geo');
   let geoRaw: unknown = undefined;
   if (geoMap instanceof Y.Map) {
-    // Convert Y.Map to plain object
     geoRaw = geoMap.toJSON();
   } else if (geoMap && typeof geoMap === 'object') {
     geoRaw = geoMap;

@@ -219,10 +219,8 @@ class ExportService {
         const ext = getExtension(asset.filename);
         const archivePath = `assets/${generateUUID()}.${ext}`;
 
-        // Add file to ZIP
         zip.file(archivePath, arrayBuffer);
 
-        // Store metadata
         assetsMeta.push({
           id: asset.id,
           filename: asset.filename,
@@ -257,7 +255,6 @@ class ExportService {
       }
     }
 
-    // Generate ZIP blob
     reportExportProgress('compress', 0, 100);
     await yieldForPaint();
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }, ({ percent }) => reportExportProgress('compress', percent, 100));
@@ -338,7 +335,6 @@ class ExportService {
 
     let md = `# ${report.title || 'Rapport'}\n\n`;
 
-    // Sort sections by order
     const sortedSections = [...report.sections].sort((a, b) => a.order - b.order);
 
     for (const section of sortedSections) {
@@ -419,7 +415,6 @@ class ExportService {
 
     const rows: string[][] = [];
 
-    // Add elements
     for (const el of rowElements) {
       const baseRow = [
         'element',
@@ -446,7 +441,6 @@ class ExportService {
         ...this.evaluationCSV(el),
         '', // fuseau (no dated bounds on element rows)
       ];
-      // Add property values
       const propsMap = new Map(el.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(esc(propsMap.get(key) ?? ''));
@@ -454,7 +448,6 @@ class ExportService {
       rows.push(baseRow);
     }
 
-    // Add links
     for (const link of rowLinks) {
       const baseRow = [
         'lien',
@@ -481,7 +474,6 @@ class ExportService {
         ...this.evaluationCSV(link),
         link.dateRange?.timeZone ?? '', // fuseau
       ];
-      // Add property values
       const propsMap = new Map(link.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(esc(propsMap.get(key) ?? ''));
@@ -517,7 +509,6 @@ class ExportService {
           '', '', '', // cotation_echelle, cotation_source, cotation_info
           ev.timeZone ?? '', // fuseau
         ];
-        // Add property values
         const propsMap = new Map(ev.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
         for (const key of sortedPropertyKeys) {
           baseRow.push(esc(propsMap.get(key) ?? ''));
@@ -562,7 +553,7 @@ class ExportService {
       ['event', 'Escale Marseille', 'Jean Dupont', '', 'Vu au port', '', '', 'Filature', '2024-01-20', '', '2024-01-21', '43.2965', '5.3698', '', '', '', '', '', '', '', '', '', '', ''],
       ['event', 'Changement de vehicule', 'Jean Dupont', '', '', '', '', 'Enquete', '2024-02-03', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
     ];
-    // Excel-style CSV : delimiter ';', tous les champs entre guillemets (avec "" pour échapper), lignes terminées en CRLF
+    // Excel-style CSV: ';' delimiter, every field quoted ("" to escape), CRLF line endings
     const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;
     const formatRow = (row: string[]) => row.map(quote).join(';');
     return [formatRow(headers), ...examples.map(formatRow)].join('\r\n') + '\r\n';
@@ -723,17 +714,14 @@ ${edges}
     elements: Element[],
     links: Link[]
   ): string {
-    // Build element map for link endpoint lookup
     const elementMap = new Map(elements.map(el => [el.id, el]));
 
-    // Filter elements with valid geo coordinates
     const geoElements = elements.filter(el => {
       if (!el.geo) return false;
       const c = getGeoCenter(el.geo);
       return c.lat !== 0 || c.lng !== 0;
     });
 
-    // Build features from elements
     const elementFeatures = geoElements.map(el => {
       const geo = el.geo!;
       let geometry: GeoJSON.Geometry;

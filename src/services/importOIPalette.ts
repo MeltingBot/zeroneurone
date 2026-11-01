@@ -285,7 +285,6 @@ export async function importOIPalette(
       }
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
@@ -364,7 +363,6 @@ async function convertPaletteNode(
           // Skip null/empty values
           if (entry.value === null || entry.value === undefined || entry.value === '') continue;
 
-          // Add as property
           const propType = entry.type === 'url' ? 'link' :
                            entry.type === 'int' || entry.type === 'float' ? 'number' : 'text';
           properties.push({
@@ -453,7 +451,6 @@ async function convertPaletteNode(
         }
       }
 
-      // Add module identifier
       if (modResult?.module) {
         properties.push({ key: 'module_id', value: modResult.module, type: 'text' });
       }

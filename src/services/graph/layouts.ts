@@ -615,7 +615,6 @@ function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: S
 
   progress(20, 'building dagre graph');
 
-  // Build dagre graph
   const g = new dagre.graphlib.Graph();
   g.setGraph({
     rankdir: 'TB',
@@ -637,7 +636,6 @@ function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: S
 
   progress(40, 'adding edges');
 
-  // Build direction lookup from links
   const linkDirectionMap = new Map<string, string>();
   for (const link of links) {
     linkDirectionMap.set(`${link.fromId}->${link.toId}`, link.direction || 'forward');
