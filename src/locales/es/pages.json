@@ -193,7 +193,8 @@
       "copyAsDot": "Copiar como DOT",
       "selectLinks": "Seleccionar sus enlaces",
       "selectAllLinks": "Seleccionar todos los enlaces",
-      "suggestLinks": "Sugerir enlaces"
+      "suggestLinks": "Sugerir enlaces",
+      "openDetail": "Abrir el detalle"
     },
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",

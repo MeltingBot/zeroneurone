@@ -193,7 +193,8 @@
       "copyAsDot": "Als DOT kopieren",
       "selectLinks": "Ihre Verbindungen auswählen",
       "selectAllLinks": "Alle Verbindungen auswählen",
-      "suggestLinks": "Verbindungen vorschlagen"
+      "suggestLinks": "Verbindungen vorschlagen",
+      "openDetail": "Details öffnen"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",

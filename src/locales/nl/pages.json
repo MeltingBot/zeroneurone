@@ -193,7 +193,8 @@
       "copyAsDot": "Kopiëren als DOT",
       "selectLinks": "Hun verbindingen selecteren",
       "selectAllLinks": "Alle verbindingen selecteren",
-      "suggestLinks": "Verbindingen voorstellen"
+      "suggestLinks": "Verbindingen voorstellen",
+      "openDetail": "Details openen"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",

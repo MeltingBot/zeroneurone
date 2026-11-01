@@ -12,6 +12,11 @@
 - **Extrémités d'un lien** — un clic sur un lien dont une extrémité est
   hors de la vue affiche, à l'endroit du clic, la source, le libellé et la
   cible. Disparaît au clic suivant, avec Échap ou quand la vue bouge.
+- **Menu contextuel** — l'en-tête du menu d'un lien montre aussi
+  source, libellé et cible ; un clic sur l'en-tête (lien ou élément seul)
+  ouvre son panneau de détail. Le clic droit sur un lien dessiné en canvas
+  (liens au-delà de 800, liens de passage) ouvre le menu du lien, et non
+  plus celui du fond.
 
 ## 2.88.0
 

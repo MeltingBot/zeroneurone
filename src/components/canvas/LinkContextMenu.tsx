@@ -2,13 +2,19 @@ import { memo } from 'react';
 import { Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
+import type { Element, Link } from '../../types';
+import { LinkEndsSummary } from './LinkEndsSummary';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
 import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
 
 interface LinkContextMenuProps {
   x: number;
   y: number;
-  linkLabel: string;
+  link: Link;
+  from: Element | undefined;
+  to: Element | undefined;
+  /** Selects the link and opens its detail panel */
+  onOpenDetail: () => void;
   onEditLabel: () => void;
   /** Present only when the link has a manual route offset in the current route style */
   onResetRoute?: () => void;
@@ -21,7 +27,10 @@ interface LinkContextMenuProps {
 function LinkContextMenuComponent({
   x,
   y,
-  linkLabel,
+  link,
+  from,
+  to,
+  onOpenDetail,
   onEditLabel,
   onResetRoute,
   onDelete,
@@ -39,11 +48,9 @@ function LinkContextMenuComponent({
       y={y}
       minWidthClass="min-w-44"
       onClose={onClose}
-      header={
-        <span className="text-xs text-text-secondary truncate block max-w-56">
-          {linkLabel || cm('noLabel')}
-        </span>
-      }
+      header={<LinkEndsSummary link={link} from={from} to={to} />}
+      onHeaderClick={onOpenDetail}
+      headerTitle={cm('openDetail')}
       sections={[
         [
           { id: 'edit-label', label: cm('editLinkLabel'), icon: Pencil, onSelect: onEditLabel },

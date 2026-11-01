@@ -416,6 +416,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
             <input
               type="text"
               value={label}
+              data-testid="link-label-input"
               onChange={(e) => {
                 editingLinkIdRef.current = link.id;
                 setLabel(e.target.value);

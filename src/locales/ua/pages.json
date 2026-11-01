@@ -193,7 +193,8 @@
       "copyAsDot": "Копіювати як DOT",
       "selectLinks": "Виділити їхні зв'язки",
       "selectAllLinks": "Виділити всі зв'язки",
-      "suggestLinks": "Запропонувати зв'язки"
+      "suggestLinks": "Запропонувати зв'язки",
+      "openDetail": "Відкрити деталі"
     },
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",
