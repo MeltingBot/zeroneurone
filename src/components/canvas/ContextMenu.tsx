@@ -262,7 +262,7 @@ function ContextMenuComponent({
       header={
         <span className="text-xs font-medium text-text-primary truncate block max-w-56">
           {hasTwoSelected
-            ? `${elementLabel} ↔ ${otherSelectedLabel}`
+            ? `${elementLabel}, ${otherSelectedLabel}`
             : selectedCount > 2
               ? t('dossier.toolbar.selectedCount', { count: selectedCount })
               : elementLabel}
