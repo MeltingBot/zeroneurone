@@ -1,6 +1,6 @@
 # Changelog
 
-## Non publié
+## 2.88.1
 
 ### Canvas : graphes denses en zoom fort
 
