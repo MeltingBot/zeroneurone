@@ -166,7 +166,7 @@ For a plain Apache host, including under a sub-directory (`VITE_BASE=/Zeroneuron
 
 > In async mode, keep the share link: it is the only way to join the session and decrypt the data.
 
-The bundled relay server (`relay-server.js`) handles real-time and async mode:
+The bundled relay server (`relay/index.js`) handles real-time and async mode:
 
 ```bash
 npm run relay-server   # ws://localhost:4444

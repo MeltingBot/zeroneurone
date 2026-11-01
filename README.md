@@ -166,7 +166,7 @@ Pour un hébergement Apache classique, y compris dans un sous-répertoire (`VITE
 
 > En mode asynchrone, conservez le lien de partage : c'est le seul moyen de rejoindre la session et de déchiffrer les données.
 
-Le serveur relais fourni (`relay-server.js`) gère le temps réel et le mode asynchrone :
+Le serveur relais fourni (`relay/index.js`) gère le temps réel et le mode asynchrone :
 
 ```bash
 npm run relay-server   # ws://localhost:4444

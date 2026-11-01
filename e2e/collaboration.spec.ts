@@ -22,7 +22,7 @@ const SERVER = `ws://localhost:${RELAY_PORT}`;
 let relay: ChildProcess;
 
 test.beforeAll(async () => {
-  relay = spawn('node', ['relay-server.js', String(RELAY_PORT)], { stdio: 'ignore' });
+  relay = spawn('node', ['relay/index.js'], { stdio: 'ignore', env: { ...process.env, PORT: String(RELAY_PORT) } });
   // Ready once its port accepts connections
   const deadline = Date.now() + 10_000;
   for (;;) {

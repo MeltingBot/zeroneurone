@@ -31,7 +31,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "sync-server": "y-websocket-server",
-    "relay-server": "node relay-server.js",
+    "relay-server": "node relay/index.js",
     "start": "node server/index.js",
     "docker:generate-lock": "node scripts/generate-docker-lock.mjs",
     "docker:build": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; npm run build:plugins && npm run docker:generate-lock && docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t ${DOCKER_REGISTRY:-zeroneurone}:latest . ; docker build -t ${DOCKER_REGISTRY:-zeroneurone}-relay:latest ./relay",
