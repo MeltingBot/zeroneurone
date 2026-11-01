@@ -116,7 +116,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
     setIsExporting(true);
     setBackupMessage(null);
     try {
-      const blob = await backupService.exportAll();
+      const blob = await backupService.exportAll(setBackupMessage);
       const timestamp = new Date().toISOString().slice(0, 10);
       downloadBlob(blob, `zeroneurone_backup_${timestamp}.zip`);
       // One event per dossier in the backup: each dossier's trace stands on its own
@@ -141,12 +141,16 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
     try {
       const result = await backupService.importAll(file, setBackupMessage);
       if (result.success) {
+        // Dossiers that could not be restored are listed after the summary
         setBackupMessage(
-          t('storage.backup.importSuccess', {
-            dossiers: result.dossiers,
-            elements: result.elements,
-            links: result.links,
-          })
+          [
+            t('storage.backup.importSuccess', {
+              dossiers: result.dossiers,
+              elements: result.elements,
+              links: result.links,
+            }),
+            ...result.errors,
+          ].join('\n')
         );
         await loadStorageInfo();
         onDataChanged?.();
@@ -484,7 +488,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
                   </div>
 
                   {backupMessage && (
-                    <p className="mt-2 text-[10px] text-text-tertiary">{backupMessage}</p>
+                    <p className="mt-2 text-[10px] text-text-tertiary whitespace-pre-line">{backupMessage}</p>
                   )}
 
                   <p className="mt-2 text-[10px] text-text-tertiary">

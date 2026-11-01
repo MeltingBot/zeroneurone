@@ -250,7 +250,18 @@
     "missingBackupJson": "Недійсний архів: відсутній backup.json",
     "backupTooLarge": "Недійсний архів: backup.json завеликий",
     "invalidFormat": "Недійсний формат резервної копії",
-    "incompatibleVersion": "Резервна копія версії {{version}} несумісна з цією версією застосунку (формат {{expected}}). Оновіть ZeroNeurone перед відновленням."
+    "incompatibleVersion": "Резервна копія версії {{version}} несумісна з цією версією застосунку (формат {{expected}}). Оновіть ZeroNeurone перед відновленням.",
+    "progress": {
+      "reading": "Читання архіву…",
+      "files": "Імпорт файлів…",
+      "elements": "Імпорт елементів…",
+      "writing": "Запис даних…",
+      "done": "Імпорт завершено",
+      "exportDossier": "Справа {{index}} / {{count}}: {{name}}",
+      "importDossier": "Відновлення {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» відсутня в архіві",
+    "dossierFailed": "«{{name}}» не відновлено: {{message}}"
   },
   "csv": {
     "empty": "Порожній файл CSV",

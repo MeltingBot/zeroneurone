@@ -6,9 +6,9 @@ import { MoreHorizontal, Trash2, Edit2, Upload, Star, Tag, Archive } from 'lucid
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
 import { formatRelativeTime } from '../../utils';
 import type { Dossier } from '../../types';
-import { dossierRepository, elementRepository, linkRepository, reportRepository, tabRepository } from '../../db/repositories';
+import { dossierRepository } from '../../db/repositories';
 import { exportService } from '../../services/exportService';
-import { fileService } from '../../services/fileService';
+import { loadDossierSnapshot } from '../../services/dossierSnapshot';
 import { toast } from '../../stores';
 
 interface DossierCardProps {
@@ -60,12 +60,10 @@ export function DossierCard({
     try {
       // Progress shown in a window while the archive is built
       await withExportProgress(async () => {
-        const elements = await elementRepository.getByDossier(dossier.id);
-        const links = await linkRepository.getByDossier(dossier.id);
-        const assets = await fileService.getAssetsByDossier(dossier.id);
-        const report = await reportRepository.getByDossierWithYDoc(dossier.id);
-        const tabs = await tabRepository.getByDossier(dossier.id);
-        await exportService.exportDossier('zip', dossier, elements, links, assets, report, tabs);
+        const s = await loadDossierSnapshot(dossier.id);
+        await exportService.exportDossier(
+          'zip', dossier, s.elements, s.links, s.assets, s.report, s.tabs, s.views, s.queries, s.queryHistory, s.comments,
+        );
       });
       toast.success(t('home.card.exportSuccess'));
     } catch (error) {

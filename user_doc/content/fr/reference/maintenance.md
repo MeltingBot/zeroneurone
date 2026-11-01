@@ -21,7 +21,9 @@ Pour l'ouvrir : icône **disque dur** dans la barre d'outils de la page d'accuei
 
 ## Onglet Sauvegarde
 
-**Exporter tout** produit une archive ZIP contenant tous les dossiers, leurs fichiers et les jeux de tags. **Importer** relit une telle archive : son contenu est **ajouté** aux dossiers existants, rien n'est remplacé.
+**Exporter tout** produit une archive ZIP qui contient l'export ZIP complet de chaque dossier : éléments, liens, groupes, onglets, commentaires, requêtes enregistrées, vues, rapport, fichiers joints, options, clôture et rétention, et données des extensions. S'y ajoutent les jeux de tags, les icônes personnalisées et les modèles d'import. **Importer** relit une telle archive : son contenu est **ajouté** aux dossiers existants, rien n'est remplacé. Un dossier qui ne peut pas être restauré est signalé, les autres le sont quand même.
+
+Les sauvegardes faites avant ZeroNeurone 2.88 restent lisibles, mais elles ne contenaient ni les onglets, ni les groupes, ni les commentaires, ni les requêtes enregistrées.
 
 {{< hint warning >}}
 Le navigateur reste un stockage fragile (vidage du cache, réinstallation). Une sauvegarde complète régulière, conservée hors du navigateur, est la seule protection contre une perte.

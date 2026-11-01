@@ -248,7 +248,18 @@
     "missingBackupJson": "Arxiu no vàlid: manca backup.json",
     "backupTooLarge": "Arxiu no vàlid: backup.json massa gran",
     "invalidFormat": "Format de còpia de seguretat no vàlid",
-    "incompatibleVersion": "Còpia de seguretat en versió {{version}}, incompatible amb aquesta versió de l'aplicació (format {{expected}}). Actualitzeu ZeroNeurone abans de restaurar."
+    "incompatibleVersion": "Còpia de seguretat en versió {{version}}, incompatible amb aquesta versió de l'aplicació (format {{expected}}). Actualitzeu ZeroNeurone abans de restaurar.",
+    "progress": {
+      "reading": "S'està llegint l'arxiu…",
+      "files": "S'estan important els fitxers…",
+      "elements": "S'estan important els elements…",
+      "writing": "S'estan escrivint les dades…",
+      "done": "Importació acabada",
+      "exportDossier": "Expedient {{index}} / {{count}}: {{name}}",
+      "importDossier": "Restauració {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» no és a l'arxiu",
+    "dossierFailed": "«{{name}}» no restaurat: {{message}}"
   },
   "csv": {
     "empty": "Fitxer CSV buit",

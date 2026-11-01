@@ -2,6 +2,32 @@
 
 ## Non publié
 
+### Sauvegarde complète refaite
+
+- **Rien ne se perd plus** — la sauvegarde (Stockage > Sauvegarde) contient
+  l'export ZIP complet de chaque dossier, lu dans ses données de
+  synchronisation (qui font foi), même pour un dossier fermé : groupes,
+  onglets, commentaires, requêtes enregistrées, vues, rapport, fichiers
+  joints, options, clôture et rétention, données des extensions ; plus les
+  jeux de tags, les icônes personnalisées et les modèles d'import. Jusqu'à
+  2.87.0, elle ne gardait ni les onglets, ni les groupes, ni les
+  commentaires, ni les requêtes enregistrées, ni les icônes personnalisées.
+- **Restauration dossier par dossier** — un dossier qui échoue est signalé
+  et ne laisse rien derrière lui ; les autres sont restaurés. Un dossier
+  clôturé ou en rétention le reste après restauration. Les anciennes
+  sauvegardes (format 1) restent lisibles.
+- **Export ZIP depuis la liste des dossiers** — il contient désormais les
+  commentaires, les requêtes enregistrées et les vues, comme l'export fait
+  dossier ouvert.
+
+### Performances
+
+- **Écritures lentes sur un navigateur neuf avec des extensions** — dans un
+  profil Chromium neuf, une base créée par une extension avant celle de
+  ZeroNeurone ralentissait durablement toutes ses écritures (environ 2,5
+  fois, par exemple annuler une grosse suppression). ZeroNeurone crée
+  maintenant sa base avant de charger les extensions.
+
 ### Plugins
 
 - **Membres internes des stores retirés** — fonctions et états jamais

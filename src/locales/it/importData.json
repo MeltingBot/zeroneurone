@@ -248,7 +248,18 @@
     "missingBackupJson": "Archivio non valido: backup.json mancante",
     "backupTooLarge": "Archivio non valido: backup.json troppo grande",
     "invalidFormat": "Formato di backup non valido",
-    "incompatibleVersion": "Backup in versione {{version}}, incompatibile con questa versione dell'applicazione (formato {{expected}}). Aggiornare ZeroNeurone prima del ripristino."
+    "incompatibleVersion": "Backup in versione {{version}}, incompatibile con questa versione dell'applicazione (formato {{expected}}). Aggiornare ZeroNeurone prima del ripristino.",
+    "progress": {
+      "reading": "Lettura dell'archivio…",
+      "files": "Importazione dei file…",
+      "elements": "Importazione degli elementi…",
+      "writing": "Scrittura dei dati…",
+      "done": "Importazione completata",
+      "exportDossier": "Fascicolo {{index}} / {{count}}: {{name}}",
+      "importDossier": "Ripristino {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» assente dall'archivio",
+    "dossierFailed": "«{{name}}» non ripristinato: {{message}}"
   },
   "csv": {
     "empty": "File CSV vuoto",

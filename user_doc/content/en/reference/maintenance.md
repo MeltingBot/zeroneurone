@@ -21,7 +21,9 @@ To open it: **hard drive** icon in the home page toolbar.
 
 ## Backup tab
 
-**Export all** produces a ZIP archive with every dossier, its files and the tag sets. **Import** reads such an archive back: its content is **added** to the existing dossiers, nothing is replaced.
+**Export all** produces a ZIP archive holding the complete ZIP export of each dossier: elements, links, groups, tabs, comments, saved queries, views, report, attached files, options, closure and retention, and extension data. The tag sets, custom icons and import templates come with it. **Import** reads such an archive back: its content is **added** to the existing dossiers, nothing is replaced. A dossier that cannot be restored is reported; the others are restored anyway.
+
+Backups made before ZeroNeurone 2.88 remain readable, but they held no tabs, groups, comments or saved queries.
 
 {{< hint warning >}}
 The browser remains fragile storage (cache clearing, reinstallation). A regular full backup, kept outside the browser, is the only protection against loss.

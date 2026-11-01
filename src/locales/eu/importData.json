@@ -248,7 +248,18 @@
     "missingBackupJson": "Artxibo baliogabea: backup.json falta da",
     "backupTooLarge": "Artxibo baliogabea: backup.json handiegia da",
     "invalidFormat": "Babeskopia-formatu baliogabea",
-    "incompatibleVersion": "{{version}} bertsioko babeskopia, aplikazioaren bertsio honekin bateraezina (formatua: {{expected}}). Eguneratu ZeroNeurone leheneratu aurretik."
+    "incompatibleVersion": "{{version}} bertsioko babeskopia, aplikazioaren bertsio honekin bateraezina (formatua: {{expected}}). Eguneratu ZeroNeurone leheneratu aurretik.",
+    "progress": {
+      "reading": "Artxiboa irakurtzen…",
+      "files": "Fitxategiak inportatzen…",
+      "elements": "Elementuak inportatzen…",
+      "writing": "Datuak idazten…",
+      "done": "Inportazioa amaituta",
+      "exportDossier": "Espedientea {{index}} / {{count}}: {{name}}",
+      "importDossier": "Leheneratzea {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» ez dago artxiboan",
+    "dossierFailed": "«{{name}}» ez da leheneratu: {{message}}"
   },
   "csv": {
     "empty": "CSV fitxategi hutsa",

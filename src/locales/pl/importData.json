@@ -250,7 +250,18 @@
     "missingBackupJson": "Nieprawidłowe archiwum: brak backup.json",
     "backupTooLarge": "Nieprawidłowe archiwum: backup.json jest zbyt duży",
     "invalidFormat": "Nieprawidłowy format kopii zapasowej",
-    "incompatibleVersion": "Kopia zapasowa w wersji {{version}}, niezgodna z tą wersją aplikacji (format {{expected}}). Zaktualizuj ZeroNeurone przed przywróceniem."
+    "incompatibleVersion": "Kopia zapasowa w wersji {{version}}, niezgodna z tą wersją aplikacji (format {{expected}}). Zaktualizuj ZeroNeurone przed przywróceniem.",
+    "progress": {
+      "reading": "Odczyt archiwum…",
+      "files": "Import plików…",
+      "elements": "Import elementów…",
+      "writing": "Zapis danych…",
+      "done": "Import zakończony",
+      "exportDossier": "Teczka {{index}} / {{count}}: {{name}}",
+      "importDossier": "Przywracanie {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "Brak „{{name}}” w archiwum",
+    "dossierFailed": "Nie przywrócono „{{name}}”: {{message}}"
   },
   "csv": {
     "empty": "Pusty plik CSV",

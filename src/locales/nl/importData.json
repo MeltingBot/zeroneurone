@@ -248,7 +248,18 @@
     "missingBackupJson": "Ongeldig archief: backup.json ontbreekt",
     "backupTooLarge": "Ongeldig archief: backup.json te groot",
     "invalidFormat": "Ongeldig back-upformaat",
-    "incompatibleVersion": "Back-up in versie {{version}}, niet compatibel met deze versie van de applicatie (formaat {{expected}}). Werk ZeroNeurone bij voordat u herstelt."
+    "incompatibleVersion": "Back-up in versie {{version}}, niet compatibel met deze versie van de applicatie (formaat {{expected}}). Werk ZeroNeurone bij voordat u herstelt.",
+    "progress": {
+      "reading": "Archief lezen…",
+      "files": "Bestanden importeren…",
+      "elements": "Elementen importeren…",
+      "writing": "Gegevens schrijven…",
+      "done": "Import voltooid",
+      "exportDossier": "Dossier {{index}} / {{count}}: {{name}}",
+      "importDossier": "Herstellen {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "‘{{name}}’ ontbreekt in het archief",
+    "dossierFailed": "‘{{name}}’ niet hersteld: {{message}}"
   },
   "csv": {
     "empty": "Leeg CSV-bestand",
