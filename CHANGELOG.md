@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.88.2
+
+### API plugin : requêtes ZNQuery
+
+- **`api.query`** — un plugin analyse (`parse`) et évalue (`evaluate`) une
+  requête ZNQuery sur le dossier ouvert, sans toucher au panneau Requête,
+  au canevas, à l'historique des requêtes ni à l'événement
+  `query:executed`. L'option `within` limite le résultat à des éléments
+  donnés et aux liens entre eux ; `vocabulary()` liste les champs réservés
+  et les opérateurs. Fonctionnalité `features.queryEngine`, permission
+  `stores:dossier:read`.
+
 ## 2.88.1
 
 ### Canvas : graphes denses en zoom fort
