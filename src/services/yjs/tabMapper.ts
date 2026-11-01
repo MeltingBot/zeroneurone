@@ -7,7 +7,9 @@
 
 import * as Y from 'yjs';
 import type { CanvasTab } from '../../types';
-import { dateToYjs, dateFromYjs } from '../../types/yjs';
+import { dateToYjs, dateFromYjs, yFields, type YStored } from '../../types/yjs';
+
+type YTab = YStored<CanvasTab>;
 
 // ============================================================================
 // TAB -> Y.MAP (FOR MIGRATION - uses primitive values)
@@ -18,7 +20,7 @@ import { dateToYjs, dateFromYjs } from '../../types/yjs';
  * Uses primitive values that can be set before the map is added to a document.
  * Viewport is NOT included — it stays local per user.
  */
-export function tabToYMap(tab: CanvasTab): Y.Map<any> {
+export function tabToYMap(tab: CanvasTab): Y.Map<unknown> {
   const map = new Y.Map();
 
   map.set('id', tab.id);
@@ -42,7 +44,7 @@ export function tabToYMap(tab: CanvasTab): Y.Map<any> {
  * Handles both Y types and primitive values (for backward compatibility).
  * Viewport defaults to {x:0, y:0, zoom:1} since it's not synced.
  */
-export function yMapToTab(ymap: Y.Map<any>): CanvasTab {
+export function yMapToTab(ymap: Y.Map<unknown>): CanvasTab {
   const memberRaw = ymap.get('memberElementIds');
   const excludedRaw = ymap.get('excludedElementIds');
 
@@ -58,15 +60,16 @@ export function yMapToTab(ymap: Y.Map<any>): CanvasTab {
       ? excludedRaw.toArray()
       : [];
 
+  const fields = yFields<YTab>(ymap);
   return {
-    id: ymap.get('id') || '',
-    dossierId: ymap.get('dossierId') || '',
-    name: ymap.get('name') || '',
-    order: ymap.get('order') ?? 0,
+    id: fields.get('id') || '',
+    dossierId: fields.get('dossierId') || '',
+    name: fields.get('name') || '',
+    order: fields.get('order') ?? 0,
     memberElementIds,
     excludedElementIds,
     viewport: { x: 0, y: 0, zoom: 1 }, // Local only — not synced
-    createdAt: dateFromYjs(ymap.get('createdAt')) || new Date(),
-    updatedAt: dateFromYjs(ymap.get('updatedAt')) || new Date(),
+    createdAt: dateFromYjs(fields.get('createdAt')) || new Date(),
+    updatedAt: dateFromYjs(fields.get('updatedAt')) || new Date(),
   };
 }

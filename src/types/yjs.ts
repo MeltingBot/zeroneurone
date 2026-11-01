@@ -3,12 +3,12 @@
  *
  * Y.Doc structure:
  * - meta: Y.Map<string>           → Dossier metadata
- * - elements: Y.Map<Y.Map<any>>   → Elements by ID
- * - links: Y.Map<Y.Map<any>>      → Links by ID
- * - comments: Y.Map<Y.Map<any>>   → Comments by ID
- * - views: Y.Map<Y.Map<any>>      → Saved views
- * - assets: Y.Map<Y.Map<any>>     → Asset metadata (binaries stay in OPFS)
- * - reports: Y.Map<Y.Map<any>>    → Reports by ID (one per dossier)
+ * - elements: Y.Map<Y.Map<unknown>>   → Elements by ID
+ * - links: Y.Map<Y.Map<unknown>>      → Links by ID
+ * - comments: Y.Map<Y.Map<unknown>>   → Comments by ID
+ * - views: Y.Map<Y.Map<unknown>>      → Saved views
+ * - assets: Y.Map<Y.Map<unknown>>     → Asset metadata (binaries stay in OPFS)
+ * - reports: Y.Map<Y.Map<unknown>>    → Reports by ID (one per dossier)
  * - pluginData: Y.Map<entry>       → Plugin data keys declared shared (services/yjs/pluginDataSync.ts)
  */
 
@@ -56,14 +56,14 @@ export const DEFAULT_SYNC_STATE: SyncState = {
  * Typed interface for accessing Y.Doc maps
  */
 export interface YDossier {
-  meta: Y.Map<any>;
-  elements: Y.Map<Y.Map<any>>;
-  links: Y.Map<Y.Map<any>>;
-  comments: Y.Map<Y.Map<any>>;
-  views: Y.Map<Y.Map<any>>;
-  assets: Y.Map<Y.Map<any>>;
-  reports: Y.Map<Y.Map<any>>;
-  tabs: Y.Map<Y.Map<any>>;
+  meta: Y.Map<unknown>;
+  elements: Y.Map<Y.Map<unknown>>;
+  links: Y.Map<Y.Map<unknown>>;
+  comments: Y.Map<Y.Map<unknown>>;
+  views: Y.Map<Y.Map<unknown>>;
+  assets: Y.Map<Y.Map<unknown>>;
+  reports: Y.Map<Y.Map<unknown>>;
+  tabs: Y.Map<Y.Map<unknown>>;
 }
 
 /**
@@ -80,6 +80,34 @@ export function getYMaps(ydoc: Y.Doc): YDossier {
     reports: ydoc.getMap('reports'),
     tabs: ydoc.getMap('tabs'),
   };
+}
+
+/**
+ * Per-key typed read view of a Y.Map. Y.Map has a single value type, so the
+ * mappers describe the shape they write; values from peers are still unchecked,
+ * which is why readers keep their defaults and guards.
+ */
+export interface YFields<T> {
+  get<K extends keyof T & string>(key: K): T[K] | undefined;
+}
+
+/** An entity as written to a Y.Map: dates become ISO strings. */
+export type YStored<T> = {
+  [K in keyof T]: T[K] extends Date
+    ? string
+    : T[K] extends Date | null | undefined
+      ? Exclude<T[K], Date> | string
+      : T[K];
+};
+
+/** Creation/update timestamps kept under an entity's `_meta` */
+export interface YMeta {
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function yFields<T>(ymap: Y.Map<unknown>): YFields<T> {
+  return ymap as unknown as YFields<T>;
 }
 
 // ============================================================================

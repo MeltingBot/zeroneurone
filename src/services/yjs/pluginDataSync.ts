@@ -111,7 +111,7 @@ function rowFromEntry(dossierId: string, entry: SharedEntry): PluginDataRow {
   };
 }
 
-function parse(json: string): any {
+function parse(json: string): unknown {
   try {
     return JSON.parse(json);
   } catch {
@@ -135,7 +135,7 @@ function mirror(dossierId: string, apply: (map: Y.Map<SharedEntry>) => void): bo
   return true;
 }
 
-export function setSharedValue(pluginId: string, dossierId: string, key: string, value: any): Promise<void> {
+export function setSharedValue(pluginId: string, dossierId: string, key: string, value: unknown): Promise<void> {
   return enqueue(async () => {
     const updatedAt = Date.now();
     const json = JSON.stringify(value ?? null);

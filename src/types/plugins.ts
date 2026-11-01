@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type JSZip from 'jszip';
 
 // ─── Context passed to menu extensions ──────────────────────
 
@@ -44,13 +45,13 @@ export interface KeyboardShortcut {
 
 export interface ExportHook {
   name: string;
-  onExport: (zip: any, dossierId: string) => Promise<void>;
+  onExport: (zip: JSZip, dossierId: string) => Promise<void>;
   pluginId?: string;
 }
 
 export interface ImportHook {
   name: string;
-  onImport: (zip: any, dossierId: string) => Promise<void>;
+  onImport: (zip: JSZip, dossierId: string) => Promise<void>;
   pluginId?: string;
 }
 

@@ -225,18 +225,21 @@ export interface DossierRepositoryAPI {
 
 /** Raw pluginData API (requires explicit pluginId — internal use). */
 export interface PluginDataAPI {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
   get: (pluginId: string, dossierId: string, key: string) => Promise<any>;
-  set: (pluginId: string, dossierId: string, key: string, value: any) => Promise<void>;
+  set: (pluginId: string, dossierId: string, key: string, value: unknown) => Promise<void>;
   remove: (pluginId: string, dossierId: string, key: string) => Promise<void>;
 
   /** Get global plugin data (not tied to any dossier). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
   getGlobal: (pluginId: string, key: string) => Promise<any>;
   /** Set global plugin data (not tied to any dossier). */
-  setGlobal: (pluginId: string, key: string, value: any) => Promise<void>;
+  setGlobal: (pluginId: string, key: string, value: unknown) => Promise<void>;
   /** Remove global plugin data (not tied to any dossier). */
   removeGlobal: (pluginId: string, key: string) => Promise<void>;
 
   /** Entries of a dossier whose key starts with `prefix`. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
   list: (pluginId: string, dossierId: string, prefix: string) => Promise<{ key: string; value: any }[]>;
   /** Declares key prefixes shared with collaborators through the dossier's Y.Doc (JSON values). ZN 2.63+ (`features.sharedPluginData`). */
   shareKeys: (pluginId: string, prefixes: string[]) => void;
@@ -256,12 +259,15 @@ export interface PluginDataRemoteChange {
  * This is what external plugins receive via `register(api)`.
  */
 export interface ScopedPluginDataAPI {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
   get: (dossierId: string, key: string) => Promise<any>;
-  set: (dossierId: string, key: string, value: any) => Promise<void>;
+  set: (dossierId: string, key: string, value: unknown) => Promise<void>;
   remove: (dossierId: string, key: string) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
   getGlobal: (key: string) => Promise<any>;
-  setGlobal: (key: string, value: any) => Promise<void>;
+  setGlobal: (key: string, value: unknown) => Promise<void>;
   removeGlobal: (key: string) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
   list: (dossierId: string, prefix: string) => Promise<{ key: string; value: any }[]>;
   shareKeys: (prefixes: string[]) => void;
   onRemoteChange: (cb: (change: PluginDataRemoteChange) => void) => () => void;
@@ -527,6 +533,7 @@ export interface PluginAPI {
   };
 
   // Dexie database instance
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins reach their tables untyped
   db: any;
 
   // File service
@@ -598,6 +605,7 @@ export interface EncryptionPluginAPI {
    * Applique le middleware de chiffrement ZN sur une instance Dexie externe.
    * No-op si le chiffrement est inactif ou la session verrouillée.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- plugin's own Dexie, possibly another copy of the library
   applyToDatabase(dexieInstance: any, tables: string[]): void;
 
   /**

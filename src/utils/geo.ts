@@ -183,9 +183,10 @@ export function generateSquarePolygon(
  * Normalize legacy geo format ({ lat, lng } without type) to GeoPoint.
  * Used during import and migration.
  */
-export function normalizeGeo(geo: any): GeoData | null {
-  if (!geo) return null;
-  if (geo.type === 'point' || geo.type === 'polygon') return geo;
+export function normalizeGeo(raw: unknown): GeoData | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const geo = raw as { type?: unknown; lat?: unknown; lng?: unknown; altitude?: unknown };
+  if (geo.type === 'point' || geo.type === 'polygon') return raw as GeoData;
   // Legacy format: { lat, lng } without type discriminator
   if (typeof geo.lat === 'number' && typeof geo.lng === 'number') {
     return { type: 'point', lat: geo.lat, lng: geo.lng, ...(typeof geo.altitude === 'number' ? { altitude: geo.altitude } : {}) };

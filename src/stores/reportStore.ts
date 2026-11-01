@@ -210,7 +210,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         updateReportYMap(ymap, { title }, ydoc);
       }
@@ -245,7 +245,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         addSectionToYMap(ymap, section, ydoc);
       }
@@ -273,7 +273,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         updateSectionInYMap(ymap, sectionId, changes, ydoc);
       }
@@ -301,7 +301,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         removeSectionFromYMap(ymap, sectionId, ydoc);
       }
@@ -335,7 +335,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         addSectionToYMap(ymap, section, ydoc);
       }
@@ -360,7 +360,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         reorderSectionsInYMap(ymap, sectionIds, ydoc);
       }
@@ -395,7 +395,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     }
 
     const { reports: reportsMap } = getYMaps(ydoc);
-    const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+    const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       return;

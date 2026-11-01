@@ -167,7 +167,7 @@ export async function registerWebAuthnCredential(
   const credential = await navigator.credentials.create(createOptions) as PublicKeyCredential | null;
   if (!credential) throw new Error('Registration cancelled');
 
-  const extensions = credential.getClientExtensionResults() as any;
+  const extensions = credential.getClientExtensionResults();
 
   const prfResult = extensions?.prf;
   if (!prfResult?.enabled) {
@@ -201,7 +201,7 @@ export async function registerWebAuthnCredential(
   const assertion = await navigator.credentials.get(getOptions) as PublicKeyCredential | null;
   if (!assertion) throw new Error('PRF evaluation cancelled');
 
-  const getExtensions = assertion.getClientExtensionResults() as any;
+  const getExtensions = assertion.getClientExtensionResults();
 
   const evalResult = getExtensions?.prf?.results?.first;
   if (!evalResult) throw new Error('PRF evaluation failed: no prf.results.first in extensions. Got: ' + JSON.stringify(Object.keys(getExtensions?.prf ?? {})));
@@ -258,7 +258,7 @@ export async function unlockWithWebAuthn(
   const usedCredId = assertion.rawId;
   const usedKey = toBase64Url(usedCredId);
 
-  const prfResults = (assertion.getClientExtensionResults() as any)?.prf?.results;
+  const prfResults = assertion.getClientExtensionResults()?.prf?.results;
   const prfOutput = prfResults?.first;
 
   if (!prfOutput) {
@@ -297,7 +297,7 @@ async function unlockWithWebAuthnFallback(
   const assertion = await navigator.credentials.get(getOptions) as PublicKeyCredential | null;
   if (!assertion) throw new Error('Authentication cancelled');
 
-  const prfOutput = (assertion.getClientExtensionResults() as any)?.prf?.results?.first;
+  const prfOutput = assertion.getClientExtensionResults()?.prf?.results?.first;
   if (!prfOutput) throw new Error('PRF evaluation failed');
 
   const kek = await deriveKEKFromPrf(toArrayBuffer(prfOutput), entry.prfSalt);

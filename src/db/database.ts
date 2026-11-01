@@ -29,13 +29,29 @@ import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../service
 import { removeAllDossierLocalStorage } from '../services/dossierPurge';
 import { dossierIdOfYdocDatabase, isYdocDatabaseName } from '../services/yjs/ydocName';
 
+/** entries() is typed by lib DOM.AsyncIterable, which the project does not enable */
+type IterableDirectory = FileSystemDirectoryHandle & {
+  entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+};
+
+/** Row of a dossier-scoped table before v8 renamed investigationId to dossierId */
+interface LegacyDossierScopedRow {
+  dossierId?: string;
+  investigationId?: string;
+}
+
+/** Element row before v10 typed geo as point/polygon */
+interface LegacyGeoRow {
+  geo?: { type?: string; lat?: number; lng?: number };
+}
+
 export interface PluginDataRow {
   pluginId: string;
   dossierId: string;
   /** @deprecated Kept for compound PK compatibility — always equals dossierId */
   investigationId?: string;
   key: string;
-  value: any;
+  value: unknown;
   /** Shared keys only (see services/yjs/pluginDataSync.ts): last write, ms */
   updatedAt?: number;
   /** Shared keys only: the row is known to the dossier's Y.Doc */
@@ -173,11 +189,11 @@ class DossierDatabase extends Dexie {
       // Remap investigationId → dossierId in all child tables
       const tablesToMigrate = ['elements', 'links', 'assets', 'views', 'reports', 'canvasTabs'];
       for (const tableName of tablesToMigrate) {
-        const table = tx.table(tableName);
+        const table = tx.table<LegacyDossierScopedRow>(tableName);
         const records = await table.toArray();
-        const needsMigration = records.some((r: any) => r.investigationId !== undefined);
+        const needsMigration = records.some((r) => r.investigationId !== undefined);
         if (needsMigration) {
-          const migrated = records.map((record: any) => {
+          const migrated = records.map((record) => {
             if (record.investigationId !== undefined) {
               record.dossierId = record.investigationId;
               delete record.investigationId;
@@ -192,10 +208,10 @@ class DossierDatabase extends Dexie {
       }
 
       // pluginData: keep investigationId (part of PK) but ADD dossierId
-      const pluginTable = tx.table('pluginData');
+      const pluginTable = tx.table<LegacyDossierScopedRow>('pluginData');
       const pluginRecords = await pluginTable.toArray();
-      if (pluginRecords.some((r: any) => r.investigationId && !r.dossierId)) {
-        const migrated = pluginRecords.map((r: any) => {
+      if (pluginRecords.some((r) => r.investigationId && !r.dossierId)) {
+        const migrated = pluginRecords.map((r) => {
           if (r.investigationId && !r.dossierId) {
             r.dossierId = r.investigationId;
             // DON'T delete investigationId — it's part of the compound PK
@@ -216,8 +232,8 @@ class DossierDatabase extends Dexie {
 
     // ─── Version 10: Migrate geo to typed GeoData (point/polygon) ────────
     this.version(10).stores({}).upgrade(async tx => {
-      const elements = tx.table('elements');
-      await elements.toCollection().modify((el: any) => {
+      const elements = tx.table<LegacyGeoRow>('elements');
+      await elements.toCollection().modify((el) => {
         if (el.geo && !el.geo.type) {
           el.geo = { type: 'point', lat: el.geo.lat, lng: el.geo.lng };
         }
@@ -396,7 +412,7 @@ export interface StorageInfo {
 
 async function measureDirectorySize(dir: FileSystemDirectoryHandle): Promise<number> {
   let total = 0;
-  for await (const [, handle] of (dir as any).entries()) {
+  for await (const [, handle] of (dir as IterableDirectory).entries()) {
     if (handle.kind === 'file') {
       const file = await (handle as FileSystemFileHandle).getFile();
       total += file.size;
@@ -760,7 +776,7 @@ export async function cleanOrphanedOpfs(): Promise<void> {
       if (!dir) continue;
 
       const orphans: string[] = [];
-      for await (const [name] of (dir as any).entries()) {
+      for await (const [name] of (dir as IterableDirectory).entries()) {
         if (!knownIds.has(name)) {
           orphans.push(name);
         }

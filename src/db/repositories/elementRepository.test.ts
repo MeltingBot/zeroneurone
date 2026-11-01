@@ -64,3 +64,18 @@ describe('bulkUpdate through the encryption middleware', () => {
     raw.close();
   });
 });
+
+describe('elementRepository.update', () => {
+  beforeEach(async () => {
+    await db.elements.clear();
+    await db.elements.add(element(1));
+  });
+
+  it('merges a partial visual instead of replacing the whole object', async () => {
+    await elementRepository.update('el-1', { visual: { color: '#f00' } });
+    const stored = await db.elements.get('el-1');
+    expect(stored?.visual.color).toBe('#f00');
+    expect(stored?.visual.shape).toBe('rectangle');
+    expect(stored?.visual.borderColor).toBe('#000');
+  });
+});

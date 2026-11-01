@@ -30,15 +30,18 @@ export function isSupportedBackupVersion(version: string): boolean {
   return major <= Number.parseInt(BACKUP_VERSION.split('.')[0], 10);
 }
 
+/** Rows of old backups carry investigationId instead of dossierId */
+type Archived<T> = T & { investigationId?: DossierId };
+
 interface BackupData {
   version: string;
   exportedAt: string;
   dossiers: Dossier[];
-  elements: Element[];
-  links: Link[];
-  assets: AssetMetadata[];
-  views: View[];
-  reports: Report[];
+  elements: Archived<Element>[];
+  links: Archived<Link>[];
+  assets: Archived<AssetMetadata>[];
+  views: Archived<View>[];
+  reports: Archived<Report>[];
   tagSets: TagSet[];
 }
 
@@ -220,8 +223,8 @@ class BackupService {
             if (!assetFile) continue;
 
             const arrayBuffer = await readZipEntryBuffer(assetFile, ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP);
-            const srcDossierId = assetMeta.dossierId || (assetMeta as any).investigationId;
-            const newDossierId = dossierIdMap.get(srcDossierId);
+            const srcDossierId = assetMeta.dossierId || assetMeta.investigationId;
+            const newDossierId = srcDossierId && dossierIdMap.get(srcDossierId);
             if (!newDossierId) continue;
 
             const fileObj = new File([arrayBuffer], assetMeta.filename, {
@@ -246,8 +249,8 @@ class BackupService {
         const elementRows: Element[] = [];
         for (const element of data.elements) {
           // Legacy compat: old backups use investigationId instead of dossierId
-          const srcDossierId = element.dossierId || (element as any).investigationId;
-          const newDossierId = dossierIdMap.get(srcDossierId);
+          const srcDossierId = element.dossierId || element.investigationId;
+          const newDossierId = srcDossierId && dossierIdMap.get(srcDossierId);
           if (!newDossierId) continue;
           const newId = generateUUID();
           elementIdMap.set(element.id, newId);
@@ -268,8 +271,8 @@ class BackupService {
 
         const linkRows: Link[] = [];
         for (const link of data.links) {
-          const srcDossierId = link.dossierId || (link as any).investigationId;
-          const newDossierId = dossierIdMap.get(srcDossierId);
+          const srcDossierId = link.dossierId || link.investigationId;
+          const newDossierId = srcDossierId && dossierIdMap.get(srcDossierId);
           const newFromId = elementIdMap.get(link.fromId);
           const newToId = elementIdMap.get(link.toId);
           if (!newDossierId || !newFromId || !newToId) continue;
@@ -289,8 +292,8 @@ class BackupService {
 
         const viewRows: View[] = [];
         for (const view of data.views || []) {
-          const srcDossierId = view.dossierId || (view as any).investigationId;
-          const newDossierId = dossierIdMap.get(srcDossierId);
+          const srcDossierId = view.dossierId || view.investigationId;
+          const newDossierId = srcDossierId && dossierIdMap.get(srcDossierId);
           if (!newDossierId) continue;
           viewRows.push({
             ...view,
@@ -311,17 +314,17 @@ class BackupService {
 
         const reportRows: Report[] = [];
         for (const report of data.reports || []) {
-          const srcDossierId = report.dossierId || (report as any).investigationId;
-          const newDossierId = dossierIdMap.get(srcDossierId);
+          const srcDossierId = report.dossierId || report.investigationId;
+          const newDossierId = srcDossierId && dossierIdMap.get(srcDossierId);
           if (!newDossierId) continue;
           // Remap element/link references in report sections
-          const remappedSections = (report.sections || []).map((section: any) => ({
+          const remappedSections = (report.sections || []).map((section) => ({
             ...section,
             id: generateUUID(),
             content: this._remapReportContent(section.content || '', elementIdMap, linkIdMap),
             elementIds: (section.elementIds || [])
               .map((eid: ElementId) => elementIdMap.get(eid))
-              .filter(Boolean),
+              .filter((id): id is ElementId => !!id),
           }));
           reportRows.push({
             ...report,

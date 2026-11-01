@@ -35,17 +35,18 @@ const slots: PluginSlots = {
 // ─── Plugin ID tracking ─────────────────────────────────────
 
 // Maps each extension (object or function) to its pluginId
-const extensionPluginId = new Map<any, string>();
+const extensionPluginId = new Map<unknown, string>();
 
-function resolvePluginId(ext: any): string | undefined {
+function resolvePluginId(ext: unknown): string | undefined {
   // 1. Explicit tracking via registerPlugin(slot, ext, pluginId)
   const tracked = extensionPluginId.get(ext);
   if (tracked) return tracked;
   if (ext && typeof ext === 'object') {
+    const fields = ext as { pluginId?: string; id?: string };
     // 2. pluginId field on the extension object
-    if (ext.pluginId) return ext.pluginId;
+    if (fields.pluginId) return fields.pluginId;
     // 3. home:card entries: id IS the pluginId
-    if ('name' in ext && 'description' in ext && 'icon' in ext && ext.id) return ext.id;
+    if ('name' in ext && 'description' in ext && 'icon' in ext && fields.id) return fields.id;
   }
   return undefined;
 }
@@ -99,7 +100,7 @@ const listeners = new Set<SlotListener>();
 
 // Cache for filtered results — useSyncExternalStore requires stable references
 let cacheVersion = 0;
-const filteredCache = new Map<string, { version: number; result: any[] }>();
+const filteredCache = new Map<string, { version: number; result: unknown[] }>();
 
 function notifyListeners() {
   cacheVersion++;
@@ -136,10 +137,10 @@ export function registerPlugins<K extends keyof PluginSlots>(
 
 export function unregisterPlugin<K extends keyof PluginSlots>(
   slot: K,
-  predicate: (ext: any) => boolean
+  predicate: (ext: PluginSlots[K][number]) => boolean
 ): void {
-  const arr = slots[slot] as any[];
-  const filtered = arr.filter((ext: any) => !predicate(ext));
+  const arr = slots[slot] as PluginSlots[K][number][];
+  const filtered = arr.filter((ext) => !predicate(ext));
   if (filtered.length !== arr.length) {
     slots[slot] = filtered as PluginSlots[K];
     notifyListeners();
@@ -157,7 +158,7 @@ export function getPlugins<K extends keyof PluginSlots>(
   if (cached && cached.version === cacheVersion) {
     return cached.result as PluginSlots[K];
   }
-  const result = all.filter((ext: any) => {
+  const result = (all as readonly unknown[]).filter((ext) => {
     const pid = resolvePluginId(ext);
     // Extensions without a pluginId are always shown (core ZN)
     return !pid || enabledIds.has(pid);
@@ -179,7 +180,7 @@ export function getPluginInfo(pluginId: string): { name: string; icon?: string }
 
 export function clearAllPlugins(): void {
   for (const key of Object.keys(slots) as (keyof PluginSlots)[]) {
-    slots[key] = [] as any;
+    slots[key] = [];
   }
   extensionPluginId.clear();
   notifyListeners();

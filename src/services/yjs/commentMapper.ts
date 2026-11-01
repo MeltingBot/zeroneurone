@@ -4,7 +4,9 @@
 
 import * as Y from 'yjs';
 import type { Comment, CommentTargetType } from '../../types';
-import { dateToYjs, dateFromYjs } from '../../types/yjs';
+import { dateToYjs, dateFromYjs, yFields, type YStored } from '../../types/yjs';
+
+type YComment = YStored<Comment>;
 
 // ============================================================================
 // COMMENT -> Y.MAP
@@ -13,7 +15,7 @@ import { dateToYjs, dateFromYjs } from '../../types/yjs';
 /**
  * Convert a Comment to a Y.Map for insertion into Y.Doc.
  */
-export function commentToYMap(comment: Comment): Y.Map<any> {
+export function commentToYMap(comment: Comment): Y.Map<unknown> {
   const map = new Y.Map();
 
   map.set('id', comment.id);
@@ -38,7 +40,8 @@ export function commentToYMap(comment: Comment): Y.Map<any> {
 /**
  * Convert a Y.Map to a Comment.
  */
-export function yMapToComment(ymap: Y.Map<any>): Comment {
+export function yMapToComment(map: Y.Map<unknown>): Comment {
+  const ymap = yFields<YComment>(map);
   return {
     id: ymap.get('id') || '',
     dossierId: ymap.get('dossierId') || '',
@@ -62,7 +65,7 @@ export function yMapToComment(ymap: Y.Map<any>): Comment {
  * Apply partial changes to an existing comment Y.Map.
  */
 export function updateCommentYMap(
-  ymap: Y.Map<any>,
+  ymap: Y.Map<unknown>,
   changes: Partial<Comment>,
   ydoc: Y.Doc
 ): void {

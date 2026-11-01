@@ -170,7 +170,7 @@ function cancelProgressClear(): void {
 }
 
 function scheduleProgressClear(
-  setStore: (partial: any) => void,
+  setStore: (partial: Pick<SyncStoreState, 'mediaAssets' | 'mediaSyncProgress'>) => void,
   getStore: () => { mediaAssets: Record<string, MediaAssetState> },
 ): void {
   cancelProgressClear();

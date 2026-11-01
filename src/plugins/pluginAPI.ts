@@ -12,38 +12,47 @@ import i18n from '../i18n';
 // external plugins. Plugins loaded via Blob URL can't resolve bare specifiers
 // like `import { useState } from 'react'`. Setting globals lets plugin
 // bundlers use `external: ['react', 'react-dom', 'dexie']` with a globals shim.
-(globalThis as any).React = React;
-(globalThis as any).ReactDOM = ReactDOM;
-(globalThis as any).__ZN_JSX_RUNTIME = jsxRuntime;
-(globalThis as any).__ZN_DEXIE = Dexie;
+Object.assign(globalThis, {
+  React,
+  ReactDOM,
+  __ZN_JSX_RUNTIME: jsxRuntime,
+  __ZN_DEXIE: Dexie,
+});
 
 // Shim process.env for plugins that reference process.env.NODE_ENV
 // (common in bundles that didn't inline this at build time)
-if (!(globalThis as any).process) {
-  (globalThis as any).process = { env: { NODE_ENV: 'production' } };
+if (!Reflect.get(globalThis, 'process')) {
+  Object.assign(globalThis, { process: { env: { NODE_ENV: 'production' } } });
 }
 
 // ─── Stores ────────────────────────────────────────────────────
 import { useDossierStore as _useDossierStore } from '../stores/dossierStore';
 
 // Wrap useDossierStore to add legacy aliases for plugins (investigation → dossier)
+type DossierStoreState = ReturnType<typeof _useDossierStore.getState>;
+type LegacyDossierState = DossierStoreState & { currentInvestigation: DossierStoreState['currentDossier'] };
+interface LegacyDossierStore {
+  (): LegacyDossierState;
+  <U>(selector: (state: DossierStoreState) => U): U;
+  getState: () => LegacyDossierState;
+  setState: typeof _useDossierStore.setState;
+  subscribe: typeof _useDossierStore.subscribe;
+}
+const withLegacyAlias = (state: DossierStoreState): LegacyDossierState => ({ ...state, currentInvestigation: state.currentDossier });
 const useDossierStore = Object.assign(
-  (selector?: any) => {
-    const state: any = selector ? _useDossierStore(selector) : _useDossierStore();
+  (selector?: (state: DossierStoreState) => unknown) => {
+    const state = selector ? _useDossierStore(selector) : _useDossierStore();
     if (!selector && state && typeof state === 'object') {
-      return { ...state, currentInvestigation: state.currentDossier };
+      return withLegacyAlias(state as DossierStoreState);
     }
     return state;
   },
   {
-    getState: () => {
-      const state: any = _useDossierStore.getState();
-      return { ...state, currentInvestigation: state.currentDossier };
-    },
+    getState: () => withLegacyAlias(_useDossierStore.getState()),
     setState: _useDossierStore.setState,
     subscribe: _useDossierStore.subscribe,
   }
-) as any;
+) as LegacyDossierStore;
 import { useSelectionStore } from '../stores/selectionStore';
 import { useViewStore } from '../stores/viewStore';
 import { useReportStore } from '../stores/reportStore';
@@ -234,7 +243,7 @@ export const pluginAPI = {
      */
     async exportDossier(dossierId: string): Promise<Blob> {
       const state = _useDossierStore.getState();
-      const dossier = state.dossiers.find((d: any) => d.id === dossierId) ?? await dossierRepository.getById(dossierId);
+      const dossier = state.dossiers.find((d) => d.id === dossierId) ?? await dossierRepository.getById(dossierId);
       if (!dossier) throw new Error(`Dossier ${dossierId} not found`);
 
       const elements = await elementRepository.getByDossier(dossierId);
@@ -546,13 +555,14 @@ export const pluginAPI = {
 
   // ─── Plugin data persistence (IndexedDB) ────────────────────
   pluginData: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
     async get(pluginId: string, dossierId: string, key: string): Promise<any> {
       // PK uses investigationId (legacy), so query with it
       const row = await db.pluginData.get({ pluginId, investigationId: dossierId, key });
       return row?.deleted ? undefined : row?.value;
     },
 
-    async set(pluginId: string, dossierId: string, key: string, value: any): Promise<void> {
+    async set(pluginId: string, dossierId: string, key: string, value: unknown): Promise<void> {
       if (isSharedKey(pluginId, key)) return setSharedValue(pluginId, dossierId, key, value);
       // Must include investigationId for compound PK + dossierId for index
       await db.pluginData.put({ pluginId, investigationId: dossierId, dossierId, key, value });
@@ -566,6 +576,7 @@ export const pluginAPI = {
     },
 
     /** Entries of a dossier whose key starts with `prefix`. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
     async list(pluginId: string, dossierId: string, prefix: string): Promise<{ key: string; value: any }[]> {
       const rows = await db.pluginData
         .where('[pluginId+investigationId+key]')
@@ -589,12 +600,13 @@ export const pluginAPI = {
     },
 
     // ─── Global data (not tied to any dossier) ────────────────
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- public plugin API: plugins read the value as their own type
     async getGlobal(pluginId: string, key: string): Promise<any> {
       const row = await db.pluginData.get({ pluginId, investigationId: GLOBAL_DOSSIER_ID, key });
       return row?.value;
     },
 
-    async setGlobal(pluginId: string, key: string, value: any): Promise<void> {
+    async setGlobal(pluginId: string, key: string, value: unknown): Promise<void> {
       await db.pluginData.put({
         pluginId,
         investigationId: GLOBAL_DOSSIER_ID,
@@ -625,7 +637,7 @@ export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pl
   return {
     ...pluginAPI,
     pluginId,
-    pluginServices: scopedPluginServices(pluginId) as any,
+    pluginServices: scopedPluginServices(pluginId),
     writeLock: {
       set: (reason: string) => setPluginWriteLock(pluginId, reason || pluginId),
       clear: () => setPluginWriteLock(pluginId, null),
@@ -638,48 +650,48 @@ export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pl
     },
     pluginData: {
       // get: new(dossierId, key) or legacy(pluginId, dossierId, key)
-      async get(...args: any[]): Promise<any> {
-        const [dossierId, key] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+      async get(...args: unknown[]) {
+        const [dossierId, key] = (args.length >= 3 ? args.slice(1) : args) as [string, string];
         return pluginAPI.pluginData.get(pluginId, dossierId, key);
       },
       // set: new(dossierId, key, value) or legacy(pluginId, dossierId, key, value)
-      async set(...args: any[]): Promise<void> {
-        const [dossierId, key, value] = args.length >= 4 ? [args[1], args[2], args[3]] : [args[0], args[1], args[2]];
+      async set(...args: unknown[]): Promise<void> {
+        const [dossierId, key, value] = (args.length >= 4 ? args.slice(1) : args) as [string, string, unknown];
         return pluginAPI.pluginData.set(pluginId, dossierId, key, value);
       },
       // remove: new(dossierId, key) or legacy(pluginId, dossierId, key)
-      async remove(...args: any[]): Promise<void> {
-        const [dossierId, key] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+      async remove(...args: unknown[]): Promise<void> {
+        const [dossierId, key] = (args.length >= 3 ? args.slice(1) : args) as [string, string];
         return pluginAPI.pluginData.remove(pluginId, dossierId, key);
       },
       // list: new(dossierId, prefix) or legacy(pluginId, dossierId, prefix)
-      async list(...args: any[]): Promise<{ key: string; value: any }[]> {
-        const [dossierId, prefix] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+      async list(...args: unknown[]) {
+        const [dossierId, prefix] = (args.length >= 3 ? args.slice(1) : args) as [string, string];
         return pluginAPI.pluginData.list(pluginId, dossierId, prefix);
       },
       // shareKeys: new(prefixes) or legacy(pluginId, prefixes)
-      shareKeys(...args: any[]): void {
+      shareKeys(...args: unknown[]): void {
         const prefixes = args.length >= 2 ? args[1] : args[0];
         pluginAPI.pluginData.shareKeys(pluginId, Array.isArray(prefixes) ? prefixes : []);
       },
       // onRemoteChange: new(cb) or legacy(pluginId, cb)
-      onRemoteChange(...args: any[]): () => void {
-        const cb = args.length >= 2 ? args[1] : args[0];
+      onRemoteChange(...args: unknown[]): () => void {
+        const cb = (args.length >= 2 ? args[1] : args[0]) as (change: PluginDataRemoteChange) => void;
         return pluginAPI.pluginData.onRemoteChange(pluginId, cb);
       },
       // getGlobal: new(key) or legacy(pluginId, key)
-      async getGlobal(...args: any[]): Promise<any> {
-        const key = args.length >= 2 ? args[1] : args[0];
+      async getGlobal(...args: unknown[]) {
+        const key = (args.length >= 2 ? args[1] : args[0]) as string;
         return pluginAPI.pluginData.getGlobal(pluginId, key);
       },
       // setGlobal: new(key, value) or legacy(pluginId, key, value)
-      async setGlobal(...args: any[]): Promise<void> {
-        const [key, value] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+      async setGlobal(...args: unknown[]): Promise<void> {
+        const [key, value] = (args.length >= 3 ? args.slice(1) : args) as [string, unknown];
         return pluginAPI.pluginData.setGlobal(pluginId, key, value);
       },
       // removeGlobal: new(key) or legacy(pluginId, key)
-      async removeGlobal(...args: any[]): Promise<void> {
-        const key = args.length >= 2 ? args[1] : args[0];
+      async removeGlobal(...args: unknown[]): Promise<void> {
+        const key = (args.length >= 2 ? args[1] : args[0]) as string;
         return pluginAPI.pluginData.removeGlobal(pluginId, key);
       },
     },
