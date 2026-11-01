@@ -278,7 +278,9 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
    * Call before destroy() to minimize storage usage.
    */
   compact(): Promise<void> {
-    if (this.db && !this._destroyed) {
+    // Before the initial read ends there is nothing new to fold in: compacting
+    // would read and decrypt every update a second time, for nothing.
+    if (this.db && !this._destroyed && this.synced) {
       return storeStateEncrypted(this, true);
     }
     return Promise.resolve();

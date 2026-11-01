@@ -208,6 +208,9 @@ interface DossierState {
 
 let ydocObserverCleanup: (() => void) | null = null;
 
+/** The load just started, taken by a second load of the same dossier in the same task */
+let inflightLoad: { id: DossierId; promise: Promise<void> } | null = null;
+
 // ============================================================================
 // ASSET CHUNK SYNC
 // ============================================================================
@@ -802,7 +805,14 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
   },
 
-  loadDossier: async (id: DossierId) => {
+  loadDossier: (id: DossierId) => {
+    // React StrictMode (dev) mounts the dossier page twice: load, unload,
+    // load again, in the same task. That second load takes the first one: two
+    // loads would read and decrypt the Y.Doc twice, or read it half-loaded.
+    // Only within the same task: a later load (dossier reopened) always runs,
+    // even when an earlier one never ended.
+    if (inflightLoad?.id === id) return inflightLoad.promise;
+    const promise = (async () => {
     // Undo entries reference elements by id, so replaying one recorded against
     // another dossier would apply it here. Only drop the stack when the dossier
     // actually changes: loadDossier is also re-run on the current one after an
@@ -1258,6 +1268,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false, loadingPhase: '', loadingDetail: '', loadingProgress: 0 });
     }
+    })();
+    inflightLoad = { id, promise };
+    setTimeout(() => {
+      if (inflightLoad?.promise === promise) inflightLoad = null;
+    }, 0);
+    return promise;
   },
 
   createDossier: async (name: string, description?: string) => {
