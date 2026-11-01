@@ -483,6 +483,34 @@ export interface PluginFeatures {
   pluginServices?: boolean;
   /** filterOutcome() (2.71+) */
   filterOutcome?: boolean;
+  /** query.parse / evaluate / vocabulary (2.88.2+) */
+  queryEngine?: boolean;
+}
+
+/** Where a ZNQuery text fails to parse */
+export interface QueryEngineError {
+  message: string;
+  /** Character offset in the text given */
+  position: number;
+  /** Token the parser expected, when known */
+  expected?: string;
+}
+
+/** ZNQuery on the open dossier, without touching the query panel, the canvas, the history or `query:executed` */
+export interface QueryEngineAPI {
+  /** Parse a ZNQuery text. No side effect. */
+  parse(text: string): { ok: true } | { ok: false; error: QueryEngineError };
+  /**
+   * Evaluate a ZNQuery text on the open dossier (elements and links of useDossierStore),
+   * as the query panel does. `within` keeps those elements and the links between two of
+   * them; conditions that follow links (WITHIN, from.*, to.*) still see the whole dossier.
+   */
+  evaluate(
+    text: string,
+    options?: { within?: Iterable<string> },
+  ): { elementIds: string[]; linkIds: string[] } | { error: QueryEngineError };
+  /** Reserved fields and recognized operators */
+  vocabulary(): { fields: string[]; operators: string[] };
 }
 
 /** What the views show, kept by the filters panel and the query applied on the canvas */
@@ -562,6 +590,9 @@ export interface PluginAPI {
 
   /** What the views show (filters + query), counted as the filters panel does (2.71+, `features.filterOutcome`) */
   filterOutcome?: () => FilterOutcomeAPI;
+
+  /** ZNQuery engine (2.88.2+, `features.queryEngine`); community plugins need `stores:dossier:read` */
+  query?: QueryEngineAPI;
 
   // Services (export, import, navigation)
   services: ServicesAPI;

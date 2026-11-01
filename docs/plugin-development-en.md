@@ -723,6 +723,31 @@ if (shownIds.length < total) {
 }
 ```
 
+## ZNQuery queries (`api.query`, ZN 2.88.2+)
+
+Parses and evaluates a ZNQuery text (the query panel syntax) on the open dossier, without changing anything: not the query panel, the canvas, the query history, nor the `query:executed` event. Test `api.features?.queryEngine`. A `community` plugin needs the `stores:dossier:read` permission; without it, `api.query` is absent.
+
+```typescript
+api.query.parse('label CONTAINS "Dupont"');
+// { ok: true }
+api.query.parse('label CONTAINS');
+// { ok: false, error: { message, position, expected? } }
+
+const r = api.query.evaluate('tag = "suspect"', { within: candidateIds });
+if ('error' in r) {
+  // r.error.position: character offset in the text given
+} else {
+  // r.elementIds, r.linkIds: arrays of ids
+}
+
+const { fields, operators } = api.query.vocabulary();
+```
+
+- `evaluate` gives the query panel result, on the whole dossier (the panel itself narrows to the open tab).
+- `within` (any iterable of ids) keeps those elements and the links between two of them. The query is evaluated on the whole dossier: `WITHIN n HOPS OF`, `from.*` and `to.*` also see the elements outside `within`.
+- The plugin passes text, never a tree: the internal form of queries may change.
+- `vocabulary()` lists the reserved fields and the operators. Free element properties are queried by their name as well.
+
 ## Services between plugins (`api.pluginServices`, ZN 2.64+)
 
 A plugin can offer a service to the other plugins, and use another plugin's service when it is there. ZN only keeps the registry: it never calls a service itself. Test `api.features?.pluginServices` before relying on it. A `community` plugin needs the `pluginServices` permission.

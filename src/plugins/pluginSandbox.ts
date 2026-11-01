@@ -237,6 +237,8 @@ export function buildSandboxedAPI(
   addStore('useQueryStore', 'stores:query:read');
   // What the views show: read-only, like the view store
   if (has(permissions, 'stores:view:read')) api.filterOutcome = scopedAPI.filterOutcome;
+  // ZNQuery on the open dossier: reveals no more than the dossier store
+  if (has(permissions, 'stores:dossier:read') || has(permissions, 'stores:dossier:write')) api.query = scopedAPI.query;
   addStore('useTagSetStore', 'stores:tagSet:read', 'stores:tagSet:write');
   addStore('useTabStore', 'stores:tab:read', 'stores:tab:write');
   addStore('useUIStore', 'stores:ui:read', 'stores:ui:write');

@@ -59,6 +59,7 @@ import { useReportStore } from '../stores/reportStore';
 import { useInsightsStore } from '../stores/insightsStore';
 import { useQueryStore } from '../stores/queryStore';
 import { getFilterOutcome } from '../hooks/useFilterOutcome';
+import { parseQueryText, evaluateQueryText, queryVocabulary } from './queryEngine';
 import { useTagSetStore } from '../stores/tagSetStore';
 import { useTabStore } from '../stores/tabStore';
 import { useUIStore } from '../stores/uiStore';
@@ -156,6 +157,8 @@ export const pluginAPI = {
     pluginServices: true,
     /** filterOutcome(): what the views show, kept by the filters and the query */
     filterOutcome: true,
+    /** query.parse / evaluate / vocabulary: ZNQuery without touching the query panel or the canvas */
+    queryEngine: true,
   },
 
   // ─── What the views show (filters + query) ──────────────────
@@ -172,6 +175,21 @@ export const pluginAPI = {
     let total = 0;
     for (const el of _useDossierStore.getState().elements) if (!hiddenElementIds.has(el.id)) total++;
     return { total, shownIds, filterCount, queryCount };
+  },
+
+  // ─── ZNQuery engine (read-only) ──────────────────────────────
+  /**
+   * Parse and evaluate a ZNQuery text on the open dossier. Nothing changes:
+   * not the query panel, the canvas, the query history, nor `query:executed`.
+   */
+  query: {
+    parse: (text: string) => parseQueryText(text),
+    /** `within`: keep those elements and the links between two of them */
+    evaluate(text: string, options?: { within?: Iterable<string> }) {
+      const { elements, links } = _useDossierStore.getState();
+      return evaluateQueryText(text, elements, links, options);
+    },
+    vocabulary: () => queryVocabulary(),
   },
 
   // ─── Services between plugins ───────────────────────────────
