@@ -1,5 +1,18 @@
 # Changelog
 
+## Non publié
+
+### Canvas : graphes denses en zoom fort
+
+- **Épaisseur des liens** — au-delà du zoom 1, un lien garde son épaisseur
+  à l'écran au lieu de grossir avec la vue (un lien de 3 unités faisait
+  10 px au zoom 3, et des centaines de liens masquaient tout).
+- **Liens de passage estompés** — un lien dont aucune extrémité n'est à
+  l'écran est dessiné pâle ; les liens des éléments visibles ressortent.
+- **Extrémités d'un lien** — un clic sur un lien dont une extrémité est
+  hors de la vue affiche, à l'endroit du clic, la source, le libellé et la
+  cible. Disparaît au clic suivant, avec Échap ou quand la vue bouge.
+
 ## 2.88.0
 
 ### Sauvegarde complète refaite

@@ -53,6 +53,7 @@ import { metadataService } from '../../services/metadataService';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { captureTabMembership } from './canvasClipboard';
 import { LinkWidthScale } from './LinkWidthScale';
+import { LinkEndsTooltip } from './LinkEndsTooltip';
 import { CanvasCaptureHandler, CanvasZoomControls, RevealSelectionOnOpen, FitViewController } from './CanvasControllers';
 import { elementToNode } from './canvasConversion';
 import { useCanvasKeyboard } from './useCanvasKeyboard';
@@ -358,8 +359,11 @@ export function Canvas() {
   const isViewportMovingRef = useRef(false);
   const cullingViewportRef = useRef(useViewStore.getState().viewport);
   const [isViewportMoving, setIsViewportMoving] = useState(false);
+  // Clicked link with an end outside the view: its ends, where it was clicked
+  const [linkTip, setLinkTip] = useState<{ linkId: string; x: number; y: number; toLeft: boolean } | null>(null);
 
   const handleMoveStart = useCallback(() => {
+    setLinkTip(null);
     isViewportMovingRef.current = true;
     setIsViewportMoving(true);
   }, []);
@@ -2320,6 +2324,28 @@ export function Canvas() {
     timer: null,
   });
 
+  /** Shows the ends of a clicked link when one of them is outside the view */
+  const showLinkEnds = useCallback((linkId: string, clientX: number, clientY: number) => {
+    const wrapper = reactFlowWrapper.current;
+    const link = links.find((l) => l.id === linkId);
+    if (!wrapper || !link) return;
+    const bounds = wrapper.getBoundingClientRect();
+    const { x: vx, y: vy, zoom } = useViewStore.getState().viewport;
+    const onScreen = (id: string) => {
+      const pos = nodePositionsRef.current.get(id);
+      if (!pos) return false;
+      const sx = pos.x * zoom + vx, sy = pos.y * zoom + vy;
+      return sx >= 0 && sx <= bounds.width && sy >= 0 && sy <= bounds.height;
+    };
+    if (onScreen(link.fromId) && onScreen(link.toId)) {
+      setLinkTip(null);
+      return;
+    }
+    const x = clientX - bounds.left;
+    // Near the right edge it opens to the left of the pointer
+    setLinkTip({ linkId, x, y: clientY - bounds.top, toLeft: x > bounds.width - 440 });
+  }, [links]);
+
   const handleEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       // Shift / Ctrl / Cmd adds the link to the selection, or removes it
@@ -2339,7 +2365,10 @@ export function Canvas() {
       if (clickData.count === 1) {
         // First click - select and start timer
         if (isMultiSelect) toggleLink(edge.id);
-        else selectLink(edge.id);
+        else {
+          selectLink(edge.id);
+          showLinkEnds(edge.id, event.clientX, event.clientY);
+        }
         clickData.timer = setTimeout(() => {
           clickData.count = 0;
         }, 300);
@@ -2353,7 +2382,7 @@ export function Canvas() {
         startEditingLink(edge.id);
       }
     },
-    [selectLink, toggleLink, startEditingLink]
+    [selectLink, toggleLink, startEditingLink, showLinkEnds]
   );
 
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
@@ -2416,7 +2445,10 @@ export function Canvas() {
       if (l >= 0) {
         const linkId = linkScene.linkIds[l];
         if (event.shiftKey || event.ctrlKey || event.metaKey) toggleLink(linkId);
-        else selectLink(linkId);
+        else {
+          selectLink(linkId);
+          showLinkEnds(linkId, event.clientX, event.clientY);
+        }
         return;
       }
     }
@@ -2425,7 +2457,7 @@ export function Canvas() {
     // Also reset any Insights highlight (bridges, clusters, centrality…) so a
     // click on empty canvas restores the normal display.
     clearHighlight();
-  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, placeImport]);
+  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, placeImport, showLinkEnds]);
 
   const handlePaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
@@ -2923,6 +2955,20 @@ export function Canvas() {
             }
           }}
         >
+          {/* Gone with the selection: a click elsewhere, Escape, another link */}
+          {linkTip && selectedLinkIds.has(linkTip.linkId) && (() => {
+            const link = links.find((l) => l.id === linkTip.linkId);
+            return link ? (
+              <LinkEndsTooltip
+                link={link}
+                from={elementMap.get(link.fromId)}
+                to={elementMap.get(link.toId)}
+                x={linkTip.x}
+                y={linkTip.y}
+                toLeft={linkTip.toLeft}
+              />
+            ) : null;
+          })()}
           <LowDetailContext.Provider value={isLowDetail}>
             <ReactFlow
               nodes={flowNodes}
