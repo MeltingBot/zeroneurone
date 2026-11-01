@@ -1392,7 +1392,9 @@ L'objet `api` passe a `register()` fournit :
 | `stores.useQueryStore` | Requete appliquee sur le canvas : elements et liens trouves |
 | `stores.useTagSetStore` | TagSets : creation, modification, proprietes suggerees |
 | `stores.useTabStore` | Onglets canvas : creation, renommage, membres |
-| `stores.useUIStore` | Etat UI : toasts, modales (preferer `api.toast` pour les notifications) |
+| `stores.useUIStore` | Etat UI. Notifications : `api.toast` (`toasts`, `openModal` et `closeModal` n'ont aucun effet ; une modale de plugin se rend dans le slot `app:global`) |
+
+Seuls les membres declares dans `types/plugin-api.d.ts` sont stables. Les stores exposent d'autres champs et fonctions internes : ils peuvent changer ou disparaitre d'une version a l'autre sans preavis (plusieurs, jamais appeles, ont ete retires apres la 2.87.0 : `openSidePanel`, `toggleSidePanel`, `panTo`, `clearElementSelection`, `toggleFilter`...). Pour ouvrir l'onglet d'un plugin, utiliser `setSidePanelTab(id)` de `useUIStore`.
 
 **Repositories base de donnees (acces DB direct) :**
 

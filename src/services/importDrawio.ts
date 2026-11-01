@@ -17,6 +17,7 @@ import { fileService } from './fileService';
 import type { ImportResult } from './importService';
 import { stripBom } from '../utils/csv';
 import { dataUrlMimeType, dataUrlToFile } from '../utils/dataUrl';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // draw.io (diagrams.net) format
@@ -183,7 +184,7 @@ async function getPageModels(doc: Document, warnings: string[]): Promise<Element
       if (pageDoc.getElementsByTagName('parsererror').length > 0) throw new Error('XML');
       models.push(pageDoc.documentElement);
     } catch {
-      warnings.push(`Page ${index + 1} illisible (contenu compressé invalide)`);
+      warnings.push(importMessage('drawio.pageUnreadable', { page: index + 1 }));
     }
   }
   return models;
@@ -357,10 +358,10 @@ export async function parseDrawio(content: string): Promise<ParsedDrawio> {
   }
 
   if (models.length > 1) {
-    warnings.push(`${models.length} pages importées, empilées verticalement`);
+    warnings.push(importMessage('drawio.pagesStacked', { count: models.length }));
   }
   if (unconnected > 0) {
-    warnings.push(`${unconnected} connecteur(s) ignoré(s) (non reliés à deux formes)`);
+    warnings.push(importMessage('drawio.connectorsSkipped', { count: unconnected }));
   }
 
   return { nodes, edges, pageCount: models.length, warnings };
@@ -397,7 +398,7 @@ export async function importDrawio(
     result.warnings.push(...parsed.warnings);
 
     if (parsed.nodes.length === 0) {
-      result.errors.push('Diagramme draw.io vide ou non reconnu');
+      result.errors.push(importMessage('drawio.empty'));
       return result;
     }
 
@@ -416,7 +417,7 @@ export async function importDrawio(
           imageCount++;
           result.assetsImported++;
         } catch {
-          result.warnings.push(`Image non importée (${node.label || node.id})`);
+          result.warnings.push(importMessage('common.imageNotImported', { name: node.label || node.id }));
         }
       }
 
@@ -511,7 +512,7 @@ export async function importDrawio(
     result.success = true;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import draw.io: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'draw.io', message: errorText(error) })
     );
   }
 

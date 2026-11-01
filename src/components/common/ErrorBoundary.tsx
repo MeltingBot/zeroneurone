@@ -44,7 +44,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorInfo.componentStack
     );
 
-    // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
   }
 
@@ -63,7 +62,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback provided
       if (this.props.fallback) {
         return this.props.fallback;
       }

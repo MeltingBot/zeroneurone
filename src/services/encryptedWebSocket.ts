@@ -83,7 +83,6 @@ export class EncryptedWebSocket {
           console.warn(`[EncryptedWS] recv SLOW: ${elapsed.toFixed(0)}ms (${dataArray.byteLength}B)`);
         }
 
-        // Create new MessageEvent with decrypted data
         const decryptedEvent = new MessageEvent('message', {
           data: decrypted.buffer,
         });
@@ -201,7 +200,6 @@ export class EncryptedWebSocket {
   // WebSocket interface methods
   send(data: string | ArrayBuffer | Blob | ArrayBufferView): void {
     if (this.keyFailed) return;
-    // Convert to ArrayBuffer if needed
     let buffer: ArrayBuffer;
     if (data instanceof ArrayBuffer) {
       buffer = data;
@@ -279,7 +277,6 @@ export class EncryptedWebSocket {
     listener: EventListenerOrEventListenerObject,
     _options?: boolean | AddEventListenerOptions
   ): void {
-    // Map to our handlers
     if (type === 'open') {
       const prev = this.onopen;
       this.onopen = (e) => {

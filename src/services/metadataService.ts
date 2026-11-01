@@ -22,7 +22,6 @@ const OFFICE_MIME_TYPES = [
  */
 function parsePdfDate(raw: string): Date | null {
   if (!raw) return null;
-  // Remove "D:" prefix if present
   const s = raw.startsWith('D:') ? raw.slice(2) : raw;
   // Format: YYYYMMDDHHmmSS±HH'mm' (parts after YYYY are optional)
   const match = s.match(

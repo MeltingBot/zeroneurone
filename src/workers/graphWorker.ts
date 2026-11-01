@@ -34,7 +34,7 @@ type WorkerRequest = { requestId?: number } & (
   | { type: 'computeLayout'; elements: SerializedElement[]; links: SerializedLink[]; options: LayoutOptions }
 );
 
-type WorkerResponse = { requestId?: number } & (
+export type WorkerResponse = { requestId?: number } & (
   | { type: 'insightsResult'; data: InsightsData }
   | { type: 'layoutResult'; positions: Record<string, { x: number; y: number }> }
   | { type: 'progress'; percent: number; phase: string }

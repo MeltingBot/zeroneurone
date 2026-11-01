@@ -20,24 +20,24 @@ import { appPath } from './utils/basePath';
 import { useShallow } from 'zustand/react/shallow';
 
 /**
- * Lit _encryptionMeta directement via l'API IndexedDB native, sans passer par
- * Dexie. Permet de savoir si le chiffrement est activé AVANT d'ouvrir Dexie,
- * afin d'installer le middleware avant la première transaction.
+  * Reads _encryptionMeta straight through the native IndexedDB API, bypassing
+  * Dexie. Tells whether encryption is enabled BEFORE Dexie opens, so the
+  * middleware can be installed before the first transaction.
  */
 async function readEncryptionMetaRaw(): Promise<EncryptionMeta | null> {
   try {
-    // Vérifier que la base existe déjà (évite de la créer avec onupgradeneeded)
+    // Check that the database already exists (avoids creating it via onupgradeneeded)
     const databases = await indexedDB.databases();
     if (!databases.some(d => d.name === 'zeroneurone')) return null;
   } catch {
-    // indexedDB.databases() non supporté (rare) → on tente quand même
+    // indexedDB.databases() not supported (rare) → try anyway
   }
 
   return new Promise((resolve) => {
     const openReq = indexedDB.open('zeroneurone');
 
     openReq.onupgradeneeded = () => {
-      // La base n'existait pas (ou ancienne version sans _encryptionMeta)
+      // The database did not exist (or an old version without _encryptionMeta)
       openReq.result.close();
       resolve(null);
     };
@@ -109,34 +109,34 @@ function GlobalErrorFallback() {
 }
 
 /**
- * EncryptionGate — Vérifie si la base est chiffrée au démarrage.
- * Si oui, affiche le PasswordModal jusqu'à déverrouillage.
- * Si non, laisse passer directement.
+  * EncryptionGate — Checks at startup whether the database is encrypted.
+  * If so, shows the PasswordModal until it is unlocked.
+  * If not, lets the app through directly.
  */
 function EncryptionGate({ children }: { children: React.ReactNode }) {
   const { isLocked, setDek, setEnabled, setError, setReady, error, isEnabled, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore(useShallow((s) => ({ isLocked: s.isLocked, setDek: s.setDek, setEnabled: s.setEnabled, setError: s.setError, setReady: s.setReady, error: s.error, isEnabled: s.isEnabled, autoLockMinutes: s.autoLockMinutes, setAutoLockMinutes: s.setAutoLockMinutes })));
   const [isVerifying, setIsVerifying] = useState(false);
   const [encryptionChecked, setEncryptionChecked] = useState(false);
-  // Conserve les métadonnées lues en raw IDB pour le déverrouillage
+  // Keeps the metadata read through raw IDB, for unlocking
   const [rawMeta, setRawMeta] = useState<EncryptionMeta | null>(null);
-  // Vrai si le middleware Dexie a déjà été installé (évite le double-stack
-  // au re-unlock après un lock session).
+  // True once the Dexie middleware is installed (avoids stacking it twice
+  // on re-unlock after a session lock).
   const middlewareInstalled = useRef(false);
 
   useEffect(() => {
-    // Lire _encryptionMeta via raw IndexedDB — Dexie n'est PAS encore ouverte.
-    // Si on passait par db._encryptionMeta.get('main'), Dexie ouvrirait la
-    // connexion sans middleware, et le db.close() ultérieur causerait des
-    // DatabaseClosedError sur toutes les transactions en cours.
+    // Read _encryptionMeta through raw IndexedDB — Dexie is NOT open yet.
+    // Going through db._encryptionMeta.get('main') would open the Dexie
+    // connection without middleware, and the later db.close() would raise
+    // DatabaseClosedError on every pending transaction.
     readEncryptionMetaRaw().then(meta => {
       if (meta) {
         setRawMeta(meta);
         setEnabled(true);
         if (meta.autoLockMinutes != null) setAutoLockMinutes(meta.autoLockMinutes);
         useEncryptionStore.getState().setLocked(true);
-        // isReady reste false : Dexie ne doit pas être ouverte avant le déverrouillage
+        // isReady stays false: Dexie must not open before unlocking
       } else {
-        // Pas de chiffrement : Dexie peut être ouverte librement
+        // No encryption: Dexie can open freely
         setReady();
       }
       setEncryptionChecked(true);
@@ -146,7 +146,7 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
     });
   }, [setEnabled, setReady]);
 
-  // Raccourci Alt+L : verrouille la session si chiffrement actif et déverrouillé
+  // Alt+L shortcut: locks the session when encryption is active and unlocked
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'l' && isEnabled && !isLocked) {
@@ -157,7 +157,7 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEnabled, isLocked]);
 
-  // Auto-lock sur inactivité
+  // Auto-lock on inactivity
   useEffect(() => {
     if (!autoLockMinutes || !isEnabled || isLocked) return;
 
@@ -167,20 +167,19 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
 
     const resetTimer = () => {
       const now = Date.now();
-      // Throttle : ignorer si < 10s depuis le dernier reset
+      // Throttle: ignore if < 10s since the last reset
       if (now - lastActivity < 10_000) return;
       lastActivity = now;
       clearTimeout(timer);
       timer = setTimeout(() => useEncryptionStore.getState().lock(), ms);
     };
 
-    // Timer initial
     timer = setTimeout(() => useEncryptionStore.getState().lock(), ms);
 
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'] as const;
     events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
 
-    // Vérifier au retour d'onglet masqué
+    // Check again when a hidden tab becomes visible
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         const elapsed = Date.now() - lastActivity;
@@ -214,23 +213,23 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
 
       const { dek, upgradedMeta } = await unlockEncryption(meta, password);
 
-      // Installer le middleware AVANT la première opération Dexie.
-      // Si le middleware est déjà installé (re-unlock après lock session),
-      // on ne rappelle PAS applyEncryption pour éviter le double-stack.
+      // Install the middleware BEFORE the first Dexie operation.
+      // If it is already installed (re-unlock after a session lock),
+      // applyEncryption is NOT called again, to avoid stacking it twice.
       if (!middlewareInstalled.current) {
         db.applyEncryption(dek);
         middlewareInstalled.current = true;
       }
 
-      // Configurer syncService pour les futures bases y-indexeddb
+      // Configure syncService for future y-indexeddb databases
       syncService.setAtRestDek(dek);
 
-      // Stocker la DEK en mémoire et débloquer Dexie
+      // Keep the DEK in memory and unblock Dexie
       setDek(dek);
       setReady();
 
-      // Upgrade PBKDF2 silencieux (v1 → v2) : persister le nouveau meta
-      // après ouverture de Dexie (setReady() autorise les opérations DB).
+      // Silent PBKDF2 upgrade (v1 → v2): persist the new meta
+      // once Dexie is open (setReady() allows DB operations).
       if (upgradedMeta) {
         setRawMeta(upgradedMeta);
         db._encryptionMeta.put(upgradedMeta).catch((err) =>
@@ -308,9 +307,9 @@ function App() {
   const loadCustomIcons = useCustomIconStore((state) => state.load);
   const isReady = useEncryptionStore((state) => state.isReady);
 
-  // Initialize TagSets uniquement quand Dexie est prête (middleware installé
-  // ou chiffrement absent). Évite d'ouvrir Dexie avant que le mot de passe
-  // soit saisi et le middleware installé.
+  // Initialize TagSets only once Dexie is ready (middleware installed
+  // or no encryption). Avoids opening Dexie before the password
+  // is entered and the middleware installed.
   useEffect(() => {
     if (!isReady) return;
     loadTagSets();

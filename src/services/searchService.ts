@@ -45,7 +45,6 @@ class SearchService {
     assets: Asset[] = [],
     comments: Comment[] = [],
   ): void {
-    // Reset if different dossier
     if (this.currentDossierId !== dossierId) {
       this.index = this.createIndex();
       this.indexedIds.clear();

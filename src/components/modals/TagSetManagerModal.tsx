@@ -10,6 +10,7 @@ import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
 import { downloadBlob } from '../../utils/download';
 import { escapeCsvField, parseCSVLine as parseCSVRow, splitCSVRecords, unescapeCsvField } from '../../utils/csv';
+import { useShallow } from 'zustand/react/shallow';
 
 // This app's own CSV export: its formula guard is dropped on the way back
 const parseCSVLine = (line: string): string[] => parseCSVRow(line, ',').map(unescapeCsvField);
@@ -76,7 +77,7 @@ function isValidExportedTagSet(data: unknown): data is ExportedTagSet {
 
 export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps) {
   const { t } = useTranslation(['modals', 'common']);
-  const { getAll, delete: deleteTagSet, resetToDefaults, create, nameExists } = useTagSetStore();
+  const { delete: deleteTagSet, resetToDefaults, create, nameExists } = useTagSetStore(useShallow((s) => ({ delete: s.delete, resetToDefaults: s.resetToDefaults, create: s.create, nameExists: s.nameExists })));
   const showToast = useUIStore((state) => state.showToast);
 
   const [editingTagSet, setEditingTagSet] = useState<TagSet | null>(null);
@@ -87,7 +88,11 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
   const [query, setQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const tagSets = getAll();
+  const tagSetsById = useTagSetStore((s) => s.tagSets);
+  const tagSets = useMemo(
+    () => Array.from(tagSetsById.values()).sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+    [tagSetsById],
+  );
 
   const filteredTagSets = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -158,7 +163,6 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     showToast('success', t('tagSets.tagsExportedJson', { count: tagSets.length }));
   }, [tagSets, showToast, t]);
 
-  // Export all TagSets to CSV file
   const handleExportCSV = useCallback(() => {
     // Properties are joined with ';': quoted too
     const escapeCSV = (value: string) => escapeCsvField(value, ';');
@@ -185,7 +189,6 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     showToast('success', t('tagSets.tagsExportedCsv', { count: tagSets.length }));
   }, [tagSets, showToast, t]);
 
-  // Download CSV template for TagSets
   const handleDownloadTemplate = useCallback(() => {
     const template = `nom,description,couleur,forme,proprietes
 Personne,Une personne physique,#3b82f6,circle,prenom:text;nom:text;date_naissance:date
@@ -202,7 +205,6 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
     fileInputRef.current?.click();
   }, []);
 
-  // Parse CSV line handling quoted values
 
   // Handle file selection for import (JSON or CSV)
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {

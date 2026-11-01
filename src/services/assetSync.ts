@@ -12,6 +12,7 @@
 import * as Y from 'yjs';
 import type { Asset } from '../types';
 import { safeDataImageUrl } from '../utils/escapeHtml';
+import { yFields, type YStored } from '../types/yjs';
 
 /** Chunk size for asset binary transfer (512 KB). Larger chunks mean fewer
  *  WebSocket messages, keeping asset transfers well under the relay's per-second
@@ -39,7 +40,9 @@ export interface AssetMeta {
   createdAt: Date;
 }
 
-export function readAssetMeta(map: Y.Map<any>, fallbackDossierId: string): AssetMeta {
+export function readAssetMeta(ymap: Y.Map<unknown>, fallbackDossierId: string): AssetMeta {
+  const map = yFields<YStored<AssetMeta>>(ymap);
+  const createdAt = map.get('createdAt');
   return {
     id: map.get('id') as string,
     dossierId: map.get('dossierId') || fallbackDossierId,
@@ -50,20 +53,20 @@ export function readAssetMeta(map: Y.Map<any>, fallbackDossierId: string): Asset
     // Peer-controlled: the SHA-256 check covers the binary, never this string.
     thumbnailDataUrl: safeDataImageUrl(map.get('thumbnailDataUrl')) || null,
     extractedText: map.get('extractedText') || null,
-    createdAt: map.get('createdAt') ? new Date(map.get('createdAt')) : new Date(),
+    createdAt: createdAt ? new Date(createdAt) : new Date(),
   };
 }
 
-export function getChunksArray(map: Y.Map<any>): Y.Array<Uint8Array> | null {
+export function getChunksArray(map: Y.Map<unknown>): Y.Array<Uint8Array> | null {
   const chunks = map.get('chunks');
   return chunks instanceof Y.Array ? (chunks as Y.Array<Uint8Array>) : null;
 }
 
-export function getChunkCount(map: Y.Map<any>): number {
+export function getChunkCount(map: Y.Map<unknown>): number {
   return Number(map.get('chunkCount')) || 0;
 }
 
-export function isAssetComplete(map: Y.Map<any>): boolean {
+export function isAssetComplete(map: Y.Map<unknown>): boolean {
   const arr = getChunksArray(map);
   if (!arr) return false;
   const expected = getChunkCount(map);
@@ -71,7 +74,7 @@ export function isAssetComplete(map: Y.Map<any>): boolean {
 }
 
 /** Sum of bytes currently present in the chunks Y.Array. */
-export function getReceivedBytes(map: Y.Map<any>): number {
+export function getReceivedBytes(map: Y.Map<unknown>): number {
   const arr = getChunksArray(map);
   if (!arr) return 0;
   let total = 0;
@@ -82,7 +85,7 @@ export function getReceivedBytes(map: Y.Map<any>): number {
 }
 
 /** Assemble all chunks into a single Uint8Array. Call only when complete. */
-export function assembleChunks(map: Y.Map<any>): Uint8Array {
+export function assembleChunks(map: Y.Map<unknown>): Uint8Array {
   const arr = getChunksArray(map);
   if (!arr) return new Uint8Array(0);
   const parts: Uint8Array[] = [];
@@ -114,7 +117,7 @@ export function assembleChunks(map: Y.Map<any>): Uint8Array {
  */
 export async function pushAssetChunked(
   ydoc: Y.Doc,
-  assetsMap: Y.Map<any>,
+  assetsMap: Y.Map<Y.Map<unknown>>,
   asset: Asset,
   arrayBuffer: ArrayBuffer,
   onChunkSent?: (bytesSent: number, totalBytes: number) => void,
@@ -123,7 +126,7 @@ export async function pushAssetChunked(
   const chunkCount = Math.max(1, Math.ceil(totalSize / ASSET_CHUNK_SIZE));
 
   const chunksArray = new Y.Array<Uint8Array>();
-  const assetYMap = new Y.Map<any>();
+  const assetYMap = new Y.Map<unknown>();
 
   // Set all metadata + empty chunks array atomically so peers see a coherent
   // asset entry before chunks start arriving.

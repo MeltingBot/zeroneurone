@@ -526,11 +526,9 @@ export function buildSVGExport(
   const positionsMap = layout.positions;
   const dimensionsMap = layout.dimensions;
 
-  // Build edge SVGs
   const edgeSvgs = computeLinkRoutes(links, layout, settings)
     .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap));
 
-  // Build node SVGs
   const assetDataUrls = settings.assetDataUrls;
   const groupSvgs = groups.map(g => buildGroupSVG(g, positionsMap.get(g.id)!, dimensionsMap.get(g.id)!));
   const nodeSvgs = normalElements.map(el => {
@@ -540,7 +538,6 @@ export function buildSVGExport(
   });
   const annotationSvgs = annotations.map(a => buildAnnotationSVG(a, positionsMap.get(a.id)!, dimensionsMap.get(a.id)!));
 
-  // Compute viewBox
   const padding = 50;
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const el of elements) {

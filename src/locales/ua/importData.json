@@ -96,7 +96,8 @@
       "marriage": "Шлюб",
       "filiation": "Спорідненість",
       "siblinghood": "Братство"
-    }
+    },
+    "importError": "Помилка імпорту генеалогії: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -209,5 +210,118 @@
     "skippedLines_few": "Пропущено {{count}} нерозпізнані рядки Mermaid",
     "skippedLines_many": "Пропущено {{count}} нерозпізнаних рядків Mermaid",
     "skippedLines_other": "Пропущено {{count}} нерозпізнаних рядків Mermaid"
+  },
+  "common": {
+    "importError": "Помилка імпорту: {{message}}",
+    "formatImportError": "Помилка імпорту {{format}}: {{message}}",
+    "unknownError": "Невідома помилка",
+    "error": "Помилка",
+    "cancelled": "Імпорт скасовано",
+    "lineError": "Рядок {{row}}: {{message}}",
+    "linkMissingEndpoints": "Зв'язок пропущено: відсутнє джерело або ціль",
+    "linkMissingElements": "Зв'язок пропущено: елементи джерела/цілі не знайдено ({{label}})",
+    "imageConversionFailed": "Зображення для «{{label}}» пропущено: помилка перетворення",
+    "imageNotImported": "Зображення не імпортовано ({{name}})",
+    "reportExists": "Для цієї справи вже існує звіт: звіт не імпортовано",
+    "reportFailed": "Звіт не імпортовано: {{message}}",
+    "assetError": "Вкладений файл пропущено: {{name}} - {{message}}",
+    "skippedElements": "Пропущено елементів (без позиції): {{count}}",
+    "skippedLinks": "Пропущено зв'язків (недійсні елементи): {{count}}",
+    "nodeNoId": "Вузол без ID пропущено"
+  },
+  "archive": {
+    "tooLarge": "Архів завеликий. Макс. розмір: {{max}} МБ",
+    "tooManyFiles": "Забагато файлів в архіві. Макс.: {{max}}",
+    "missingDossierJson": "Недійсний архів: відсутній dossier.json",
+    "jsonTooLarge": "Файл JSON завеликий. Макс. розмір: {{max}} МБ",
+    "invalidJson": "Недійсний формат JSON: відсутні поля",
+    "tooManyElements": "Забагато елементів. Макс.: {{max}}",
+    "tooManyLinks": "Забагато зв'язків. Макс.: {{max}}",
+    "tooManyAssets": "Забагато вкладених файлів. Макс.: {{max}}",
+    "assetMissing": "Вкладений файл не знайдено в архіві: {{name}}",
+    "assetTooLarge": "Вкладений файл пропущено (завеликий, макс. {{max}} МБ): {{name}}",
+    "totalTooLarge": "Загальний розмір після розпакування завеликий. Макс.: {{max}} ГБ",
+    "suspiciousRatio": "Підозрілий коефіцієнт стиснення (можлива ZIP-бомба)"
+  },
+  "json": {
+    "unrecognized": "Формат JSON не розпізнано. Підтримувані формати: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Недійсний архів: відсутній backup.json",
+    "backupTooLarge": "Недійсний архів: backup.json завеликий",
+    "invalidFormat": "Недійсний формат резервної копії",
+    "incompatibleVersion": "Резервна копія версії {{version}} несумісна з цією версією застосунку (формат {{expected}}). Оновіть ZeroNeurone перед відновленням.",
+    "progress": {
+      "reading": "Читання архіву…",
+      "files": "Імпорт файлів…",
+      "elements": "Імпорт елементів…",
+      "writing": "Запис даних…",
+      "done": "Імпорт завершено",
+      "exportDossier": "Справа {{index}} / {{count}}: {{name}}",
+      "importDossier": "Відновлення {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» відсутня в архіві",
+    "dossierFailed": "«{{name}}» не відновлено: {{message}}"
+  },
+  "csv": {
+    "empty": "Порожній файл CSV",
+    "emptyLabel": "Рядок {{row}}: порожня назва, елемент пропущено",
+    "emptyLabelRow": "Рядок {{row}}: порожня назва, рядок пропущено",
+    "emptyEndpoints": "Рядок {{row}}: порожні from/to, зв'язок пропущено",
+    "emptyEndpointsRow": "Рядок {{row}}: порожні from/to, рядок пропущено",
+    "elementsNotFound": "Рядок {{row}}: елемент(и) не знайдено: {{names}}",
+    "emptyParent": "Рядок {{row}}: порожній батьківський елемент (from), подію пропущено",
+    "parentNotFound": "Рядок {{row}}: батьківський елемент не знайдено: {{name}}",
+    "invalidDate": "Рядок {{row}}: дата відсутня або недійсна, подію пропущено",
+    "missingLabelColumn": "Обов'язковий стовпець «label» не знайдено",
+    "missingFromToColumns": "Обов'язкові стовпці «from» і «to» (або «de» і «vers») не знайдено"
+  },
+  "graphml": {
+    "parseError": "Недійсний формат GraphML: помилка читання XML",
+    "missingGraphml": "Недійсний формат GraphML: відсутній елемент <graphml>",
+    "missingGraph": "Недійсний формат GraphML: відсутній елемент <graph>",
+    "linkNoEndpoints": "Зв'язок {{id}} пропущено: відсутнє джерело або ціль",
+    "linkMissingNode": "Зв'язок {{id}} пропущено: вузол джерела або цілі не знайдено",
+    "noId": "без ID"
+  },
+  "excalidraw": {
+    "noElements": "Недійсний формат Excalidraw: немає елементів",
+    "imageNotImported": "Зображення не імпортовано: {{id}}…",
+    "skippedArrows": "Пропущено стрілок (не з'єднаних із фігурами): {{count}}",
+    "imagesImported": "Імпортовано зображень із файлу Excalidraw: {{count}}",
+    "orphanArrows": "Пропущено вільних стрілок (без з'єднання): {{count}}"
+  },
+  "predicagraph": {
+    "missingNodes": "Недійсний формат PredicaGraph: відсутнє поле «nodes»",
+    "nodeSkipped": "Вузол пропущено: відсутній ID або позиція",
+    "linkMissingNode": "Зв'язок пропущено: вузол джерела ({{source}}) або цілі ({{target}}) не знайдено"
+  },
+  "graphPalette": {
+    "missingNodes": "Недійсний формат Graph Palette: відсутнє поле «nodes»",
+    "nodeTypeSkipped": "Тип вузла пропущено: {{type}} ({{label}})",
+    "unsupportedType": "Непідтримуваний тип: {{type}}",
+    "unexpectedNode": "Вузол пропущено: неочікуваний формат ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Сторінка {{page}} нечитабельна (недійсний стиснутий вміст)",
+    "pagesStacked": "Імпортовано сторінок, розміщених вертикально: {{count}}",
+    "connectorsSkipped": "Пропущено з'єднувачів (не прикріплених до двох фігур): {{count}}",
+    "empty": "Діаграма draw.io порожня або не розпізнана"
+  },
+  "osintIndustries": {
+    "invalid": "Недійсний формат OSINT Industries: порожній масив або неправильний формат",
+    "noFound": "Не знайдено жодного модуля зі статусом «found»"
+  },
+  "geojson": {
+    "invalid": "Недійсний формат GeoJSON: очікується FeatureCollection",
+    "noGeometry": "Feature без геометрії пропущено",
+    "polygonTooSmall": "\"{{label}}\": полігон із менш ніж 3 точками, пропущено",
+    "multiPointReduced": "\"{{label}}\": MultiPoint зведено до першої точки",
+    "unsupportedGeometry": "\"{{label}}\": геометрія \"{{type}}\" не підтримується, пропущено",
+    "invalidCoordinates": "\"{{label}}\": недійсні координати, пропущено",
+    "outOfRange": "Об'єктів із координатами поза WGS 84 (широта/довгота в градусах): {{count}}. Перепроєктуйте файл в EPSG:4326 (WGS 84) перед імпортом.",
+    "outOfRangeCrs": "Об'єктів із координатами поза WGS 84 (широта/довгота в градусах): {{count}}, заявлена проєкція: {{crs}}. Перепроєктуйте файл в EPSG:4326 (WGS 84) перед імпортом.",
+    "outOfRangeSkipped": "{{message}} Ці об'єкти пропущено.",
+    "multiPolygonsReduced": "MultiPolygon, зведених до найбільшого полігона: {{count}}"
   }
 }

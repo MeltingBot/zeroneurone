@@ -87,7 +87,6 @@ export function LandingSection({
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex flex-col items-center text-center mb-12">
-          {/* Logo */}
           <img
             src={appPath('/logo.png')}
             alt="Zero Neurone"
@@ -272,6 +271,7 @@ export function LandingSection({
           ))}
           <button
             onClick={onEncryption}
+            data-testid="encryption-settings-button"
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
             <Lock size={14} className={isEncryptionEnabled ? 'text-success' : undefined} />

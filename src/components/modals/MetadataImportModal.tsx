@@ -102,8 +102,8 @@ export function MetadataImportModal() {
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
-  // Appele inconditionnellement : les hooks doivent preceder tout return.
-  // Echap revient a ignorer l'element courant de la file.
+  // Called unconditionally: hooks must come before any return.
+  // Escape skips the current item of the queue.
   useDialogA11y(Boolean(current && !batchChoice), dialogRef, shiftMetadataImport);
 
   if (!current || batchChoice) return null;
@@ -174,7 +174,6 @@ export function MetadataImportModal() {
         className="bg-bg-primary rounded shadow-lg w-full max-w-md max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border-default">
           <div className="min-w-0">
             <h3 id={titleId} className="text-sm font-semibold text-text-primary">
@@ -253,7 +252,6 @@ export function MetadataImportModal() {
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-2 p-4 border-t border-border-default">
           {canApplyToBatch && (
             <label className="mr-auto flex items-center gap-2 cursor-pointer text-xs text-text-secondary hover:text-text-primary">

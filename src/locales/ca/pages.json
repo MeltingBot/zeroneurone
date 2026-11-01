@@ -13,8 +13,6 @@
     "lightMode": "Mode clar",
     "noDossiers": "Sense expedients",
     "createFirst": "Creeu la vostra primera expedient per començar",
-    "viewDossiers": "Veure expedients",
-    "dossierCount": "{{count}} expedient(s)",
     "loading": "Carregant...",
     "searchPlaceholder": "Cercar per nom o descripció...",
     "filterByTag": "Filtrar per etiqueta",
@@ -24,7 +22,6 @@
     "activeFilters": "Filtres actius",
     "clearFilters": "Esborrar",
     "noResults": "No s'han trobat expedients",
-    "noResultsHint": "Proveu altres termes o esborreu els filtres",
     "resultsCount": "{{count}} / {{total}} expedient(s)",
     "card": {
       "modified": "Modificat {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Selecció",
-      "pan": "Desplaçament",
-      "addElement": "Afegir un element",
-      "addGroup": "Afegir un grup",
-      "addAnnotation": "Afegir una anotació",
-      "autoLayout": "Disposició automàtica",
       "fitView": "Ajustar vista",
       "zoomIn": "Apropar",
       "zoomOut": "Allunyar",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Amagar els no datats",
       "temporalUndatedShow": "Mostrar els no datats (en gris)",
       "hideMinimap": "Amagar minimapa",
-      "closeEsc": "Tancar (Esc)",
-      "close": "Tancar",
-      "loading": "Carregant...",
       "oneElement": "1 element",
       "oneLink": "1 enllaç",
       "selectedCount": "{{count}} seleccionats"
@@ -226,17 +215,6 @@
       "matrix": "Matriu",
       "report": "Informe"
     },
-    "panels": {
-      "detail": "Detall",
-      "filters": "Filtres",
-      "insights": "Anàlisis",
-      "views": "Vistes"
-    },
-    "emptyCanvas": {
-      "title": "Llenç buit",
-      "hint": "Doble clic per crear un element",
-      "orDrop": "o deixeu anar fitxers"
-    },
     "importPlacement": {
       "instructions": "Feu clic per col·locar els elements importats",
       "importing": "Important...",
@@ -302,25 +280,15 @@
       "noKeyObjectHint": "Ctrl+clic per triar un element de referència"
     },
     "toast": {
-      "elementCreated": "Element creat",
-      "elementsDeleted": "{{count}} element(s) eliminat(s)",
-      "linkCreated": "Enllaç creat",
-      "copied": "Copiat al porta-retalls",
-      "pasted": "{{count}} element(s) enganxat(s)",
-      "saved": "Desat",
-      "exportSuccess": "Exportació acabada",
-      "exportError": "Error durant l'exportació",
       "assetTooLargeToShare": "Fitxer massa gran per sincronitzar ({{size}}, màxim {{max}}). Continua disponible localment però no es comparteix.",
       "assetLargeToShare": "Fitxer gran ({{size}}): la sincronització pot ser lenta."
     },
     "notFound": "Investigació no trobada",
     "header": {
-      "report": "Síntesi",
       "generateReport": "Síntesi",
       "export": "Exportar",
       "search": "Cercar",
       "clearFilters": "Esborrar filtres",
-      "activeFilters": "Filtres actius",
       "shortcuts": "Dreceres de teclat",
       "documentation": "Documentació",
       "supportKofi": "Donar suport a Ko-fi",
@@ -345,9 +313,6 @@
       "moveHere": "Moure a aquesta pestanya",
       "addToTab": "Afegir a pestanya...",
       "removeFromTab": "Treure de pestanya",
-      "emptyState": "Cap element en aquesta pestanya",
-      "emptyHint": "Clic dret als elements per afegir-los",
-      "ghostBadge": "A {{tabs}}",
       "navigateTo": "Anar a pestanya {{name}}",
       "combine": "Combinar",
       "uncombine": "Deixar de combinar",
@@ -358,7 +323,6 @@
     "retentionExpiredBanner": "Retenció expirada des de fa {{days}} dia/es",
     "retentionDeleteConfirm": "Aquesta expedient s'eliminarà definitivament, sense possibilitat d'anul·lació.",
     "retentionDeleteAction": "Eliminar definitivament",
-    "retentionReadonly": "Investigació en només lectura (retenció expirada)",
     "retentionRedactConfirm": "La redacció eliminarà permanentment tot el contingut textual (noms, notes, propietats). L'estructura del graf es conservarà. Aquesta acció és irreversible.",
     "retentionRedactAction": "Redactar definitivament",
     "opfsUnavailable": "Aquest navegador (o el mode privat) impedeix l'emmagatzematge local dels mitjans: les imatges no es mostraran. Obre l'expedient en una finestra normal.",
@@ -376,7 +340,6 @@
     "offMapLinked": "{{count}} element(s) enllaçat(s) sense posició",
     "offMapSelectRest": "Selecciona els altres {{count}}",
     "addLocation": "Afegiu coordenades als elements per veure'ls al mapa",
-    "pickLocation": "Feu clic al mapa per definir la posició",
     "elementsLocated": "{{count}} element(s) localitzat(s)",
     "elementsLocatedFiltered": "{{kept}} / {{count}} element(s) localitzat(s)",
     "density": "Densitat",
@@ -431,25 +394,17 @@
     "zoneSquare": "Quadrat",
     "editZone": "Modifica la forma",
     "geometry": "Geometria",
-    "vertices": "Vèrtexs",
-    "area": "Superfície",
-    "center": "Centre",
     "viewOnMap": "Mostra al mapa",
-    "deleteVertex": "Suprimeix aquest vèrtex",
     "geoJsonSave": "Aplica",
     "geoJsonParseError": "JSON no vàlid",
     "geoJsonMinVertices": "Mínim 3 vèrtexs",
     "geoJsonInvalidCoord": "Coordenada no vàlida: [lng, lat]"
   },
   "timeline": {
-    "noEvents": "Cap esdeveniment datat",
-    "addDates": "Afegiu dates als elements o creeu esdeveniments",
     "noTemporalData": "Sense dades temporals",
     "howToAddTimeline": "Per veure elements a la línia de temps:",
     "addPeriodToLinks": "Afegiu un període als enllaços (data inici/fi)",
     "addEventsToHistory": "Afegiu esdeveniments a l'historial dels elements",
-    "eventsCount": "{{count}} esdeveniment(s)",
-    "zoomHint": "Ctrl+roda: zoom | Arrossegar: moure",
     "zoomPresetCentury": "Segle",
     "zoomPresetDecade": "10 anys",
     "zoomPreset1Year": "1 any",
@@ -495,7 +450,6 @@
     "relation": "relació",
     "newElement": "Nou element",
     "filter": "Filtre",
-    "filteredEventsCount": "{{filtered}}/{{total}} esdeveniment(s)",
     "temporalFilter": "Període",
     "temporalFilterHint": "Filtrar per període temporal",
     "stepBackward": "Retrocedir un mes",
@@ -528,7 +482,6 @@
     "source": "Font",
     "count": "{{count}}/{{total}} elements",
     "properties": "{{count}} propietats",
-    "search": "Cercar...",
     "columns": "Mostra/amaga columnes",
     "noResults": "Sense resultats",
     "empty": "Cap element amb propietats",
@@ -551,19 +504,11 @@
   },
   "report": {
     "title": "Informe",
-    "untitled": "Sense títol",
     "addSection": "Afegir una secció",
     "sections": {
-      "title": "Títol",
-      "text": "Text",
-      "canvas": "Llenç",
-      "map": "Mapa",
-      "timeline": "Línia de temps",
-      "table": "Taula",
-      "insights": "Anàlisis"
+      "map": "Mapa"
     },
-    "export": "Exportar a PDF",
-    "print": "Imprimir"
+    "export": "Exportar a PDF"
   },
   "join": {
     "title": "Unir-se a una sessió",
@@ -616,12 +561,9 @@
   },
   "tutorial": {
     "start": "Tutorial guiat",
-    "restart": "Reiniciar el tutorial",
-    "progress": "Pas {{current}}/{{total}}",
     "next": "Següent",
     "skip": "Ometre",
     "quit": "Sortir",
-    "finish": "Acabar",
     "deleteDossier": "Suprimir l'expedient del tutorial",
     "keepDossier": "Conservar-lo",
     "offTrack": {

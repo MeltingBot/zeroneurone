@@ -13,8 +13,6 @@
     "lightMode": "Heller Modus",
     "noDossiers": "Keine Akten",
     "createFirst": "Erstellen Sie Ihre erste Akte, um zu beginnen",
-    "viewDossiers": "Akten anzeigen",
-    "dossierCount": "{{count}} Akte(n)",
     "loading": "Wird geladen...",
     "searchPlaceholder": "Nach Name oder Beschreibung suchen...",
     "filterByTag": "Nach Tag filtern",
@@ -24,7 +22,6 @@
     "activeFilters": "Aktive Filter",
     "clearFilters": "Löschen",
     "noResults": "Keine Akten gefunden",
-    "noResultsHint": "Versuchen Sie andere Begriffe oder löschen Sie die Filter",
     "resultsCount": "{{count}} / {{total}} Akte(n)",
     "card": {
       "modified": "Geändert {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Auswahl",
-      "pan": "Verschieben",
-      "addElement": "Element hinzufügen",
-      "addGroup": "Gruppe hinzufügen",
-      "addAnnotation": "Anmerkung hinzufügen",
-      "autoLayout": "Automatisches Layout",
       "fitView": "Ansicht anpassen",
       "zoomIn": "Vergrößern",
       "zoomOut": "Verkleinern",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Undatierte ausblenden",
       "temporalUndatedShow": "Undatierte anzeigen (grau)",
       "hideMinimap": "Minimap ausblenden",
-      "closeEsc": "Schließen (Esc)",
-      "close": "Schließen",
-      "loading": "Wird geladen...",
       "oneElement": "1 Element",
       "oneLink": "1 Verbindung",
       "selectedCount": "{{count}} ausgewählt"
@@ -226,17 +215,6 @@
       "matrix": "Matrix",
       "report": "Bericht"
     },
-    "panels": {
-      "detail": "Detail",
-      "filters": "Filter",
-      "insights": "Analysen",
-      "views": "Ansichten"
-    },
-    "emptyCanvas": {
-      "title": "Leere Arbeitsfläche",
-      "hint": "Doppelklick zum Erstellen eines Elements",
-      "orDrop": "oder Dateien ablegen"
-    },
     "importPlacement": {
       "instructions": "Klicken Sie, um die importierten Elemente zu platzieren",
       "importing": "Wird importiert...",
@@ -302,25 +280,15 @@
       "noKeyObjectHint": "Ctrl+Klick um ein Bezugselement zu wählen"
     },
     "toast": {
-      "elementCreated": "Element erstellt",
-      "elementsDeleted": "{{count}} Element(e) gelöscht",
-      "linkCreated": "Verbindung erstellt",
-      "copied": "In Zwischenablage kopiert",
-      "pasted": "{{count}} Element(e) eingefügt",
-      "saved": "Gespeichert",
-      "exportSuccess": "Export abgeschlossen",
-      "exportError": "Fehler beim Export",
       "assetTooLargeToShare": "Datei zu groß für die Synchronisierung ({{size}}, maximal {{max}}). Sie bleibt lokal verfügbar, wird aber nicht geteilt.",
       "assetLargeToShare": "Große Datei ({{size}}): Die Synchronisierung kann langsam sein."
     },
     "notFound": "Akte nicht gefunden",
     "header": {
-      "report": "Zusammenfassung",
       "generateReport": "Synthese",
       "export": "Exportieren",
       "search": "Suchen",
       "clearFilters": "Filter löschen",
-      "activeFilters": "Aktive Filter",
       "shortcuts": "Tastenkürzel",
       "documentation": "Dokumentation",
       "supportKofi": "Auf Ko-fi unterstützen",
@@ -345,9 +313,6 @@
       "moveHere": "In diesen Tab verschieben",
       "addToTab": "Zu Tab hinzufügen...",
       "removeFromTab": "Aus Tab entfernen",
-      "emptyState": "Keine Elemente in diesem Tab",
-      "emptyHint": "Rechtsklick auf Elemente zum Hinzufügen",
-      "ghostBadge": "In {{tabs}}",
       "navigateTo": "Zu Tab {{name}} wechseln",
       "combine": "Kombinieren",
       "uncombine": "Nicht mehr kombinieren",
@@ -358,7 +323,6 @@
     "retentionExpiredBanner": "Aufbewahrung abgelaufen seit {{days}} Tag(en)",
     "retentionDeleteConfirm": "Diese Akte wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
     "retentionDeleteAction": "Endgültig löschen",
-    "retentionReadonly": "Akte ist schreibgeschützt (Aufbewahrung abgelaufen)",
     "retentionRedactConfirm": "Die Schwärzung löscht dauerhaft alle Textinhalte (Namen, Notizen, Eigenschaften). Die Graphstruktur bleibt erhalten. Diese Aktion ist unwiderruflich.",
     "retentionRedactAction": "Endgültig schwärzen",
     "opfsUnavailable": "Dieser Browser (oder der private Modus) blockiert die lokale Medienspeicherung: Bilder werden nicht angezeigt. Öffnen Sie die Akte in einem normalen Fenster.",
@@ -376,7 +340,6 @@
     "offMapLinked": "{{count}} verknüpfte(s) Element(e) ohne Position",
     "offMapSelectRest": "Die übrigen {{count}} auswählen",
     "addLocation": "Fügen Sie Koordinaten zu Elementen hinzu, um sie auf der Karte zu sehen",
-    "pickLocation": "Klicken Sie auf die Karte, um die Position festzulegen",
     "elementsLocated": "{{count}} Element(e) lokalisiert",
     "elementsLocatedFiltered": "{{kept}} / {{count}} Element(e) lokalisiert",
     "density": "Dichte",
@@ -419,11 +382,7 @@
     "deleteSelection": "Auswahl löschen",
     "editZone": "Form bearbeiten",
     "geometry": "Geometrie",
-    "vertices": "Eckpunkte",
-    "area": "Fläche",
-    "center": "Mittelpunkt",
     "viewOnMap": "Auf Karte anzeigen",
-    "deleteVertex": "Eckpunkt löschen",
     "geoJsonSave": "Anwenden",
     "geoJsonParseError": "Ungültiges JSON",
     "geoJsonMinVertices": "Mindestens 3 Eckpunkte",
@@ -442,14 +401,10 @@
     "zoneSquare": "Quadrat"
   },
   "timeline": {
-    "noEvents": "Keine datierten Ereignisse",
-    "addDates": "Fügen Sie Daten zu Elementen hinzu oder erstellen Sie Ereignisse",
     "noTemporalData": "Keine zeitlichen Daten",
     "howToAddTimeline": "Um Elemente auf der Zeitleiste zu sehen:",
     "addPeriodToLinks": "Fügen Sie einen Zeitraum zu Verbindungen hinzu (Start-/Enddatum)",
     "addEventsToHistory": "Fügen Sie Ereignisse in der Historie der Elemente hinzu",
-    "eventsCount": "{{count}} Ereignis(se)",
-    "zoomHint": "Strg+Mausrad: Zoom | Ziehen: Verschieben",
     "zoomPresetCentury": "Jhdt.",
     "zoomPresetDecade": "10 Jahre",
     "zoomPreset1Year": "1 Jahr",
@@ -495,7 +450,6 @@
     "relation": "Beziehung",
     "newElement": "Neues Element",
     "filter": "Filter",
-    "filteredEventsCount": "{{filtered}}/{{total}} Ereignis(se)",
     "temporalFilter": "Zeitraum",
     "temporalFilterHint": "Nach Zeitraum filtern",
     "stepBackward": "Einen Monat zurück",
@@ -528,7 +482,6 @@
     "source": "Quelle",
     "count": "{{count}}/{{total}} Elemente",
     "properties": "{{count}} Eigenschaften",
-    "search": "Suchen...",
     "columns": "Spalten ein-/ausblenden",
     "noResults": "Keine Ergebnisse",
     "empty": "Keine Elemente mit Eigenschaften",
@@ -551,19 +504,11 @@
   },
   "report": {
     "title": "Bericht",
-    "untitled": "Ohne Titel",
     "addSection": "Abschnitt hinzufügen",
     "sections": {
-      "title": "Titel",
-      "text": "Text",
-      "canvas": "Arbeitsfläche",
-      "map": "Karte",
-      "timeline": "Zeitleiste",
-      "table": "Tabelle",
-      "insights": "Analysen"
+      "map": "Karte"
     },
-    "export": "Als PDF exportieren",
-    "print": "Drucken"
+    "export": "Als PDF exportieren"
   },
   "join": {
     "title": "Sitzung beitreten",
@@ -616,12 +561,9 @@
   },
   "tutorial": {
     "start": "Geführtes Tutorial",
-    "restart": "Tutorial neu starten",
-    "progress": "Schritt {{current}}/{{total}}",
     "next": "Weiter",
     "skip": "Überspringen",
     "quit": "Beenden",
-    "finish": "Abschließen",
     "deleteDossier": "Tutorial-Akte löschen",
     "keepDossier": "Behalten",
     "offTrack": {

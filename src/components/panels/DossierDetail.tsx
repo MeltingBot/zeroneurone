@@ -12,6 +12,7 @@ import { activeTimeZoneLabel, dateLocale } from '../../utils/dates';
 import { findLegacyUtcMidnightDates, type LegacyDateFixes } from '../../utils/legacyDates';
 import { LABEL_WRAP_DEFAULT, LABEL_WRAP_MAX, LABEL_WRAP_MIN } from '../../utils/wrapLabel';
 import { retentionExpiresAt } from '../../utils/dossierLock';
+import { useShallow } from 'zustand/react/shallow';
 
 interface DossierDetailProps {
   dossier: Dossier;
@@ -29,14 +30,13 @@ interface DossierDetailProps {
 export function DossierDetail({ dossier }: DossierDetailProps) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
-  const { updateDossier, addExistingTag, addSuggestedProperty, updateSuggestedPropertyChoices } = useDossierStore();
+  const { updateDossier, addExistingTag, addSuggestedProperty, updateSuggestedPropertyChoices } = useDossierStore(useShallow((s) => ({ updateDossier: s.updateDossier, addExistingTag: s.addExistingTag, addSuggestedProperty: s.addSuggestedProperty, updateSuggestedPropertyChoices: s.updateSuggestedPropertyChoices })));
 
   // Description state - managed separately for MarkdownEditor
   const [description, setDescription] = useState(dossier.description);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const descriptionRef = useRef(dossier.description);
 
-  // Start date local state
   const [startDate, setStartDate] = useState(
     dossier.startDate ? formatDateForInput(dossier.startDate) : ''
   );
@@ -64,7 +64,6 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
     }
   }, [dossier.startDate, isEditingStartDate]);
 
-  // Handle name change (from EditableField)
   const handleNameChange = useCallback(
     (value: string) => {
       updateDossier(dossier.id, { name: value });
@@ -72,7 +71,6 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
     [dossier.id, updateDossier]
   );
 
-  // Handle creator change (from EditableField)
   const handleCreatorChange = useCallback(
     (value: string) => {
       updateDossier(dossier.id, { creator: value });
@@ -94,13 +92,11 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
   // Handle description blur - save if changed
   const handleDescriptionBlur = useCallback(() => {
     setIsEditingDescription(false);
-    // Only save if value changed
     if (description !== descriptionRef.current) {
       updateDossier(dossier.id, { description });
     }
   }, [description, dossier.id, updateDossier]);
 
-  // Handle start date change
   const handleStartDateChange = useCallback(
     (value: string) => {
       setStartDate(value);
@@ -117,7 +113,6 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
     [dossier.id, updateDossier]
   );
 
-  // Handle tags change
   const handleTagsChange = useCallback(
     (tags: string[]) => {
       updateDossier(dossier.id, { tags });
@@ -125,7 +120,6 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
     [dossier.id, updateDossier]
   );
 
-  // Handle properties change
   const handlePropertiesChange = useCallback(
     (properties: Property[]) => {
       updateDossier(dossier.id, { properties });
@@ -168,7 +162,7 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
 
   return (
     <div className="divide-y divide-border-default">
-      {/* Informations générales */}
+      {/* General information */}
       <AccordionSection
         id="general"
         title={t('dossier.sections.information')}
@@ -268,16 +262,13 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
         </div>
       </AccordionSection>
 
-      {/* Évaluation de l'information */}
       <EvaluationSection dossier={dossier} />
 
-      {/* Rétention */}
       <RetentionSection dossier={dossier} />
 
-      {/* Options */}
       <OptionsSection dossier={dossier} />
 
-      {/* Propriétés */}
+      {/* Properties */}
       <AccordionSection
         id="properties"
         title={t('dossier.sections.properties')}
@@ -314,7 +305,7 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
 function EvaluationSection({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation('panels');
   const { t: tc } = useTranslation('common');
-  const { updateDossier } = useDossierStore();
+  const { updateDossier } = useDossierStore(useShallow((s) => ({ updateDossier: s.updateDossier })));
   const model = getEvaluationModel(dossier);
   const [pendingState, setPending] = useState<
     { model: EvaluationModel; count: number; from: EvaluationModel; dossierId: string } | null
@@ -559,7 +550,7 @@ function ClosureField({ dossier }: { dossier: Dossier }) {
 function RetentionSection({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
-  const { updateDossier } = useDossierStore();
+  const { updateDossier } = useDossierStore(useShallow((s) => ({ updateDossier: s.updateDossier })));
 
   const [localDays, setLocalDays] = useState<string>(
     dossier.retentionDays != null ? String(dossier.retentionDays) : ''
@@ -730,7 +721,7 @@ function formatDateDisplay(date: Date, language: string): string {
  */
 function TimeZoneAndLegacyDates() {
   const { t } = useTranslation('panels');
-  const { updateElement, updateLink } = useDossierStore();
+  const { updateElement, updateLink } = useDossierStore(useShallow((s) => ({ updateElement: s.updateElement, updateLink: s.updateLink })));
   const [fixes, setFixes] = useState<LegacyDateFixes | null>(null);
   const [applying, setApplying] = useState(false);
   const [doneCount, setDoneCount] = useState<number | null>(null);

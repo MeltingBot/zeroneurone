@@ -74,16 +74,13 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const comments = useDossierStore((s) => s.comments);
   // Note: currentDossier is used for suggestions in PropertiesEditor
 
-  // Count unresolved comments for this link
   const linkComments = comments.filter(c => c.targetId === link.id);
   const unresolvedCommentCount = linkComments.filter(c => !c.resolved).length;
 
-  // Local state for inputs
   const [label, setLabel] = useState(link.label);
   const [notes, setNotes] = useState(link.notes);
   const [source, setSource] = useState(link.source);
 
-  // State for suggested properties popup
   const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
   // Track which link we're editing to prevent cross-link saves
@@ -98,12 +95,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const lastSyncedNotesRef = useRef(link.notes);
   const lastSyncedSourceRef = useRef(link.source);
 
-  // Debounced values
   const debouncedLabel = useDebounce(label, 500);
   const debouncedNotes = useDebounce(notes, 500);
   const debouncedSource = useDebounce(source, 500);
 
-  // Find connected elements
   const fromElement = elements.find((el) => el.id === link.fromId);
   const toElement = elements.find((el) => el.id === link.toId);
 
@@ -387,7 +382,6 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
   const hasPeriod = link.dateRange?.start !== null;
 
-  // Direction options with icons
   const directionOptions: { value: LinkDirection; icon: typeof Minus; labelKey: string }[] = [
     { value: 'none', icon: Minus, labelKey: 'directionNone' },
     { value: 'forward', icon: ArrowRight, labelKey: 'directionForward' },
@@ -780,7 +774,6 @@ export function LinkDetail({ link }: LinkDetailProps) {
         <CopyableId id={link.id} />
       </div>
 
-      {/* Suggested Properties Popup */}
       {suggestedPropsTagSet && (
         <SuggestedPropertiesPopup
           tagSetName={suggestedPropsTagSet}

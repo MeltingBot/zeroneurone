@@ -46,7 +46,6 @@ export function convertToZeroNeurone(
   const idMapping = new Map<string, ElementId>();
   const warnings: string[] = [];
 
-  // Convert persons to elements
   const elements: Partial<Element>[] = [];
   for (const person of data.persons) {
     const element = personToElement(person, dossierId, data.fileName, options);
@@ -56,7 +55,6 @@ export function convertToZeroNeurone(
     }
   }
 
-  // Convert families to links
   const links: Partial<Link>[] = [];
   for (const family of data.families) {
     const familyLinks = familyToLinks(family, idMapping, dossierId, data.fileName, options, data.persons);
@@ -77,7 +75,6 @@ function personToElement(
 ): Partial<Element> {
   const id = generateUUID() as ElementId;
 
-  // Build life events
   const events: ElementEvent[] = [];
 
   if (person.birthDate) {
@@ -133,7 +130,6 @@ function personToElement(
     }
   }
 
-  // Build properties
   const properties: Property[] = [
     { key: t('properties.firstName'), value: person.firstName, type: 'text' },
     { key: t('properties.lastName'), value: person.lastName, type: 'text' },
@@ -157,7 +153,6 @@ function personToElement(
   // Add source ID for reference
   properties.push({ key: t('properties.sourceId'), value: person.id, type: 'text' });
 
-  // Build tags
   const tags: string[] = [];
   if (options.addGenealogyTag) {
     tags.push(t('tags.genealogy'));
@@ -303,7 +298,6 @@ function familyToLinks(
       if (family.divorceDate) {
         marriageEndDate = toDate(family.divorceDate);
       } else {
-        // Find death dates of both spouses
         const husband = persons.find(p => p.id === family.husbandId);
         const wife = persons.find(p => p.id === family.wifeId);
         const husbandDeathDate = husband?.deathDate ? toDate(husband.deathDate) : null;
@@ -503,7 +497,6 @@ function formatDate(gdate: GenealogyDate): string {
 
   let formatted = parts.join('/');
 
-  // Add modifier prefix
   switch (gdate.modifier) {
     case 'about':
       formatted = `~${formatted}`;

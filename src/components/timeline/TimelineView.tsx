@@ -22,15 +22,10 @@ import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { buildTimelineItems, type TimelineItem } from './timelineItems';
 import { ItemThumbnail } from './ItemThumbnail';
 import { exportTimelineToCSV, CAUSAL_COLORS, getDensityColor } from './timelineOutput';
+import { useTimelineNavigation } from './useTimelineNavigation';
+import { MIN_ZOOM, MAX_ZOOM, ROW_HEIGHT, ROW_GAP } from './timelineConstants';
+import { useShallow } from 'zustand/react/shallow';
 
-// Constants
-const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
-const MAX_ZOOM = 1000; // pixels per day (900 = ~1h visible at 800px width)
-const ROW_HEIGHT = 36;
-// Selection held when the timeline was last left (the store replaces the Set
-// on every change, so identity tells whether it changed in another view)
-let selectionWhenTimelineLeft: ReadonlySet<string> | null = null;
-const ROW_GAP = 8;
 // Scatter mode: a bar too short for its content shows it just after the bar
 // (each item has its own row, so the space on the right is free)
 const OUTSIDE_LABEL_GAP = 6;
@@ -54,20 +49,20 @@ export function TimelineView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links, comments, currentDossier } = useDossierStore();
+  const { elements, links, comments, currentDossier } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, comments: s.comments, currentDossier: s.currentDossier })));
   const evaluationModel = useEvaluationModel();
-  const { selectElement, selectLink, selectedElementIds, selectedLinkIds, setFocusedEventId } = useSelectionStore();
+  const { selectElement, selectLink, selectedElementIds, selectedLinkIds, setFocusedEventId } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectLink: s.selectLink, selectedElementIds: s.selectedElementIds, selectedLinkIds: s.selectedLinkIds, setFocusedEventId: s.setFocusedEventId })));
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
   const themeMode = useUIStore((state) => state.themeMode);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
-  const { filters, hiddenElementIds } = useViewStore();
+  const { filters, hiddenElementIds } = useViewStore(useShallow((s) => ({ filters: s.filters, hiddenElementIds: s.hiddenElementIds })));
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
   const { includedDateProperties, excludedDateProperties, dateRangeProperties } = filters;
-  const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore(useShallow((s) => ({ highlightedElementIds: s.highlightedElementIds })));
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
   const queryMatchLinkIds = useQueryStore((s) => s.matchingLinkIds);
@@ -102,26 +97,26 @@ export function TimelineView() {
   const tl = useViewStore((s) => s.timeline);
   const setTimeline = useViewStore((s) => s.setTimeline);
 
-  // Derive zoom/viewStart from store
   const zoom = tl.zoom;
+  // Updaters read the store, not the render's value: callers memoised with
+  // empty dependencies (zoom buttons, wheel) keep a stable setter
   const setZoom = useCallback((v: number | ((prev: number) => number)) => {
-    setTimeline({ zoom: typeof v === 'function' ? v(tl.zoom) : v });
-  }, [tl.zoom, setTimeline]);
+    setTimeline({ zoom: typeof v === 'function' ? v(useViewStore.getState().timeline.zoom) : v });
+  }, [setTimeline]);
 
   const viewStart = useMemo(() => new Date(tl.viewStartMs || Date.now() - 80 * 24 * 60 * 60 * 1000), [tl.viewStartMs]);
   const setViewStart = useCallback((d: Date) => {
     setTimeline({ viewStartMs: d.getTime() });
   }, [setTimeline]);
 
-  // Derive other persisted values
   const newestFirst = tl.newestFirst;
   const setNewestFirst = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
-    setTimeline({ newestFirst: typeof v === 'function' ? v(tl.newestFirst) : v });
-  }, [tl.newestFirst, setTimeline]);
+    setTimeline({ newestFirst: typeof v === 'function' ? v(useViewStore.getState().timeline.newestFirst) : v });
+  }, [setTimeline]);
   const showDensity = tl.showDensity;
   const setShowDensity = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
-    setTimeline({ showDensity: typeof v === 'function' ? v(tl.showDensity) : v });
-  }, [tl.showDensity, setTimeline]);
+    setTimeline({ showDensity: typeof v === 'function' ? v(useViewStore.getState().timeline.showDensity) : v });
+  }, [setTimeline]);
   const showHistogram = tl.showHistogram;
   const histogramMode = tl.histogramMode;
   // Selected histogram bar (local): highlights the matching items
@@ -138,8 +133,8 @@ export function TimelineView() {
   }, [tl.showHistogram, setTimeline]);
   const showCausality = tl.showCausality;
   const setShowCausality = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
-    setTimeline({ showCausality: typeof v === 'function' ? v(tl.showCausality) : v });
-  }, [tl.showCausality, setTimeline]);
+    setTimeline({ showCausality: typeof v === 'function' ? v(useViewStore.getState().timeline.showCausality) : v });
+  }, [setTimeline]);
   const causalityMaxDays = tl.causalityMaxDays;
   const setCausalityMaxDays = useCallback((v: number) => {
     setTimeline({ causalityMaxDays: v });
@@ -181,20 +176,15 @@ export function TimelineView() {
   }, []);
 
   // Local-only state (not worth persisting)
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragStartView, setDragStartView] = useState<Date>(new Date());
   const [showTemporalFilter, setShowTemporalFilter] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState<Date | null>(null);
   const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
 
-  // Build timeline items from links and element events
   const { items, timeBounds } = useMemo(
     () => buildTimelineItems({ elements, links, comments, viewHiddenIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, includedDateProperties, excludedDateProperties, dateRangeProperties, t, language: i18n.language }),
     [elements, links, comments, viewHiddenIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language, includedDateProperties, excludedDateProperties, dateRangeProperties, t],
   );
 
-  // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -234,7 +224,6 @@ export function TimelineView() {
         return null;
       }
 
-      // Calculate zoom to fit all items in view
       const containerWidth = containerRef.current.clientWidth || 800;
       const timeRangeMs = timeBounds.max.getTime() - timeBounds.min.getTime();
       const timeRangeDays = timeRangeMs / (24 * 60 * 60 * 1000);
@@ -242,14 +231,12 @@ export function TimelineView() {
       // Calculate zoom to fit, with some padding
       const targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, (containerWidth - 100) / timeRangeDays));
 
-      // Update view to show all items
       setZoom(targetZoom);
       setViewStart(timeBounds.min);
 
       // Wait longer for render to complete
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Capture
       const element = document.querySelector('[data-report-capture="timeline"]') as HTMLElement;
       if (!element) {
         return null;
@@ -270,9 +257,8 @@ export function TimelineView() {
 
     registerCaptureHandler('timeline', captureHandler);
     return () => unregisterCaptureHandler('timeline');
-  }, [items, timeBounds, registerCaptureHandler, unregisterCaptureHandler]);
+  }, [items, timeBounds, registerCaptureHandler, unregisterCaptureHandler, setZoom, setViewStart]);
 
-  // Apply temporal filter to items
   const filteredItems = useMemo(() => {
     if (!filterStartDate && !filterEndDate) return items;
 
@@ -328,7 +314,6 @@ export function TimelineView() {
     setLaneOrder(null);
   }, [groupingCriterion, setLaneOrder]);
 
-  // Lane reorder callback
   const handleLaneReorder = useCallback((fromKey: string, toKey: string) => {
     const keys = swimlaneLanes.map(l => l.key);
     const fromIdx = keys.indexOf(fromKey);
@@ -383,7 +368,6 @@ export function TimelineView() {
     const viewEndDate = new Date(viewStart.getTime() + ((containerWidth + buffer) / zoom) * 24 * 60 * 60 * 1000);
     const viewStartBuffer = new Date(viewStart.getTime() - (buffer / zoom) * 24 * 60 * 60 * 1000);
 
-    // Vertical bounds
     const rowSize = ROW_HEIGHT + ROW_GAP;
     const vBuffer = 200; // Extra pixels vertically
     const minRow = Math.max(0, Math.floor((scrollTop - vBuffer) / rowSize));
@@ -392,7 +376,6 @@ export function TimelineView() {
     return itemsWithRows.filter((item) => {
       // Vertical check first (cheaper)
       if (item.row < minRow || item.row > maxRow) return false;
-      // Horizontal check
       const itemEnd = item.end || item.start;
       return itemEnd >= viewStartBuffer && item.start <= viewEndDate;
     });
@@ -444,19 +427,16 @@ export function TimelineView() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [causalFocusId]);
 
-  // Convert date to X position
   const dateToX = useCallback((date: Date): number => {
     const days = (date.getTime() - viewStart.getTime()) / (24 * 60 * 60 * 1000);
     return days * zoom;
   }, [viewStart, zoom]);
 
-  // Convert X position to date
   const xToDate = useCallback((x: number): Date => {
     const days = x / zoom;
     return new Date(viewStart.getTime() + days * 24 * 60 * 60 * 1000);
   }, [viewStart, zoom]);
 
-  // Get container width
   const getContainerWidth = useCallback((): number => {
     return containerRef.current?.clientWidth || 800;
   }, []);
@@ -567,7 +547,6 @@ export function TimelineView() {
         labels.push({ x, label, isMain });
       }
 
-      // Increment
       if (step === 'hour') {
         current.setHours(current.getHours() + 1);
       } else if (step === 'hour6') {
@@ -590,7 +569,6 @@ export function TimelineView() {
     return labels;
   }, [viewStart, zoom, dateToX, xToDate, getContainerWidth, i18n.language]);
 
-  // Today marker position
   const todayX = useMemo(() => dateToX(new Date()), [dateToX]);
 
   // Density heatmap — adaptive bucket size based on zoom
@@ -657,92 +635,29 @@ export function TimelineView() {
     setFilterEndDate(bucketEnd);
   }, []);
 
-  // Handle wheel zoom - use ref to avoid stale closures
-  const zoomRef = useRef(zoom);
-  const viewStartRef = useRef(viewStart);
-  useEffect(() => {
-    zoomRef.current = zoom;
-    viewStartRef.current = viewStart;
-  }, [zoom, viewStart]);
+  const {
+    isDragging,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleZoomIn,
+    handleZoomOut,
+    handleToday,
+    handleFitAll,
+  } = useTimelineNavigation({
+    containerRef,
+    zoom,
+    setZoom,
+    viewStart,
+    setViewStart,
+    viewStartMs: tl.viewStartMs,
+    timeBounds,
+    itemsWithRows,
+    selectedElementIds,
+    timelineMode,
+    getContainerWidth,
+  });
 
-  // Wheel zoom with native event listener for proper preventDefault
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-
-      const rect = container.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-
-      // Convert X to date using current refs
-      const currentZoom = zoomRef.current;
-      const currentViewStart = viewStartRef.current;
-      const days = mouseX / currentZoom;
-      const dateAtMouse = new Date(currentViewStart.getTime() + days * 24 * 60 * 60 * 1000);
-
-      const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom * zoomFactor));
-
-      // Adjust viewStart to keep mouse position stable
-      const newDaysFromStart = mouseX / newZoom;
-      const newViewStart = new Date(dateAtMouse.getTime() - newDaysFromStart * 24 * 60 * 60 * 1000);
-
-      // Update refs immediately so rapid successive wheel events accumulate correctly
-      // (the useEffect sync only runs after React re-renders, causing stale reads)
-      zoomRef.current = newZoom;
-      viewStartRef.current = newViewStart;
-
-      setZoom(newZoom);
-      setViewStart(newViewStart);
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, []);
-
-  // RAF-based panning for smooth performance
-  const rafRef = useRef<number | null>(null);
-  const pendingViewStartRef = useRef<Date | null>(null);
-
-  // Handle mouse drag for panning
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    setDragStartX(e.clientX);
-    setDragStartView(viewStart);
-  }, [viewStart]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-
-    const deltaX = e.clientX - dragStartX;
-    const deltaDays = -deltaX / zoom;
-    const newViewStart = new Date(dragStartView.getTime() + deltaDays * 24 * 60 * 60 * 1000);
-
-    // Use RAF for smoother updates
-    pendingViewStartRef.current = newViewStart;
-    if (!rafRef.current) {
-      rafRef.current = requestAnimationFrame(() => {
-        if (pendingViewStartRef.current) {
-          setViewStart(pendingViewStartRef.current);
-        }
-        rafRef.current = null;
-      });
-    }
-  }, [isDragging, dragStartX, dragStartView, zoom]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  }, []);
-
-  // Handle item click
   const handleItemClick = useCallback((item: TimelineItem, e: React.MouseEvent) => {
     e.stopPropagation();
     // With the causality overlay on, the clicked event becomes its subject (click again to leave)
@@ -758,119 +673,6 @@ export function TimelineView() {
     }
   }, [selectElement, selectLink, setFocusedEventId, showCausality]);
 
-  // Navigation handlers
-  const handleZoomIn = useCallback(() => {
-    setZoom(z => Math.min(MAX_ZOOM, z * 1.5));
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    setZoom(z => Math.max(MIN_ZOOM, z / 1.5));
-  }, []);
-
-  const handleToday = useCallback(() => {
-    const containerWidth = getContainerWidth();
-    const daysVisible = containerWidth / zoom;
-    const now = new Date();
-    setViewStart(new Date(now.getTime() - (daysVisible / 2) * 24 * 60 * 60 * 1000));
-  }, [zoom, getContainerWidth]);
-
-  const handleFitAll = useCallback(() => {
-    if (!timeBounds) return;
-    const containerWidth = getContainerWidth();
-    const totalDays = (timeBounds.max.getTime() - timeBounds.min.getTime()) / (24 * 60 * 60 * 1000);
-    // Add 10% padding on each side
-    const paddedDays = totalDays * 1.2;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, containerWidth / paddedDays));
-    // Start 10% before min
-    const paddingMs = (timeBounds.max.getTime() - timeBounds.min.getTime()) * 0.1;
-    setZoom(newZoom);
-    setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
-  }, [timeBounds, getContainerWidth]);
-
-  // Bring an item on screen: its start date centred and, one row per item
-  // (not in swimlanes, where rows are lanes), its row scrolled to the middle
-  const revealItem = useCallback((item: { start: Date; row: number }) => {
-    const daysVisible = getContainerWidth() / zoom;
-    setViewStart(new Date(item.start.getTime() - (daysVisible / 2) * 24 * 60 * 60 * 1000));
-    const container = containerRef.current;
-    if (container && timelineMode !== 'swimlane') {
-      container.scrollTop = Math.max(0, item.row * (ROW_HEIGHT + ROW_GAP) - container.clientHeight / 2);
-    }
-  }, [zoom, getContainerWidth, setViewStart, timelineMode]);
-
-  // ── Listen for scrollToElement events (from search modal) ──────────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const elementId = (e as CustomEvent).detail?.elementId as string | undefined;
-      if (!elementId) return;
-      // Find the first timeline item for this element
-      const item = itemsWithRows.find(it => it.sourceId === elementId);
-      if (item) revealItem(item);
-    };
-    window.addEventListener('timeline:scrollToElement', handler);
-    return () => window.removeEventListener('timeline:scrollToElement', handler);
-  }, [itemsWithRows, revealItem]);
-
-  // Arriving on the timeline with an element selected elsewhere (canvas, map):
-  // bring it on screen, unless it already is. A selection unchanged since the
-  // timeline was left keeps its position. Once per opening of the view.
-  const revealedOnOpenRef = useRef(false);
-  // Decided on the first mount only: refs survive StrictMode's remount,
-  // whose cleanup would otherwise record the selection as already seen
-  const selectionChangedRef = useRef<boolean | null>(null);
-  useEffect(() => {
-    selectionChangedRef.current ??= useSelectionStore.getState().selectedElementIds !== selectionWhenTimelineLeft;
-    return () => { selectionWhenTimelineLeft = useSelectionStore.getState().selectedElementIds; };
-  }, []);
-  useEffect(() => {
-    if (revealedOnOpenRef.current || itemsWithRows.length === 0) return;
-    revealedOnOpenRef.current = true;
-    if (selectedElementIds.size === 0 || !selectionChangedRef.current) return;
-    const item = itemsWithRows.find(it => it.sourceId !== undefined && selectedElementIds.has(it.sourceId));
-    if (!item) return;
-    const viewEndMs = viewStart.getTime() + (getContainerWidth() / zoom) * 24 * 60 * 60 * 1000;
-    const startMs = item.start.getTime();
-    const onScreenX = startMs >= viewStart.getTime() && startMs <= viewEndMs;
-    const container = containerRef.current;
-    const top = item.row * (ROW_HEIGHT + ROW_GAP);
-    const onScreenY = timelineMode === 'swimlane' || !container
-      || (top >= container.scrollTop && top + ROW_HEIGHT <= container.scrollTop + container.clientHeight);
-    if (!onScreenX || !onScreenY) revealItem(item);
-  }, [itemsWithRows, selectedElementIds, viewStart, zoom, getContainerWidth, timelineMode, revealItem]);
-
-  // Cleanup mouse events and RAF
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      setIsDragging(false);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
-
-  // Fit all items on first-ever visit (viewStartMs === 0); otherwise keep persisted position
-  useEffect(() => {
-    if (tl.viewStartMs !== 0) return; // Already has a persisted position
-    if (!containerRef.current) return;
-    const containerWidth = containerRef.current.clientWidth || 800;
-    const totalDays = (timeBounds.max.getTime() - timeBounds.min.getTime()) / (24 * 60 * 60 * 1000);
-    if (totalDays <= 0) return;
-    const paddedDays = totalDays * 1.2;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, containerWidth / paddedDays));
-    const paddingMs = (timeBounds.max.getTime() - timeBounds.min.getTime()) * 0.1;
-    setZoom(newZoom);
-    setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- fit all on first mount only
-
-  // Check if item is selected
   const isSelected = useCallback((item: TimelineItem): boolean => {
     if (!item.sourceId) return false;
     if (item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) {
@@ -879,7 +681,6 @@ export function TimelineView() {
     return selectedElementIds.has(item.sourceId);
   }, [selectedElementIds, selectedLinkIds]);
 
-  // Empty state
   if (items.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
@@ -1363,7 +1164,6 @@ export function TimelineView() {
                     )}
                   </div>
                 ) : (
-                  // Content inside the bar
                   <div
                     className="relative h-full flex items-center overflow-hidden gap-2 pr-2"
                     style={{ paddingLeft: contentOffset + 8 }}
@@ -1434,13 +1234,11 @@ export function TimelineView() {
                 </filter>
               </defs>
               {focusedCausalConnections.map((conn, idx) => {
-                // Calculate positions
                 const fromEndX = dateToX(conn.fromItem.end || conn.fromItem.start);
                 const fromY = ROW_GAP + conn.fromItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
                 const toStartX = dateToX(conn.toItem.start);
                 const toY = ROW_GAP + conn.toItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
 
-                // Calculate days between events
                 const fromEnd = conn.fromItem.end || conn.fromItem.start;
                 const daysBetween = Math.round((conn.toItem.start.getTime() - fromEnd.getTime()) / (24 * 60 * 60 * 1000));
 
@@ -1483,11 +1281,9 @@ export function TimelineView() {
                             ${toStartX - 10} ${toY}`;
                 }
 
-                // Calculate midpoint for label placement
                 const midX = (fromEndX + toStartX) / 2;
                 const midY = (fromY + toY) / 2;
 
-                // Format duration label
                 let durationLabel: string;
                 if (daysBetween < 1) {
                   durationLabel = '<1j';

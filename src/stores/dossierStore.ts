@@ -15,6 +15,7 @@ import type {
   CommentTargetType,
   Asset,
   Position,
+  Property,
   PropertyDefinition,
 } from '../types';
 
@@ -36,7 +37,7 @@ import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
 import { isDossierOptions } from '../utils/dossierOptions';
 import { useHistoryStore } from './historyStore';
-import { getYMaps } from '../types/yjs';
+import { getYMaps, yFields } from '../types/yjs';
 import { attachPluginDataSync } from '../services/yjs/pluginDataSync';
 import {
   elementToYMap,
@@ -178,7 +179,6 @@ interface DossierState {
   resolveComment: (id: CommentId, resolverName: string) => Promise<void>;
   unresolveComment: (id: CommentId) => Promise<void>;
   deleteComment: (id: CommentId) => Promise<void>;
-  getCommentsForTarget: (targetId: ElementId | LinkId) => Comment[];
 
   // Actions - Settings (for reusable tags/properties)
   addExistingTag: (tag: string) => Promise<void>;
@@ -229,7 +229,7 @@ function clearAssetChunkObservers(): void {
  * Save a fully-received asset to OPFS and update sync progress.
  * Returns the saved Asset (or null if dedup/hash-mismatch/error).
  */
-async function saveAssembledAsset(map: Y.Map<any>, meta: AssetMeta): Promise<Asset | null> {
+async function saveAssembledAsset(map: Y.Map<unknown>, meta: AssetMeta): Promise<Asset | null> {
   const syncStore = useSyncStore.getState();
   try {
     const data = assembleChunks(map);
@@ -295,7 +295,7 @@ function base64ToUint8Array(base64: string): Uint8Array {
  * asset maps left the media unreadable (stuck loading spinner). This restores
  * backward compatibility.
  */
-async function saveLegacyBase64Asset(map: Y.Map<any>, meta: AssetMeta): Promise<Asset | null> {
+async function saveLegacyBase64Asset(map: Y.Map<unknown>, meta: AssetMeta): Promise<Asset | null> {
   const syncStore = useSyncStore.getState();
   try {
     const base64 = map.get('data') as string;
@@ -321,7 +321,7 @@ async function saveLegacyBase64Asset(map: Y.Map<any>, meta: AssetMeta): Promise<
  * @returns the saved Asset if it could be saved synchronously, else null.
  */
 async function processAssetMap(
-  map: Y.Map<any>,
+  map: Y.Map<unknown>,
   fallbackDossierId: string,
   onLateSave: (asset: Asset) => void,
 ): Promise<Asset | null> {
@@ -407,12 +407,12 @@ export function setForceAssetResync() { forceAssetResync = true; }
  * sync detects drift. An element that fails to parse (partial-sync window)
  * keeps its last-known state rather than vanishing from the canvas.
  */
-function rebuildElementsFromYDoc(elementsMap: Y.Map<any>, target: Map<string, Element>): void {
+function rebuildElementsFromYDoc(elementsMap: Y.Map<Y.Map<unknown>>, target: Map<string, Element>): void {
   const previous = new Map(target);
   target.clear();
   elementsMap.forEach((ymap, key) => {
     try {
-      const element = yMapToElement(ymap as Y.Map<any>);
+      const element = yMapToElement(ymap);
       if (element.id) target.set(element.id, element);
     } catch {
       const fallback = previous.get(key);
@@ -487,11 +487,11 @@ export function setupYDocObserver(
   metaMap.observe(metaObserver);
 
   // Observe elements changes — extract changed IDs for incremental sync
-  const elementsObserver = (events: Y.YEvent<any>[]) => {
+  const elementsObserver = (events: Y.YEvent<Y.Map<unknown>>[]) => {
     for (const event of events) {
       if (event.path.length === 0) {
         // Top-level: element added or removed from the map
-        event.changes.keys.forEach((_change: any, key: string) => {
+        event.changes.keys.forEach((_change, key) => {
           changedElementIds.add(key);
           structuralElementChange = true;
         });
@@ -506,10 +506,10 @@ export function setupYDocObserver(
   elementsMap.observeDeep(elementsObserver);
 
   // Observe links changes — extract changed IDs for incremental sync
-  const linksObserver = (events: Y.YEvent<any>[]) => {
+  const linksObserver = (events: Y.YEvent<Y.Map<unknown>>[]) => {
     for (const event of events) {
       if (event.path.length === 0) {
-        event.changes.keys.forEach((_change: any, key: string) => {
+        event.changes.keys.forEach((_change, key) => {
           changedLinkIds.add(key);
           structuralLinkChange = true;
         });
@@ -537,11 +537,11 @@ export function setupYDocObserver(
   assetsMap.observeDeep(assetsObserver);
 
   // Observe tabs changes — extract changed IDs for incremental sync
-  const tabsObserver = (events: Y.YEvent<any>[]) => {
+  const tabsObserver = (events: Y.YEvent<Y.Map<unknown>>[]) => {
     tabsChangedFlag = true;
     for (const event of events) {
       if (event.path.length === 0) {
-        event.changes.keys.forEach((_change: any, key: string) => {
+        event.changes.keys.forEach((_change, key) => {
           changedTabIds.add(key);
           structuralTabChange = true;
         });
@@ -554,7 +554,6 @@ export function setupYDocObserver(
   };
   tabsMap.observeDeep(tabsObserver);
 
-  // Return cleanup function
   return () => {
     if (syncRafId) {
       cancelAnimationFrame(syncRafId);
@@ -638,7 +637,7 @@ async function reconcileSharedTabs(ydoc: Y.Doc): Promise<void> {
     const remoteTabs: import('../types').CanvasTab[] = [];
     tabsMap.forEach((ymap) => {
       try {
-        const tab = yMapToTab(ymap as Y.Map<any>);
+        const tab = yMapToTab(ymap as Y.Map<unknown>);
         if (tab.id) remoteTabs.push(tab);
       } catch { /* skip malformed */ }
     });
@@ -1051,9 +1050,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         const assetsFromYDoc: Asset[] = [];
         const existingIds = new Set(assets.map((a) => a.id));
 
-        const assetEntries: Y.Map<any>[] = [];
+        const assetEntries: Y.Map<unknown>[] = [];
         assetsMap.forEach((ymap) => {
-          assetEntries.push(ymap as Y.Map<any>);
+          assetEntries.push(ymap as Y.Map<unknown>);
         });
 
         const totalAssets = assetEntries.length;
@@ -1094,7 +1093,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           const remoteTabs: import('../types').CanvasTab[] = [];
           joinerTabsMap.forEach((ymap, key) => {
             try {
-              const tab = yMapToTab(ymap as Y.Map<any>);
+              const tab = yMapToTab(ymap as Y.Map<unknown>);
               if (tab.id) remoteTabs.push(tab);
             } catch (err) { warnSkippedEntry('tab', key, err); }
           });
@@ -1125,7 +1124,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const elementsById = new Map<string, Element>();
       elementsMap.forEach((ymap, key) => {
         try {
-          const element = yMapToElement(ymap as Y.Map<any>);
+          const element = yMapToElement(ymap as Y.Map<unknown>);
           if (element.id) {
             elementsById.set(element.id, element);
           }
@@ -1148,7 +1147,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const linksById = new Map<string, Link>();
       linksMap.forEach((ymap) => {
         try {
-          const link = yMapToLink(ymap as Y.Map<any>);
+          const link = yMapToLink(ymap as Y.Map<unknown>);
           if (link.id) {
             linksById.set(link.id, link);
           }
@@ -1160,7 +1159,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const loadedComments: Comment[] = [];
       commentsYMap.forEach((ymap) => {
         try {
-          const comment = yMapToComment(ymap as Y.Map<any>);
+          const comment = yMapToComment(ymap as Y.Map<unknown>);
           if (comment.id) loadedComments.push(comment);
         } catch {
           // Skip invalid comments
@@ -1475,7 +1474,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     }
 
-    // Add to Y.Doc
     const { elements: elementsMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       const ymap = elementToYMap(element);
@@ -1510,7 +1508,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     const { elements: elementsMap } = getYMaps(ydoc);
-    const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+    const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       throw new Error('Element not found');
@@ -1545,7 +1543,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     updateElementYMap(ymap, effectiveChanges, ydoc);
 
     // Also update Dexie for backwards compatibility
-    await elementRepository.update(id, effectiveChanges as any).catch(() => {
+    await elementRepository.update(id, effectiveChanges).catch(() => {
       // Ignore Dexie errors - Y.Doc is source of truth
     });
 
@@ -1586,11 +1584,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Use Set for O(1) lookups
     const idsSet = new Set(ids);
 
-    // Find connected links
     const linksToDelete: string[] = [];
     linksMap.forEach((ymap, linkId) => {
-      const map = ymap as Y.Map<any>;
-      if (idsSet.has(map.get('fromId')) || idsSet.has(map.get('toId'))) {
+      const map = yFields<Pick<Link, 'fromId' | 'toId'>>(ymap);
+      if (idsSet.has(map.get('fromId') ?? '') || idsSet.has(map.get('toId') ?? '')) {
         linksToDelete.push(linkId);
       }
     });
@@ -1630,7 +1627,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     const { elements: elementsMap } = getYMaps(ydoc);
-    const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+    const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       throw new Error('Element not found');
@@ -1672,7 +1669,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     ydoc.transact(() => {
       updates.forEach(({ id, position }) => {
-        const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+        const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
         if (ymap) {
           // Position stored as separate fields for better CRDT conflict resolution
           ymap.set('positionX', position.x);
@@ -1710,7 +1707,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     const link = makeLink(currentDossier.id, fromId, toId, options);
 
-    // Add to Y.Doc
     const { links: linksMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       const ymap = linkToYMap(link);
@@ -1749,7 +1745,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     const { links: linksMap } = getYMaps(ydoc);
-    const ymap = linksMap.get(id) as Y.Map<any> | undefined;
+    const ymap = linksMap.get(id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       throw new Error('Link not found');
@@ -1773,7 +1769,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     updateLinkYMap(ymap, changes, ydoc);
 
     // Also update Dexie
-    await linkRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'link.update'));
+    await linkRepository.update(id, changes).catch((err) => onPersistFailure(err, 'link.update'));
 
     const dossierId = get().currentDossier?.id;
     if (dossierId) emitPluginEvent('link:updated', dossierId, id);
@@ -1843,7 +1839,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     ydoc.transact(() => {
       ids.forEach(id => {
-        const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+        const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
         if (ymap) {
           updateElementYMap(ymap, changes, ydoc);
         }
@@ -1852,7 +1848,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also update Dexie for backwards compatibility
     await Promise.all(
-      ids.map(id => elementRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'element.updateMany')))
+      ids.map(id => elementRepository.update(id, changes).catch((err) => onPersistFailure(err, 'element.updateMany')))
     );
     const invId = get().currentDossier?.id;
     if (invId) {
@@ -1872,7 +1868,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     ydoc.transact(() => {
       ids.forEach(id => {
-        const ymap = linksMap.get(id) as Y.Map<any> | undefined;
+        const ymap = linksMap.get(id) as Y.Map<unknown> | undefined;
         if (ymap) {
           updateLinkYMap(ymap, changes, ydoc);
         }
@@ -1881,7 +1877,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also update Dexie
     await Promise.all(
-      ids.map(id => linkRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'link.updateMany')))
+      ids.map(id => linkRepository.update(id, changes).catch((err) => onPersistFailure(err, 'link.updateMany')))
     );
     const invId = get().currentDossier?.id;
     if (invId) {
@@ -1964,7 +1960,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           for (const childId of childIds) {
             const child = elements.find(el => el.id === childId);
             if (child) {
-              const ymap = elementsMap.get(childId) as any;
+              const ymap = elementsMap.get(childId);
               if (ymap) {
                 const relX = child.position.x - position.x;
                 const relY = child.position.y - position.y;
@@ -2009,7 +2005,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (!child || child.isGroup) continue; // Don't nest groups
       if (child.parentGroupId === groupId) continue; // Already in this group
 
-      // Remove from previous group if any
       if (child.parentGroupId) {
         const prevGroup = elements.find(el => el.id === child.parentGroupId);
         if (prevGroup) {
@@ -2124,7 +2119,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Then update Y.Doc
     ydoc.transact(() => {
       for (const [childId, absPos] of childAbsPositions) {
-        const ymap = elementsMap.get(childId) as any;
+        const ymap = elementsMap.get(childId);
         if (ymap) {
           ymap.set('parentGroupId', null);
           ymap.set('positionX', absPos.x);
@@ -2364,8 +2359,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Y.Doc transaction
     ydoc.transact(() => {
-      // Update target element
-      const targetYMap = elementsMap.get(targetId) as Y.Map<any>;
+      const targetYMap = elementsMap.get(targetId) as Y.Map<unknown>;
       if (targetYMap) {
         updateElementYMap(targetYMap, {
           notes: mergedNotes,
@@ -2385,7 +2379,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       // Retarget links
       for (const { id, newFromId, newToId } of linksToRetarget) {
-        const linkYMap = linksMap.get(id) as Y.Map<any> | undefined;
+        const linkYMap = linksMap.get(id) as Y.Map<unknown> | undefined;
         if (linkYMap) {
           updateLinkYMap(linkYMap, { fromId: newFromId, toId: newToId }, ydoc);
         }
@@ -2393,7 +2387,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       // Merge duplicate link metadata in Y.Doc
       for (const [keepId, dupeIds] of linksToMergeInto) {
-        const keepYMap = linksMap.get(keepId) as Y.Map<any> | undefined;
+        const keepYMap = linksMap.get(keepId) as Y.Map<unknown> | undefined;
         if (!keepYMap) continue;
         const keepLink = links.find(l => l.id === keepId);
         if (!keepLink) continue;
@@ -2430,7 +2424,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         linksMap.delete(linkId);
       }
 
-      // Delete source element
       elementsMap.delete(sourceId);
     });
 
@@ -2497,7 +2490,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { elements: elementsMap } = getYMaps(ydoc);
-      const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
+      const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
       if (ymap) {
         const currentAssetIds = ymap.get('assetIds') || [];
         const assetIdsArray = Array.isArray(currentAssetIds) ? currentAssetIds : [];
@@ -2560,7 +2553,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { elements: elementsMap, assets: assetsMap } = getYMaps(ydoc);
-      const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
+      const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
       if (ymap) {
         // assetIds is stored as plain array, not Y.Array
         const currentAssetIds = ymap.get('assetIds') || [];
@@ -2568,14 +2561,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         ymap.set('assetIds', assetIdsArray.filter((id: string) => id !== assetId));
       }
 
-      // Remove asset from Y.Doc assets map
       assetsMap.delete(assetId);
     }
 
     // Also update Dexie
     await elementRepository.removeAsset(elementId, assetId).catch((err) => onPersistFailure(err, 'element.removeAsset'));
 
-    // Remove from local state
     set((state) => ({
       assets: state.assets.filter((a) => a.id !== assetId),
     }));
@@ -2612,7 +2603,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { elements: elementsMap } = getYMaps(ydoc);
-      const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
+      const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
       if (ymap) {
         ymap.set('assetIds', assetIds);
       }
@@ -2621,7 +2612,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Also update Dexie
     await elementRepository.update(elementId, { assetIds }).catch((err) => onPersistFailure(err, 'element.update(assets)'));
 
-    // Update local Zustand state
     set((state) => ({
       elements: state.elements.map((el) =>
         el.id === elementId ? { ...el, assetIds } : el
@@ -2664,7 +2654,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       createdAt: new Date(),
     };
 
-    // Add to Y.Doc
     const { comments: commentsMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       const ymap = commentToYMap(comment);
@@ -2683,7 +2672,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     const { comments: commentsMap } = getYMaps(ydoc);
-    const ymap = commentsMap.get(id) as Y.Map<any> | undefined;
+    const ymap = commentsMap.get(id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       throw new Error('Comment not found');
@@ -2705,7 +2694,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     const { comments: commentsMap } = getYMaps(ydoc);
-    const ymap = commentsMap.get(id) as Y.Map<any> | undefined;
+    const ymap = commentsMap.get(id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       throw new Error('Comment not found');
@@ -2731,11 +2720,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     ydoc.transact(() => {
       commentsMap.delete(id);
     });
-  },
-
-  getCommentsForTarget: (targetId) => {
-    const { comments } = get();
-    return comments.filter(c => c.targetId === targetId);
   },
 
   // ============================================================================
@@ -3181,7 +3165,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const metaCreator = metaMap.get('creator') as string | undefined;
       const metaStartDate = metaMap.get('startDate') as string | null | undefined;
       const metaTags = metaMap.get('tags') as string[] | undefined;
-      const metaProperties = metaMap.get('properties') as any[] | undefined;
+      const metaProperties = metaMap.get('properties') as Property[] | undefined;
       const metaRetentionDays = metaMap.get('retentionDays') as number | null | undefined;
       const metaRetentionPolicy = metaMap.get('retentionPolicy') as string | undefined;
       const metaRetentionFrom = metaMap.get('retentionFrom') as Dossier['retentionFrom'] | undefined;
@@ -3247,7 +3231,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const stateMap = new Map(stateElements.map((e) => [e.id, e]));
       let changed = false;
       for (const id of elIdsChanged) {
-        const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+        const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
         if (!ymap) {
           // Counts as a change even when a local delete already removed it
           // from state: the Dexie row still has to go (see persistence below).
@@ -3295,7 +3279,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const stateMap = new Map(stateLinks.map((l) => [l.id, l]));
       let changed = false;
       for (const id of lkIdsChanged) {
-        const ymap = linksMap.get(id) as Y.Map<any> | undefined;
+        const ymap = linksMap.get(id) as Y.Map<unknown> | undefined;
         if (!ymap) {
           // Counts as a change even when a local delete already removed it
           // from state: the Dexie row still has to go (see persistence below).
@@ -3315,7 +3299,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         stateMap.clear();
         linksMap.forEach((ymap, key) => {
           try {
-            const link = yMapToLink(ymap as Y.Map<any>);
+            const link = yMapToLink(ymap as Y.Map<unknown>);
             if (link.id) stateMap.set(link.id, link);
           } catch (err) { warnSkippedEntry('link', key, err); }
         });
@@ -3335,7 +3319,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const commentsById = new Map<string, Comment>();
       commentsMap.forEach((ymap, key) => {
         try {
-          const comment = yMapToComment(ymap as Y.Map<any>);
+          const comment = yMapToComment(ymap as Y.Map<unknown>);
           if (comment.id) commentsById.set(comment.id, comment);
         } catch (err) { warnSkippedEntry('comment', key, err); }
       });
@@ -3358,7 +3342,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         // Structural change (tab added/removed) → full rebuild
         tabsMap.forEach((ymap, key) => {
           try {
-            const tab = yMapToTab(ymap as Y.Map<any>);
+            const tab = yMapToTab(ymap as Y.Map<unknown>);
             if (tab.id) remoteTabs.push(tab);
           } catch (err) { warnSkippedEntry('tab', key, err); }
         });
@@ -3367,7 +3351,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         const existingTabs = useTabStore.getState().tabs;
         const tabMap = new Map(existingTabs.map(t => [t.id, t]));
         for (const id of tabIdsChanged) {
-          const ymap = tabsMap.get(id) as Y.Map<any> | undefined;
+          const ymap = tabsMap.get(id) as Y.Map<unknown> | undefined;
           if (ymap) {
             try {
               const updated = yMapToTab(ymap);
@@ -3398,7 +3382,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const currentAssetIds = new Set(currentAssets.map((a) => a.id));
       assetsMap.forEach((ymap, key) => {
         try {
-          const map = ymap as Y.Map<any>;
+          const map = ymap as Y.Map<unknown>;
           const assetId = map.get('id') as string;
           if (!assetId || currentAssetIds.has(assetId)) return;
           processAssetMap(map, currentDossier.id, (saved) => {
@@ -3412,7 +3396,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       });
     }
 
-    // Update Zustand state
     set({
       currentDossier: updatedDossier,
       elements,
@@ -3425,7 +3408,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // loadDossier if the Y.Doc happened to be empty (e.g. last element
     // deleted via collab) and migration kicked in.
     const dossierId = currentDossier.id;
-    const dbPromises: Promise<any>[] = [];
+    const dbPromises: Promise<unknown>[] = [];
     if (elementsDidChange) {
       const changedEls = elements.filter((el) => elIdsChanged.has(el.id));
       if (changedEls.length > 0) {

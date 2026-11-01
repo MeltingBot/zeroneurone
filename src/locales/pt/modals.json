@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Eliminar",
-    "message": "Esta ação é irreversível.",
     "confirm": "Eliminar",
     "deleting": "A eliminar...",
     "deleteDossier": "Eliminar o dossiê",
@@ -19,8 +18,7 @@
     "rename": "Renomear",
     "renaming": "A renomear...",
     "label": "Nome",
-    "renameDossier": "Renomear o dossiê",
-    "namePlaceholder": "Novo nome"
+    "renameDossier": "Renomear o dossiê"
   },
   "importIntoCurrent": {
     "title": "Importar no dossiê",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Importar um dossiê",
-    "dropzone": "Largue um ficheiro ou clique para selecionar",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -160,10 +157,6 @@
       "folderByTag": "Uma pasta por tag principal",
       "folderFlat": "Pasta única"
     },
-    "options": {
-      "includeAssets": "Incluir ficheiros anexos",
-      "highResolution": "Alta resolução (2x)"
-    },
     "resolution": "Resolução",
     "scale": {
       "1x": "Tamanho normal",
@@ -218,12 +211,6 @@
     },
     "placeholder": "Pesquisar elementos e ligações...",
     "noResults": "Sem resultados para \"{{query}}\"",
-    "resultsCount": "{{count}} resultado(s)",
-    "filters": {
-      "all": "Todos",
-      "elements": "Elementos",
-      "links": "Ligações"
-    },
     "noName": "Sem nome",
     "link": "Ligação",
     "element": "Elemento",
@@ -282,18 +269,6 @@
       "lockSession": "Bloquear a sessão"
     }
   },
-  "tagSetManager": {
-    "title": "Gerir tags",
-    "description": "Crie paletas de tags reutilizáveis",
-    "newTagSet": "Nova paleta",
-    "editTagSet": "Editar paleta",
-    "deleteTagSet": "Eliminar paleta",
-    "tagSetName": "Nome da paleta",
-    "tags": "Tags",
-    "addTag": "Adicionar uma tag",
-    "noTagSets": "Sem paletas de tags",
-    "createFirst": "Crie a sua primeira paleta"
-  },
   "tagSetEditor": {
     "applyTitle": "Aplicar ao processo aberto",
     "applyVisual": "Aparência (elementos com esta etiqueta principal)",
@@ -303,9 +278,6 @@
     "title": "Paleta de tags",
     "titleNew": "Nova tag",
     "titleEdit": "Editar \"{{name}}\"",
-    "namePlaceholder": "Nome da paleta",
-    "tagsPlaceholder": "Adicionar uma tag...",
-    "colorLabel": "Cor por defeito",
     "nameLabel": "Nome",
     "nameExample": "Ex: Pessoa, Empresa...",
     "nameRequired": "O nome é obrigatório",
@@ -391,7 +363,6 @@
       "opfs": "Ficheiros (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Histórico Y.js",
-      "other": "Outro",
       "measured": "Dados medidos"
     },
     "persistent": {
@@ -423,18 +394,9 @@
       "exportAll": "Exportar tudo",
       "import": "Importar",
       "description": "Todas as dossiês, ficheiros e tags. A importação adiciona sem substituir.",
-      "exporting": "A exportar...",
-      "importing": "A importar...",
       "exportSuccess": "Exportação concluída",
       "importSuccess": "Importação bem-sucedida: {{dossiers}} dossiê(s), {{elements}} elemento(s), {{links}} ligação(ões)",
       "error": "Erro"
-    },
-    "purge": {
-      "description": "O histórico Y.js armazena as modificações para anular. Limpar liberta espaço.",
-      "confirm": "Limpar o histórico Y.js?\n\nIsto libertará espaço mas eliminará o histórico de anulação. Os dados serão conservados.",
-      "success": "{{count}} base(s) eliminada(s)",
-      "successWithErrors": "{{deleted}} base(s) eliminada(s), {{errors}} erro(s)",
-      "error": "Erro durante a limpeza"
     },
     "compact": {
       "title": "Histórico Y.js por dossiê",
@@ -459,7 +421,6 @@
       "button": "Eliminar tudo",
       "confirm": "Eliminar TODOS os dossiês e os seus dados?\n\nEsta ação é irreversível.",
       "confirmAgain": "Última confirmação: todos os dados serão perdidos. Continuar?",
-      "success": "Todos os dossiês foram eliminados.",
       "error": "Erro ao eliminar"
     }
   },
@@ -497,19 +458,6 @@
     "sortByName": "Nome",
     "sortByDate": "Data",
     "sortByConfidence": "Confiança",
-    "preview": "Pré-visualização:",
-    "previewContent": "O relatório conterá",
-    "previewDescription": "a descrição",
-    "previewSummary": "um resumo",
-    "previewInsights": "a análise do grafo",
-    "previewTimeline": "a cronologia",
-    "previewElements": "{{count}} elementos",
-    "previewLinks": "{{count}} ligações",
-    "previewProperties": "as propriedades",
-    "previewFiles": "{{count}} ficheiros",
-    "previewFiches": "as fichas detalhadas",
-    "previewGraphCapture": "captura do grafo",
-    "previewNoContent": "sem conteúdo",
     "jsonDescription": "JSON+: dados estruturados com análise do grafo",
     "jsonTooltip": "Exportação JSON estruturada com dados enriquecidos",
     "print": "Imprimir",
@@ -596,10 +544,6 @@
     "sortByEvaluation": "Classificação"
   },
   "metadataImport": {
-    "title": "Importar metadados",
-    "description": "Extrair metadados do ficheiro (EXIF, PDF, etc.)",
-    "noMetadata": "Sem metadados encontrados",
-    "import": "Importar os metadados selecionados",
     "detected": "Metadados detetados",
     "gps": "Coordenadas GPS",
     "ignore": "Ignorar",
@@ -644,7 +588,6 @@
   "tagSets": {
     "title": "Gerir tags",
     "newTag": "Nova tag",
-    "editTag": "Editar \"{{name}}\"",
     "deleteConfirm": "Eliminar a tag \"{{name}}\"? As tags existentes nos elementos permanecerão mas já não estarão associadas a este TagSet.",
     "csvEmptyOrInvalid": "Ficheiro CSV vazio ou inválido",
     "csvMissingNameColumn": "Coluna \"nome\" em falta no CSV",
@@ -725,7 +668,6 @@
     "errorDeactivation": "Erro durante a desativação",
     "errorPasswordChange": "Erro ao alterar a senha",
     "enable": {
-      "warning": "Sem esta senha, os seus dados serão irrecuperáveis. Exporte um backup antes de continuar.",
       "passwordLabel": "Senha (mínimo 8 caracteres)",
       "confirmLabel": "Confirmar senha",
       "mismatch": "As senhas não coincidem",
@@ -773,7 +715,6 @@
       "successRemoved": "Chave de segurança removida",
       "errorPrfNotSupported": "Esta chave não suporta desbloqueio sem senha (PRF)",
       "errorRegistration": "Erro ao registrar a chave",
-      "errorUnlock": "Falha ao desbloquear com chave de segurança",
       "addedOn": "Adicionada em"
     }
   },

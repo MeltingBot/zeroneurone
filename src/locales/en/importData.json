@@ -96,7 +96,8 @@
       "marriage": "Marriage",
       "filiation": "Filiation",
       "siblinghood": "Siblinghood"
-    }
+    },
+    "importError": "Genealogy import error: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,118 @@
     "parseError": "Mermaid parsing error: {{message}}",
     "skippedLines_one": "{{count}} unrecognized Mermaid line skipped",
     "skippedLines_other": "{{count}} unrecognized Mermaid lines skipped"
+  },
+  "common": {
+    "importError": "Import error: {{message}}",
+    "formatImportError": "{{format}} import error: {{message}}",
+    "unknownError": "Unknown error",
+    "error": "Error",
+    "cancelled": "Import cancelled",
+    "lineError": "Line {{row}}: {{message}}",
+    "linkMissingEndpoints": "Link skipped: missing source or target",
+    "linkMissingElements": "Link skipped: source/target elements not found ({{label}})",
+    "imageConversionFailed": "Image skipped for \"{{label}}\": conversion error",
+    "imageNotImported": "Image not imported ({{name}})",
+    "reportExists": "This dossier already has a report: report not imported",
+    "reportFailed": "Report not imported: {{message}}",
+    "assetError": "Attachment skipped: {{name}} - {{message}}",
+    "skippedElements": "{{count}} element(s) skipped (no position)",
+    "skippedLinks": "{{count}} link(s) skipped (invalid elements)",
+    "nodeNoId": "Node without ID skipped"
+  },
+  "archive": {
+    "tooLarge": "Archive too large. Max size: {{max}} MB",
+    "tooManyFiles": "Too many files in the archive. Max: {{max}}",
+    "missingDossierJson": "Invalid archive: dossier.json missing",
+    "jsonTooLarge": "JSON file too large. Max size: {{max}} MB",
+    "invalidJson": "Invalid JSON format: missing fields",
+    "tooManyElements": "Too many elements. Max: {{max}}",
+    "tooManyLinks": "Too many links. Max: {{max}}",
+    "tooManyAssets": "Too many attachments. Max: {{max}}",
+    "assetMissing": "Attachment not found in the archive: {{name}}",
+    "assetTooLarge": "Attachment skipped (too large, max {{max}} MB): {{name}}",
+    "totalTooLarge": "Total uncompressed size too large. Max: {{max}} GB",
+    "suspiciousRatio": "Suspicious compression ratio (possible ZIP bomb)"
+  },
+  "json": {
+    "unrecognized": "Unrecognized JSON format. Supported formats: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Invalid archive: backup.json missing",
+    "backupTooLarge": "Invalid archive: backup.json too large",
+    "invalidFormat": "Invalid backup format",
+    "incompatibleVersion": "Backup in version {{version}}, incompatible with this version of the application (format {{expected}}). Update ZeroNeurone before restoring.",
+    "progress": {
+      "reading": "Reading the archive…",
+      "files": "Importing files…",
+      "elements": "Importing elements…",
+      "writing": "Writing data…",
+      "done": "Import complete",
+      "exportDossier": "Dossier {{index}} / {{count}}: {{name}}",
+      "importDossier": "Restoring {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "\"{{name}}\" missing from the archive",
+    "dossierFailed": "\"{{name}}\" not restored: {{message}}"
+  },
+  "csv": {
+    "empty": "Empty CSV file",
+    "emptyLabel": "Line {{row}}: empty label, element skipped",
+    "emptyLabelRow": "Line {{row}}: empty label, line skipped",
+    "emptyEndpoints": "Line {{row}}: empty from/to, link skipped",
+    "emptyEndpointsRow": "Line {{row}}: empty from/to, line skipped",
+    "elementsNotFound": "Line {{row}}: element(s) not found: {{names}}",
+    "emptyParent": "Line {{row}}: empty parent element (from), event skipped",
+    "parentNotFound": "Line {{row}}: parent element not found: {{name}}",
+    "invalidDate": "Line {{row}}: missing or invalid date, event skipped",
+    "missingLabelColumn": "Required \"label\" column not found",
+    "missingFromToColumns": "Required \"from\" and \"to\" (or \"de\" and \"vers\") columns not found"
+  },
+  "graphml": {
+    "parseError": "Invalid GraphML format: XML parsing error",
+    "missingGraphml": "Invalid GraphML format: <graphml> element missing",
+    "missingGraph": "Invalid GraphML format: <graph> element missing",
+    "linkNoEndpoints": "Link {{id}} skipped: missing source or target",
+    "linkMissingNode": "Link {{id}} skipped: source or target node not found",
+    "noId": "without ID"
+  },
+  "excalidraw": {
+    "noElements": "Invalid Excalidraw format: no elements",
+    "imageNotImported": "Image not imported: {{id}}…",
+    "skippedArrows": "{{count}} arrow(s) skipped (not connected to shapes)",
+    "imagesImported": "{{count}} image(s) imported from the Excalidraw file",
+    "orphanArrows": "{{count}} free arrow(s) skipped (no connection)"
+  },
+  "predicagraph": {
+    "missingNodes": "Invalid PredicaGraph format: \"nodes\" field missing",
+    "nodeSkipped": "Node skipped: missing ID or position",
+    "linkMissingNode": "Link skipped: source ({{source}}) or target ({{target}}) node not found"
+  },
+  "graphPalette": {
+    "missingNodes": "Invalid Graph Palette format: \"nodes\" field missing",
+    "nodeTypeSkipped": "Node type skipped: {{type}} ({{label}})",
+    "unsupportedType": "Unsupported type: {{type}}",
+    "unexpectedNode": "Node skipped: unexpected format ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Page {{page}} unreadable (invalid compressed content)",
+    "pagesStacked": "{{count}} pages imported, stacked vertically",
+    "connectorsSkipped": "{{count}} connector(s) skipped (not attached to two shapes)",
+    "empty": "Empty or unrecognized draw.io diagram"
+  },
+  "osintIndustries": {
+    "invalid": "Invalid OSINT Industries format: empty array or incorrect format",
+    "noFound": "No module with status \"found\""
+  },
+  "geojson": {
+    "invalid": "Invalid GeoJSON format: FeatureCollection expected",
+    "noGeometry": "Feature without geometry skipped",
+    "polygonTooSmall": "\"{{label}}\": polygon with fewer than 3 points, skipped",
+    "multiPointReduced": "\"{{label}}\": MultiPoint reduced to its first point",
+    "unsupportedGeometry": "\"{{label}}\": unsupported geometry \"{{type}}\", skipped",
+    "invalidCoordinates": "\"{{label}}\": invalid coordinates, skipped",
+    "outOfRange": "{{count}} feature(s) with coordinates outside WGS 84 (latitude/longitude in degrees). Reproject the file to EPSG:4326 (WGS 84) before importing.",
+    "outOfRangeCrs": "{{count}} feature(s) with coordinates outside WGS 84 (latitude/longitude in degrees), declared projection: {{crs}}. Reproject the file to EPSG:4326 (WGS 84) before importing.",
+    "outOfRangeSkipped": "{{message}} These features are skipped.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon(s) reduced to their largest polygon"
   }
 }

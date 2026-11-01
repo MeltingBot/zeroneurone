@@ -27,7 +27,6 @@ function preprocessGedcom(buffer: ArrayBuffer): ArrayBuffer {
   const decoder = new TextDecoder('utf-8');
   const content = decoder.decode(uint8);
 
-  // Process lines
   const lines = content.split(/\r?\n/);
   const cleanedLines: string[] = [];
 
@@ -83,7 +82,6 @@ export async function parseGedcom(
   }
   const format = gedcomVersion.startsWith('7') ? 'gedcom-7.0' : 'gedcom-5.5.1';
 
-  // Parse metadata
   let source: string | undefined;
   let language: string | undefined;
   let encoding: string | undefined;
@@ -116,7 +114,6 @@ export async function parseGedcom(
     encoding,
   };
 
-  // Parse individuals
   const persons: GenealogyPerson[] = [];
   const indiRecords = gedcom.getIndividualRecord();
 
@@ -128,7 +125,6 @@ export async function parseGedcom(
     }
   }
 
-  // Parse families
   const families: GenealogyFamily[] = [];
   const famRecords = gedcom.getFamilyRecord();
 
@@ -173,7 +169,6 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       if (surn.length > 0) lastName = surn.value()[0] || lastName;
     } catch { /* Use extracted values */ }
 
-    // Parse sex
     let sex: Sex = 'U';
     try {
       const sexRecord = indi.get('SEX');
@@ -183,7 +178,6 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       }
     } catch { /* Use unknown */ }
 
-    // Parse birth
     let birthDate: GenealogyDate | undefined;
     let birthPlace: GenealogyPlace | undefined;
     try {
@@ -194,7 +188,6 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       }
     } catch { /* ignore */ }
 
-    // Parse death
     let deathDate: GenealogyDate | undefined;
     let deathPlace: GenealogyPlace | undefined;
     try {
@@ -205,7 +198,6 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       }
     } catch { /* ignore */ }
 
-    // Parse occupation
     let occupation: string | undefined;
     try {
       const occu = indi.get('OCCU');
@@ -232,7 +224,6 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       }
     } catch { /* ignore */ }
 
-    // Parse notes
     let notes: string | undefined;
     try {
       const noteRecord = indi.get('NOTE');
@@ -328,7 +319,6 @@ function parseFamily(fam: any): GenealogyFamily | null {
       }
     } catch { /* ignore */ }
 
-    // Parse marriage
     let marriageDate: GenealogyDate | undefined;
     let marriagePlace: GenealogyPlace | undefined;
     try {
@@ -339,7 +329,6 @@ function parseFamily(fam: any): GenealogyFamily | null {
       }
     } catch { /* ignore */ }
 
-    // Parse divorce
     let divorceDate: GenealogyDate | undefined;
     try {
       const div = fam.get('DIV');
@@ -348,7 +337,6 @@ function parseFamily(fam: any): GenealogyFamily | null {
       }
     } catch { /* ignore */ }
 
-    // Parse notes
     let notes: string | undefined;
     try {
       const noteRecord = fam.get('NOTE');
@@ -579,7 +567,6 @@ function parseCoordinate(coord: string): number | undefined {
 
   if (isNaN(value)) return undefined;
 
-  // Handle direction prefix
   if (direction === 'S' || direction === 'W') {
     value = -value;
   }

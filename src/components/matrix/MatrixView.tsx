@@ -23,6 +23,7 @@ import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { downloadBlob } from '../../utils/download';
 import { escapeCsvField } from '../../utils/csv';
+import { useShallow } from 'zustand/react/shallow';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -164,14 +165,14 @@ export function MatrixView() {
   const updateElement = useDossierStore((s) => s.updateElement);
   const evaluationModel = useEvaluationModel();
   const dossierName = useDossierStore((s) => s.currentDossier?.name ?? 'export');
-  const { selectElement, selectElements, toggleElement, selectedElementIds } = useSelectionStore();
+  const { selectElement, selectElements, toggleElement, selectedElementIds } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectElements: s.selectElements, toggleElement: s.toggleElement, selectedElementIds: s.selectedElementIds })));
   const pushAction = useHistoryStore((s) => s.pushAction);
   const historyUndo = useHistoryStore((s) => s.undo);
   const historyRedo = useHistoryStore((s) => s.redo);
-  const { filters, hiddenElementIds } = useViewStore();
+  const { filters, hiddenElementIds } = useViewStore(useShallow((s) => ({ filters: s.filters, hiddenElementIds: s.hiddenElementIds })));
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
-  const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore(useShallow((s) => ({ highlightedElementIds: s.highlightedElementIds })));
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
@@ -286,7 +287,6 @@ export function MatrixView() {
     visibleCols.reduce((sum, col) => sum + getColWidth(col), 0),
   [visibleCols, getColWidth]);
 
-  // Toggle column visibility
   const toggleColumn = useCallback((key: string) => {
     setHiddenColumns((prev) => {
       const next = new Set(prev);
@@ -296,7 +296,6 @@ export function MatrixView() {
     });
   }, []);
 
-  // Show all / hide all columns
   const showAllColumns = useCallback(() => {
     setHiddenColumns(new Set());
   }, []);
@@ -305,7 +304,6 @@ export function MatrixView() {
     setHiddenColumns(new Set(columnOrder));
   }, [columnOrder]);
 
-  // Reset matrix view to defaults
   const resetView = useCallback(() => {
     setSort({ column: 'label', direction: 'asc' });
     setHiddenColumns(new Set());
@@ -452,7 +450,6 @@ export function MatrixView() {
     );
   }, [visibleElements, columnFilters, evaluationModel]);
 
-  // Sort
   const sortedElements = useMemo(() => {
     const sorted = [...filteredElements];
     sorted.sort((a, b) => {
@@ -469,7 +466,6 @@ export function MatrixView() {
     return sorted;
   }, [filteredElements, sort, evaluationModel]);
 
-  // Column sort toggle
   const handleSort = useCallback((column: string) => {
     setSort((prev) => ({
       column,
@@ -772,7 +768,6 @@ export function MatrixView() {
     };
   }, [contextMenu, closeContextMenu]);
 
-  // Export CSV
   const handleExportCSV = useCallback(() => {
     const escape = (v: string) => escapeCsvField(v);
     const headers = visibleCols.map((c) => escape(c.label)).join(',');
@@ -882,7 +877,6 @@ export function MatrixView() {
               </button>
             </div>
 
-            {/* Export CSV */}
             <button
               onClick={handleExportCSV}
               className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors hover:bg-bg-tertiary text-text-secondary"
@@ -911,7 +905,6 @@ export function MatrixView() {
               </button>
             )}
 
-            {/* Reset view */}
             <button
               onClick={resetView}
               disabled={!hasCustomizations}

@@ -25,7 +25,6 @@ interface ReportState {
   activeSectionId: ReportSectionId | null;
 
   // Track unsaved changes
-  isDirty: boolean;
 
   // Loading state
   isLoading: boolean;
@@ -34,7 +33,6 @@ interface ReportState {
   loadReport: (dossierId: DossierId) => Promise<void>;
   createReport: (dossierId: DossierId, title: string) => Promise<Report>;
   updateReportTitle: (title: string) => Promise<void>;
-  clearReport: () => void;
 
   // Actions - Sections
   addSection: (title?: string) => Promise<ReportSection | null>;
@@ -53,7 +51,6 @@ interface ReportState {
   _setupObserver: () => (() => void) | null;
 }
 
-// Store the observer cleanup function
 let ydocObserverCleanup: (() => void) | null = null;
 
 /**
@@ -93,7 +90,6 @@ export function flushReportTraces(): void {
 export const useReportStore = create<ReportState>((set, get) => ({
   currentReport: null,
   activeSectionId: null,
-  isDirty: false,
   isLoading: false,
 
   loadReport: async (dossierId) => {
@@ -107,7 +103,6 @@ export const useReportStore = create<ReportState>((set, get) => ({
       if (ydoc) {
         const { reports: reportsMap } = getYMaps(ydoc);
 
-        // Find report for this dossier
         let ydocReport: Report | null = null;
         for (const [, ymap] of reportsMap.entries()) {
           const invId = ymap.get('dossierId');
@@ -132,7 +127,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
             await db.reports.add(reportToSave);
           }
 
-          set({ currentReport: ydocReport, isDirty: false, activeSectionId: null });
+          set({ currentReport: ydocReport, activeSectionId: null });
 
           // Setup observer if not already
           if (ydocObserverCleanup) {
@@ -144,7 +139,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
       }
 
       // Use local database report
-      set({ currentReport: localReport, isDirty: false, activeSectionId: null });
+      set({ currentReport: localReport, activeSectionId: null });
 
       // If we have a report and Y.Doc, sync it to Y.Doc
       if (localReport && ydoc) {
@@ -190,7 +185,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
         }
       }
 
-      set({ currentReport: report, isDirty: false });
+      set({ currentReport: report });
       return report;
     } finally {
       set({ isLoading: false });
@@ -203,14 +198,12 @@ export const useReportStore = create<ReportState>((set, get) => ({
     if (!currentReport) return;
     traceReport(currentReport.dossierId, 'title');
 
-    // Update local database
     await reportRepository.update(currentReport.id, { title });
 
-    // Update Y.Doc if available
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         updateReportYMap(ymap, { title }, ydoc);
       }
@@ -218,18 +211,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     set({
       currentReport: { ...currentReport, title, updatedAt: new Date() },
-      isDirty: false,
     });
-  },
-
-  clearReport: () => {
-    flushReportTraces();
-    // Cleanup observer
-    if (ydocObserverCleanup) {
-      ydocObserverCleanup();
-      ydocObserverCleanup = null;
-    }
-    set({ currentReport: null, activeSectionId: null, isDirty: false });
   },
 
   addSection: async (title = '') => {
@@ -238,14 +220,13 @@ export const useReportStore = create<ReportState>((set, get) => ({
     if (!currentReport) return null;
     traceReport(currentReport.dossierId, 'section-added');
 
-    // Create section in local database
     const section = await reportRepository.addSection(currentReport.id, title);
 
     // Sync to Y.Doc if available
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         addSectionToYMap(ymap, section, ydoc);
       }
@@ -266,14 +247,12 @@ export const useReportStore = create<ReportState>((set, get) => ({
     if (!currentReport) return;
     traceReport(currentReport.dossierId, 'section-updated', sectionId);
 
-    // Update local database
     await reportRepository.updateSection(currentReport.id, sectionId, changes);
 
-    // Update Y.Doc if available
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         updateSectionInYMap(ymap, sectionId, changes, ydoc);
       }
@@ -284,7 +263,6 @@ export const useReportStore = create<ReportState>((set, get) => ({
     );
     set({
       currentReport: { ...currentReport, sections: updatedSections, updatedAt: new Date() },
-      isDirty: false,
     });
   },
 
@@ -294,14 +272,12 @@ export const useReportStore = create<ReportState>((set, get) => ({
     if (!currentReport) return;
     traceReport(currentReport.dossierId, 'section-removed', sectionId);
 
-    // Remove from local database
     await reportRepository.removeSection(currentReport.id, sectionId);
 
-    // Remove from Y.Doc if available
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         removeSectionFromYMap(ymap, sectionId, ydoc);
       }
@@ -335,7 +311,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         addSectionToYMap(ymap, section, ydoc);
       }
@@ -353,14 +329,12 @@ export const useReportStore = create<ReportState>((set, get) => ({
     if (!currentReport) return;
     traceReport(currentReport.dossierId, 'sections-reordered');
 
-    // Update local database
     await reportRepository.reorderSections(currentReport.id, sectionIds);
 
-    // Update Y.Doc if available
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
-      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
       if (ymap) {
         reorderSectionsInYMap(ymap, sectionIds, ydoc);
       }
@@ -395,7 +369,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     }
 
     const { reports: reportsMap } = getYMaps(ydoc);
-    const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+    const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
 
     if (!ymap) {
       return;

@@ -10,6 +10,7 @@ import { isLambert93CrsName, lambert93ToWgs84 } from '../utils/lambert93';
 import { isValidShape } from './importValidators';
 import { importedDate } from './importDates';
 import type { ImportResult } from './importService';
+import { errorText, importMessage } from './importMessages';
 
 /**
  * Properties of a GeoJSON FeatureCollection that hold a value in at least one
@@ -87,7 +88,7 @@ export async function importFromGeoJSON(
     const data = JSON.parse(content);
 
     if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
-      result.errors.push('Format GeoJSON invalide: FeatureCollection attendu');
+      result.errors.push(importMessage('geojson.invalid'));
       return result;
     }
 
@@ -120,7 +121,7 @@ export async function importFromGeoJSON(
 
     for (const [featureIndex, feature] of features.entries()) {
       if (!feature.geometry) {
-        result.warnings.push('Feature sans géométrie ignorée');
+        result.warnings.push(importMessage('geojson.noGeometry'));
         continue;
       }
 
@@ -137,7 +138,6 @@ export async function importFromGeoJSON(
         feature.id || `Feature ${featureIndex + 1}`
       );
 
-      // Extract metadata from properties
       const notes = String(props.notes || props.description || props.desc || props.NOTES || '');
       const tags: string[] = [];
       if (props.tags) {
@@ -148,10 +148,8 @@ export async function importFromGeoJSON(
         }
       }
 
-      // Extract source
       const source = String(props.source || props.SOURCE || '');
 
-      // Parse confidence
       let confidence: Confidence | null = null;
       const confVal = props.confidence ?? props.confiance;
       if (confVal !== undefined && confVal !== null) {
@@ -187,7 +185,6 @@ export async function importFromGeoJSON(
         }
       }
 
-      // Parse date
       let date: Date | null = null;
       if (props.date) {
         const parsed = importedDate(String(props.date));
@@ -220,7 +217,7 @@ export async function importFromGeoJSON(
           : [];
 
         if (outerRings.length === 0) {
-          result.warnings.push(`"${label}": polygone avec moins de 3 points, ignoré`);
+          result.warnings.push(importMessage('geojson.polygonTooSmall', { label }));
           continue;
         }
         const coords = outerRings.reduce((largest, ring) =>
@@ -238,7 +235,7 @@ export async function importFromGeoJSON(
         if (Array.isArray(coords) && coords.length > 0) {
           geo = { type: 'point', lat: coords[0][1], lng: coords[0][0] };
           if (coords.length > 1) {
-            result.warnings.push(`"${label}": MultiPoint réduit au premier point`);
+            result.warnings.push(importMessage('geojson.multiPointReduced', { label }));
           }
         }
       } else if (geomType === 'LineString') {
@@ -246,12 +243,12 @@ export async function importFromGeoJSON(
         // Could be ZN-exported links; skip silently
         continue;
       } else {
-        result.warnings.push(`"${label}": géométrie "${geomType}" non supportée, ignorée`);
+        result.warnings.push(importMessage('geojson.unsupportedGeometry', { label, type: geomType }));
         continue;
       }
 
       if (!geo) {
-        result.warnings.push(`"${label}": coordonnées invalides, ignoré`);
+        result.warnings.push(importMessage('geojson.invalidCoordinates', { label }));
         continue;
       }
       if (!isGeoInRange(geo)) {
@@ -307,27 +304,26 @@ export async function importFromGeoJSON(
     if (outOfRange > 0) {
       // GeoJSON is WGS 84 degrees (RFC 7946); metres mean a projected file.
       const crsName = data.crs?.properties?.name;
-      const message = `${outOfRange} entité(s) aux coordonnées hors WGS 84 (latitude/longitude en degrés)`
-        + (crsName ? `, projection déclarée : ${crsName}` : '')
-        + '. Reprojeter le fichier en EPSG:4326 (WGS 84) avant import.';
+      const message = crsName
+        ? importMessage('geojson.outOfRangeCrs', { count: outOfRange, crs: crsName })
+        : importMessage('geojson.outOfRange', { count: outOfRange });
       if (result.elementsImported === 0) result.errors.push(message);
-      else result.warnings.push(`${message} Ces entités sont ignorées.`);
+      else result.warnings.push(importMessage('geojson.outOfRangeSkipped', { message }));
     }
 
     if (multiPolygonsReduced > 0) {
       result.warnings.push(
-        `${multiPolygonsReduced} MultiPolygon réduit(s) à leur plus grand polygone`
+        importMessage('geojson.multiPolygonsReduced', { count: multiPolygonsReduced })
       );
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
 
     result.success = result.elementsImported > 0;
   } catch (error) {
-    result.errors.push(`Erreur d'import GeoJSON: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    result.errors.push(importMessage('common.formatImportError', { format: 'GeoJSON', message: errorText(error) }));
   }
 
   return result;

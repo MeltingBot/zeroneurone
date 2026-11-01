@@ -14,6 +14,7 @@ import { fileService } from './fileService';
 import { dataUrlToFile } from '../utils/dataUrl';
 import type { ImportResult } from './importService';
 import { importOIPaletteV2, isOIPaletteV2Format } from './importOIPaletteV2';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // Graph Palette (OSINT Industries) Format Types
@@ -158,7 +159,7 @@ export async function importOIPalette(
     const data = parsed as PaletteGraphData;
 
     if (!data.nodes || !Array.isArray(data.nodes)) {
-      result.errors.push('Format Graph Palette invalide: champ "nodes" manquant');
+      result.errors.push(importMessage('graphPalette.missingNodes'));
       return result;
     }
 
@@ -180,7 +181,7 @@ export async function importOIPalette(
       if (SKIP_TYPES.has(node.type)) return false;
       if (node.parentId) return false;
       if (!IMPORTABLE_TYPES.has(node.type)) {
-        result.warnings.push(`Type de noeud ignoré: ${node.type} (${node.data?.label || node.id})`);
+        result.warnings.push(importMessage('graphPalette.nodeTypeSkipped', { type: node.type, label: node.data?.label || node.id }));
         return false;
       }
       return true;
@@ -244,7 +245,7 @@ export async function importOIPalette(
     if (data.edges && Array.isArray(data.edges)) {
       for (const edge of data.edges) {
         if (!edge.source || !edge.target) {
-          result.warnings.push(`Lien ignoré: source ou target manquant`);
+          result.warnings.push(importMessage('common.linkMissingEndpoints'));
           continue;
         }
 
@@ -284,7 +285,6 @@ export async function importOIPalette(
       }
     }
 
-    // Update dossier timestamp
     await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
@@ -292,7 +292,7 @@ export async function importOIPalette(
     result.success = result.elementsImported > 0;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import Graph Palette: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'Graph Palette', message: errorText(error) })
     );
   }
 
@@ -363,7 +363,6 @@ async function convertPaletteNode(
           // Skip null/empty values
           if (entry.value === null || entry.value === undefined || entry.value === '') continue;
 
-          // Add as property
           const propType = entry.type === 'url' ? 'link' :
                            entry.type === 'int' || entry.type === 'float' ? 'number' : 'text';
           properties.push({
@@ -431,7 +430,7 @@ async function convertPaletteNode(
               visualImageId = asset.id;
               assetsImported++;
             } catch {
-              warnings.push(`Image ignorée pour "${label}": erreur de conversion`);
+              warnings.push(importMessage('common.imageConversionFailed', { label }));
             }
           } else if (picValue.startsWith('http')) {
             properties.push({ key: entry.proper_key || 'Image', value: picValue, type: 'link' });
@@ -452,7 +451,6 @@ async function convertPaletteNode(
         }
       }
 
-      // Add module identifier
       if (modResult?.module) {
         properties.push({ key: 'module_id', value: modResult.module, type: 'text' });
       }
@@ -486,7 +484,7 @@ async function convertPaletteNode(
     }
 
     default:
-      warnings.push(`Type non géré: ${node.type}`);
+      warnings.push(importMessage('graphPalette.unsupportedType', { type: node.type }));
       return { element: null, warnings, assetsImported: 0 };
   }
 

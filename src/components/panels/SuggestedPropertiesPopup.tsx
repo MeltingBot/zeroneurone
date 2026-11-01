@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Check } from 'lucide-react';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { useTagSetStore } from '../../stores';
 import type { Property } from '../../types';
 
@@ -82,7 +83,12 @@ export function SuggestedPropertiesPopup({
   }, [tagSet, selectedKeys, onApply, onClose, canApplyVisual, applyVisual]);
 
   // Don't show if no TagSet, nor anything to offer (no properties AND no visual)
-  if (!tagSet || (availableProperties.length === 0 && !canApplyVisual)) {
+  const isVisible = !!tagSet && (availableProperties.length > 0 || canApplyVisual);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(isVisible, dialogRef, onClose);
+
+  if (!isVisible) {
     return null;
   }
 
@@ -90,16 +96,14 @@ export function SuggestedPropertiesPopup({
   // Nothing to apply: no property selected and (no visual, or visual unchecked)
   const nothingToApply = selectedKeys.size === 0 && !(canApplyVisual && applyVisual);
 
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
 
-      {/* Popup */}
-      <div className="relative bg-bg-primary border border-border-default rounded shadow-lg max-w-sm w-full mx-4">
-        {/* Header */}
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative bg-bg-primary border border-border-default rounded shadow-lg max-w-sm w-full mx-4">
         <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
-          <span className="text-xs font-medium text-text-primary">
+          <span id={titleId} className="text-xs font-medium text-text-primary">
             {t('detail.properties.suggestedFor', { name: tagSetName })}
           </span>
           <button
@@ -151,7 +155,6 @@ export function SuggestedPropertiesPopup({
           </label>
         )}
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-3 py-2 border-t border-border-default bg-bg-secondary">
           {availableProperties.length > 0 ? (
             <button

@@ -79,7 +79,7 @@ interface OsintrackerData {
     data: Array<{
       tableName: string;
       inbound: boolean;
-      rows: any[];
+      rows: unknown[];
     }>;
   };
 }
@@ -87,6 +87,8 @@ interface OsintrackerData {
 interface OsintrackerElement {
   id: string;
   dossierId: string;
+  /** v2 name of dossierId */
+  investigationId?: string;
   value: string;
   typeId: string;
   position: { x: number; y: number };
@@ -103,6 +105,8 @@ interface OsintrackerElement {
 interface OsintrackerRelation {
   id: string;
   dossierId: string;
+  /** v2 name of dossierId */
+  investigationId?: string;
   originId: string;
   targetId: string;
   label?: string;
@@ -164,13 +168,11 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   const typeMap = await loadTypeMap();
   const data: OsintrackerData = JSON.parse(jsonContent);
 
-  // Validate format
   if (data.formatName !== 'dexie') {
     throw new Error('Invalid OSINTracker file: expected Dexie format');
   }
 
-  // Extract tables
-  const tables: Record<string, any[]> = {};
+  const tables: Record<string, unknown[]> = {};
   for (const table of data.data.data) {
     tables[table.tableName] = table.rows;
   }
@@ -189,13 +191,12 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   // Filter elements and relations for this dossier
   // v1 uses "dossierId", v2 uses "investigationId"
   const dossierId = osintDossier.id;
-  const filteredElements = osintElements.filter(e => (e.dossierId || (e as any).investigationId) === dossierId);
-  const filteredRelations = osintRelations.filter(r => (r.dossierId || (r as any).investigationId) === dossierId);
+  const filteredElements = osintElements.filter(e => (e.dossierId || e.investigationId) === dossierId);
+  const filteredRelations = osintRelations.filter(r => (r.dossierId || r.investigationId) === dossierId);
 
   // Track valid element IDs for link validation
   const validElementIds = new Set(filteredElements.map(e => e.id));
 
-  // Convert dossier
   const dossier: OsintrackerImportResult['dossier'] = {
     originalId: osintDossier.id,
     name: osintDossier.name || 'Dossier importée',
@@ -216,7 +217,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     },
   };
 
-  // Convert elements
   const elements: OsintrackerImportResult['elements'] = [];
   const assets: OsintrackerImportResult['assets'] = [];
   let skippedElements = 0;
@@ -231,7 +231,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     // Get type info (name + color) from master.json
     const typeInfo = osintEl.typeId ? typeMap.get(osintEl.typeId) : null;
 
-    // Build tags
     const tags: string[] = [];
 
     // Add category from typeId using master.json mapping
@@ -243,7 +242,6 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       tags.push('Important');
     }
 
-    // Build properties
     const properties: Array<{ key: string; value: string; type: 'text' | 'number' | 'date' | 'link' | 'country' }> = [];
 
     // Add Badge property from progress field

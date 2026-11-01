@@ -102,7 +102,6 @@ export function ReportSectionEditor({
   }, []);
 
   const handleContentChange = useCallback((value: string) => {
-    // Update local state
     setContent(value);
     // Track what we sent to detect our own echo
     lastSyncedContentRef.current = value;

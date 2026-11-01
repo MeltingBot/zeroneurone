@@ -30,10 +30,8 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
   const [newTagIcon, setNewTagIcon] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // State for editing existing tag icons
   const [editingTagIcon, setEditingTagIcon] = useState<string | null>(null);
 
-  // State for inline tag rename
   const [renamingTag, setRenamingTag] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +42,6 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
 
   const tagColors = useTagColors();
 
-  // Get TagSet store
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
   const createTagSet = useTagSetStore((state) => state.create);
   const updateTagSet = useTagSetStore((state) => state.update);
@@ -88,7 +85,6 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
       s.toLowerCase().includes(inputValue.toLowerCase())
   );
 
-  // Show suggestions when focused and there are suggestions available
   const shouldShowSuggestions = showSuggestions && allSuggestions.length > 0;
 
   const handleAddTag = useCallback(async (tagToAdd?: string) => {
@@ -175,12 +171,10 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
     if (renamingTag) renameInputRef.current?.focus();
   }, [renamingTag]);
 
-  // Handle icon change for existing tags
   const handleTagIconChange = useCallback(async (tagName: string, newIcon: string | null) => {
     const existingData = tagSetData.get(tagName);
 
     if (existingData) {
-      // Update existing TagSet
       await updateTagSet(existingData.id, {
         defaultVisual: {
           ...existingData.tagSet.defaultVisual,
@@ -188,7 +182,6 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
         },
       });
     } else if (newIcon) {
-      // Create new TagSet for this tag
       await createTagSet({
         name: tagName,
         description: '',

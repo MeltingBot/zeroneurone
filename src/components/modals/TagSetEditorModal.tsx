@@ -5,6 +5,7 @@ import { Modal, Button, Input, IconButton, IconPicker } from '../common';
 import { useTagSetStore, useUIStore, useDossierStore, useHistoryStore } from '../../stores';
 import { planTagSetApply } from '../../services/tagSetApply';
 import type { TagSet, SuggestedProperty, ElementShape, PropertyType } from '../../types';
+import { useShallow } from 'zustand/react/shallow';
 
 interface TagSetEditorModalProps {
   isOpen: boolean;
@@ -59,12 +60,11 @@ const COLOR_OPTIONS = [
 
 export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModalProps) {
   const { t } = useTranslation(['modals', 'common']);
-  const { create, update, nameExists } = useTagSetStore();
+  const { create, update, nameExists } = useTagSetStore(useShallow((s) => ({ create: s.create, update: s.update, nameExists: s.nameExists })));
   const showToast = useUIStore((state) => state.showToast);
 
   const isEditing = !!tagSet;
 
-  // Form state
   const [name, setName] = useState(tagSet?.name || '');
   const [description, setDescription] = useState(tagSet?.description || '');
   const [color, setColor] = useState(tagSet?.defaultVisual.color || null);
@@ -90,7 +90,6 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
     [isEditing, tagSet, currentDossier, elements, color, shape, icon, properties]
   );
 
-  // Validation
   const nameError = useMemo(() => {
     if (!name.trim()) return t('tagSetEditor.nameRequired');
     if (nameExists(name.trim(), tagSet?.id)) return t('tagSetEditor.nameExists');
@@ -551,7 +550,6 @@ function PropertyEditor({
         )}
       </div>
 
-      {/* Remove button */}
       <IconButton onClick={onRemove} size="sm" title={t('common:actions.delete')}>
         <Trash2 size={12} />
       </IconButton>

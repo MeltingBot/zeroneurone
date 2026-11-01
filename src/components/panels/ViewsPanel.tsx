@@ -39,7 +39,22 @@ export function ViewsPanel() {
     setLinkAnchorMode,
     setLinkCurveMode,
     setSizeByDegree,
-  } = useDossierStore();
+  } = useDossierStore(
+    useShallow((s) => ({
+      currentDossier: s.currentDossier,
+      elements: s.elements,
+      links: s.links,
+      updateElementPositions: s.updateElementPositions,
+      toggleConfidenceIndicator: s.toggleConfidenceIndicator,
+      togglePropertyDisplay: s.togglePropertyDisplay,
+      clearDisplayedProperties: s.clearDisplayedProperties,
+      setTagDisplayMode: s.setTagDisplayMode,
+      setTagDisplaySize: s.setTagDisplaySize,
+      setLinkAnchorMode: s.setLinkAnchorMode,
+      setLinkCurveMode: s.setLinkCurveMode,
+      setSizeByDegree: s.setSizeByDegree,
+    })),
+  );
   const { savedViews, saveView, loadView, deleteView } = useViewStore(useShallow((s) => ({ savedViews: s.savedViews, saveView: s.saveView, loadView: s.loadView, deleteView: s.deleteView })));
   const [isCreating, setIsCreating] = useState(false);
   const [newViewName, setNewViewName] = useState('');
@@ -47,7 +62,6 @@ export function ViewsPanel() {
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [propertySearch, setPropertySearch] = useState('');
 
-  // Current display settings
   const settings = currentDossier?.settings;
   const tagDisplayMode = settings?.tagDisplayMode ?? 'icons';
   const tagDisplaySize = settings?.tagDisplaySize ?? 'small';
@@ -75,7 +89,6 @@ export function ViewsPanel() {
     return Array.from(keys).sort((a, b) => a.localeCompare(b, 'fr'));
   }, [elements, links]);
 
-  // Filter properties by search
   const filteredPropertyKeys = useMemo(() => {
     if (!propertySearch.trim()) return allPropertyKeys;
     const search = propertySearch.toLowerCase();

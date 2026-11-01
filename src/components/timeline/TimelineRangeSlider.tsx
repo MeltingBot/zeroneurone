@@ -12,7 +12,6 @@ interface TimelineRangeSliderProps {
   onClear: () => void;
 }
 
-// Format date for display
 function formatDate(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
@@ -58,7 +57,6 @@ export function TimelineRangeSlider({
     return Math.max(0, Math.min(1, (endDate.getTime() - minDate.getTime()) / totalMs));
   }, [endDate, minDate, totalMs]);
 
-  // Convert ratio to date
   const ratioToDate = useCallback((ratio: number): Date => {
     const ms = minDate.getTime() + ratio * totalMs;
     return new Date(ms);
@@ -110,11 +108,9 @@ export function TimelineRangeSlider({
     const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
 
     if (isDragging === 'range') {
-      // Calculate how much the mouse has moved
       const deltaRatio = ratio - dragStartRatioRef.current;
       const rangeWidth = dragStartRangeRef.current.end - dragStartRangeRef.current.start;
 
-      // Calculate new positions
       let newStartRatio = dragStartRangeRef.current.start + deltaRatio;
       let newEndRatio = dragStartRangeRef.current.end + deltaRatio;
 
@@ -174,7 +170,6 @@ export function TimelineRangeSlider({
     let currentStart = startDate ? startDate.getTime() : minDate.getTime();
 
     const animate = () => {
-      // Check if we should stop
       if (!shouldAnimateRef.current) {
         return;
       }
@@ -192,7 +187,6 @@ export function TimelineRangeSlider({
       // Move forward by 1 day per frame (adjust speed as needed)
       currentStart += 24 * 60 * 60 * 1000; // 1 day
 
-      // Schedule next frame
       timeoutRef.current = window.setTimeout(() => {
         if (shouldAnimateRef.current) {
           animationRef.current = requestAnimationFrame(animate);
@@ -241,7 +235,6 @@ export function TimelineRangeSlider({
     };
   }, []);
 
-  // Handle date input changes
   const handleStartDateInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -266,7 +259,6 @@ export function TimelineRangeSlider({
 
   return (
     <div className="flex items-center gap-3 px-3 py-2 bg-bg-tertiary border-b border-border-default">
-      {/* Label */}
       <span className="text-xs text-text-secondary whitespace-nowrap">
         {t('timeline.temporalFilter')}
       </span>
@@ -371,7 +363,6 @@ export function TimelineRangeSlider({
         className="h-6 px-1.5 text-[10px] bg-bg-primary border border-border-default rounded text-text-primary"
       />
 
-      {/* Clear button */}
       {isActive && (
         <button
           onClick={() => {

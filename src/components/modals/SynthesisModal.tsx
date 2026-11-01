@@ -27,9 +27,9 @@ interface ScreenshotOptions {
 export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   const { t, i18n } = useTranslation('modals');
   const evaluationModel = useEvaluationModel();
-  const { currentDossier, elements, links, assets } = useDossierStore();
+  const { currentDossier, elements, links, assets } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, assets: s.assets })));
   const { displayMode, setDisplayMode } = useViewStore(useShallow((s) => ({ displayMode: s.displayMode, setDisplayMode: s.setDisplayMode })));
-  const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore();
+  const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore(useShallow((s) => ({ captureView: s.captureView, captureHandlers: s.captureHandlers, themeMode: s.themeMode, setThemeMode: s.setThemeMode })));
 
   const [options, setOptions] = useState<ReportOptions>({
     ...DEFAULT_REPORT_OPTIONS,
@@ -126,7 +126,6 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
-      // Capture canvas screenshot
       if (screenshotOptions.canvas) {
         setCaptureStatus(t('synthesis.capture.capturingGraph'));
         finalOptions.canvasScreenshot = await captureViewScreenshot('canvas');
@@ -140,7 +139,6 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
-      // Restore original theme
       if (hasScreenshots && originalState.themeMode !== 'light') {
         setCaptureStatus(t('synthesis.capture.restoringTheme'));
         setThemeMode(originalState.themeMode);
@@ -201,14 +199,12 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
         </div>
       )}
 
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -216,7 +212,6 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
         aria-labelledby={titleId}
         className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-bg-primary sketchy-border-soft modal-shadow max-h-[90vh] overflow-hidden flex flex-col"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
           <h2 id={titleId} className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <FileText size={16} />

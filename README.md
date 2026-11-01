@@ -26,6 +26,16 @@ Documentation utilisateur : [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - **Le visuel est l'analyse** — position, couleurs et formes portent le sens que l'utilisateur leur donne.
 - **Zéro ontologie imposée** — l'utilisateur crée ses propres concepts ; aucun type d'entité n'est imposé.
 
+> [!WARNING]
+> **Sauvegardez vos données.** Tout est stocké dans le navigateur, et nulle part ailleurs. Vider les données du site, réinstaller le navigateur ou perdre son profil efface les dossiers. Il n'existe pas de copie sur un serveur.
+>
+> - **Sauvegarde complète** : page d'accueil > **Stockage** > **Exporter tout**. L'archive contient chaque dossier complet (éléments, liens, groupes, onglets, commentaires, requêtes, rapport, fichiers joints, clôture et rétention), ainsi que les jeux de tags, les icônes et les modèles d'import. **Importer** la restaure, en ajoutant aux dossiers existants.
+> - **Un dossier** : dans le dossier, **Exporter** > **Sauvegarde** > **ZIP** ; ou **Exporter ZIP** dans le menu de sa carte sur la page d'accueil.
+> - **Automatique** : l'extension VaultNeurone envoie des sauvegardes chiffrées vers S3 ou WebDAV.
+> - Avec le chiffrement au repos, sans le mot de passe, les données sont perdues : il n'y a pas de récupération.
+>
+> Les sauvegardes complètes faites avant la version 2.88 ne contiennent ni les onglets, ni les groupes, ni les commentaires, ni les requêtes enregistrées : refaites-en une.
+
 ## Fonctionnalités
 
 ### Canvas
@@ -166,7 +176,7 @@ Pour un hébergement Apache classique, y compris dans un sous-répertoire (`VITE
 
 > En mode asynchrone, conservez le lien de partage : c'est le seul moyen de rejoindre la session et de déchiffrer les données.
 
-Le serveur relais fourni (`relay-server.js`) gère le temps réel et le mode asynchrone :
+Le serveur relais fourni (`relay/index.js`) gère le temps réel et le mode asynchrone :
 
 ```bash
 npm run relay-server   # ws://localhost:4444

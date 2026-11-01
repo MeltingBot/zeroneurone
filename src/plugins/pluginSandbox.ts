@@ -21,8 +21,16 @@
 import type { Permission, TrustLevel } from './pluginManifest';
 import { SLOT_PERMISSION_MAP } from './pluginManifest';
 import type { createScopedPluginAPI } from './pluginAPI';
+import type { PluginSlots } from '../types/plugins';
 
 type ScopedPluginAPI = ReturnType<typeof createScopedPluginAPI>;
+
+/** A zustand hook as the sandbox wraps it: called with a selector, plus its static methods */
+interface StoreHook {
+  (selector: (state: object) => unknown, equalityFn?: unknown): unknown;
+  getState?: () => object;
+  subscribe?: unknown;
+}
 
 // ─── Read-only store proxy ──────────────────────────────────
 
@@ -31,15 +39,15 @@ type ScopedPluginAPI = ReturnType<typeof createScopedPluginAPI>;
  * Ensures referential stability: useStore(s => s.deleteElement)
  * always returns the same blocked function, avoiding spurious re-renders.
  */
-const blockedActionCache = new Map<string | symbol, (...args: any[]) => void>();
+const blockedActionCache = new Map<string | symbol, () => void>();
 
 function makeReadOnly<T extends object>(state: T): T {
   return new Proxy(state, {
     get(target, prop) {
-      const value = (target as any)[prop];
+      const value = (target as Record<string | symbol, unknown>)[prop];
       if (typeof value === 'function') {
         if (!blockedActionCache.has(prop)) {
-          blockedActionCache.set(prop, (..._args: any[]) => {
+          blockedActionCache.set(prop, () => {
             console.error(
               `[ZN Sandbox] Write action "${String(prop)}" blocked (read-only store).`
             );
@@ -52,18 +60,19 @@ function makeReadOnly<T extends object>(state: T): T {
   });
 }
 
-function buildReadOnlyStore(useStore: any): any {
+function buildReadOnlyStore(useStore: StoreHook): StoreHook {
   // A hook itself: plugin components call it like the store they asked for
-  const useReadOnlyStore = (selector?: (state: any) => any, equalityFn?: any) => {
+  const useReadOnlyStore = (selector?: (state: object) => unknown, equalityFn?: unknown) => {
     const wrappedSelector = selector
-      ? (state: any) => selector(makeReadOnly(state))
-      : (state: any) => makeReadOnly(state);
+      ? (state: object) => selector(makeReadOnly(state))
+      : (state: object) => makeReadOnly(state);
     return useStore(wrappedSelector, equalityFn);
   };
 
   // Copy static methods (getState, subscribe, etc.)
-  if (useStore.getState) {
-    useReadOnlyStore.getState = () => makeReadOnly(useStore.getState());
+  const getState = useStore.getState;
+  if (getState) {
+    useReadOnlyStore.getState = () => makeReadOnly(getState());
   }
   if (useStore.subscribe) {
     useReadOnlyStore.subscribe = useStore.subscribe;
@@ -77,19 +86,19 @@ function buildReadOnlyStore(useStore: any): any {
 function buildReadOnlyRepositories(repos: ScopedPluginAPI['repositories']): ScopedPluginAPI['repositories'] {
   const readMethods = new Set(['getByDossier', 'getByInvestigation', 'getById', 'getAll']);
 
-  function makeReadOnly(repo: any): any {
-    const filtered: any = {};
-    for (const key of Object.keys(repo)) {
+  function makeReadOnly<T extends object>(repo: T): T {
+    const filtered: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(repo)) {
       if (readMethods.has(key)) {
-        filtered[key] = repo[key];
+        filtered[key] = value;
       } else {
-        filtered[key] = (..._args: any[]) => {
+        filtered[key] = () => {
           console.error(`[ZN Sandbox] Repository write "${key}" blocked (read-only).`);
           return Promise.resolve();
         };
       }
     }
-    return filtered;
+    return filtered as T;
   }
 
   return {
@@ -97,7 +106,7 @@ function buildReadOnlyRepositories(repos: ScopedPluginAPI['repositories']): Scop
     linkRepository: makeReadOnly(repos.linkRepository),
     dossierRepository: repos.dossierRepository, // already read-only by nature
     investigationRepository: repos.dossierRepository, // legacy alias
-  } as any;
+  };
 }
 
 // ─── Filtered slot registration ─────────────────────────────
@@ -106,7 +115,7 @@ function buildFilteredRegisterPlugin(
   original: ScopedPluginAPI['registerPlugin'],
   permissions: Permission[]
 ): ScopedPluginAPI['registerPlugin'] {
-  return ((slot: string, extension: any, pluginId?: string) => {
+  return (<K extends keyof PluginSlots>(slot: K, extension: PluginSlots[K][number], pluginId?: string) => {
     const required = SLOT_PERMISSION_MAP[slot];
     if (required && !permissions.includes(required)) {
       console.error(
@@ -115,15 +124,15 @@ function buildFilteredRegisterPlugin(
       );
       return;
     }
-    return (original as any)(slot, extension, pluginId);
-  }) as ScopedPluginAPI['registerPlugin'];
+    return original(slot, extension, pluginId);
+  });
 }
 
 function buildFilteredRegisterPlugins(
   original: ScopedPluginAPI['registerPlugins'],
   permissions: Permission[]
 ): ScopedPluginAPI['registerPlugins'] {
-  return ((slot: string, extensions: any[], pluginId?: string) => {
+  return (<K extends keyof PluginSlots>(slot: K, extensions: PluginSlots[K][number][], pluginId?: string) => {
     const required = SLOT_PERMISSION_MAP[slot];
     if (required && !permissions.includes(required)) {
       console.error(
@@ -132,15 +141,15 @@ function buildFilteredRegisterPlugins(
       );
       return;
     }
-    return (original as any)(slot, extensions, pluginId);
-  }) as ScopedPluginAPI['registerPlugins'];
+    return original(slot, extensions, pluginId);
+  });
 }
 
 function buildFilteredUnregisterPlugin(
   original: ScopedPluginAPI['unregisterPlugin'],
   permissions: Permission[]
 ): ScopedPluginAPI['unregisterPlugin'] {
-  return ((slot: string, predicate: (ext: any) => boolean) => {
+  return (<K extends keyof PluginSlots>(slot: K, predicate: (ext: PluginSlots[K][number]) => boolean) => {
     const required = SLOT_PERMISSION_MAP[slot];
     if (required && !permissions.includes(required)) {
       console.error(
@@ -149,8 +158,8 @@ function buildFilteredUnregisterPlugin(
       );
       return;
     }
-    return (original as any)(slot, predicate);
-  }) as ScopedPluginAPI['unregisterPlugin'];
+    return original(slot, predicate);
+  });
 }
 
 // ─── Helper ─────────────────────────────────────────────────
@@ -179,7 +188,8 @@ export function buildSandboxedAPI(
   // Trusted = full access
   if (trust === 'trusted') return scopedAPI;
 
-  const api: any = {};
+  // Only the members allowed by the permissions are set: the others stay absent
+  const api: Partial<ScopedPluginAPI> = {};
 
   // --- Always available ---
   api.pluginId = scopedAPI.pluginId;
@@ -197,7 +207,7 @@ export function buildSandboxedAPI(
   api.features = scopedAPI.features;
 
   // --- Stores ---
-  const stores: any = {};
+  const stores: Record<string, StoreHook> = {};
   let hasStores = false;
 
   function addStore(
@@ -208,7 +218,7 @@ export function buildSandboxedAPI(
   ) {
     if (has(permissions, writePerm ?? readPerm) || has(permissions, readPerm)) {
       hasStores = true;
-      const store = (scopedAPI.stores as any)[key];
+      const store = (scopedAPI.stores as Record<string, StoreHook | undefined>)[key];
       if (!store) return;
       stores[key] = (writePerm && has(permissions, writePerm))
         ? store
@@ -231,7 +241,7 @@ export function buildSandboxedAPI(
   addStore('useTabStore', 'stores:tab:read', 'stores:tab:write');
   addStore('useUIStore', 'stores:ui:read', 'stores:ui:write');
 
-  if (hasStores) api.stores = stores;
+  if (hasStores) api.stores = stores as ScopedPluginAPI['stores'];
 
   // --- Repositories ---
   if (has(permissions, 'repositories:read') || has(permissions, 'repositories:write')) {
@@ -252,7 +262,7 @@ export function buildSandboxedAPI(
 
   // --- Write lock ---
   if (has(permissions, 'writeLock')) {
-    api.writeLock = (scopedAPI as any).writeLock;
+    api.writeLock = scopedAPI.writeLock;
   }
 
   // --- Event bus ---
@@ -274,20 +284,20 @@ export function buildSandboxedAPI(
   if (has(permissions, 'services:export') ||
       has(permissions, 'services:import') ||
       has(permissions, 'services:navigate')) {
-    const services: any = {};
+    const services: Partial<ScopedPluginAPI['services']> = {};
     if (has(permissions, 'services:export')) {
       services.exportDossier = scopedAPI.services.exportDossier;
     }
     if (has(permissions, 'services:import')) {
       services.importDossier = scopedAPI.services.importDossier;
-      if ((scopedAPI.services as any).importJSON) {
-        services.importJSON = (scopedAPI.services as any).importJSON;
+      if (scopedAPI.services.importJSON) {
+        services.importJSON = scopedAPI.services.importJSON;
       }
     }
     if (has(permissions, 'services:navigate')) {
       services.navigateTo = scopedAPI.services.navigateTo;
     }
-    api.services = services;
+    api.services = services as ScopedPluginAPI['services'];
   }
 
   // --- Direct DB access (dangerous) ---
@@ -305,5 +315,5 @@ export function buildSandboxedAPI(
     api.encryption = scopedAPI.encryption;
   }
 
-  return api;
+  return api as ScopedPluginAPI;
 }

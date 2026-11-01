@@ -75,9 +75,6 @@
     }
   },
   "detail": {
-    "noSelection": "Geen element geselecteerd",
-    "multipleSelection": "{{count}} elementen geselecteerd",
-    "element": "Element",
     "link": {
       "linkedElements": "Verbonden elementen",
       "deletedElement": "Verwijderd element",
@@ -86,8 +83,6 @@
       "periodStart": "Start",
       "periodEnd": "Einde (leeg laten indien lopend)"
     },
-    "group": "Groep",
-    "annotation": "Annotatie",
     "sections": {
       "identity": "Identiteit",
       "content": "Inhoud",
@@ -105,9 +100,7 @@
       "linkLabel": "Naamloze relatie",
       "notes": "Notities...",
       "source": "Bron van de informatie...",
-      "markdown": "Markdown: **vet**, *cursief*, [link](url), lijsten...",
-      "keyName": "Naam...",
-      "keyValue": "Waarde..."
+      "markdown": "Markdown: **vet**, *cursief*, [link](url), lijsten..."
     },
     "labels": {
       "name": "Naam",
@@ -154,7 +147,6 @@
       "goToTab": "Ga naar tabblad {{name}}"
     },
     "events": {
-      "title": "Gebeurtenissen",
       "description": "Geschiedenis van gedateerde gebeurtenissen (zichtbaar op de tijdlijn)",
       "add": "Gebeurtenis toevoegen",
       "labelPlaceholder": "Label (bijv.: Stop in Marseille, Site gehackt...)",
@@ -164,7 +156,6 @@
       "delete": "Verwijderen",
       "dateFrom": "Van",
       "dateTo": "Tot",
-      "dateEndOptional": "Einde (optioneel)",
       "descriptionLabel": "Beschrijving",
       "descriptionPlaceholder": "Gedetailleerde beschrijving...",
       "sourceLabel": "Bron",
@@ -185,7 +176,6 @@
       "geoJsonMinPoints": "Minimaal 3 punten"
     },
     "location": {
-      "title": "Locatie",
       "description": "Vaste positie van het element (zichtbaar op de kaart)",
       "gpsCoordinates": "GPS-coördinaten",
       "latitude": "Breedtegraad",
@@ -196,7 +186,6 @@
       "clearLocation": "Wissen",
       "removeLocation": "Locatie verwijderen",
       "saveLocation": "Opslaan",
-      "noLocation": "Geen positie gedefinieerd",
       "copyCoordinates": "Coördinaten kopiëren",
       "coordinatesCopied": "Coördinaten gekopieerd",
       "altitude": "Hoogte",
@@ -210,7 +199,6 @@
       "selectAll": "Alles selecteren",
       "deselectAll": "Selectie opheffen",
       "ignore": "Negeren",
-      "keyPlaceholder": "Sleutel",
       "valuePlaceholder": "Waarde",
       "typePlaceholder": "Type",
       "optionsPlaceholder": "Opties gescheiden door komma's",
@@ -255,13 +243,11 @@
       "editChoices": "Opties bewerken"
     },
     "appearance": {
-      "title": "Weergave",
       "color": "Kleur",
       "borderColor": "Randkleur",
       "defaultGray": "Standaard grijs",
       "customColor": "Aangepaste kleur",
       "shape": "Vorm",
-      "size": "Grootte",
       "style": "Stijl",
       "thickness": "Dikte",
       "textSize": "Tekstgrootte",
@@ -273,11 +259,6 @@
       "borderStyle": "Randstijl"
     },
     "files": {
-      "title": "Bestanden",
-      "drop": "Sleep bestanden hier",
-      "noFiles": "Geen bestanden",
-      "delete": "Bestand verwijderen",
-      "download": "Downloaden",
       "preview": "Voorbeeld",
       "defaultThumbnail": "Standaard miniatuur",
       "closeEsc": "Sluiten (Esc)",
@@ -351,7 +332,6 @@
     }
   },
   "filters": {
-    "title": "Filters",
     "elementsCount": "{{matching}}/{{total}} elementen",
     "countBreakdown": "Filters {{filters}} · Query {{query}}",
     "queryBadge": "Query",
@@ -371,11 +351,7 @@
       "quickFilters": "Snelfilters",
       "textSearch": "Tekstzoeken",
       "tags": "Tags",
-      "tabs": "Tabbladen",
-      "types": "Types",
-      "confidence": "Betrouwbaarheid",
-      "property": "Eigenschap",
-      "date": "Datum"
+      "tabs": "Tabbladen"
     },
     "placeholders": {
       "textSearch": "Filteren op naam of notities...",
@@ -427,9 +403,7 @@
     },
     "hiddenElements": {
       "title": "Verborgen",
-      "count": "{{count}} verborgen element(en)",
-      "showAll": "Alles tonen",
-      "noHidden": "Geen verborgen elementen"
+      "showAll": "Alles tonen"
     },
     "evaluation": {
       "hint": "Alleen elementen die in het actieve model met een geselecteerde code zijn gewaardeerd, blijven zichtbaar."
@@ -497,7 +471,6 @@
     "syntaxExample5": "WITHIN 2 HOPS OF tag = \"verdachte\""
   },
   "insights": {
-    "title": "Analyses",
     "computing": "Analyse bezig...",
     "between": {
       "title": "Tussen {{a}} en {{b}}",
@@ -511,18 +484,9 @@
     "noData": "Voeg elementen en verbindingen toe om analyses te zien.",
     "noInsights": "Geen analyses gedetecteerd. Voeg meer verbindingen toe tussen elementen.",
     "lastComputed": "Laatste analyse:",
-    "refresh": "Vernieuwen",
     "noName": "Naamloos",
     "noResults": "Geen resultaten",
     "links": "{{count}} verbindingen",
-    "elements": "{{count}} elementen",
-    "sections": {
-      "clusters": "Clusters",
-      "bridges": "Bruggen",
-      "centrality": "Centraliteit",
-      "isolated": "Geïsoleerd",
-      "similar": "Vergelijkbaar"
-    },
     "roles": {
       "title": "Rollen",
       "soleConnector": "{{x}} is de enige verbinding tussen {{groups}}",
@@ -544,9 +508,7 @@
     },
     "clusters": {
       "title": "Clusters",
-      "description": "Groepen van sterk verbonden elementen",
       "name": "Cluster {{id}}",
-      "count": "{{count}} cluster(s)",
       "elements": "{{count}} elementen",
       "actions": {
         "select": "Select.",
@@ -561,8 +523,6 @@
     "bridges": {
       "title": "Bruggen",
       "description": "Elementen die verschillende delen van de graaf verbinden",
-      "count": "{{count}} brug(gen)",
-      "noBridges": "Geen bruggen gedetecteerd",
       "showBridges": "Bruggen tonen",
       "hideBridges": "Markering verbergen",
       "selectAll": "Alles selecteren",
@@ -571,15 +531,11 @@
     },
     "centrality": {
       "title": "Meest verbonden",
-      "description": "Elementen met de meeste verbindingen",
-      "degree": "Graad",
       "betweenness": "Tussenligging"
     },
     "isolated": {
       "title": "Geïsoleerd",
       "description": "Elementen zonder verbindingen",
-      "count": "{{count}} geïsoleerd(e) element(en)",
-      "noIsolated": "Geen geïsoleerde elementen",
       "showIsolated": "Geïsoleerde tonen",
       "hideIsolated": "Markering verbergen",
       "selectAll": "Alles selecteren",
@@ -598,7 +554,6 @@
       "maxDepth": "Max. diepte",
       "highlightThisPath": "Dit pad markeren",
       "noPath": "Geen pad gevonden tussen deze elementen",
-      "pathLength": "{{count}} stap(pen)",
       "blockedByConstraints": "Pad uitgesloten door de beperkingen",
       "constraints": {
         "title": "Beperkingen",
@@ -630,7 +585,6 @@
     }
   },
   "views": {
-    "title": "Weergaven",
     "canvasDisplay": "Weergave op canvas",
     "tags": "Tags",
     "tagSize": "Grootte:",
@@ -660,9 +614,7 @@
     "noPropertiesDefined": "Geen eigenschappen gedefinieerd op elementen",
     "savedViews": "Opgeslagen weergaven",
     "save": "Weergave opslaan",
-    "load": "Laden",
     "delete": "Verwijderen",
-    "rename": "Hernoemen",
     "noViews": "Geen opgeslagen weergaven",
     "namePlaceholder": "Naam van weergave...",
     "includePositions": "Posities opnemen ({{count}} elementen)",
@@ -672,32 +624,20 @@
     "savedPositions": "Opgeslagen posities",
     "deleteView": "Weergave verwijderen",
     "activeView": "Actieve weergave. Filters en weergave hersteld.",
-    "positionsRestored": "Posities van {{count}} elementen hersteld.",
-    "saveDescription": "Slaat filters, zoom en verborgen elementen op"
+    "positionsRestored": "Posities van {{count}} elementen hersteld."
   },
   "assets": {
-    "title": "Bestanden",
-    "noAssets": "Geen bestanden",
     "drop": "Sleep bestanden",
     "deleteConfirm": "Dit bestand verwijderen?",
-    "usedBy": "Gebruikt door {{count}} element(en)",
     "hideMediaOnNode": "Media op knooppunt verbergen",
     "showMediaOnNode": "Media op knooppunt tonen",
     "uploading": "Uploaden…",
     "dropOrPaste": "Sleep bestanden of druk op Ctrl+V om te plakken",
     "browse": "of bladeren"
   },
-  "history": {
-    "title": "Geschiedenis",
-    "noHistory": "Geen acties",
-    "undo": "Ongedaan maken",
-    "redo": "Opnieuw doen"
-  },
   "collaboration": {
     "title": "Samenwerking",
     "connected": "Verbonden",
-    "disconnected": "Niet verbonden",
-    "users": "{{count}} gebruiker(s)",
     "you": "U",
     "others": "anderen",
     "local": "Lokaal",

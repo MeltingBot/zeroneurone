@@ -96,7 +96,8 @@
       "marriage": "Mariage",
       "filiation": "Filiation",
       "siblinghood": "Fratrie"
-    }
+    },
+    "importError": "Erreur d'import généalogie : {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,118 @@
     "parseError": "Erreur de lecture Mermaid : {{message}}",
     "skippedLines_one": "{{count}} ligne Mermaid non reconnue ignorée",
     "skippedLines_other": "{{count}} lignes Mermaid non reconnues ignorées"
+  },
+  "common": {
+    "importError": "Erreur d'import : {{message}}",
+    "formatImportError": "Erreur d'import {{format}} : {{message}}",
+    "unknownError": "Erreur inconnue",
+    "error": "Erreur",
+    "cancelled": "Import annulé",
+    "lineError": "Ligne {{row}} : {{message}}",
+    "linkMissingEndpoints": "Lien ignoré : source ou cible manquante",
+    "linkMissingElements": "Lien ignoré : éléments source/cible non trouvés ({{label}})",
+    "imageConversionFailed": "Image ignorée pour « {{label}} » : erreur de conversion",
+    "imageNotImported": "Image non importée ({{name}})",
+    "reportExists": "Un rapport existe déjà pour ce dossier : rapport non importé",
+    "reportFailed": "Rapport non importé : {{message}}",
+    "assetError": "Fichier joint ignoré : {{name}} - {{message}}",
+    "skippedElements": "{{count}} élément(s) ignoré(s) (sans position)",
+    "skippedLinks": "{{count}} lien(s) ignoré(s) (éléments invalides)",
+    "nodeNoId": "Nœud sans ID ignoré"
+  },
+  "archive": {
+    "tooLarge": "Archive trop volumineuse. Taille max : {{max}} Mo",
+    "tooManyFiles": "Trop de fichiers dans l'archive. Max : {{max}}",
+    "missingDossierJson": "Archive invalide : dossier.json manquant",
+    "jsonTooLarge": "Fichier JSON trop volumineux. Taille max : {{max}} Mo",
+    "invalidJson": "Format JSON invalide : champs manquants",
+    "tooManyElements": "Trop d'éléments. Max : {{max}}",
+    "tooManyLinks": "Trop de liens. Max : {{max}}",
+    "tooManyAssets": "Trop de fichiers joints. Max : {{max}}",
+    "assetMissing": "Fichier joint introuvable dans l'archive : {{name}}",
+    "assetTooLarge": "Fichier joint ignoré (trop volumineux, max {{max}} Mo) : {{name}}",
+    "totalTooLarge": "Taille totale décompressée trop importante. Max : {{max}} Go",
+    "suspiciousRatio": "Taux de compression suspect (archive piégée possible)"
+  },
+  "json": {
+    "unrecognized": "Format JSON non reconnu. Formats pris en charge : {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Archive invalide : backup.json manquant",
+    "backupTooLarge": "Archive invalide : backup.json trop volumineux",
+    "invalidFormat": "Format de sauvegarde invalide",
+    "incompatibleVersion": "Sauvegarde en version {{version}}, incompatible avec cette version de l'application (format {{expected}}). Mettez à jour ZeroNeurone avant de restaurer.",
+    "progress": {
+      "reading": "Lecture de l'archive…",
+      "files": "Import des fichiers…",
+      "elements": "Import des éléments…",
+      "writing": "Écriture des données…",
+      "done": "Import terminé",
+      "exportDossier": "Dossier {{index}} / {{count}} : {{name}}",
+      "importDossier": "Restauration {{index}} / {{count}} : {{name}}"
+    },
+    "missingDossier": "« {{name}} » absent de l'archive",
+    "dossierFailed": "« {{name}} » non restauré : {{message}}"
+  },
+  "csv": {
+    "empty": "Fichier CSV vide",
+    "emptyLabel": "Ligne {{row}} : libellé vide, élément ignoré",
+    "emptyLabelRow": "Ligne {{row}} : libellé vide, ligne ignorée",
+    "emptyEndpoints": "Ligne {{row}} : de/vers vide, lien ignoré",
+    "emptyEndpointsRow": "Ligne {{row}} : de/vers vide, ligne ignorée",
+    "elementsNotFound": "Ligne {{row}} : élément(s) non trouvé(s) : {{names}}",
+    "emptyParent": "Ligne {{row}} : élément parent (de) vide, événement ignoré",
+    "parentNotFound": "Ligne {{row}} : élément parent introuvable : {{name}}",
+    "invalidDate": "Ligne {{row}} : date manquante ou invalide, événement ignoré",
+    "missingLabelColumn": "Colonne « label » requise non trouvée",
+    "missingFromToColumns": "Colonnes « de » et « vers » (ou « from » et « to ») requises non trouvées"
+  },
+  "graphml": {
+    "parseError": "Format GraphML invalide : erreur de lecture XML",
+    "missingGraphml": "Format GraphML invalide : élément <graphml> manquant",
+    "missingGraph": "Format GraphML invalide : élément <graph> manquant",
+    "linkNoEndpoints": "Lien {{id}} ignoré : source ou cible manquante",
+    "linkMissingNode": "Lien {{id}} ignoré : nœud source ou cible non trouvé",
+    "noId": "sans ID"
+  },
+  "excalidraw": {
+    "noElements": "Format Excalidraw invalide : pas d'éléments",
+    "imageNotImported": "Image non importée : {{id}}…",
+    "skippedArrows": "{{count}} flèche(s) ignorée(s) (non connectées à des formes)",
+    "imagesImported": "{{count}} image(s) importée(s) depuis le fichier Excalidraw",
+    "orphanArrows": "{{count}} flèche(s) libre(s) ignorée(s) (sans connexion)"
+  },
+  "predicagraph": {
+    "missingNodes": "Format PredicaGraph invalide : champ « nodes » manquant",
+    "nodeSkipped": "Nœud ignoré : ID ou position manquant",
+    "linkMissingNode": "Lien ignoré : nœud source ({{source}}) ou cible ({{target}}) non trouvé"
+  },
+  "graphPalette": {
+    "missingNodes": "Format Graph Palette invalide : champ « nodes » manquant",
+    "nodeTypeSkipped": "Type de nœud ignoré : {{type}} ({{label}})",
+    "unsupportedType": "Type non géré : {{type}}",
+    "unexpectedNode": "Nœud ignoré : format inattendu ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Page {{page}} illisible (contenu compressé invalide)",
+    "pagesStacked": "{{count}} pages importées, empilées verticalement",
+    "connectorsSkipped": "{{count}} connecteur(s) ignoré(s) (non reliés à deux formes)",
+    "empty": "Diagramme draw.io vide ou non reconnu"
+  },
+  "osintIndustries": {
+    "invalid": "Format OSINT Industries invalide : tableau vide ou format incorrect",
+    "noFound": "Aucun module avec le statut « found » trouvé"
+  },
+  "geojson": {
+    "invalid": "Format GeoJSON invalide : FeatureCollection attendu",
+    "noGeometry": "Feature sans géométrie ignorée",
+    "polygonTooSmall": "\"{{label}}\": polygone avec moins de 3 points, ignoré",
+    "multiPointReduced": "\"{{label}}\": MultiPoint réduit au premier point",
+    "unsupportedGeometry": "\"{{label}}\": géométrie \"{{type}}\" non supportée, ignorée",
+    "invalidCoordinates": "\"{{label}}\": coordonnées invalides, ignoré",
+    "outOfRange": "{{count}} entité(s) aux coordonnées hors WGS 84 (latitude/longitude en degrés). Reprojeter le fichier en EPSG:4326 (WGS 84) avant import.",
+    "outOfRangeCrs": "{{count}} entité(s) aux coordonnées hors WGS 84 (latitude/longitude en degrés), projection déclarée : {{crs}}. Reprojeter le fichier en EPSG:4326 (WGS 84) avant import.",
+    "outOfRangeSkipped": "{{message}} Ces entités sont ignorées.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon réduit(s) à leur plus grand polygone"
   }
 }

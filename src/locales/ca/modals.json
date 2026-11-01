@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Eliminar",
-    "message": "Aquesta acció és irreversible.",
     "confirm": "Eliminar",
     "deleting": "Eliminant...",
     "deleteDossier": "Eliminar l'expedient",
@@ -19,8 +18,7 @@
     "rename": "Reanomenar",
     "renaming": "Reanomenant...",
     "label": "Nom",
-    "renameDossier": "Reanomenar l'expedient",
-    "namePlaceholder": "Nou nom"
+    "renameDossier": "Reanomenar l'expedient"
   },
   "importIntoCurrent": {
     "title": "Importar a l'expedient",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Importar un expedient",
-    "dropzone": "Deixeu anar un fitxer o feu clic per seleccionar",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -160,10 +157,6 @@
       "folderByTag": "Una carpeta per etiqueta principal",
       "folderFlat": "Carpeta plana"
     },
-    "options": {
-      "includeAssets": "Incloure fitxers adjunts",
-      "highResolution": "Alta resolució (2x)"
-    },
     "resolution": "Resolució",
     "scale": {
       "1x": "Mida normal",
@@ -218,12 +211,6 @@
     },
     "placeholder": "Cercar elements i enllaços...",
     "noResults": "Sense resultats per a \"{{query}}\"",
-    "resultsCount": "{{count}} resultat(s)",
-    "filters": {
-      "all": "Tots",
-      "elements": "Elements",
-      "links": "Enllaços"
-    },
     "noName": "Sense nom",
     "link": "Enllaç",
     "element": "Element",
@@ -282,18 +269,6 @@
       "lockSession": "Bloqueja la sessió"
     }
   },
-  "tagSetManager": {
-    "title": "Gestionar etiquetes",
-    "description": "Creeu paletes d'etiquetes reutilitzables",
-    "newTagSet": "Nova paleta",
-    "editTagSet": "Editar paleta",
-    "deleteTagSet": "Eliminar paleta",
-    "tagSetName": "Nom de la paleta",
-    "tags": "Etiquetes",
-    "addTag": "Afegir una etiqueta",
-    "noTagSets": "Sense paletes d'etiquetes",
-    "createFirst": "Creeu la vostra primera paleta"
-  },
   "tagSetEditor": {
     "applyTitle": "Aplicar a l'expedient obert",
     "applyVisual": "Aparença (elements amb aquesta etiqueta principal)",
@@ -303,9 +278,6 @@
     "title": "Paleta d'etiquetes",
     "titleNew": "Nova etiqueta",
     "titleEdit": "Editar \"{{name}}\"",
-    "namePlaceholder": "Nom de la paleta",
-    "tagsPlaceholder": "Afegir una etiqueta...",
-    "colorLabel": "Color per defecte",
     "nameLabel": "Nom",
     "nameExample": "Ex: Persona, Empresa...",
     "nameRequired": "El nom és obligatori",
@@ -391,7 +363,6 @@
       "opfs": "Fitxers (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Historial Y.js",
-      "other": "Altre",
       "measured": "Dades mesurades"
     },
     "persistent": {
@@ -423,18 +394,9 @@
       "exportAll": "Exportar tot",
       "import": "Importar",
       "description": "Totes les expedients, fitxers i etiquetes. La importació afegeix sense substituir.",
-      "exporting": "Exportant...",
-      "importing": "Important...",
       "exportSuccess": "Exportació acabada",
       "importSuccess": "Importació reeixida: {{dossiers}} expedient(s), {{elements}} element(s), {{links}} enllaç(os)",
       "error": "Error"
-    },
-    "purge": {
-      "description": "L'historial Y.js emmagatzema les modificacions per desfer. Purgar allibera espai.",
-      "confirm": "Purgar l'historial Y.js?\n\nAixò alliberarà espai però eliminarà l'historial de desfer. Les dades es conservaran.",
-      "success": "{{count}} base(s) eliminada(es)",
-      "successWithErrors": "{{deleted}} base(s) eliminada(es), {{errors}} error(s)",
-      "error": "Error durant la purga"
     },
     "compact": {
       "title": "Historial Y.js per expedient",
@@ -459,7 +421,6 @@
       "button": "Suprimeix-ho tot",
       "confirm": "Voleu suprimir TOTS els dossiers i les seves dades?\n\nAquesta acció és irreversible.",
       "confirmAgain": "Última confirmació: es perdran totes les dades. Voleu continuar?",
-      "success": "S'han suprimit tots els dossiers.",
       "error": "Error en suprimir"
     }
   },
@@ -497,19 +458,6 @@
     "sortByName": "Nom",
     "sortByDate": "Data",
     "sortByConfidence": "Confiança",
-    "preview": "Previsualització:",
-    "previewContent": "L'informe contindrà",
-    "previewDescription": "la descripció",
-    "previewSummary": "un resum",
-    "previewInsights": "l'anàlisi del graf",
-    "previewTimeline": "la cronologia",
-    "previewElements": "{{count}} elements",
-    "previewLinks": "{{count}} enllaços",
-    "previewProperties": "les propietats",
-    "previewFiles": "{{count}} fitxers",
-    "previewFiches": "les fitxes detallades",
-    "previewGraphCapture": "captura del graf",
-    "previewNoContent": "sense contingut",
     "jsonDescription": "JSON+: dades estructurades amb anàlisi del graf",
     "jsonTooltip": "Exportació JSON estructurada amb dades enriquides",
     "print": "Imprimir",
@@ -596,10 +544,6 @@
     "sortByEvaluation": "Valoració"
   },
   "metadataImport": {
-    "title": "Importar metadades",
-    "description": "Extreure metadades del fitxer (EXIF, PDF, etc.)",
-    "noMetadata": "Sense metadades trobades",
-    "import": "Importar les metadades seleccionades",
     "detected": "Metadades detectades",
     "gps": "Coordenades GPS",
     "ignore": "Ignorar",
@@ -644,7 +588,6 @@
   "tagSets": {
     "title": "Gestionar etiquetes",
     "newTag": "Nova etiqueta",
-    "editTag": "Editar \"{{name}}\"",
     "deleteConfirm": "Eliminar l'etiqueta \"{{name}}\"? Les etiquetes existents als elements romandran però ja no estaran associades a aquest TagSet.",
     "csvEmptyOrInvalid": "Fitxer CSV buit o invàlid",
     "csvMissingNameColumn": "Columna \"nom\" absent al CSV",
@@ -725,7 +668,6 @@
     "errorDeactivation": "Error durant la desactivació",
     "errorPasswordChange": "Error en canviar la contrasenya",
     "enable": {
-      "warning": "Sense aquesta contrasenya, les vostres dades seran irrecuperables. Exporteu una còpia de seguretat abans de continuar.",
       "passwordLabel": "Contrasenya (mínim 8 caràcters)",
       "confirmLabel": "Confirmar la contrasenya",
       "mismatch": "Les contrasenyes no coincideixen",
@@ -773,7 +715,6 @@
       "successRemoved": "Clau de seguretat eliminada",
       "errorPrfNotSupported": "Aquesta clau no suporta el desbloqueig sense contrasenya (PRF)",
       "errorRegistration": "Error en registrar la clau",
-      "errorUnlock": "Error en desbloquejar amb clau de seguretat",
       "addedOn": "Afegida el"
     }
   },

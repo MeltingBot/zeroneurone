@@ -68,7 +68,6 @@ export function useSwimlaneLayout(
         continue;
       }
 
-      // Sort by start date
       const sorted = [...items].sort(
         (a, b) => a.start.getTime() - b.start.getTime(),
       );
@@ -134,7 +133,6 @@ export function useSwimlaneLayout(
         const rh = rowMaxHeights[r] || SWIMLANE_ITEM_HEIGHT;
         contentHeight += rh + (r < rowCount - 1 ? SWIMLANE_ROW_GAP : 0);
       }
-      // Assign computed rowY to layout items
       for (const li of layoutItems) {
         li.rowY = rowYOffsets[li.row];
       }

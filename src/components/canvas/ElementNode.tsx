@@ -88,7 +88,6 @@ const EVENT_LABEL_HEIGHT = 24;
 function countryCodeToFlag(countryCode: string): string {
   const code = countryCode.toUpperCase();
   if (code.length !== 2) return countryCode;
-  // Check if both characters are letters A-Z
   if (!/^[A-Z]{2}$/.test(code)) return countryCode;
   const offset = 127397; // Regional indicator symbol letter A starts at U+1F1E6
   return String.fromCodePoint(code.charCodeAt(0) + offset, code.charCodeAt(1) + offset);
@@ -130,7 +129,6 @@ function FullElementNode({ data }: NodeProps) {
   // Font size from visual properties (default: 'sm' = 12px, same as text-xs)
   const labelFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
 
-  // Get tag data from TagSets
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
   // Subscribe to custom icons so tag icons appear once the store loads
   useCustomIconStore((state) => state.icons);
@@ -150,7 +148,6 @@ function FullElementNode({ data }: NodeProps) {
     return tags;
   }, [tagDisplayMode, element.tags, tagSetsMap]);
 
-  // Tag size configuration
   const tagSizeConfig = useMemo(() => {
     switch (tagDisplaySize) {
       case 'large': return { iconSize: 18, fontSize: 'text-sm', padding: 'px-2 py-1', boxSize: 'w-7 h-7' };
@@ -182,7 +179,6 @@ function FullElementNode({ data }: NodeProps) {
     };
   }, [isSelected]);
 
-  // Handle input key events
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.stopPropagation();
     if (e.key === 'Enter') {
@@ -194,7 +190,6 @@ function FullElementNode({ data }: NodeProps) {
     }
   };
 
-  // Handle input blur
   const handleInputBlur = () => {
     onLabelChange?.(editValue);
     onStopEditing?.();
@@ -255,11 +250,11 @@ function FullElementNode({ data }: NodeProps) {
     if (!isDiamond) return null;
     const w = dimensions.width;
     const h = dimensions.height;
-    const half = (w + h) / (2 * Math.SQRT2); // distance centre → pointe, sur l'axe
-    const oy = half - h / 2; // débord vertical au-delà du bord haut/bas
-    const ox = half - w / 2; // débord horizontal au-delà du bord gauche/droit
-    const dx = (h - w) / (2 * Math.SQRT2); // décalage x de la pointe haute (bas = −dx)
-    const dy = (w - h) / (2 * Math.SQRT2); // décalage y de la pointe droite (gauche = −dy)
+    const half = (w + h) / (2 * Math.SQRT2); // distance from centre to tip, along the axis
+    const oy = half - h / 2; // vertical overhang past the top/bottom edge
+    const ox = half - w / 2; // horizontal overhang past the left/right edge
+    const dx = (h - w) / (2 * Math.SQRT2); // x offset of the top tip (bottom = −dx)
+    const dy = (w - h) / (2 * Math.SQRT2); // y offset of the right tip (left = −dy)
     return {
       top: { top: -oy, left: `calc(50% + ${dx}px)` },
       bottom: { bottom: -oy, left: `calc(50% + ${-dx}px)` },
@@ -487,7 +482,6 @@ function FullElementNode({ data }: NodeProps) {
             const showIcon = (tagDisplayMode === 'icons' || tagDisplayMode === 'both') && hasIcon;
             const showLabel = tagDisplayMode === 'labels' || tagDisplayMode === 'both';
 
-            // Icon only mode
             if (tagDisplayMode === 'icons') {
               if (!hasIcon || !iconName) return null;
               return (
@@ -556,7 +550,6 @@ function FullElementNode({ data }: NodeProps) {
         >
           {displayedPropertyValues.slice(0, 3).map(({ key, value }) => {
             const isCountry = isLikelyCountryCode(value);
-            // Truncate value to 20 chars max
             const displayValue = value.length > 20 ? value.slice(0, 20) + '...' : value;
             return (
               <div
@@ -822,7 +815,6 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.badgeProperty?.value !== nextData.badgeProperty?.value) return false;
   if (prevData.badgeProperty?.type !== nextData.badgeProperty?.type) return false;
 
-  // Compare remote selectors
   const prevRemote = prevData.remoteSelectors ?? [];
   const nextRemote = nextData.remoteSelectors ?? [];
   if (prevRemote.length !== nextRemote.length) return false;
@@ -870,7 +862,6 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.visual.fontSize !== nextEl.visual.fontSize) return false;
   if (prevEl.assetIds?.length !== nextEl.assetIds?.length) return false;
 
-  // Compare tags for tag display
   if (prevEl.tags?.length !== nextEl.tags?.length) return false;
   if (prevEl.tags && nextEl.tags) {
     for (let i = 0; i < prevEl.tags.length; i++) {

@@ -131,10 +131,8 @@ export function SidePanel() {
     };
   }, [positionMenuOpen]);
 
-  // Detached window
   const detachedContainer = useDetachedWindow(isDetached, () => setPanelSide('right'));
 
-  // Handle resize
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
@@ -268,7 +266,6 @@ export function SidePanel() {
     setPanelTabOrder(ids);
   };
 
-  // Render detail content based on selection
   const renderDetailContent = () => {
     if (totalSelected === 0) {
       if (currentDossier) {
@@ -318,7 +315,6 @@ export function SidePanel() {
     return null;
   };
 
-  // Render tab content
   const renderTabContent = () => {
     switch (activeTab) {
       case 'detail':
@@ -576,7 +572,6 @@ export function SidePanel() {
         )}
       </header>
 
-      {/* Tab content */}
       {renderTabContent()}
     </aside>
   );

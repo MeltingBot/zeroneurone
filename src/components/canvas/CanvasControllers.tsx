@@ -9,11 +9,12 @@ import { ZoomIn, ZoomOut, Maximize2, RotateCcw } from 'lucide-react';
 import { isExportedNode, withLayersAt } from './overview/exportLayers';
 
 import { useSelectionStore, useViewStore, useUIStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 
 // Capture handler for report screenshots - must be inside ReactFlowProvider
 export function CanvasCaptureHandler() {
   const { fitView } = useReactFlow();
-  const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore();
+  const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore(useShallow((s) => ({ registerCaptureHandler: s.registerCaptureHandler, unregisterCaptureHandler: s.unregisterCaptureHandler })));
 
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
@@ -25,14 +26,13 @@ export function CanvasCaptureHandler() {
       // Wait for React Flow to fully render
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Capture
       const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
       if (!element) {
         return null;
       }
 
       try {
-        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
+        // Loaded on demand: PNG capture is not on the main path.
         const { toPng } = await import('html-to-image');
         return await withLayersAt(3, () => toPng(element, {
           backgroundColor: '#faf8f5',

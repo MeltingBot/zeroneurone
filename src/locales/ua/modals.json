@@ -7,7 +7,6 @@
   },
   "confirmDelete": {
     "title": "Видалити",
-    "message": "Ця дія незворотна.",
     "confirm": "Видалити",
     "deleting": "Видалення...",
     "deleteDossier": "Видалити справа",
@@ -19,8 +18,7 @@
     "rename": "Перейменувати",
     "renaming": "Перейменування...",
     "label": "Назва",
-    "renameDossier": "Перейменувати справа",
-    "namePlaceholder": "Нова назва"
+    "renameDossier": "Перейменувати справа"
   },
   "importIntoCurrent": {
     "title": "Імпорт у справа",
@@ -38,7 +36,6 @@
   },
   "import": {
     "title": "Імпортувати справа",
-    "dropzone": "Перетягніть файл або клацніть для вибору",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Генеалогія: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
@@ -162,10 +159,6 @@
       "folderByTag": "Окрема тека для кожного основного тегу",
       "folderFlat": "Одна тека"
     },
-    "options": {
-      "includeAssets": "Включити вкладення",
-      "highResolution": "Висока роздільність (2x)"
-    },
     "resolution": "Роздільність",
     "scale": {
       "1x": "Звичайний розмір",
@@ -220,12 +213,6 @@
     },
     "placeholder": "Пошук елементів та зв'язків...",
     "noResults": "Немає результатів для \"{{query}}\"",
-    "resultsCount": "{{count}} результатів",
-    "filters": {
-      "all": "Всі",
-      "elements": "Елементи",
-      "links": "Зв'язки"
-    },
     "noName": "Без назви",
     "link": "Зв'язок",
     "element": "Елемент",
@@ -284,18 +271,6 @@
       "lockSession": "Заблокувати сеанс"
     }
   },
-  "tagSetManager": {
-    "title": "Керувати тегами",
-    "description": "Створюйте багаторазові палітри тегів",
-    "newTagSet": "Нова палітра",
-    "editTagSet": "Редагувати палітру",
-    "deleteTagSet": "Видалити палітру",
-    "tagSetName": "Назва палітри",
-    "tags": "Теги",
-    "addTag": "Додати тег",
-    "noTagSets": "Немає палітр тегів",
-    "createFirst": "Створіть свою першу палітру"
-  },
   "tagSetEditor": {
     "applyTitle": "Застосувати до відкритої справи",
     "applyVisual": "Вигляд (елементи з цим головним тегом)",
@@ -305,9 +280,6 @@
     "title": "Палітра тегів",
     "titleNew": "Новий тег",
     "titleEdit": "Редагувати \"{{name}}\"",
-    "namePlaceholder": "Назва палітри",
-    "tagsPlaceholder": "Додати тег...",
-    "colorLabel": "Колір за замовчуванням",
     "nameLabel": "Назва",
     "nameExample": "Напр.: Особа, Компанія...",
     "nameRequired": "Назва обов'язкова",
@@ -393,7 +365,6 @@
       "opfs": "Файли (OPFS)",
       "indexedDB": "IndexedDB",
       "yjs": "Історія Y.js",
-      "other": "Інше",
       "measured": "Виміряні дані"
     },
     "persistent": {
@@ -425,18 +396,9 @@
       "exportAll": "Експортувати все",
       "import": "Імпортувати",
       "description": "Усі справа, файли та теги. Імпорт додає, не замінює.",
-      "exporting": "Експортування...",
-      "importing": "Імпортування...",
       "exportSuccess": "Експорт завершено",
       "importSuccess": "Імпорт успішний: {{dossiers}} справ, {{elements}} елементів, {{links}} зв'язків",
       "error": "Помилка"
-    },
-    "purge": {
-      "description": "Історія Y.js зберігає зміни для скасування. Очищення звільняє місце.",
-      "confirm": "Очистити історію Y.js?\n\nЦе звільнить місце, але видалить історію скасування. Дані будуть збережені.",
-      "success": "{{count}} баз видалено",
-      "successWithErrors": "{{deleted}} баз видалено, {{errors}} помилок",
-      "error": "Помилка під час очищення"
     },
     "compact": {
       "title": "Історія Y.js за справами",
@@ -461,7 +423,6 @@
       "button": "Видалити все",
       "confirm": "Видалити ВСІ досьє та їхні дані?\n\nЦю дію не можна скасувати.",
       "confirmAgain": "Останнє підтвердження: усі дані буде втрачено. Продовжити?",
-      "success": "Усі досьє видалено.",
       "error": "Помилка під час видалення"
     }
   },
@@ -499,19 +460,6 @@
     "sortByName": "Назва",
     "sortByDate": "Дата",
     "sortByConfidence": "Достовірність",
-    "preview": "Попередній перегляд:",
-    "previewContent": "Звіт міститиме",
-    "previewDescription": "опис",
-    "previewSummary": "підсумок",
-    "previewInsights": "аналіз графу",
-    "previewTimeline": "хронологію",
-    "previewElements": "{{count}} елементів",
-    "previewLinks": "{{count}} зв'язків",
-    "previewProperties": "властивості",
-    "previewFiles": "{{count}} файлів",
-    "previewFiches": "детальні картки",
-    "previewGraphCapture": "знімок графу",
-    "previewNoContent": "без вмісту",
     "jsonDescription": "JSON+: структуровані дані з аналізом графу",
     "jsonTooltip": "Структурований JSON експорт зі збагаченими даними",
     "print": "Друкувати",
@@ -598,10 +546,6 @@
     "sortByEvaluation": "Оцінка"
   },
   "metadataImport": {
-    "title": "Імпортувати метадані",
-    "description": "Витягти метадані з файлу (EXIF, PDF, тощо)",
-    "noMetadata": "Метадані не знайдено",
-    "import": "Імпортувати вибрані метадані",
     "detected": "Виявлено метадані",
     "gps": "GPS-координати",
     "ignore": "Пропустити",
@@ -646,7 +590,6 @@
   "tagSets": {
     "title": "Керувати тегами",
     "newTag": "Новий тег",
-    "editTag": "Редагувати \"{{name}}\"",
     "deleteConfirm": "Видалити тег \"{{name}}\"? Існуючі теги на елементах залишаться, але більше не будуть пов'язані з цим набором тегів.",
     "csvEmptyOrInvalid": "Файл CSV порожній або недійсний",
     "csvMissingNameColumn": "Відсутня колонка \"назва\" в CSV",
@@ -735,7 +678,6 @@
     "errorDeactivation": "Помилка під час деактивації",
     "errorPasswordChange": "Помилка під час зміни пароля",
     "enable": {
-      "warning": "Без цього пароля ваші дані будуть безповоротно втрачені. Експортуйте резервну копію перед продовженням.",
       "passwordLabel": "Пароль (мінімум 8 символів)",
       "confirmLabel": "Підтвердіть пароль",
       "mismatch": "Паролі не збігаються",
@@ -783,7 +725,6 @@
       "successRemoved": "Ключ безпеки видалено",
       "errorPrfNotSupported": "Цей ключ не підтримує розблокування без пароля (PRF)",
       "errorRegistration": "Помилка при реєстрації ключа",
-      "errorUnlock": "Не вдалося розблокувати ключем безпеки",
       "addedOn": "Додано"
     }
   },

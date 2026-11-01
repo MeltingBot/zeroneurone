@@ -73,7 +73,6 @@ export function QueryPanel() {
   const saveView = useViewStore((s) => s.saveView);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Load saved queries on mount
   useEffect(() => {
     if (currentDossier) {
       loadSavedQueries(currentDossier.id);
@@ -140,7 +139,6 @@ export function QueryPanel() {
       {/* Results bar, at the top like the filters header; wraps in a narrow
           panel rather than pushing buttons out */}
       <div className="border-b border-border-default bg-bg-secondary px-3 py-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        {/* Clear button */}
         {currentAst && (
           <button
             onClick={handleClear}
@@ -308,7 +306,6 @@ export function QueryPanel() {
       <div className={`overflow-y-auto ${showTable ? '' : 'flex-1'}`} style={showTable ? { maxHeight: '40%' } : undefined}>
         {editorMode === 'text' ? <QueryBuilderText /> : <QueryBuilderVisual />}
 
-        {/* Saved queries */}
         <SavedQueriesList />
       </div>
 

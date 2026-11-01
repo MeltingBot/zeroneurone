@@ -3,6 +3,7 @@ import { generateUUID } from '../../utils';
 import type {
   Element,
   ElementId,
+  ElementVisual,
   DossierId,
   Position,
 } from '../../types';
@@ -92,13 +93,17 @@ export const elementRepository = {
 
   async update(
     id: ElementId,
-    changes: Partial<Omit<Element, 'id' | 'dossierId' | 'createdAt'>>
+    changes: Omit<Partial<Element>, 'id' | 'dossierId' | 'createdAt' | 'visual'> & { visual?: Partial<ElementVisual> }
   ): Promise<void> {
     const element = await db.elements.get(id);
     if (!element) return;
 
+    // Callers send only the visual fields they change: merge, since Dexie
+    // replaces a nested object as a whole
+    const { visual, ...rest } = changes;
     await db.elements.update(id, {
-      ...changes,
+      ...rest,
+      ...(visual ? { visual: { ...element.visual, ...visual } } : {}),
       updatedAt: new Date(),
     });
 
@@ -112,7 +117,6 @@ export const elementRepository = {
     if (!element) return;
 
     await db.transaction('rw', [db.elements, db.links, db.dossiers], async () => {
-      // Delete associated links
       await db.links
         .where('fromId')
         .equals(id)
@@ -125,10 +129,8 @@ export const elementRepository = {
         await db.elements.where({ parentGroupId: id }).delete();
       }
 
-      // Delete the element
       await db.elements.delete(id);
 
-      // Update dossier timestamp
       await db.dossiers.update(element.dossierId, {
         updatedAt: new Date(),
       });
@@ -149,10 +151,8 @@ export const elementRepository = {
       await db.links.where('fromId').anyOf(ids).delete();
       await db.links.where('toId').anyOf(ids).delete();
 
-      // Delete elements
       await db.elements.where('id').anyOf(ids).delete();
 
-      // Update dossier timestamp
       await db.dossiers.update(dossierId, {
         updatedAt: new Date(),
       });
@@ -198,7 +198,6 @@ export const elementRepository = {
       childIds: elementIds,
     });
 
-    // Update children
     await db.elements.where('id').anyOf(elementIds).modify({ parentGroupId: group.id });
 
     return group;

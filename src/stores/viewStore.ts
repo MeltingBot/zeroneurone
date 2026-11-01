@@ -127,7 +127,6 @@ interface ViewState {
   // Actions - Viewport
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
   setZoom: (zoom: number) => void;
-  panTo: (x: number, y: number) => void;
   saveViewportForDossier: (dossierId: DossierId) => void;
   loadViewportForDossier: (dossierId: DossierId) => boolean;
   requestViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
@@ -143,8 +142,6 @@ interface ViewState {
   clearFilters: () => void;
   addIncludeTag: (tag: string) => void;
   removeIncludeTag: (tag: string) => void;
-  addExcludeTag: (tag: string) => void;
-  removeExcludeTag: (tag: string) => void;
 
   // Actions - Hidden elements
   hideElement: (id: ElementId) => void;
@@ -205,7 +202,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({ viewport });
   },
 
-  // Save viewport for a specific dossier
   saveViewportForDossier: (dossierId: DossierId) => {
     const { viewport } = get();
     try {
@@ -215,7 +211,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
     }
   },
 
-  // Load viewport for a specific dossier
   loadViewportForDossier: (dossierId: DossierId) => {
     try {
       const saved = localStorage.getItem(`viewport_${dossierId}`);
@@ -235,12 +230,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
   setZoom: (zoom) => {
     set((state) => ({
       viewport: { ...state.viewport, zoom: Math.max(0.1, Math.min(4, zoom)) },
-    }));
-  },
-
-  panTo: (x, y) => {
-    set((state) => ({
-      viewport: { ...state.viewport, x, y },
     }));
   },
 
@@ -299,26 +288,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
       filters: {
         ...state.filters,
         includeTags: state.filters.includeTags.filter((t) => t !== tag),
-      },
-    }));
-  },
-
-  addExcludeTag: (tag) => {
-    set((state) => ({
-      filters: {
-        ...state.filters,
-        excludeTags: state.filters.excludeTags.includes(tag)
-          ? state.filters.excludeTags
-          : [...state.filters.excludeTags, tag],
-      },
-    }));
-  },
-
-  removeExcludeTag: (tag) => {
-    set((state) => ({
-      filters: {
-        ...state.filters,
-        excludeTags: state.filters.excludeTags.filter((t) => t !== tag),
       },
     }));
   },

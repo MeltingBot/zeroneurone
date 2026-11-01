@@ -50,7 +50,6 @@ interface QueryState {
   setOutputMode: (mode: 'canvas' | 'table' | 'both' | 'none') => void;
   execute: () => void;
   clear: () => void;
-  toggleFilter: () => void;
   selectAllResults: () => void;
   deselectAllResults: () => void;
   /** Select what the query did not find, of the kind it found (elements, links
@@ -68,8 +67,6 @@ interface QueryState {
   deleteSavedQuery: (id: string) => Promise<void>;
   applySavedQuery: (query: SavedQuery) => void;
 
-  // Table
-  setTableColumns: (columns: string[]) => void;
 }
 
 /**
@@ -319,19 +316,6 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     });
   },
 
-  toggleFilter: () => {
-    const { isFilterActive, results } = get();
-    if (isFilterActive) {
-      set({ isFilterActive: false, matchingElementIds: new Set(), matchingLinkIds: new Set() });
-    } else if (results) {
-      set({
-        isFilterActive: true,
-        matchingElementIds: withLinkEnds(results),
-        matchingLinkIds: results.linkIds,
-      });
-    }
-  },
-
   loadSavedQueries: async (dossierId: DossierId) => {
     const queries = await queryRepository.getByDossierId(dossierId);
     set({ savedQueries: queries });
@@ -374,7 +358,6 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     get().execute();
   },
 
-  setTableColumns: (columns: string[]) => set({ tableColumns: columns }),
 }));
 
 // Each dossier has its own query, results and history: nothing typed in one

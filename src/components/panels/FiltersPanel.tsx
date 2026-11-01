@@ -154,7 +154,7 @@ function keptDateKeys(dateKeys: string[], filters: ViewFilters): string[] {
 export function FiltersPanel() {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
-  const { elements, comments } = useDossierStore();
+  const { elements, comments } = useDossierStore(useShallow((s) => ({ elements: s.elements, comments: s.comments })));
   const {
     filters,
     setFilters,
@@ -180,7 +180,7 @@ export function FiltersPanel() {
     showElement: s.showElement,
     showAllElements: s.showAllElements,
   })));
-  const { isolated } = useInsightsStore();
+  const { isolated } = useInsightsStore(useShallow((s) => ({ isolated: s.isolated })));
 
   const isActive = hasActiveFilters();
   // Tabs filter: in the "All" view only (a tab already narrows the views)
@@ -227,7 +227,6 @@ export function FiltersPanel() {
 
   const tagColors = useTagColors();
 
-  // Get all unique tags from elements with counts
   const tagsWithCounts = useMemo(() => {
     const tagMap = new Map<string, number>();
     scopeElements.forEach((el) => {
@@ -240,7 +239,6 @@ export function FiltersPanel() {
       .sort((a, b) => b.count - a.count);
   }, [scopeElements]);
 
-  // Get all unique property keys from elements
   const allPropertyKeys = useMemo(() => {
     const keySet = new Set<string>();
     scopeElements.forEach((el) => el.properties.forEach((prop) => keySet.add(prop.key)));
@@ -284,7 +282,6 @@ export function FiltersPanel() {
   );
   const someDatesUnchecked = keptDateProperties.length < dateKeys.length;
 
-  // Quick filter params
   const quickFilterParams: QuickFilterParams = useMemo(
     () => ({ scope: scopeElements, isolated, comments, filters, evaluationModel }),
     [scopeElements, isolated, comments, filters, evaluationModel]
@@ -298,7 +295,7 @@ export function FiltersPanel() {
     setQuickModeState(mode);
     try { localStorage.setItem(QUICK_MODE_KEY, mode); } catch { /* per-viewer convenience */ }
   };
-  const { selectedElementIds, selectElements, clearSelection } = useSelectionStore();
+  const { selectedElementIds, selectElements, clearSelection } = useSelectionStore(useShallow((s) => ({ selectedElementIds: s.selectedElementIds, selectElements: s.selectElements, clearSelection: s.clearSelection })));
   const quickSets = useMemo(
     () => QUICK_FILTER_DEFS
       .filter((qf) => !qf.models || qf.models.includes(evaluationModel))
@@ -331,7 +328,6 @@ export function FiltersPanel() {
     }
   };
 
-  // Handle tag toggle
   const handleTagToggle = useCallback(
     (tag: string) => {
       if (filters.includeTags.includes(tag)) {
@@ -343,7 +339,6 @@ export function FiltersPanel() {
     [filters.includeTags, addIncludeTag, removeIncludeTag]
   );
 
-  // Handle property filter change
   const handlePropertyChange = useCallback(
     (value: string) => {
       // Clear badge if changing/clearing property filter
@@ -356,7 +351,6 @@ export function FiltersPanel() {
     [setFilters, filters.badgePropertyKey]
   );
 
-  // Handle text search change
   const handleTextSearchChange = useCallback(
     (value: string) => {
       setFilters({ textSearch: value });
@@ -892,7 +886,6 @@ function HiddenElementsSection({
   );
 }
 
-// Filter badge component
 interface FilterBadgeProps {
   label: string;
   onRemove: () => void;

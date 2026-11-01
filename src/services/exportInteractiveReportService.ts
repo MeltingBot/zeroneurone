@@ -201,7 +201,6 @@ function generateGraphSVG(
     const borderColor = resolveExportColor(el.visual?.borderColor, color);
     const shape = el.visual?.shape || 'rectangle';
 
-    // Find thumbnail for this element
     let thumbDataUrl = '';
     if (el.assetIds && el.assetIds.length > 0) {
       for (const aid of el.assetIds) {
@@ -281,7 +280,6 @@ function generateGraphSVG(
 }
 
 
-// Generate thumbnail from image blob
 async function generateThumbnail(blob: Blob, maxSize = 200, quality = 0.7): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -317,7 +315,6 @@ async function generateThumbnail(blob: Blob, maxSize = 200, quality = 0.7): Prom
   });
 }
 
-// Generate thumbnails for all image assets
 async function generateThumbnails(assets: Asset[]): Promise<Record<string, string>> {
   const thumbnails: Record<string, string> = {};
 
@@ -362,7 +359,6 @@ function buildElementDetails(elements: Element[], thumbnails: Record<string, str
       html += `<div class="notes">${markdownToHtml(el.notes)}</div>`;
     }
 
-    // Check for thumbnail
     if (el.assetIds && el.assetIds.length > 0) {
       for (const assetId of el.assetIds) {
         if (thumbnails[assetId]) {
@@ -411,10 +407,8 @@ export async function exportInteractiveReport(
     toc: t('toc'),
   };
 
-  // Generate thumbnails
   const thumbnails = await generateThumbnails(assets);
 
-  // Generate SVG
   const graphSvg = generateGraphSVG(
     elements,
     links,
@@ -428,7 +422,6 @@ export async function exportInteractiveReport(
     i18nStrings.noElements
   );
 
-  // Build TOC and report HTML
   const tocItems: { id: string; title: string }[] = [];
   let reportHtml = `<h1>${escapeXml(report.title)}</h1>`;
   // Unique anchors: two sections of the same title each get their own

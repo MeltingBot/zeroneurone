@@ -1,8 +1,8 @@
 /**
- * PasswordModal — Saisie du mot de passe de chiffrement au démarrage
+ * PasswordModal — encryption password prompt at startup
  *
- * Affiché au lancement de l'app si `_encryptionMeta` existe dans Dexie.
- * Bloquant : l'app n'est pas accessible tant que le mot de passe n'est pas validé.
+ * Shown when the app starts if `_encryptionMeta` exists in Dexie.
+ * Blocking: the app stays inaccessible until the password is validated.
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
@@ -11,15 +11,15 @@ import { Lock, Eye, EyeOff, AlertTriangle, TriangleAlert, KeyRound } from 'lucid
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface PasswordModalProps {
-  /** Appelé avec le mot de passe quand l'utilisateur soumet */
+  /** Called with the password when the user submits */
   onUnlock: (password: string) => Promise<void>;
-  /** Message d'erreur à afficher (mot de passe incorrect, etc.) */
+  /** Error message to display (wrong password, etc.) */
   error?: string | null;
-  /** Vrai pendant la vérification du mot de passe */
+  /** True while the password is being verified */
   isVerifying?: boolean;
-  /** Vrai si au moins un credential WebAuthn est enregistré */
+  /** True if at least one WebAuthn credential is registered */
   hasWebAuthn?: boolean;
-  /** Appelé quand l'utilisateur clique sur "clé de sécurité" */
+  /** Called when the user clicks "security key" */
   onUnlockWebAuthn?: () => Promise<void>;
 }
 
@@ -50,7 +50,7 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      // Supprime _encryptionMeta via raw IndexedDB (sans passer par Dexie)
+      // Delete _encryptionMeta through raw IndexedDB (bypassing Dexie)
       await new Promise<void>((resolve, reject) => {
         const openReq = indexedDB.open('zeroneurone');
         openReq.onsuccess = () => {
@@ -74,8 +74,8 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
   };
 
   const dialogRef = useRef<HTMLDivElement>(null);
-  // Modale bloquante : l'application est inaccessible tant que le mot de passe
-  // n'est pas valide, donc Escape ne ferme rien. Seul le piege de focus compte.
+  // Blocking modal: the app is inaccessible until the password is valid, so
+  // Escape closes nothing. Only the focus trap matters.
   useDialogA11y(true, dialogRef, () => {});
 
   return (
@@ -87,7 +87,6 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
       ref={dialogRef}
     >
       <div className="bg-bg-primary border border-border-default shadow-lg w-full max-w-sm mx-4 p-6 rounded">
-        {/* En-tête */}
         <div className="flex items-center gap-3 mb-5">
           <Lock size={16} className="text-text-secondary shrink-0" />
           <div>
@@ -100,7 +99,7 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
           </div>
         </div>
 
-        {/* Champ mot de passe */}
+        {/* Password field */}
         <div className="mb-4">
           <label
             htmlFor="encryption-password"
@@ -133,7 +132,6 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
           </div>
         </div>
 
-        {/* Erreur */}
         {error && (
           <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-bg-secondary border border-border-default rounded text-xs text-error">
             <AlertTriangle size={13} className="shrink-0" />
@@ -141,7 +139,6 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
           </div>
         )}
 
-        {/* Bouton */}
         <button
           data-testid="unlock-submit-button"
           onClick={handleSubmit}
@@ -168,12 +165,12 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
           </button>
         )}
 
-        {/* Reminder stockage local */}
+        {/* Local storage reminder */}
         <p className="text-[11px] text-text-tertiary mt-3 text-center border-t border-border-default pt-3">
           {t('passwordModal.storageReminder')}
         </p>
 
-        {/* Mot de passe oublié */}
+        {/* Forgotten password */}
         {!showReset ? (
           <p className="text-xs text-text-tertiary mt-3 text-center">
             {t('passwordModal.forgotHint')}{' '}

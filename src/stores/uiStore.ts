@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode, GeoData, GeoPolygon, Element, ElementEvent, Link } from '../types';
+import type { ModalType, Toast, SidePanelTab, DisplayMode, GeoData, GeoPolygon, Element, ElementEvent, Link } from '../types';
 import type { ExtractedMetadata } from '../services/metadataService';
 import { useToastStore } from './toastStore';
 
@@ -77,9 +77,6 @@ interface UIState {
   sidePanelOpen: boolean;
   sidePanelTab: SidePanelTab;
   panelSide: 'left' | 'right' | 'bottom' | 'detached';
-
-  // Tool
-  activeTool: ToolType;
 
   // Toasts
   toasts: Toast[];
@@ -169,14 +166,9 @@ interface UIState {
   closeModal: () => void;
 
   // Actions - Side panel
-  toggleSidePanel: () => void;
-  openSidePanel: (tab?: SidePanelTab) => void;
   closeSidePanel: () => void;
   setSidePanelTab: (tab: SidePanelTab) => void;
   setPanelSide: (side: 'left' | 'right' | 'bottom' | 'detached') => void;
-
-  // Actions - Tool
-  setActiveTool: (tool: ToolType) => void;
 
   // Actions - Toasts
   showToast: (
@@ -249,7 +241,6 @@ export const useUIStore = create<UIState>()(
   sidePanelOpen: true,
   sidePanelTab: 'detail',
   panelSide: 'right' as 'left' | 'right' | 'bottom' | 'detached',
-  activeTool: 'select',
   toasts: [],
   searchOpen: false,
   themeMode: 'light' as ThemeMode,
@@ -318,17 +309,6 @@ export const useUIStore = create<UIState>()(
   },
 
   // Side panel
-  toggleSidePanel: () => {
-    set((state) => ({ sidePanelOpen: !state.sidePanelOpen }));
-  },
-
-  openSidePanel: (tab) => {
-    set((state) => ({
-      sidePanelOpen: true,
-      sidePanelTab: tab ?? state.sidePanelTab,
-    }));
-  },
-
   closeSidePanel: () => {
     set({ sidePanelOpen: false });
   },
@@ -339,11 +319,6 @@ export const useUIStore = create<UIState>()(
 
   setPanelSide: (side) => {
     set({ panelSide: side });
-  },
-
-  // Tool
-  setActiveTool: (tool) => {
-    set({ activeTool: tool });
   },
 
   // Toasts — delegated to toastStore, the store ToastContainer renders, so

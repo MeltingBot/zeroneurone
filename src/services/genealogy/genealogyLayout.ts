@@ -97,7 +97,6 @@ export function applyGenealogyLayout(
     direction: options.layoutDirection,
   };
 
-  // Build element lookup
   const elementMap = new Map<ElementId, Partial<Element>>();
   for (const el of elements) {
     if (el.id) {
@@ -105,17 +104,14 @@ export function applyGenealogyLayout(
     }
   }
 
-  // Build family units from links
   const familyUnits = buildFamilyUnits(elements, links);
 
-  // Build parent-child relationships
   const childToParents = buildChildToParentsMap(familyUnits);
   const parentToFamilies = buildParentToFamiliesMap(familyUnits);
 
   // Assign generations
   const generations = assignGenerations(elements, childToParents, familyUnits);
 
-  // Find max generation
   let maxGeneration = 0;
   for (const gen of generations.values()) {
     maxGeneration = Math.max(maxGeneration, gen);
@@ -332,7 +328,6 @@ function assignGenerations(
     const currentId = queue.shift()!;
     const currentGen = generations.get(currentId) || 0;
 
-    // Find children of this element
     for (const unit of familyUnits.values()) {
       const isParent = unit.husband === currentId || unit.wife === currentId;
       if (!isParent) continue;
@@ -375,7 +370,6 @@ function assignGenerations(
     }
   }
 
-  // Handle unvisited elements
   for (const el of elements) {
     if (el.id && !generations.has(el.id as ElementId)) {
       generations.set(el.id as ElementId, 0);
@@ -395,7 +389,6 @@ function calculateSubtreeWidth(
   subtreeWidths: Map<string, SubtreeInfo>,
   options: LayoutOptions
 ): SubtreeInfo {
-  // Return cached value if already calculated
   if (subtreeWidths.has(familyId)) {
     return subtreeWidths.get(familyId)!;
   }
@@ -421,7 +414,6 @@ function calculateSubtreeWidth(
     }
   }
 
-  // Calculate width of all descendant subtrees
   let descendantsWidth = 0;
   const childSubtreeInfos: SubtreeInfo[] = [];
 
@@ -466,7 +458,6 @@ function positionFamily(
   const family = familyUnits.get(familyId);
   if (!family) return;
 
-  // Calculate Y based on direction
   const y = options.direction === 'TB'
     ? generation * options.levelHeight
     : (maxGeneration - generation) * options.levelHeight;
@@ -485,7 +476,6 @@ function positionFamily(
     }
   }
 
-  // Find child families and leaf children
   const childFamilies: string[] = [];
   const leafChildren: ElementId[] = [];
   const processedChildren = new Set<ElementId>();
@@ -509,7 +499,6 @@ function positionFamily(
     }
   }
 
-  // Calculate total width of children
   let totalChildWidth = 0;
   const childInfos: { id: string; info: SubtreeInfo }[] = [];
 

@@ -44,7 +44,6 @@ export function isANXFormat(content: string): boolean {
 
 /** Fix common malformed XML in i2 ANX exports */
 function sanitizeANXContent(content: string): string {
-  // Remove BOM
   let s = stripBom(content);
   // Strip XML declaration (browser already decoded the string, avoids encoding mismatch)
   s = s.replace(/<\?xml[^?]*\?>\s*/, '');
@@ -270,7 +269,6 @@ export async function importANX(
       return result;
     }
 
-    // Build lookup tables
     const strengthLookup = buildStrengthLookup(doc);
     const entityTypeLookup = buildEntityTypeLookup(doc);
     const linkTypeLookup = buildLinkTypeLookup(doc);

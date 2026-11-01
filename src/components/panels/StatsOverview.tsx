@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Link2, Network, CircleOff, GitBranch } from 'lucide-react';
 import { useDossierStore, useInsightsStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 
 interface StatItemProps {
   icon: React.ReactNode;
@@ -45,10 +46,10 @@ interface StatsOverviewProps {
 
 export function StatsOverview({ onStatClick, activeStat, counts }: StatsOverviewProps) {
   const { t } = useTranslation('common');
-  const { elements: dossierElements, links: dossierLinks } = useDossierStore();
+  const { elements: dossierElements, links: dossierLinks } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links })));
   const elements = { length: counts?.elements ?? dossierElements.length };
   const links = { length: counts?.links ?? dossierLinks.length };
-  const { clusters, isolated, bridges } = useInsightsStore();
+  const { clusters, isolated, bridges } = useInsightsStore(useShallow((s) => ({ clusters: s.clusters, isolated: s.isolated, bridges: s.bridges })));
 
   const stats = useMemo(() => ({
     elements: elements.length,

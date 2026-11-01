@@ -103,8 +103,9 @@ export function useService<T>(name: string): T | undefined {
 export function scopedPluginServices(pluginId: string) {
   return {
     // provide: new(name, impl) or raw(owner, name, impl); the owner is always this plugin
-    provide(...args: any[]): ServiceHandle {
-      const [name, impl] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+    provide(...args: unknown[]): ServiceHandle {
+      // Untyped at runtime (compiled plugins): provideService checks name and impl
+      const [name, impl] = (args.length >= 3 ? args.slice(1) : args) as [string, { version: number }];
       return provideService(pluginId, name, impl);
     },
     get: getService,

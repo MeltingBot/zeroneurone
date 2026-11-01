@@ -4,6 +4,7 @@ import { Check, Trash2, Send } from 'lucide-react';
 import { useDossierStore, useSyncStore } from '../../stores';
 import type { Comment, CommentTargetType } from '../../types';
 import { dateLocale } from '../../utils/dates';
+import { useShallow } from 'zustand/react/shallow';
 
 interface CommentsSectionProps {
   targetId: string;
@@ -12,12 +13,11 @@ interface CommentsSectionProps {
 
 export function CommentsSection({ targetId, targetType }: CommentsSectionProps) {
   const { t, i18n } = useTranslation('panels');
-  const { comments, createComment, resolveComment, unresolveComment, deleteComment } = useDossierStore();
+  const { comments, createComment, resolveComment, unresolveComment, deleteComment } = useDossierStore(useShallow((s) => ({ comments: s.comments, createComment: s.createComment, resolveComment: s.resolveComment, unresolveComment: s.unresolveComment, deleteComment: s.deleteComment })));
   const localUser = useSyncStore(state => state.localUser);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter comments for this target
   const targetComments = comments
     .filter(c => c.targetId === targetId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -160,7 +160,6 @@ export function CommentsSection({ targetId, targetType }: CommentsSectionProps) 
                   </div>
                 </div>
 
-                {/* Content */}
                 <p className={`text-sm ${comment.resolved ? 'line-through' : ''}`}>
                   {comment.content}
                 </p>

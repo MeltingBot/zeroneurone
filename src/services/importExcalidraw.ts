@@ -16,6 +16,7 @@ import { db } from '../db/database';
 import { fileService } from './fileService';
 import type { ImportResult } from './importService';
 import { dataUrlMimeType, dataUrlToFile } from '../utils/dataUrl';
+import { errorText, importMessage } from './importMessages';
 
 // ============================================================================
 // Excalidraw Format Types
@@ -185,14 +186,13 @@ export async function importExcalidraw(
     const data: ExcalidrawData = JSON.parse(content);
 
     if (!data.elements || !Array.isArray(data.elements)) {
-      result.errors.push('Format Excalidraw invalide: pas d\'éléments');
+      result.errors.push(importMessage('excalidraw.noElements'));
       return result;
     }
 
     // Filter active elements only
     const activeElements = data.elements.filter(el => !el.isDeleted);
 
-    // Build lookup maps
     const textByContainerId = new Map<string, ExcalidrawElement>();
     const textById = new Map<string, ExcalidrawElement>();
     const elementById = new Map<string, ExcalidrawElement>();
@@ -238,7 +238,6 @@ export async function importExcalidraw(
       const elementId = generateUUID() as ElementId;
       idMap.set(shape.id, elementId);
 
-      // Get bound text label
       const boundText = textByContainerId.get(shape.id);
       const label = boundText
         ? (boundText.originalText || boundText.text || '').replace(/\n/g, ' ').trim()
@@ -309,7 +308,6 @@ export async function importExcalidraw(
       let visualImageId: AssetId | null = null;
 
       try {
-        // Convert dataURL to File
         if (fileData.dataURL.includes(',')) {
           const mimeType = dataUrlMimeType(fileData.dataURL, 'image/png');
           const ext = mimeType.split('/')[1] || 'png';
@@ -323,10 +321,9 @@ export async function importExcalidraw(
           result.assetsImported++;
         }
       } catch {
-        result.warnings.push(`Image non importée: ${img.fileId?.substring(0, 12)}...`);
+        result.warnings.push(importMessage('excalidraw.imageNotImported', { id: img.fileId?.substring(0, 12) }));
       }
 
-      // Get bound text for image (if any)
       const boundText = textByContainerId.get(img.id);
       const label = boundText
         ? (boundText.originalText || boundText.text || '').trim()
@@ -500,13 +497,13 @@ export async function importExcalidraw(
     const skippedArrows = arrows.length - links.length;
     if (skippedArrows > 0) {
       result.warnings.push(
-        `${skippedArrows} flèche(s) ignorée(s) (non connectées à des formes)`
+        importMessage('excalidraw.skippedArrows', { count: skippedArrows })
       );
     }
 
     if (imageDownloadCount > 0) {
       result.warnings.push(
-        `${imageDownloadCount} image(s) importée(s) depuis le fichier Excalidraw`
+        importMessage('excalidraw.imagesImported', { count: imageDownloadCount })
       );
     }
 
@@ -515,14 +512,14 @@ export async function importExcalidraw(
     ).length;
     if (orphanArrows > 0) {
       result.warnings.push(
-        `${orphanArrows} flèche(s) libre(s) ignorée(s) (sans connexion)`
+        importMessage('excalidraw.orphanArrows', { count: orphanArrows })
       );
     }
 
     result.success = result.elementsImported > 0;
   } catch (error) {
     result.errors.push(
-      `Erreur d'import Excalidraw: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      importMessage('common.formatImportError', { format: 'Excalidraw', message: errorText(error) })
     );
   }
 

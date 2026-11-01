@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, X } from 'lucide-react';
 import type { Asset } from '../../types';
@@ -6,6 +6,7 @@ import { fileService } from '../../services/fileService';
 import { PdfPreview } from '../common/PdfPreview';
 import { ImagePreview } from '../common/ImagePreview';
 import { isEmlFile } from '../../utils/fileTypes';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface AssetPreviewModalProps {
   asset: Asset;
@@ -92,16 +93,9 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     };
   }, [asset, isImage, isPdf, isText, isDoc, isEml, hasPreview]);
 
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(true, dialogRef, onClose);
 
   return (
     <div
@@ -109,14 +103,17 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className={`bg-bg-primary rounded shadow-lg ${
           isPdf || isText || isDoc || isEml || isImage ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-border-default flex-shrink-0">
-          <h3 className="text-sm font-medium text-text-primary truncate pr-4">
+          <h3 id={titleId} className="text-sm font-medium text-text-primary truncate pr-4">
             {asset.filename}
           </h3>
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -143,7 +140,6 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           </div>
         </div>
 
-        {/* Content */}
         <div className={isPdf || isText || isDoc || isEml || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">

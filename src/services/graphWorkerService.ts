@@ -8,6 +8,7 @@
 import type { Element, Link } from '../types';
 import { toLayoutEdges, toLayoutNodes } from './graph/layouts';
 import type { StructuralRoles } from './graph/structuralRoles';
+import type { WorkerResponse } from '../workers/graphWorker';
 
 export type { LayoutType, LayoutOptions } from './graph/layouts';
 import type { LayoutOptions } from './graph/layouts';
@@ -45,8 +46,8 @@ type RequestKind = 'insights' | 'layout';
 
 interface PendingRequest {
   id: number;
-  resolve: (value: any) => void;
-  reject: (reason: any) => void;
+  resolve: (value: unknown) => void;
+  reject: (reason: unknown) => void;
   onProgress: ProgressCallback | null;
 }
 
@@ -92,7 +93,7 @@ class GraphWorkerService {
     return null;
   }
 
-  private handleMessage(response: any) {
+  private handleMessage(response: WorkerResponse) {
     if (response.type === 'progress') {
       for (const request of this.pending.values()) {
         if (request.id === response.requestId) request.onProgress?.(response.percent, response.phase);
@@ -120,7 +121,7 @@ class GraphWorkerService {
     }
     const id = this.nextId++;
     return new Promise<T>((resolve, reject) => {
-      this.pending.set(kind, { id, resolve, reject, onProgress });
+      this.pending.set(kind, { id, resolve: (value) => resolve(value as T), reject, onProgress });
       worker.postMessage({ ...message, requestId: id });
     });
   }

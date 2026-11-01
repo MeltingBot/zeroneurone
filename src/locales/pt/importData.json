@@ -96,7 +96,8 @@
       "marriage": "Casamento",
       "filiation": "Filiação",
       "siblinghood": "Fraternidade"
-    }
+    },
+    "importError": "Erro de importação de genealogia: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,118 @@
     "parseError": "Erro ao ler Mermaid: {{message}}",
     "skippedLines_one": "{{count}} linha Mermaid não reconhecida ignorada",
     "skippedLines_other": "{{count}} linhas Mermaid não reconhecidas ignoradas"
+  },
+  "common": {
+    "importError": "Erro de importação: {{message}}",
+    "formatImportError": "Erro de importação {{format}}: {{message}}",
+    "unknownError": "Erro desconhecido",
+    "error": "Erro",
+    "cancelled": "Importação cancelada",
+    "lineError": "Linha {{row}}: {{message}}",
+    "linkMissingEndpoints": "Ligação ignorada: origem ou destino em falta",
+    "linkMissingElements": "Ligação ignorada: elementos de origem/destino não encontrados ({{label}})",
+    "imageConversionFailed": "Imagem ignorada para «{{label}}»: erro de conversão",
+    "imageNotImported": "Imagem não importada ({{name}})",
+    "reportExists": "Já existe um relatório para este dossiê: relatório não importado",
+    "reportFailed": "Relatório não importado: {{message}}",
+    "assetError": "Ficheiro anexo ignorado: {{name}} - {{message}}",
+    "skippedElements": "{{count}} elemento(s) ignorado(s) (sem posição)",
+    "skippedLinks": "{{count}} ligação(ões) ignorada(s) (elementos inválidos)",
+    "nodeNoId": "Nó sem ID ignorado"
+  },
+  "archive": {
+    "tooLarge": "Arquivo demasiado grande. Tamanho máx.: {{max}} MB",
+    "tooManyFiles": "Demasiados ficheiros no arquivo. Máx.: {{max}}",
+    "missingDossierJson": "Arquivo inválido: dossier.json em falta",
+    "jsonTooLarge": "Ficheiro JSON demasiado grande. Tamanho máx.: {{max}} MB",
+    "invalidJson": "Formato JSON inválido: campos em falta",
+    "tooManyElements": "Demasiados elementos. Máx.: {{max}}",
+    "tooManyLinks": "Demasiadas ligações. Máx.: {{max}}",
+    "tooManyAssets": "Demasiados ficheiros anexos. Máx.: {{max}}",
+    "assetMissing": "Ficheiro anexo não encontrado no arquivo: {{name}}",
+    "assetTooLarge": "Ficheiro anexo ignorado (demasiado grande, máx. {{max}} MB): {{name}}",
+    "totalTooLarge": "Tamanho total descomprimido demasiado grande. Máx.: {{max}} GB",
+    "suspiciousRatio": "Taxa de compressão suspeita (possível bomba ZIP)"
+  },
+  "json": {
+    "unrecognized": "Formato JSON não reconhecido. Formatos suportados: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Arquivo inválido: backup.json em falta",
+    "backupTooLarge": "Arquivo inválido: backup.json demasiado grande",
+    "invalidFormat": "Formato de cópia de segurança inválido",
+    "incompatibleVersion": "Cópia de segurança na versão {{version}}, incompatível com esta versão da aplicação (formato {{expected}}). Atualize o ZeroNeurone antes de restaurar.",
+    "progress": {
+      "reading": "A ler o arquivo…",
+      "files": "A importar ficheiros…",
+      "elements": "A importar elementos…",
+      "writing": "A escrever os dados…",
+      "done": "Importação concluída",
+      "exportDossier": "Dossiê {{index}} / {{count}}: {{name}}",
+      "importDossier": "A restaurar {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» ausente do arquivo",
+    "dossierFailed": "«{{name}}» não restaurado: {{message}}"
+  },
+  "csv": {
+    "empty": "Ficheiro CSV vazio",
+    "emptyLabel": "Linha {{row}}: rótulo vazio, elemento ignorado",
+    "emptyLabelRow": "Linha {{row}}: rótulo vazio, linha ignorada",
+    "emptyEndpoints": "Linha {{row}}: from/to vazio, ligação ignorada",
+    "emptyEndpointsRow": "Linha {{row}}: from/to vazio, linha ignorada",
+    "elementsNotFound": "Linha {{row}}: elemento(s) não encontrado(s): {{names}}",
+    "emptyParent": "Linha {{row}}: elemento pai (from) vazio, evento ignorado",
+    "parentNotFound": "Linha {{row}}: elemento pai não encontrado: {{name}}",
+    "invalidDate": "Linha {{row}}: data em falta ou inválida, evento ignorado",
+    "missingLabelColumn": "Coluna obrigatória «label» não encontrada",
+    "missingFromToColumns": "Colunas obrigatórias «from» e «to» (ou «de» e «vers») não encontradas"
+  },
+  "graphml": {
+    "parseError": "Formato GraphML inválido: erro de leitura XML",
+    "missingGraphml": "Formato GraphML inválido: elemento <graphml> em falta",
+    "missingGraph": "Formato GraphML inválido: elemento <graph> em falta",
+    "linkNoEndpoints": "Ligação {{id}} ignorada: origem ou destino em falta",
+    "linkMissingNode": "Ligação {{id}} ignorada: nó de origem ou destino não encontrado",
+    "noId": "sem ID"
+  },
+  "excalidraw": {
+    "noElements": "Formato Excalidraw inválido: sem elementos",
+    "imageNotImported": "Imagem não importada: {{id}}…",
+    "skippedArrows": "{{count}} seta(s) ignorada(s) (não ligadas a formas)",
+    "imagesImported": "{{count}} imagem(ns) importada(s) do ficheiro Excalidraw",
+    "orphanArrows": "{{count}} seta(s) livre(s) ignorada(s) (sem ligação)"
+  },
+  "predicagraph": {
+    "missingNodes": "Formato PredicaGraph inválido: campo «nodes» em falta",
+    "nodeSkipped": "Nó ignorado: ID ou posição em falta",
+    "linkMissingNode": "Ligação ignorada: nó de origem ({{source}}) ou de destino ({{target}}) não encontrado"
+  },
+  "graphPalette": {
+    "missingNodes": "Formato Graph Palette inválido: campo «nodes» em falta",
+    "nodeTypeSkipped": "Tipo de nó ignorado: {{type}} ({{label}})",
+    "unsupportedType": "Tipo não suportado: {{type}}",
+    "unexpectedNode": "Nó ignorado: formato inesperado ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Página {{page}} ilegível (conteúdo comprimido inválido)",
+    "pagesStacked": "{{count}} páginas importadas, empilhadas verticalmente",
+    "connectorsSkipped": "{{count}} conector(es) ignorado(s) (não ligados a duas formas)",
+    "empty": "Diagrama draw.io vazio ou não reconhecido"
+  },
+  "osintIndustries": {
+    "invalid": "Formato OSINT Industries inválido: matriz vazia ou formato incorreto",
+    "noFound": "Nenhum módulo com o estado «found» encontrado"
+  },
+  "geojson": {
+    "invalid": "Formato GeoJSON inválido: FeatureCollection esperada",
+    "noGeometry": "Feature sem geometria ignorada",
+    "polygonTooSmall": "\"{{label}}\": polígono com menos de 3 pontos, ignorado",
+    "multiPointReduced": "\"{{label}}\": MultiPoint reduzido ao primeiro ponto",
+    "unsupportedGeometry": "\"{{label}}\": geometria \"{{type}}\" não suportada, ignorada",
+    "invalidCoordinates": "\"{{label}}\": coordenadas inválidas, ignorado",
+    "outOfRange": "{{count}} entidade(s) com coordenadas fora de WGS 84 (latitude/longitude em graus). Reprojete o ficheiro para EPSG:4326 (WGS 84) antes de importar.",
+    "outOfRangeCrs": "{{count}} entidade(s) com coordenadas fora de WGS 84 (latitude/longitude em graus), projeção declarada: {{crs}}. Reprojete o ficheiro para EPSG:4326 (WGS 84) antes de importar.",
+    "outOfRangeSkipped": "{{message}} Estas entidades são ignoradas.",
+    "multiPolygonsReduced": "{{count}} MultiPolygon reduzido(s) ao seu maior polígono"
   }
 }

@@ -11,6 +11,7 @@ import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { foldKey, suggestionElementIds, type MergeReason, type MergeSuggestion, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
 import type { Element } from '../../types';
 import { useProgressStore } from '../../stores/progressStore';
+import { useShallow } from 'zustand/react/shallow';
 
 /** Compact select of the settings row: same height as the checkbox labels */
 const SELECT_CLASS = 'h-6 px-1.5 text-xs rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent disabled:opacity-50';
@@ -151,7 +152,47 @@ export function SuggestionsPanel() {
     valuesEnabled, sourcesEnabled, zonesEnabled, setRuleEnabled, duplicatesEnabled, duplicateThreshold, setDuplicateThreshold, merge,
     shownCount, meetingsTruncated, crowdedCount, between, setBetween, excludedKeys, setExcludedKeys, loadExcludedKeys,
     analyze, refresh, setNearbyRadius, setMeetingRadius, setMaxStay, setPlacesEnabled, setMeetingsEnabled, setMeetingWindow, accept, dismiss, restore,
-  } = useSuggestionsStore();
+  } = useSuggestionsStore(
+    useShallow((s) => ({
+      suggestions: s.suggestions,
+      dismissedSuggestions: s.dismissedSuggestions,
+      dossierId: s.dossierId,
+      scope: s.scope,
+      nearbyRadius: s.nearbyRadius,
+      meetingRadius: s.meetingRadius,
+      maxStay: s.maxStay,
+      placesEnabled: s.placesEnabled,
+      meetingsEnabled: s.meetingsEnabled,
+      meetingWindow: s.meetingWindow,
+      valuesEnabled: s.valuesEnabled,
+      sourcesEnabled: s.sourcesEnabled,
+      zonesEnabled: s.zonesEnabled,
+      setRuleEnabled: s.setRuleEnabled,
+      duplicatesEnabled: s.duplicatesEnabled,
+      duplicateThreshold: s.duplicateThreshold,
+      setDuplicateThreshold: s.setDuplicateThreshold,
+      merge: s.merge,
+      shownCount: s.shownCount,
+      meetingsTruncated: s.meetingsTruncated,
+      crowdedCount: s.crowdedCount,
+      between: s.between,
+      setBetween: s.setBetween,
+      excludedKeys: s.excludedKeys,
+      setExcludedKeys: s.setExcludedKeys,
+      loadExcludedKeys: s.loadExcludedKeys,
+      analyze: s.analyze,
+      refresh: s.refresh,
+      setNearbyRadius: s.setNearbyRadius,
+      setMeetingRadius: s.setMeetingRadius,
+      setMaxStay: s.setMaxStay,
+      setPlacesEnabled: s.setPlacesEnabled,
+      setMeetingsEnabled: s.setMeetingsEnabled,
+      setMeetingWindow: s.setMeetingWindow,
+      accept: s.accept,
+      dismiss: s.dismiss,
+      restore: s.restore,
+    })),
+  );
   const highlightSuggestion = useInsightsStore((s) => s.highlightSuggestion);
   const clearHighlight = useInsightsStore((s) => s.clearHighlight);
   const selectElements = useSelectionStore((s) => s.selectElements);

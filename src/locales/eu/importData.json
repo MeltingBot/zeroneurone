@@ -96,7 +96,8 @@
       "marriage": "Ezkontza",
       "filiation": "Filiazioa",
       "siblinghood": "Anai-arrebatasuna"
-    }
+    },
+    "importError": "Genealogia inportatzeko errorea: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -207,5 +208,118 @@
     "parseError": "Errorea Mermaid irakurtzean: {{message}}",
     "skippedLines_one": "Ezagutu gabeko Mermaid lerro {{count}} saltatu da",
     "skippedLines_other": "Ezagutu gabeko {{count}} Mermaid lerro saltatu dira"
+  },
+  "common": {
+    "importError": "Inportazio-errorea: {{message}}",
+    "formatImportError": "{{format}} inportazio-errorea: {{message}}",
+    "unknownError": "Errore ezezaguna",
+    "error": "Errorea",
+    "cancelled": "Inportazioa bertan behera utzi da",
+    "lineError": "{{row}}. lerroa: {{message}}",
+    "linkMissingEndpoints": "Lotura baztertua: iturria edo helburua falta da",
+    "linkMissingElements": "Lotura baztertua: ez dira iturri/helburu elementuak aurkitu ({{label}})",
+    "imageConversionFailed": "«{{label}}» elementuaren irudia baztertua: bihurketa-errorea",
+    "imageNotImported": "Irudia ez da inportatu ({{name}})",
+    "reportExists": "Espediente honek badu txosten bat: txostena ez da inportatu",
+    "reportFailed": "Txostena ez da inportatu: {{message}}",
+    "assetError": "Erantsitako fitxategia baztertua: {{name}} - {{message}}",
+    "skippedElements": "Baztertutako elementuak (posiziorik gabe): {{count}}",
+    "skippedLinks": "Baztertutako loturak (elementu baliogabeak): {{count}}",
+    "nodeNoId": "IDrik gabeko nodoa baztertua"
+  },
+  "archive": {
+    "tooLarge": "Artxiboa handiegia da. Gehienezko tamaina: {{max}} MB",
+    "tooManyFiles": "Fitxategi gehiegi artxiboan. Gehienez: {{max}}",
+    "missingDossierJson": "Artxibo baliogabea: dossier.json falta da",
+    "jsonTooLarge": "JSON fitxategia handiegia da. Gehienezko tamaina: {{max}} MB",
+    "invalidJson": "JSON formatu baliogabea: eremuak falta dira",
+    "tooManyElements": "Elementu gehiegi. Gehienez: {{max}}",
+    "tooManyLinks": "Lotura gehiegi. Gehienez: {{max}}",
+    "tooManyAssets": "Erantsitako fitxategi gehiegi. Gehienez: {{max}}",
+    "assetMissing": "Erantsitako fitxategia ez da artxiboan aurkitu: {{name}}",
+    "assetTooLarge": "Erantsitako fitxategia baztertua (handiegia, gehienez {{max}} MB): {{name}}",
+    "totalTooLarge": "Deskonprimatutako tamaina osoa handiegia da. Gehienez: {{max}} GB",
+    "suspiciousRatio": "Konpresio-tasa susmagarria (ZIP bonba izan daiteke)"
+  },
+  "json": {
+    "unrecognized": "JSON formatua ez da ezagutu. Onartutako formatuak: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Artxibo baliogabea: backup.json falta da",
+    "backupTooLarge": "Artxibo baliogabea: backup.json handiegia da",
+    "invalidFormat": "Babeskopia-formatu baliogabea",
+    "incompatibleVersion": "{{version}} bertsioko babeskopia, aplikazioaren bertsio honekin bateraezina (formatua: {{expected}}). Eguneratu ZeroNeurone leheneratu aurretik.",
+    "progress": {
+      "reading": "Artxiboa irakurtzen…",
+      "files": "Fitxategiak inportatzen…",
+      "elements": "Elementuak inportatzen…",
+      "writing": "Datuak idazten…",
+      "done": "Inportazioa amaituta",
+      "exportDossier": "Espedientea {{index}} / {{count}}: {{name}}",
+      "importDossier": "Leheneratzea {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "«{{name}}» ez dago artxiboan",
+    "dossierFailed": "«{{name}}» ez da leheneratu: {{message}}"
+  },
+  "csv": {
+    "empty": "CSV fitxategi hutsa",
+    "emptyLabel": "{{row}}. lerroa: etiketa hutsa, elementua baztertua",
+    "emptyLabelRow": "{{row}}. lerroa: etiketa hutsa, lerroa baztertua",
+    "emptyEndpoints": "{{row}}. lerroa: from/to hutsik, lotura baztertua",
+    "emptyEndpointsRow": "{{row}}. lerroa: from/to hutsik, lerroa baztertua",
+    "elementsNotFound": "{{row}}. lerroa: ez dira elementuak aurkitu: {{names}}",
+    "emptyParent": "{{row}}. lerroa: elementu gurasoa (from) hutsik, gertaera baztertua",
+    "parentNotFound": "{{row}}. lerroa: ez da elementu gurasoa aurkitu: {{name}}",
+    "invalidDate": "{{row}}. lerroa: data falta da edo baliogabea da, gertaera baztertua",
+    "missingLabelColumn": "Ez da derrigorrezko «label» zutabea aurkitu",
+    "missingFromToColumns": "Ez dira derrigorrezko «from» eta «to» (edo «de» eta «vers») zutabeak aurkitu"
+  },
+  "graphml": {
+    "parseError": "GraphML formatu baliogabea: XML irakurketa-errorea",
+    "missingGraphml": "GraphML formatu baliogabea: <graphml> elementua falta da",
+    "missingGraph": "GraphML formatu baliogabea: <graph> elementua falta da",
+    "linkNoEndpoints": "{{id}} lotura baztertua: iturria edo helburua falta da",
+    "linkMissingNode": "{{id}} lotura baztertua: ez da iturri- edo helburu-nodoa aurkitu",
+    "noId": "IDrik gabe"
+  },
+  "excalidraw": {
+    "noElements": "Excalidraw formatu baliogabea: ez dago elementurik",
+    "imageNotImported": "Irudia ez da inportatu: {{id}}…",
+    "skippedArrows": "Baztertutako geziak (formekin konektatu gabe): {{count}}",
+    "imagesImported": "Excalidraw fitxategitik inportatutako irudiak: {{count}}",
+    "orphanArrows": "Baztertutako gezi libreak (konexiorik gabe): {{count}}"
+  },
+  "predicagraph": {
+    "missingNodes": "PredicaGraph formatu baliogabea: «nodes» eremua falta da",
+    "nodeSkipped": "Nodoa baztertua: IDa edo posizioa falta da",
+    "linkMissingNode": "Lotura baztertua: ez da iturri-nodoa ({{source}}) edo helburu-nodoa ({{target}}) aurkitu"
+  },
+  "graphPalette": {
+    "missingNodes": "Graph Palette formatu baliogabea: «nodes» eremua falta da",
+    "nodeTypeSkipped": "Nodo-mota baztertua: {{type}} ({{label}})",
+    "unsupportedType": "Onartzen ez den mota: {{type}}",
+    "unexpectedNode": "Nodoa baztertua: ustekabeko formatua ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "{{page}}. orria irakurtezina (konprimatutako eduki baliogabea)",
+    "pagesStacked": "Inportatutako orriak, bertikalki pilatuta: {{count}}",
+    "connectorsSkipped": "Baztertutako konektoreak (bi formari lotu gabeak): {{count}}",
+    "empty": "draw.io diagrama hutsa edo ezezaguna"
+  },
+  "osintIndustries": {
+    "invalid": "OSINT Industries formatu baliogabea: matrize hutsa edo formatu okerra",
+    "noFound": "Ez da «found» egoera duen modulurik aurkitu"
+  },
+  "geojson": {
+    "invalid": "GeoJSON formatu baliogabea: FeatureCollection espero zen",
+    "noGeometry": "Geometriarik gabeko Feature baztertua",
+    "polygonTooSmall": "\"{{label}}\": 3 puntu baino gutxiagoko poligonoa, baztertua",
+    "multiPointReduced": "\"{{label}}\": MultiPoint lehen puntura murriztua",
+    "unsupportedGeometry": "\"{{label}}\": \"{{type}}\" geometria ez da onartzen, baztertua",
+    "invalidCoordinates": "\"{{label}}\": koordenatu baliogabeak, baztertua",
+    "outOfRange": "WGS 84tik kanpoko koordenatuak dituzten entitateak (latitudea/longitudea gradutan): {{count}}. Birproiektatu fitxategia EPSG:4326 (WGS 84) sistemara inportatu aurretik.",
+    "outOfRangeCrs": "WGS 84tik kanpoko koordenatuak dituzten entitateak (latitudea/longitudea gradutan): {{count}}, adierazitako proiekzioa: {{crs}}. Birproiektatu fitxategia EPSG:4326 (WGS 84) sistemara inportatu aurretik.",
+    "outOfRangeSkipped": "{{message}} Entitate horiek baztertu egiten dira.",
+    "multiPolygonsReduced": "Poligono handienera murriztutako MultiPolygonak: {{count}}"
   }
 }

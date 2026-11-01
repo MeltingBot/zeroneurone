@@ -56,7 +56,6 @@ export function MinResolutionGuard({ children }: MinResolutionGuardProps) {
             <Monitor size={32} className="text-accent" />
           </div>
 
-          {/* Title */}
           <h1 className="text-lg font-semibold text-text-primary">
             {t('resolution.title')}
           </h1>
@@ -102,7 +101,6 @@ export function MinResolutionGuard({ children }: MinResolutionGuardProps) {
             </ul>
           </div>
 
-          {/* Continue button */}
           <button
             onClick={handleDismiss}
             className="text-sm text-accent hover:underline"

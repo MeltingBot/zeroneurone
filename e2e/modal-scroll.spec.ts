@@ -6,9 +6,9 @@ import { setupCleanEnvironment, waitForAppLoad } from './fixtures/test-utils';
 import { buildLargeDossierJson } from './fixtures/large-dossier';
 
 /**
- * On a short window (a laptop screen), the export dialog is taller than the
- * viewport. It must fit on screen and its list must scroll down to the last
- * formats (PNG), instead of running off the page with no way to reach them.
+ * On a short window (a laptop screen), the export dialog must fit on screen:
+ * its longest category (Graph, five formats) scrolls down to the last format,
+ * and the Export button stays reachable.
  */
 test('the export dialog scrolls on a short window', async ({ page }) => {
   await setupCleanEnvironment(page);
@@ -22,8 +22,11 @@ test('the export dialog scrolls on a short window', async ({ page }) => {
   // A laptop window (the app asks for 600 px at least)
   await page.setViewportSize({ width: 1280, height: 640 });
   await page.locator('button[title="Export"]').first().click();
-  const dialog = page.locator('[role="dialog"]').filter({ hasText: 'PNG' });
+  const dialog = page.getByRole('dialog').filter({
+    has: page.getByRole('button', { name: 'Graph', exact: true }),
+  });
   await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Graph', exact: true }).click();
 
   // The dialog stays inside the window
   const box = (await dialog.boundingBox())!;
@@ -31,9 +34,14 @@ test('the export dialog scrolls on a short window', async ({ page }) => {
   expect(box.y + box.height).toBeLessThanOrEqual(640);
 
   // The last format can be reached by scrolling the list
-  const png = dialog.getByText('PNG', { exact: false }).last();
-  await png.scrollIntoViewIfNeeded();
-  const pngBox = (await png.boundingBox())!;
-  expect(pngBox.y + pngBox.height).toBeLessThanOrEqual(640);
-  expect(pngBox.y).toBeGreaterThanOrEqual(0);
+  const last = dialog.getByText('.anx', { exact: false }).last();
+  await last.scrollIntoViewIfNeeded();
+  const lastBox = (await last.boundingBox())!;
+  expect(lastBox.y).toBeGreaterThanOrEqual(0);
+  expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(640);
+
+  // The Export button stays on screen
+  const exportButton = dialog.getByRole('button', { name: /^Export$/ });
+  const buttonBox = (await exportButton.boundingBox())!;
+  expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(640);
 });

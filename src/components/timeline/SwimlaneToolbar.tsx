@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Rows3, LayoutList, ChevronDown, Check, Link2 } from 'lucide-react';
 import type { GroupingCriterion } from './useSwimlaneGrouping';
+import { DropdownPortal } from '../common/DropdownPortal';
 
 interface SwimlaneToolbarProps {
   mode: 'scatter' | 'swimlane';
@@ -31,23 +32,11 @@ export function SwimlaneToolbar({
   const { t } = useTranslation('pages');
   const [criterionDropdownOpen, setCriterionDropdownOpen] = useState(false);
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
-  const criterionRef = useRef<HTMLDivElement>(null);
-  const tagRef = useRef<HTMLDivElement>(null);
+  const criterionRef = useRef<HTMLButtonElement>(null);
+  const tagRef = useRef<HTMLButtonElement>(null);
 
-  // Click outside to close dropdowns
-  useEffect(() => {
-    if (!criterionDropdownOpen && !tagDropdownOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (criterionDropdownOpen && criterionRef.current && !criterionRef.current.contains(e.target as Node)) {
-        setCriterionDropdownOpen(false);
-      }
-      if (tagDropdownOpen && tagRef.current && !tagRef.current.contains(e.target as Node)) {
-        setTagDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [criterionDropdownOpen, tagDropdownOpen]);
+  const closeCriterion = useCallback(() => setCriterionDropdownOpen(false), []);
+  const closeTags = useCallback(() => setTagDropdownOpen(false), []);
 
   const activeCriterionLabel =
     availableCriteria.find(c => c.id === criterion)?.label ??
@@ -111,8 +100,9 @@ export function SwimlaneToolbar({
 
       {/* Grouping criterion dropdown (only in swimlane mode) */}
       {mode === 'swimlane' && availableCriteria.length > 0 && (
-        <div ref={criterionRef} className="relative ml-1">
+        <div className="relative ml-1">
           <button
+            ref={criterionRef}
             onClick={() => { setCriterionDropdownOpen(!criterionDropdownOpen); setTagDropdownOpen(false); }}
             className="flex items-center gap-1 px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default"
           >
@@ -121,8 +111,7 @@ export function SwimlaneToolbar({
             <ChevronDown size={10} />
           </button>
 
-          {criterionDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-bg-primary border border-border-default rounded shadow-lg z-50 min-w-[180px] max-h-[300px] overflow-y-auto">
+          <DropdownPortal anchorRef={criterionRef} isOpen={criterionDropdownOpen} onClose={closeCriterion} className="min-w-[180px] max-h-[300px] overflow-y-auto">
               {/* Standard criteria (Tag, Source) */}
               {standardCriteria.map(c => (
                 <button
@@ -165,8 +154,7 @@ export function SwimlaneToolbar({
                   ))}
                 </>
               )}
-            </div>
-          )}
+          </DropdownPortal>
         </div>
       )}
 
@@ -188,8 +176,9 @@ export function SwimlaneToolbar({
 
       {/* Tag filter dropdown (only in swimlane mode + tag criterion) */}
       {mode === 'swimlane' && criterion === 'tag' && availableTags.length > 0 && (
-        <div ref={tagRef} className="relative">
+        <div className="relative">
           <button
+            ref={tagRef}
             onClick={() => { setTagDropdownOpen(!tagDropdownOpen); setCriterionDropdownOpen(false); }}
             className={`flex items-center gap-1 px-2 h-6 text-[10px] rounded border ${
               allTagsActive
@@ -201,8 +190,7 @@ export function SwimlaneToolbar({
             <ChevronDown size={10} />
           </button>
 
-          {tagDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-bg-primary border border-border-default rounded shadow-lg z-50 min-w-[160px] max-h-[300px] overflow-y-auto">
+          <DropdownPortal anchorRef={tagRef} isOpen={tagDropdownOpen} onClose={closeTags} className="min-w-[160px] max-h-[300px] overflow-y-auto">
               {/* Select all */}
               <button
                 onClick={toggleAll}
@@ -234,8 +222,7 @@ export function SwimlaneToolbar({
                   </button>
                 );
               })}
-            </div>
-          )}
+          </DropdownPortal>
         </div>
       )}
     </>

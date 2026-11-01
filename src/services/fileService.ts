@@ -128,7 +128,7 @@ class FileService {
     return this.opfsWritable;
   }
 
-  /** Retourne la DEK si le chiffrement est actif, null sinon */
+  /** The DEK when encryption is active, null otherwise */
   private getDek(): Uint8Array | null {
     return useEncryptionStore.getState().dek;
   }
@@ -198,7 +198,6 @@ class FileService {
   async saveAsset(dossierId: DossierId, file: File): Promise<Asset> {
     await this.ensureInitialized();
 
-    // Validate file before processing
     this.validateFile(file);
 
     // 1. Calculate hash
@@ -228,7 +227,7 @@ class FileService {
     const extension = getExtension(file.name);
     const filename = `${hash}.${extension}`;
 
-    // 4. Write file (chiffré si DEK disponible)
+    // 4. Write file (encrypted when a DEK is available)
     const dek = this.getDek();
     const bufferToWrite = dek
       ? await encryptOpfsBuffer(dek, arrayBuffer)
@@ -275,7 +274,7 @@ class FileService {
     const fileHandle = await handle.getFileHandle(pathParts.at(-1)!);
     const rawFile = await fileHandle.getFile();
 
-    // Déchiffrer si le fichier est chiffré (magic header présent)
+    // Decrypt when the file is encrypted (magic header present)
     const dek = this.getDek();
     if (dek) {
       const rawBuf = await rawFile.arrayBuffer();
@@ -313,7 +312,6 @@ class FileService {
       console.warn('Failed to delete file from OPFS:', error);
     }
 
-    // Delete DB entry
     await db.assets.delete(asset.id);
   }
 
@@ -420,12 +418,10 @@ class FileService {
   }
 
   private async generateThumbnail(file: File, arrayBuffer: ArrayBuffer): Promise<string | null> {
-    // Handle images
     if (file.type.startsWith('image/')) {
       return this.generateImageThumbnail(file);
     }
 
-    // Handle PDFs
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
       return this.generatePdfThumbnail(arrayBuffer);
     }
@@ -507,7 +503,6 @@ class FileService {
   }
 
   private async extractText(file: File, arrayBuffer: ArrayBuffer): Promise<string | null> {
-    // Extract text from text files
     if (file.type.startsWith('text/') || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
       try {
         return await file.text();
@@ -516,7 +511,6 @@ class FileService {
       }
     }
 
-    // Extract text from PDFs
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
       return this.extractPdfText(arrayBuffer);
     }
@@ -527,7 +521,6 @@ class FileService {
       return this.extractDocxText(arrayBuffer);
     }
 
-    // Extract text from ODT
     if (file.type === 'application/vnd.oasis.opendocument.text' || nameLower.endsWith('.odt')) {
       return this.extractOdtText(arrayBuffer);
     }

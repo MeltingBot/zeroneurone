@@ -170,7 +170,7 @@ function cancelProgressClear(): void {
 }
 
 function scheduleProgressClear(
-  setStore: (partial: any) => void,
+  setStore: (partial: Pick<SyncStoreState, 'mediaAssets' | 'mediaSyncProgress'>) => void,
   getStore: () => { mediaAssets: Record<string, MediaAssetState> },
 ): void {
   cancelProgressClear();
@@ -193,7 +193,6 @@ function scheduleProgressClear(
 // ============================================================================
 
 export const useSyncStore = create<SyncStoreState>((set, get) => {
-  // Initialize local user
   const localUser = getOrCreateLocalUser();
 
   // Subscribe to sync service state changes (delayed to avoid get() being undefined during init)
@@ -226,13 +225,11 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awarenessUnsubscribe = null;
     }
 
-    // Clear any existing heartbeat
     if (heartbeatInterval) {
       clearInterval(heartbeatInterval);
       heartbeatInterval = null;
     }
 
-    // Set local user state with initial lastSeen
     const { localUser } = get();
 
     awareness.setLocalState({
@@ -389,7 +386,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       return { shareUrl, encryptionKey };
     },
 
-    // Stop sharing
     unshare: async () => {
       const dossierId = syncService.getDossierId();
       if (awarenessUnsubscribe) {
@@ -412,14 +408,12 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       }
     },
 
-    // Update local user name
     updateLocalUserName: (name: string) => {
       const { localUser } = get();
       const updated = { ...localUser, name };
       localStorage.setItem('zeroneurone-user', JSON.stringify(updated));
       set({ localUser: updated });
 
-      // Update awareness if connected
       const awareness = syncService.getAwareness();
       if (awareness) {
         const state = awareness.getLocalState() || {};
@@ -427,7 +421,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       }
     },
 
-    // Update current selection
     updateSelection: (elementIds) => {
       const awareness = syncService.getAwareness();
       if (!awareness) return;
@@ -436,7 +429,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awareness.setLocalState({ ...currentState, selection: elementIds });
     },
 
-    // Update elements being dragged
     updateDragging: (elementIds) => {
       const awareness = syncService.getAwareness();
       if (!awareness) return;
@@ -445,7 +437,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awareness.setLocalState({ ...state, dragging: elementIds });
     },
 
-    // Update element being edited
     updateEditing: (elementId) => {
       const awareness = syncService.getAwareness();
       if (!awareness) return;
@@ -454,7 +445,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awareness.setLocalState({ ...state, editing: elementId });
     },
 
-    // Update current link selection
     updateLinkSelection: (linkIds) => {
       const awareness = syncService.getAwareness();
       if (!awareness) return;
@@ -463,7 +453,6 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awareness.setLocalState({ ...state, linkSelection: linkIds });
     },
 
-    // Update link being edited
     updateEditingLink: (linkId) => {
       const awareness = syncService.getAwareness();
       if (!awareness) return;

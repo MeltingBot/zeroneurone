@@ -22,7 +22,6 @@ const EXCLUDED_EXPORTS = new Set([
 // Build icon list once - filter to get only icon components (not *Icon / Lucide* duplicates)
 const ALL_ICONS = Object.keys(LucideIcons)
   .filter(name => {
-    // Exclude non-icon exports
     if (EXCLUDED_EXPORTS.has(name)) return false;
     // Exclude *Icon and Lucide* duplicates (keep User, not UserIcon / LucideUser)
     if (name.endsWith('Icon')) return false;
@@ -96,7 +95,6 @@ function IconDropdownContent({
     [customIconsMap]
   );
 
-  // Filter icons based on search
   const filteredIcons = useMemo(() => {
     if (!search.trim()) {
       return POPULAR_ICONS.filter(name => ALL_ICONS.includes(name));
@@ -144,7 +142,6 @@ function IconDropdownContent({
 
   return (
     <>
-      {/* Search input */}
       <div className="p-2 border-b border-border-default">
         <div className="relative">
           <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary" />

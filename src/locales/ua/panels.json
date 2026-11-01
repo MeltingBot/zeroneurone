@@ -75,9 +75,6 @@
     }
   },
   "detail": {
-    "noSelection": "Елемент не вибрано",
-    "multipleSelection": "{{count}} елементів вибрано",
-    "element": "Елемент",
     "link": {
       "linkedElements": "Пов'язані елементи",
       "deletedElement": "Видалений елемент",
@@ -86,8 +83,6 @@
       "periodStart": "Початок",
       "periodEnd": "Кінець (порожнє, якщо триває)"
     },
-    "group": "Група",
-    "annotation": "Анотація",
     "sections": {
       "identity": "Ідентичність",
       "content": "Вміст",
@@ -105,9 +100,7 @@
       "linkLabel": "Зв'язок без назви",
       "notes": "Нотатки...",
       "source": "Джерело інформації...",
-      "markdown": "Markdown: **жирний**, *курсив*, [посилання](url), списки...",
-      "keyName": "Назва...",
-      "keyValue": "Значення..."
+      "markdown": "Markdown: **жирний**, *курсив*, [посилання](url), списки..."
     },
     "labels": {
       "name": "Назва",
@@ -154,7 +147,6 @@
       "goToTab": "Перейти на вкладку {{name}}"
     },
     "events": {
-      "title": "Події",
       "description": "Історія датованих подій (видимі на хронології)",
       "add": "Додати подію",
       "labelPlaceholder": "Мітка (напр.: Зупинка в Марселі, Сайт зламано...)",
@@ -164,7 +156,6 @@
       "delete": "Видалити",
       "dateFrom": "Від",
       "dateTo": "До",
-      "dateEndOptional": "Кінець (необов'язково)",
       "descriptionLabel": "Опис",
       "descriptionPlaceholder": "Детальний опис...",
       "sourceLabel": "Джерело",
@@ -185,7 +176,6 @@
       "geoJsonMinPoints": "Щонайменше 3 точки"
     },
     "location": {
-      "title": "Розташування",
       "description": "Фіксована позиція елемента (видима на карті)",
       "gpsCoordinates": "GPS координати",
       "latitude": "Широта",
@@ -196,7 +186,6 @@
       "clearLocation": "Очистити",
       "removeLocation": "Видалити розташування",
       "saveLocation": "Зберегти",
-      "noLocation": "Позицію не визначено",
       "copyCoordinates": "Копіювати координати",
       "coordinatesCopied": "Координати скопійовано",
       "altitude": "Висота",
@@ -210,7 +199,6 @@
       "selectAll": "Вибрати все",
       "deselectAll": "Зняти вибір",
       "ignore": "Ігнорувати",
-      "keyPlaceholder": "Ключ",
       "valuePlaceholder": "Значення",
       "typePlaceholder": "Тип",
       "optionsPlaceholder": "Варіанти через кому",
@@ -255,13 +243,11 @@
       "editChoices": "Змінити варіанти"
     },
     "appearance": {
-      "title": "Вигляд",
       "color": "Колір",
       "borderColor": "Колір межі",
       "defaultGray": "Сірий за замовчуванням",
       "customColor": "Власний колір",
       "shape": "Форма",
-      "size": "Розмір",
       "style": "Стиль",
       "thickness": "Товщина",
       "textSize": "Розмір тексту",
@@ -273,11 +259,6 @@
       "borderStyle": "Стиль рамки"
     },
     "files": {
-      "title": "Файли",
-      "drop": "Перетягніть файли сюди",
-      "noFiles": "Немає файлів",
-      "delete": "Видалити файл",
-      "download": "Завантажити",
       "preview": "Попередній перегляд",
       "defaultThumbnail": "Мініатюра за замовчуванням",
       "closeEsc": "Закрити (Esc)",
@@ -351,7 +332,6 @@
     }
   },
   "filters": {
-    "title": "Фільтри",
     "elementsCount": "{{matching}}/{{total}} елементів",
     "countBreakdown": "Фільтри {{filters}} · Запит {{query}}",
     "queryBadge": "Запит",
@@ -371,11 +351,7 @@
       "quickFilters": "Швидкі фільтри",
       "textSearch": "Текстовий пошук",
       "tags": "Теги",
-      "tabs": "Вкладки",
-      "types": "Типи",
-      "confidence": "Достовірність",
-      "property": "Властивість",
-      "date": "Дата"
+      "tabs": "Вкладки"
     },
     "placeholders": {
       "textSearch": "Фільтрувати за назвою або нотатками...",
@@ -427,9 +403,7 @@
     },
     "hiddenElements": {
       "title": "Приховані",
-      "count": "{{count}} прихованих елементів",
-      "showAll": "Показати все",
-      "noHidden": "Немає прихованих елементів"
+      "showAll": "Показати все"
     },
     "evaluation": {
       "hint": "Видимими залишаються лише елементи, оцінені в активній моделі вибраним кодом."
@@ -499,7 +473,6 @@
     "syntaxExample5": "WITHIN 2 HOPS OF tag = \"підозрюваний\""
   },
   "insights": {
-    "title": "Аналітика",
     "computing": "Аналіз триває...",
     "between": {
       "title": "Між {{a}} і {{b}}",
@@ -513,18 +486,9 @@
     "noData": "Додайте елементи та зв'язки, щоб побачити аналітику.",
     "noInsights": "Аналітики не виявлено. Додайте більше зв'язків між елементами.",
     "lastComputed": "Останній аналіз:",
-    "refresh": "Оновити",
     "noName": "Без назви",
     "noResults": "Немає результатів",
     "links": "{{count}} зв'язків",
-    "elements": "{{count}} елементів",
-    "sections": {
-      "clusters": "Кластери",
-      "bridges": "Мости",
-      "centrality": "Центральність",
-      "isolated": "Ізольовані",
-      "similar": "Схожі"
-    },
     "roles": {
       "title": "Ролі",
       "soleConnector": "{{x}} — єдиний зв'язок між {{groups}}",
@@ -546,9 +510,7 @@
     },
     "clusters": {
       "title": "Кластери",
-      "description": "Групи сильно пов'язаних елементів",
       "name": "Кластер {{id}}",
-      "count": "{{count}} кластерів",
       "elements": "{{count}} елементів",
       "actions": {
         "select": "Вибрати",
@@ -563,8 +525,6 @@
     "bridges": {
       "title": "Мости",
       "description": "Елементи, що з'єднують різні частини графу",
-      "count": "{{count}} мостів",
-      "noBridges": "Мостів не виявлено",
       "showBridges": "Показати мости",
       "hideBridges": "Сховати виділення",
       "selectAll": "Вибрати всі",
@@ -573,15 +533,11 @@
     },
     "centrality": {
       "title": "Найбільш пов'язані",
-      "description": "Елементи з найбільшою кількістю зв'язків",
-      "degree": "Ступінь",
       "betweenness": "Посередництво"
     },
     "isolated": {
       "title": "Ізольовані",
       "description": "Елементи без жодних зв'язків",
-      "count": "{{count}} ізольованих елементів",
-      "noIsolated": "Немає ізольованих елементів",
       "showIsolated": "Показати ізольовані",
       "hideIsolated": "Сховати виділення",
       "selectAll": "Вибрати всі",
@@ -600,7 +556,6 @@
       "maxDepth": "Макс. глибина",
       "highlightThisPath": "Підсвітити цей шлях",
       "noPath": "Шлях між цими елементами не знайдено",
-      "pathLength": "{{count}} кроків",
       "blockedByConstraints": "Шлях виключено обмеженнями",
       "constraints": {
         "title": "Обмеження",
@@ -632,7 +587,6 @@
     }
   },
   "views": {
-    "title": "Види",
     "canvasDisplay": "Відображення на дошці",
     "tags": "Теги",
     "tagSize": "Розмір:",
@@ -662,9 +616,7 @@
     "noPropertiesDefined": "На елементах не визначено властивостей",
     "savedViews": "Збережені види",
     "save": "Зберегти вид",
-    "load": "Завантажити",
     "delete": "Видалити",
-    "rename": "Перейменувати",
     "noViews": "Немає збережених видів",
     "namePlaceholder": "Назва виду...",
     "includePositions": "Включити позиції ({{count}} елементів)",
@@ -674,32 +626,20 @@
     "savedPositions": "Збережені позиції",
     "deleteView": "Видалити вид",
     "activeView": "Активний вид. Фільтри та вид відновлено.",
-    "positionsRestored": "Відновлено позиції {{count}} елементів.",
-    "saveDescription": "Зберігає фільтри, масштаб та приховані елементи"
+    "positionsRestored": "Відновлено позиції {{count}} елементів."
   },
   "assets": {
-    "title": "Файли",
-    "noAssets": "Немає файлів",
     "drop": "Перетягніть файли",
     "deleteConfirm": "Видалити цей файл?",
-    "usedBy": "Використовується {{count}} елементами",
     "hideMediaOnNode": "Сховати медіа на вузлі",
     "showMediaOnNode": "Показати медіа на вузлі",
     "uploading": "Завантаження…",
     "dropOrPaste": "Перетягніть файли або вставте Ctrl+V",
     "browse": "або оберіть"
   },
-  "history": {
-    "title": "Історія",
-    "noHistory": "Немає дій",
-    "undo": "Скасувати",
-    "redo": "Повторити"
-  },
   "collaboration": {
     "title": "Співпраця",
     "connected": "Підключено",
-    "disconnected": "Відключено",
-    "users": "{{count}} користувачів",
     "you": "Ви",
     "others": "інших",
     "local": "Локально",

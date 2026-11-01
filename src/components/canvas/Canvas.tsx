@@ -8,7 +8,6 @@ import '@xyflow/react/dist/style.css';
 
 import { ElementNode, LowDetailContext } from './ElementNode';
 import { LowDetailHandleRepair } from './lowDetailHandles';
-import type { TabMembershipSnapshot } from '../../stores/historyStore';
 import { GroupNode } from './GroupNode';
 import { AnnotationNode } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
@@ -20,7 +19,6 @@ import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { LinkContextMenu } from './LinkContextMenu';
-import { computeHandleSlots as computeLinkHandleSlots, type HandleSlots } from '../../utils/edgeRouting';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { usePlugins } from '../../plugins/usePlugins';
 import { AlignDropdown } from './AlignDropdown';
@@ -28,15 +26,15 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { OverviewLayer, type OverviewHandle } from './overview/OverviewLayer';
 import { LinksLayer } from './overview/LinksLayer';
-import { buildOverviewScene, computeAbsoluteNodePositions, linkFlagsOf, nodeFootprint } from './overview/overviewScene';
+import { buildOverviewScene, linkFlagsOf, nodeFootprint } from './overview/overviewScene';
 import { hitLink, linksTouching } from './overview/overviewHitTest';
 import { NODE_GHOST, type OverviewScene } from './overview/overviewTypes';
 import { linkVisualState, type LinkVisualContext } from '../../utils/linkVisualState';
 import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast } from '../../stores';
-import type { Element, Link, Position, Asset } from '../../types';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore } from '../../stores';
+import type { Element, Position, Asset } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
@@ -51,34 +49,18 @@ import { dateLocale, formatPropertyValue } from '../../utils/dates';
 import { isRenderedPartOf } from '../../utils/selectionEcho';
 import { collectTemporalDates, datePropertyRules, computeCanvasTemporalClassification, closestDateIndex, shiftNavigator, summarizeActiveEvents, sameEventSummary, type TemporalEventSummary } from '../../utils/temporalUtils';
 import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
-import { isMappableJson } from '../../utils/jsonMapping';
-import { isMermaidFlowchart } from '../../services/importMermaid';
-import { buildMermaidExport } from '../../services/exportMermaid';
-import { startMermaidPlacement } from '../../services/mermaidPlacement';
-import { isDotGraph } from '../../services/importDOT';
-import { buildDOTExport } from '../../services/exportDOT';
-import { startDotPlacement } from '../../services/dotPlacement';
-import { serializeQuery } from '../../services/query/serializer';
-import { insightsService } from '../../services/insightsService';
 import { metadataService } from '../../services/metadataService';
-import { importService } from '../../services/importService';
-import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
-import { withImportProgress } from '../../services/importProgress';
-import { gatherGroup, groupElements } from '../../utils/groupElements';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
-import { elementRepository } from '../../db/repositories/elementRepository';
-import { emitExport, importFormatOf } from '../../plugins/pluginEventBus';
-import { captureTabMembership, cloneClipboardForPaste } from './canvasClipboard';
+import { captureTabMembership } from './canvasClipboard';
 import { CanvasCaptureHandler, CanvasZoomControls, RevealSelectionOnOpen, FitViewController } from './CanvasControllers';
-import { elementToNode, resolveLinkHandles, linkToEdge, calculateBestHandles } from './canvasConversion';
-
-interface ContextMenuState {
-  x: number;
-  y: number;
-  elementId: string;
-  elementLabel: string;
-  previewAsset: Asset | null;
-}
+import { elementToNode } from './canvasConversion';
+import { useCanvasKeyboard } from './useCanvasKeyboard';
+import { useCanvasPaste } from './useCanvasPaste';
+import { useCanvasSelectionActions } from './useCanvasSelectionActions';
+import { useImportPlacement } from './useImportPlacement';
+import { useCanvasEdges } from './useCanvasEdges';
+import type { ContextMenuState } from './canvasHookTypes';
+import { useShallow } from 'zustand/react/shallow';
 
 interface LinkContextMenuState {
   x: number;
@@ -105,7 +87,6 @@ const OVERVIEW_ENTER_VISIBLE = 1500;
 const OVERVIEW_EXIT_VISIBLE = 1000;
 const OVERVIEW_EXIT_ZOOM = 0.4;
 
-const EMPTY_EDGES: Edge[] = [];
 /** No cycle highlighted: a stable empty map, so the edges are not rebuilt. */
 const EMPTY_LINK_FLOW: ReadonlyMap<string, 'forward' | 'backward' | 'both'> = new Map();
 const EMPTY_LINK_SET: ReadonlySet<string> = new Set();
@@ -156,27 +137,6 @@ function reuseIfSameSet(prev: Set<string>, next: Set<string>): Set<string> {
   }
   return prev;
 }
-
-
-/** Handle slots of every link, from the handles it is drawn between (see utils/edgeRouting). */
-function computeHandleSlots(
-  links: Link[],
-  nodePositions: Map<string, Position>,
-  linkAnchorMode: 'auto' | 'manual',
-  parallelLookup: Map<string, { index: number; count: number }>
-): Map<string, HandleSlots> {
-  return computeLinkHandleSlots(
-    links.map(link => ({
-      id: link.id,
-      fromId: link.fromId,
-      toId: link.toId,
-      ...resolveLinkHandles(link, nodePositions, linkAnchorMode),
-      tie: parallelLookup.get(link.id)?.index ?? 0,
-    })),
-    nodePositions
-  );
-}
-
 
 export function Canvas() {
   // Below this zoom a label is a few pixels tall and unreadable, so the node's
@@ -253,29 +213,20 @@ export function Canvas() {
     return () => { observer.disconnect(); if (resizeTimer) clearTimeout(resizeTimer); };
   }, []);
 
-  // File drag state
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
-  // Context menu state (for elements)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
-  // Canvas context menu state (for empty space right-click)
   const [canvasContextMenu, setCanvasContextMenu] = useState<{ x: number; y: number; canvasX: number; canvasY: number } | null>(null);
 
-  // Share modal state
-
-  // Merge modal state
   const [mergeElements, setMergeElements] = useState<Element[] | null>(null);
 
-  // Link context menu state
   const [linkContextMenu, setLinkContextMenu] = useState<LinkContextMenuState | null>(null);
 
-  // Plugin context menu extensions
   const canvasPlugins = usePlugins('contextMenu:canvas');
   const elementPlugins = usePlugins('contextMenu:element');
   const linkPlugins = usePlugins('contextMenu:link');
 
-  // Asset preview modal state
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
 
   // Global in-memory clipboard (module-level store) — survives dossier switch,
@@ -320,7 +271,6 @@ export function Canvas() {
     navigator.clipboard.writeText(clipboardData).catch(() => {});
   }, [links, currentDossier, setClipboard, buildClipboardData]);
 
-  // History store for undo/redo
   const pushAction = useHistoryStore((s) => s.pushAction);
 
   // Delete elements with their attached links, recorded for undo along with
@@ -370,7 +320,6 @@ export function Canvas() {
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
 
-  // Tab filtering
   const activeTabId = useTabStore((s) => s.activeTabId);
   const extraTabIds = useTabStore((s) => s.extraTabIds);
   const tabMemberSet = useTabStore((s) => s.memberSet);
@@ -433,7 +382,14 @@ export function Canvas() {
     findPaths,
     findAllPaths,
     clearHighlight,
-  } = useInsightsStore();
+  } = useInsightsStore(
+    useShallow((s) => ({
+      highlightedElementIds: s.highlightedElementIds,
+      findPaths: s.findPaths,
+      findAllPaths: s.findAllPaths,
+      clearHighlight: s.clearHighlight,
+    })),
+  );
   // Links of the highlighted cycles, or of a path that followed link direction,
   // with the way each is walked (their dashes move)
   const cycleLinkFlow = useInsightsStore((s) => (
@@ -460,7 +416,7 @@ export function Canvas() {
   const queryMatchLinkIds = useQueryStore((s) => s.matchingLinkIds);
 
   // Sync store for collaboration presence
-  const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
+  const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore(useShallow((s) => ({ updateSelection: s.updateSelection, updateLinkSelection: s.updateLinkSelection, updateDragging: s.updateDragging, updateEditing: s.updateEditing, updateEditingLink: s.updateEditingLink })));
   const syncMode = useSyncStore((state) => state.mode);
   const remoteUsers = useSyncStore((state) => state.remoteUsers);
 
@@ -766,17 +722,14 @@ export function Canvas() {
     return map;
   }, [comments]);
 
-  // Create asset lookup map for thumbnail retrieval
   const assetMap = useMemo(() => {
     const map = new Map<string, string | null>();
     assets.forEach((asset) => {
-      // Store thumbnailDataUrl keyed by asset ID
       map.set(asset.id, asset.thumbnailDataUrl);
     });
     return map;
   }, [assets]);
 
-  // Handle element resize
   const handleElementResize = useCallback(
     (elementId: string, width: number, height: number, position?: { x: number; y: number }) => {
       const element = elementMap.get(elementId);
@@ -810,10 +763,8 @@ export function Canvas() {
     [elementMap, updateElement, updateElementPositions]
   );
 
-  // Handle element label change (inline editing)
   const handleElementLabelChange = useCallback(
     (elementId: string, newLabel: string) => {
-      // Get the old label for undo
       const element = elementMap.get(elementId);
       const oldLabel = element?.label ?? '';
 
@@ -831,7 +782,6 @@ export function Canvas() {
     [elementMap, updateElement, pushAction]
   );
 
-  // Handle link label change (inline editing)
   const handleLinkLabelChange = useCallback(
     (linkId: string, newLabel: string) => {
       const oldLink = links.find((l) => l.id === linkId);
@@ -1036,7 +986,6 @@ export function Canvas() {
       return ns;
     });
 
-    // Update tracking refs
     const newPrev = new Map<string, Element>();
     for (const el of visible) newPrev.set(el.id, el);
     prevElementsByIdRef.current = newPrev;
@@ -1091,7 +1040,6 @@ export function Canvas() {
       prevTagSizeRef.current !== tagDisplaySize ||
       prevThemeRef.current !== themeMode;
 
-    // Helper: build a single node from its structure
     const buildNode = (ns: typeof nodeStructures[number]) => {
       const callbacks = getCallbacks(ns.el.id, Boolean(ns.el.isAnnotation));
       const isGhostNode = activeTabId !== null && !tabMemberSet.has(ns.el.id);
@@ -1185,7 +1133,6 @@ export function Canvas() {
       structMap.set(ns.el.id, ns); // Mutate ref in place
     }
 
-    // Selection diff
     if (prevSelectedIdsRef.current !== selectedElementIds) {
       for (const id of selectedElementIds) {
         if (!prevSelectedIdsRef.current.has(id)) needsRebuild.add(id);
@@ -1232,13 +1179,11 @@ export function Canvas() {
       if (focusedElementId) needsRebuild.add(focusedElementId);
     }
 
-    // Editing diff
     if (prevEditingIdRef.current !== editingElementId) {
       if (prevEditingIdRef.current) needsRebuild.add(prevEditingIdRef.current);
       if (editingElementId) needsRebuild.add(editingElementId);
     }
 
-    // Remote presence diff
     if (prevRemoteUsersRef.current !== remoteUsersByElement) {
       const allRemoteIds = new Set([
         ...remoteUsersByElement.keys(),
@@ -1264,7 +1209,6 @@ export function Canvas() {
       }
     }
 
-    // Update visual state refs
     prevSelectedIdsRef.current = selectedElementIds;
     prevDimmedIdsRef.current = dimmedElementIds;
     prevHighlightedIdsRef.current = emphasizedElementIds;
@@ -1325,24 +1269,21 @@ export function Canvas() {
     return result;
   }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, focusedElementId, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, elementMap, linkedNodeIds]);
 
-  // Update awareness when selection changes
+  // Collaboration presence: what this user selects and edits
   useEffect(() => {
     const selectedIds = Array.from(selectedElementIds);
     updateSelection(selectedIds);
   }, [selectedElementIds, updateSelection]);
 
-  // Update awareness when editing state changes
   useEffect(() => {
     updateEditing(editingElementId);
   }, [editingElementId, updateEditing]);
 
-  // Update awareness when link selection changes
   useEffect(() => {
     const selectedIds = Array.from(selectedLinkIds);
     updateLinkSelection(selectedIds);
   }, [selectedLinkIds, updateLinkSelection]);
 
-  // Update awareness when link editing state changes
   useEffect(() => {
     updateEditingLink(editingLinkId);
   }, [editingLinkId, updateEditingLink]);
@@ -1543,35 +1484,6 @@ export function Canvas() {
     }
     return count;
   }
-  // Version counter to trigger edge recomputation on drag-end / structural changes
-  const [edgeVersion, setEdgeVersion] = useState(0);
-  const edgeVersionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Update positions ref from displayNodes (cheap, no re-render)
-  useEffect(() => {
-    nodePositionsRef.current = computeAbsoluteNodePositions(displayNodes);
-
-    // Debounced edge recomputation: during continuous remote updates, edges
-    // only rebuild ~3/sec instead of on every position change. The positions
-    // ref is always up-to-date, so handles will be correct once edges rebuild.
-    if (!isDraggingRef.current && !isViewportMovingRef.current) {
-      if (edgeVersionTimerRef.current) clearTimeout(edgeVersionTimerRef.current);
-      edgeVersionTimerRef.current = setTimeout(() => {
-        setEdgeVersion(v => v + 1);
-        edgeVersionTimerRef.current = null;
-      }, 300);
-    }
-  }, [displayNodes]);
-
-  // --- Edge computation: viewport culling → cap → simplification → progressive rendering ---
-  const MAX_RENDERED_EDGES = 800;
-  const SIMPLE_EDGE_THRESHOLD = 200;
-
-  // Cache previous edges by ID for incremental patching (selection/dimming changes)
-  const prevEdgeCacheRef = useRef(new Map<string, Edge>());
-  // Stable reference: avoid creating a new array when all edges are cache hits
-  const prevEdgesArrayRef = useRef<Edge[]>([]);
-
   const linkVisualContext: LinkVisualContext = useMemo(() => ({
     selectedLinkIds,
     dimmedElementIds,
@@ -1584,198 +1496,46 @@ export function Canvas() {
     glowLinks: pathGlowLinks,
   }), [selectedLinkIds, dimmedElementIds, emphasizedElementIds, queryFilterActive, queryMatchLinkIds, temporalClassification, canvasTemporal.showUndated, cycleLinkFlow, pathGlowLinks]);
 
-  const allEdges = useMemo(() => {
-    // The overview layer draws every link itself. Returning before the cache
-    // keeps it for the way back.
-    if (overviewActive) return EMPTY_EDGES;
-    const nodePositions = nodePositionsRef.current;
-    const edgeCache = prevEdgeCacheRef.current;
-
-    // Skip edge computation until node positions are initialized.
-    // At first render, nodePositionsRef is empty — computing edges with unknown positions
-    // wastes CPU (all links pass culling) and produces edges with incorrect auto-handles.
-    // Edges will be computed once edgeVersion bumps after positions are populated.
-    if (nodePositions.size === 0 && links.length > 0) {
-      return [];
-    }
-
-    // Viewport culling: filter edges whose both endpoints are off-screen
-    const cv = cullingViewportRef.current;
-    const bufferPx = 200;
-    const vLeft = (-cv.x - bufferPx) / cv.zoom;
-    const vTop = (-cv.y - bufferPx) / cv.zoom;
-    const vRight = (-cv.x + (wrapperSize.width + bufferPx)) / cv.zoom;
-    const vBottom = (-cv.y + (wrapperSize.height + bufferPx)) / cv.zoom;
-
-    const visibleLinks = links.filter(link => {
-      if (temporalHiddenLinkIds.has(link.id)) return false;
-      if (viewHiddenIds.has(link.fromId) || viewHiddenIds.has(link.toId)) return false;
-      const fromPos = nodePositions.get(link.fromId);
-      const toPos = nodePositions.get(link.toId);
-      // An endpoint with no position is not displayed (outside the active
-      // tab, filtered, hidden): the edge cannot be drawn. Letting it through
-      // would also take a place under MAX_RENDERED_EDGES from a drawable one.
-      if (!fromPos || !toPos) return false;
-      const fromVisible = fromPos.x >= vLeft && fromPos.x <= vRight && fromPos.y >= vTop && fromPos.y <= vBottom;
-      const toVisible = toPos.x >= vLeft && toPos.x <= vRight && toPos.y >= vTop && toPos.y <= vBottom;
-      return fromVisible || toVisible;
-    });
-
-    // Cap edges: the selected links and those touching a selected element are
-    // always kept, the rest fill the budget. The original order is kept, so a
-    // click only swaps the few links it has to instead of reordering them all.
-    let cappedLinks = visibleLinks;
-    if (visibleLinks.length > MAX_RENDERED_EDGES) {
-      const isPriority = (link: Link) => selectedLinkIds.has(link.id) || cycleLinkFlow.has(link.id) || pathGlowLinks.has(link.id)
-        || selectedElementIds.has(link.fromId) || selectedElementIds.has(link.toId);
-      let priorityCount = 0;
-      for (const link of visibleLinks) if (isPriority(link)) priorityCount++;
-      const budget = MAX_RENDERED_EDGES - priorityCount;
-      let restKept = 0;
-      cappedLinks = visibleLinks.filter(link => isPriority(link) || restKept++ < budget);
-    }
-
-    // Build parallel edges lookup
-    const pairGroupMap = new Map<string, string[]>();
-    for (const link of cappedLinks) {
-      const pairKey = link.fromId < link.toId
-        ? `${link.fromId}-${link.toId}`
-        : `${link.toId}-${link.fromId}`;
-      let group = pairGroupMap.get(pairKey);
-      if (!group) { group = []; pairGroupMap.set(pairKey, group); }
-      group.push(link.id);
-    }
-    const parallelLookup = new Map<string, { index: number; count: number }>();
-    for (const group of pairGroupMap.values()) {
-      for (let i = 0; i < group.length; i++) {
-        parallelLookup.set(group[i], { index: i, count: group.length });
-      }
-    }
-    // Links sharing a node side, whatever their other end, get their own point along it
-    const handleSlots = computeHandleSlots(cappedLinks, nodePositions, linkAnchorMode, parallelLookup);
-
-    const useSimpleEdges = cappedLinks.length > SIMPLE_EDGE_THRESHOLD;
-
-    const newCache = new Map<string, Edge>();
-    const result = cappedLinks.map(link => {
-      const { isSelected, isDimmed: isLinkDimmed, isHighlighted: isLinkHighlighted, flow } = linkVisualState(link, linkVisualContext);
-      const simplified = useSimpleEdges && !isSelected;
-
-      // Reuse cached edge if visual state is unchanged (same reference → memo skip)
-      const cached = edgeCache.get(link.id);
-      if (cached) {
-        const cd = cached.data as any;
-        // Check that the link data itself hasn't changed (reference equality — Zustand immutability)
-        // AND that global settings affecting edge rendering haven't changed
-        const linkUnchanged = cd?._linkRef === link;
-        const globalsUnchanged = cd?._curveMode === linkCurveMode
-          && cd?._anchorMode === linkAnchorMode
-          && cd?._showConfidence === confidenceDisplay
-          && cd?._dateLocale === propertyDateLocale;
-        if (linkUnchanged && globalsUnchanged) {
-          const sameVisuals = cached.selected === isSelected
-            && cd?.isDimmed === isLinkDimmed
-            && cd?.isHighlighted === isLinkHighlighted
-            && cd?.flow === flow
-            && (cached.type === 'simple') === simplified;
-          if (sameVisuals) {
-            // In auto anchor mode, verify handles are still optimal for current positions
-            let handlesStale = false;
-            if ((link.anchorMode ?? linkAnchorMode) === 'auto') {
-              const sourcePos = nodePositions.get(link.fromId);
-              const targetPos = nodePositions.get(link.toId);
-              if (sourcePos && targetPos) {
-                const best = calculateBestHandles(sourcePos, targetPos);
-                handlesStale = cached.sourceHandle !== best.sourceHandle || cached.targetHandle !== best.targetHandle;
-              }
-            }
-            if (!handlesStale) {
-              if (simplified) {
-                newCache.set(link.id, cached);
-                return cached;
-              }
-              // CustomEdge: also check editing, remote users, parallel layout
-              const sameEditing = cd?.isEditing === (editingLinkId === link.id);
-              const sameRemote = remoteUsersByLink.get(link.id) === cd?.remoteLinkSelectors;
-              const parallel = parallelLookup.get(link.id);
-              const sameParallel = cd?._parallelIndex === parallel?.index && cd?._parallelCount === parallel?.count;
-              const slots = handleSlots.get(link.id);
-              const sameSlots = cd?.sourceSlot === (slots?.source ?? 0) && cd?.targetSlot === (slots?.target ?? 0);
-              if (sameEditing && sameRemote && sameParallel && sameSlots) {
-                newCache.set(link.id, cached);
-                return cached;
-              }
-            }
-          }
-        }
-      }
-
-      let edge: Edge;
-      if (simplified) {
-        edge = linkToEdge(
-          link, isSelected, isLinkDimmed, nodePositions,
-          linkAnchorMode, linkCurveMode,
-          undefined, undefined, undefined,
-          undefined, undefined, undefined, undefined, undefined, undefined,
-          true
-        );
-      } else {
-        const edgeCbs = getEdgeCallbacks(link.id);
-        const parallel = parallelLookup.get(link.id)!;
-
-        const linkDisplayedPropertyValues = displayedProperties
-          .map(key => {
-            const props = propertiesOf(link.properties, key);
-            if (props.length === 0) return null;
-            const valueStr = props.map((p) => formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)).join(VALUES_SEPARATOR);
-            return { key, value: valueStr };
-          })
-          .filter((p): p is { key: string; value: string } => p !== null);
-
-        edge = linkToEdge(
-          link, isSelected, isLinkDimmed, nodePositions,
-          linkAnchorMode, linkCurveMode,
-          editingLinkId === link.id,
-          edgeCbs.onLabelChange, stopEditing,
-          parallel.index, parallel.count,
-          edgeCbs.onCurveOffsetChange,
-          confidenceDisplay, linkDisplayedPropertyValues,
-          remoteUsersByLink.get(link.id),
-          false,
-          handleSlots.get(link.id)
-        );
-      }
-
-      // Stamp cache metadata for next comparison
-      const edgeData = edge.data as any;
-      edgeData._linkRef = link;
-      edgeData._curveMode = linkCurveMode;
-      edgeData._anchorMode = linkAnchorMode;
-      edgeData._showConfidence = confidenceDisplay;
-      edgeData._dateLocale = propertyDateLocale;
-      edgeData.isHighlighted = isLinkHighlighted;
-      edgeData.flow = flow;
-      if (!simplified) {
-        const parallel = parallelLookup.get(link.id);
-        edgeData._parallelIndex = parallel?.index;
-        edgeData._parallelCount = parallel?.count;
-      }
-      newCache.set(link.id, edge);
-      return edge;
-    });
-
-    prevEdgeCacheRef.current = newCache;
-
-    // Referential stability: if all edges are the same objects as previous array,
-    // return the previous array to avoid triggering downstream re-renders.
-    const prev = prevEdgesArrayRef.current;
-    if (prev.length === result.length && result.every((e, i) => e === prev[i])) {
-      return prev;
-    }
-    prevEdgesArrayRef.current = result;
-    return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overviewActive, linkVisualContext, links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, canvasTemporal.showUndated, propertyDateLocale, viewHiddenIds]);
+  // Version counter to trigger edge recomputation on drag-end / structural changes
+  const [edgeVersion, setEdgeVersion] = useState(0);
+  const edgeVersionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { allEdges, edges } = useCanvasEdges({
+    edgeVersion,
+    setEdgeVersion,
+    edgeVersionTimerRef,
+    links,
+    displayNodes,
+    nodePositionsRef,
+    isDraggingRef,
+    isViewportMovingRef,
+    cullingViewportRef,
+    wrapperSize,
+    overviewActive,
+    isLowDetail,
+    linkVisualContext,
+    temporalHiddenLinkIds,
+    viewHiddenIds,
+    selectedLinkIds,
+    selectedElementIds,
+    dimmedElementIds,
+    emphasizedElementIds,
+    cycleLinkFlow,
+    pathGlowLinks,
+    queryFilterActive,
+    queryMatchLinkIds,
+    temporalClassification,
+    showUndated: canvasTemporal.showUndated,
+    linkAnchorMode,
+    linkCurveMode,
+    confidenceDisplay,
+    propertyDateLocale,
+    language: i18n.language,
+    displayedProperties,
+    editingLinkId,
+    stopEditing,
+    remoteUsersByLink,
+    getEdgeCallbacks,
+  });
 
   // What the overview layer draws: the nodes as assembled for React Flow (tab,
   // hidden and time filters applied, selection and dimming resolved) and the
@@ -1940,69 +1700,6 @@ export function Canvas() {
     selectBoth(indices.map((i) => scene.ids[i]), linksTouching(scene, indices), false);
   }, [selectBoth]);
 
-  // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
-  // Only the edges not already on screen are added in batches; those already
-  // shown stay, so a click or a small pan never makes the links blink.
-  const EDGE_BATCH_SIZE = 250;
-  const shownEdgeIdsRef = useRef<Set<string>>(new Set());
-  const edgeProgressRef = useRef<{ source: Edge[]; base: Set<string>; limit: number } | null>(null);
-  const [edgeProgressTick, setEdgeProgressTick] = useState(0);
-
-  const cappedEdges = useMemo(() => {
-    let progress = edgeProgressRef.current;
-    if (!progress || progress.source !== allEdges) {
-      const shown = shownEdgeIdsRef.current;
-      let newCount = 0;
-      for (const e of allEdges) if (!shown.has(e.id)) newCount++;
-      progress = newCount > EDGE_BATCH_SIZE
-        ? { source: allEdges, base: shown, limit: EDGE_BATCH_SIZE }
-        : null;
-    }
-    let result = allEdges;
-    if (progress) {
-      const { base, limit } = progress;
-      let added = 0;
-      const partial = allEdges.filter(e => {
-        if (base.has(e.id)) return true;
-        if (added >= limit) return false;
-        added++;
-        return true;
-      });
-      if (partial.length < allEdges.length) result = partial;
-      else progress = null;
-    }
-    edgeProgressRef.current = progress;
-    shownEdgeIdsRef.current = new Set(result.map(e => e.id));
-    return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allEdges, edgeProgressTick]);
-
-  useEffect(() => {
-    if (!edgeProgressRef.current) return;
-    const timer = setTimeout(() => {
-      const progress = edgeProgressRef.current;
-      if (!progress) return;
-      progress.limit += EDGE_BATCH_SIZE;
-      setEdgeProgressTick(t => t + 1);
-    }, 60);
-    return () => clearTimeout(timer);
-  }, [cappedEdges]);
-  // Zoomed far out, element nodes carry a single handle: edges drop their
-  // handle ids so React Flow anchors them to a node's first handle. The
-  // per-edge cache keeps these objects stable across renders.
-  const lowDetailEdgeCacheRef = useRef(new WeakMap<Edge, Edge>());
-  const edges = useMemo(() => {
-    if (!isLowDetail) return cappedEdges;
-    const cache = lowDetailEdgeCacheRef.current;
-    return cappedEdges.map((e) => {
-      let lod = cache.get(e);
-      if (!lod) {
-        lod = { ...e, sourceHandle: null, targetHandle: null };
-        cache.set(e, lod);
-      }
-      return lod;
-    });
-  }, [cappedEdges, isLowDetail]);
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
 
@@ -2028,7 +1725,6 @@ export function Canvas() {
   const linksLayerSceneRef = useRef(linksLayerScene);
   linksLayerSceneRef.current = linksLayerScene;
 
-  // Track starting positions for undo
   const dragStartPositionsRef = useRef<Map<string, Position>>(new Map());
 
   // Throttle for position sync during drag (for collaboration)
@@ -2076,7 +1772,6 @@ export function Canvas() {
           c.type === 'position'
       );
 
-      // Check if any node is currently being dragged
       const nowDragging = new Set<string>();
       const draggingChangesWithPosition: { id: string; position: Position }[] = [];
 
@@ -2137,7 +1832,6 @@ export function Canvas() {
         setDraggedNodeInfo(null);
       }
 
-      // Update awareness for collaboration
       const prevDragging = draggingNodeIdsRef.current;
       if (nowDragging.size !== prevDragging.size ||
           [...nowDragging].some(id => !prevDragging.has(id))) {
@@ -2212,7 +1906,6 @@ export function Canvas() {
           }
         }
 
-        // Push undo action if positions changed
         if (undoPositions.length > 0) {
           pushAction({
             type: 'move-elements',
@@ -2221,14 +1914,12 @@ export function Canvas() {
           });
         }
 
-        // Clear tracked positions
         for (const update of updates) {
           dragStartPositionsRef.current.delete(update.id);
         }
 
         draggingNodeIdsRef.current.clear();
 
-        // Clear alignment guides
         setDraggedNodeInfo(null);
 
         // Update store FIRST (synchronous), then release isDraggingRef.
@@ -2329,7 +2020,6 @@ export function Canvas() {
     []
   );
 
-  // Handle edge reconnection (moving edge endpoints)
   const handleReconnect: OnReconnect = useCallback(
     async (oldEdge: Edge, newConnection: Connection) => {
       const fixedEnd = reconnectFixedEndRef.current;
@@ -2416,7 +2106,6 @@ export function Canvas() {
     [updateLink, links, pushAction]
   );
 
-  // Handle node click (Shift or Ctrl for multi-select)
   const handleNodeClick: NodeMouseHandler = useCallback(
     (event, node) => {
       const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
@@ -2425,11 +2114,9 @@ export function Canvas() {
     [selectElement]
   );
 
-  // Handle node context menu (right-click)
   const handleNodeContextMenu: NodeMouseHandler = useCallback(
     (event, node) => {
       event.preventDefault();
-      // Close other context menus
       setCanvasContextMenu(null);
       setLinkContextMenu(null);
 
@@ -2459,27 +2146,22 @@ export function Canvas() {
     [elementMap, assets]
   );
 
-  // Close context menu
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
   }, []);
 
-  // Close canvas context menu
   const closeCanvasContextMenu = useCallback(() => {
     setCanvasContextMenu(null);
   }, []);
 
-  // Close link context menu
   const closeLinkContextMenu = useCallback(() => {
     setLinkContextMenu(null);
   }, []);
 
-  // Handle right-click on a link (edge)
   const handleEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault();
 
-      // Close other context menus
       setContextMenu(null);
       setCanvasContextMenu(null);
 
@@ -2495,7 +2177,6 @@ export function Canvas() {
     [links]
   );
 
-  // Handle right-click on empty canvas
   const handlePaneContextMenu = useCallback(
     (event: MouseEvent | React.MouseEvent<globalThis.Element, MouseEvent>) => {
       event.preventDefault();
@@ -2509,7 +2190,6 @@ export function Canvas() {
           return;
         }
       }
-      // Close other context menus
       setContextMenu(null);
       setLinkContextMenu(null);
 
@@ -2533,889 +2213,105 @@ export function Canvas() {
     [handleNodeContextMenu]
   );
 
-  // Create element from canvas context menu
-  const handleCanvasContextMenuCreate = useCallback(async () => {
-    if (!canvasContextMenu) return;
-
-    const newElement = await createElement('', {
-      x: canvasContextMenu.canvasX,
-      y: canvasContextMenu.canvasY,
-    });
-
-    // Auto-add to active tab
-    if (activeTabId) {
-      addTabMembers(activeTabId, [newElement.id]);
-    }
-
-    // Save for undo
-    pushAction({
-      type: 'create-element',
-      undo: {},
-      redo: { elements: [newElement], elementIds: [newElement.id] },
-    });
-
-    // Select the new element
-    selectElement(newElement.id);
-  }, [canvasContextMenu, createElement, selectElement, pushAction, activeTabId, addTabMembers]);
-
-  // Create group from canvas context menu
-  const handleCanvasContextMenuCreateGroup = useCallback(async () => {
-    if (!canvasContextMenu) return;
-
-    const group = await createGroup('Groupe', {
-      x: canvasContextMenu.canvasX,
-      y: canvasContextMenu.canvasY,
-    }, { width: 300, height: 200 });
-
-    pushAction({
-      type: 'create-element',
-      undo: {},
-      redo: { elements: [group], elementIds: [group.id] },
-    });
-
-    selectElement(group.id);
-  }, [canvasContextMenu, createGroup, selectElement, pushAction]);
-
-  // Create annotation from canvas context menu
-  const handleCanvasContextMenuCreateAnnotation = useCallback(async () => {
-    if (!canvasContextMenu) return;
-
-    const annotation = await createElement('', {
-      x: canvasContextMenu.canvasX,
-      y: canvasContextMenu.canvasY,
-    }, {
-      isAnnotation: true,
-      notes: '',
-      visual: {
-        color: '#ffffff',
-        borderColor: '#e5e7eb',
-        shape: 'rectangle',
-        size: 'medium',
-        icon: null,
-        image: null,
-        customWidth: 200,
-      },
-    });
-
-    // Auto-add to active tab
-    if (activeTabId) {
-      addTabMembers(activeTabId, [annotation.id]);
-    }
-
-    pushAction({
-      type: 'create-element',
-      undo: {},
-      redo: { elements: [annotation], elementIds: [annotation.id] },
-    });
-    selectElement(annotation.id);
-  }, [canvasContextMenu, createElement, selectElement, pushAction, activeTabId, addTabMembers]);
-
-  // Selection handlers for canvas context menu (work without contextMenu state)
-  const handleSelectionCopy = useCallback(() => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length === 0) return;
-    const elsToCopy = elements.filter(el => selectedEls.includes(el.id));
-    if (elsToCopy.length > 0) {
-      writeClipboard(elsToCopy, [...selectedLinkIds]);
-    }
-  }, [elements, getSelectedElementIds, selectedLinkIds, writeClipboard]);
-
-  const handleSelectionCut = useCallback(async () => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length === 0) return;
-    const elsToCut = elements.filter(el => selectedEls.includes(el.id));
-    if (elsToCut.length > 0) {
-      writeClipboard(elsToCut, [...selectedLinkIds]);
-      await deleteElementsWithHistory(selectedEls);
-      clearSelection();
-    }
-  }, [elements, getSelectedElementIds, selectedLinkIds, deleteElementsWithHistory, clearSelection, writeClipboard]);
-
-  const handleSelectionDuplicate = useCallback(async () => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length === 0 || !currentDossier) return;
-    const elsToDuplicate = elements.filter(el => selectedEls.includes(el.id));
-    if (elsToDuplicate.length === 0) return;
-
-    const now = new Date();
-    const offset = 40;
-    const oldToNewIdMap = new Map<string, string>();
-
-    const newElements: Element[] = elsToDuplicate.map(el => {
-      const newId = generateUUID();
-      oldToNewIdMap.set(el.id, newId);
-      return {
-        ...el,
-        id: newId,
-        dossierId: currentDossier.id,
-        position: { x: el.position.x + offset, y: el.position.y + offset },
-        parentGroupId: null,
-        createdAt: now,
-        updatedAt: now,
-      };
-    });
-
-    const elIdSet = new Set(selectedEls);
-    const relevantLinks = links.filter(l => elIdSet.has(l.fromId) && elIdSet.has(l.toId));
-    const newLinks: Link[] = relevantLinks.map(link => ({
-      ...link,
-      id: generateUUID(),
-      dossierId: currentDossier.id,
-      fromId: oldToNewIdMap.get(link.fromId)!,
-      toId: oldToNewIdMap.get(link.toId)!,
-      createdAt: now,
-      updatedAt: now,
-    })).filter(l => l.fromId && l.toId);
-
-    pasteElements(newElements, newLinks);
-    const newElementIds = newElements.map(el => el.id);
-    if (activeTabId) {
-      addTabMembers(activeTabId, newElementIds);
-    }
-    const newLinkIds = newLinks.map(l => l.id);
-    pushAction({
-      type: 'create-elements',
-      undo: {},
-      redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
-    });
-    selectElements(newElementIds);
-  }, [elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
-
-  const handleSelectionDelete = useCallback(async () => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length === 0) return;
-    await deleteElementsWithHistory(selectedEls);
-    clearSelection();
-  }, [getSelectedElementIds, deleteElementsWithHistory, clearSelection]);
-
-  // Canvas menu (right-click on the selection box): lock or unlock every
-  // selected element; unlock only when all of them are already locked
-  const selectionLocked = useMemo(() => {
-    if (selectedElementIds.size === 0) return false;
-    for (const id of selectedElementIds) {
-      if (!elementMap.get(id)?.isPositionLocked) return false;
-    }
-    return true;
-  }, [selectedElementIds, elementMap]);
-
-  const handleSelectionToggleLock = useCallback(async () => {
-    const ids = getSelectedElementIds();
-    if (ids.length === 0) return;
-    await Promise.all(ids.map(id => updateElement(id, { isPositionLocked: !selectionLocked })));
-  }, [getSelectedElementIds, selectionLocked, updateElement]);
-
-  // Tab membership changes go through the history: each records, per tab,
-  // only the elements really added or removed, so Ctrl+Z puts things back.
-  const tabMembers = useCallback((tabId: string) =>
-    new Set(useTabStore.getState().tabs.find((t) => t.id === tabId)?.memberElementIds ?? []), []);
-  const pushTabMembership = useCallback((snapshot: TabMembershipSnapshot) => {
-    if (snapshot.changes.every((c) => c.added.length === 0 && c.removed.length === 0) && !snapshot.createdTab) return;
-    pushAction({ type: 'tab-membership', undo: { snapshot }, redo: { snapshot } });
-  }, [pushAction]);
-
-  // Tabs the view shows: the open one, and those combined with it
-  const viewTabIds = useMemo(
-    () => (activeTabId === null ? [] : [activeTabId, ...extraTabIds]),
-    [activeTabId, extraTabIds],
-  );
-
-  // New canvas tab holding `ids`, opened. Same naming as the tab bar; the
-  // canvas stays where it is, the elements being on screen. Made from inside
-  // a tab (or combined tabs), the elements move: they leave the tabs they came from.
-  const canCreateTab = !!currentDossier;
-  const createTabFromIds = useCallback(async (ids: string[]) => {
-    if (!currentDossier || ids.length === 0) return;
-    const from = activeTabId;
-    const sources = viewTabIds.map((tabId) => ({ tabId, removed: ids.filter((id) => tabMembers(tabId).has(id)) }));
-    const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
-    // The new tab opens where the view stands (the elements are on screen)
-    await saveTabViewport(tab.id, useViewStore.getState().viewport);
-    await addTabMembers(tab.id, ids);
-    for (const { tabId, removed } of sources) if (removed.length > 0) await removeTabMembers(tabId, removed);
-    setActiveTab(tab.id);
-    pushTabMembership({
-      changes: [{ tabId: tab.id, added: ids, removed: [] }, ...sources.map(({ tabId, removed }) => ({ tabId, added: [], removed }))],
-      createdTab: tab,
-      activeBefore: from,
-      activeAfter: tab.id,
-    });
-  }, [currentDossier, activeTabId, viewTabIds, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab, tabMembers, pushTabMembership]);
-
-  // Send `ids` to another tab and out of the tabs in view (they stay in "All").
-  const moveIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
-    const from = activeTabId;
-    if (from === null || ids.length === 0) return;
-    const sources = viewTabIds.filter((id) => id !== tabId);
-    if (sources.length === 0) return;
-    const target = tabMembers(tabId);
-    const added = ids.filter((id) => !target.has(id));
-    const removals = sources.map((sourceId) => ({ tabId: sourceId, removed: ids.filter((id) => tabMembers(sourceId).has(id)) }));
-    await addTabMembers(tabId, ids);
-    for (const { tabId: sourceId, removed } of removals) if (removed.length > 0) await removeTabMembers(sourceId, removed);
-    pushTabMembership({
-      changes: [{ tabId, added, removed: [] }, ...removals.map(({ tabId: sourceId, removed }) => ({ tabId: sourceId, added: [], removed }))],
-      activeBefore: from,
-      activeAfter: from,
-    });
-  }, [activeTabId, viewTabIds, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
-
-  // Bring ghosts into the open tab: in it, out of the tabs they are in
-  const moveIdsHere = useCallback(async (ids: string[]) => {
-    const here = activeTabId;
-    if (here === null || ids.length === 0) return;
-    const target = tabMembers(here);
-    const added = ids.filter((id) => !target.has(id));
-    const removals = canvasTabs
-      .filter((tab) => tab.id !== here)
-      .map((tab) => ({ tabId: tab.id, removed: ids.filter((id) => tabMembers(tab.id).has(id)) }))
-      .filter(({ removed }) => removed.length > 0);
-    await addTabMembers(here, ids);
-    for (const { tabId, removed } of removals) await removeTabMembers(tabId, removed);
-    pushTabMembership({
-      changes: [{ tabId: here, added, removed: [] }, ...removals.map(({ tabId, removed }) => ({ tabId, added: [], removed }))],
-      activeBefore: here,
-      activeAfter: here,
-    });
-  }, [activeTabId, canvasTabs, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
-
-  // Take `ids` out of the tabs in view: members leave them (they stay in
-  // "All"), ghosts are set aside. Membership changes go through the history.
-  const removeIdsFromActiveTab = useCallback(async (ids: string[]) => {
-    if (activeTabId === null || ids.length === 0) return;
-    const inView = new Set<string>();
-    const removals = viewTabIds.map((tabId) => {
-      const members = tabMembers(tabId);
-      const removed = ids.filter((id) => members.has(id));
-      removed.forEach((id) => inView.add(id));
-      return { tabId, removed };
-    });
-    const ghosts = ids.filter((id) => !inView.has(id));
-    for (const tabId of viewTabIds) if (ghosts.length > 0) await excludeFromTab(tabId, ghosts);
-    const changed = removals.filter(({ removed }) => removed.length > 0);
-    if (changed.length > 0) {
-      for (const { tabId, removed } of changed) await removeTabMembers(tabId, removed);
-      pushTabMembership({
-        changes: changed.map(({ tabId, removed }) => ({ tabId, added: [], removed })),
-        activeBefore: activeTabId,
-        activeAfter: activeTabId,
-      });
-    }
-  }, [activeTabId, viewTabIds, tabMembers, excludeFromTab, removeTabMembers, pushTabMembership]);
-
-  // Add `ids` to a tab, keeping them where they are.
-  const addIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
-    const target = tabMembers(tabId);
-    const added = ids.filter((id) => !target.has(id));
-    if (added.length === 0) return;
-    await addTabMembers(tabId, added);
-    pushTabMembership({ changes: [{ tabId, added, removed: [] }], activeBefore: activeTabId, activeAfter: activeTabId });
-  }, [activeTabId, addTabMembers, tabMembers, pushTabMembership]);
-
-  // Show only `ids`: everything else is hidden, except the groups holding
-  // them (a hidden group would take them along) and the members of a group
-  // among them
-  const showOnly = useCallback((ids: string[]) => {
-    if (ids.length === 0) return;
-    const all = useDossierStore.getState().elements;
-    const byId = new Map(all.map((el) => [el.id, el]));
-    // The chosen ones and, through nested groups, everything inside them
-    const chosen = new Set(ids);
-    let grew = true;
-    while (grew) {
-      grew = false;
-      for (const el of all) {
-        if (el.parentGroupId && chosen.has(el.parentGroupId) && !chosen.has(el.id)) {
-          chosen.add(el.id);
-          grew = true;
-        }
-      }
-    }
-    const keep = new Set(chosen);
-    for (const id of ids) {
-      let parent = byId.get(id)?.parentGroupId ?? null;
-      while (parent && !keep.has(parent)) {
-        keep.add(parent);
-        parent = byId.get(parent)?.parentGroupId ?? null;
-      }
-    }
-    showElements([...keep]);
-    hideElements(all.filter((el) => !keep.has(el.id)).map((el) => el.id));
-  }, [showElements, hideElements]);
-
-  const handleSelectionShowOnly = useCallback(() => {
-    showOnly(getSelectedElementIds());
-  }, [getSelectedElementIds, showOnly]);
-
-  const handleContextMenuShowOnly = useCallback(() => {
-    if (!contextMenu) return;
-    const selectedEls = getSelectedElementIds();
-    showOnly(selectedEls.length > 1 && selectedEls.includes(contextMenu.elementId) ? selectedEls : [contextMenu.elementId]);
-  }, [contextMenu, getSelectedElementIds, showOnly]);
-
-  const showAllHidden = useCallback(() => useViewStore.getState().showAllElements(), []);
-
-  const handleSelectionHide = useCallback(() => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length === 0) return;
-    hideElements(selectedEls);
-    clearSelection();
-  }, [getSelectedElementIds, hideElements, clearSelection]);
-
-  // Query: Find similar (single element — search by tags)
-  const handleFindSimilar = useCallback(() => {
-    // Element menu: right-clicked element; canvas menu: the single selected element
-    const targetId = contextMenu?.elementId ?? getSelectedElementIds()[0];
-    if (!targetId) return;
-    const el = elements.find(e => e.id === targetId);
-    if (!el) return;
-    // A label close to it (LIKE: case, accents, small typos) AND one of its
-    // tags; either part alone when the element lacks the other
-    type Q = import('../../services/query/types').QueryNode;
-    const label = el.label.trim();
-    const tags = el.tags.filter(Boolean);
-    if (tags.length === 0 && !label) {
-      useUIStore.getState().showToast('warning', tPages('dossier.findSimilarNoTags'));
-      return;
-    }
-
-    const tagConditions: Q[] = tags.map(tag => ({ type: 'condition' as const, field: 'tag', operator: 'eq' as const, value: tag }));
-    const tagPart: Q | null = tagConditions.length === 0 ? null
-      : tagConditions.length === 1 ? tagConditions[0]
-      : { type: 'or' as const, children: tagConditions };
-    const labelPart: Q | null = label ? { type: 'condition' as const, field: 'label', operator: 'like' as const, value: label } : null;
-    const ast: Q = labelPart && tagPart
-      ? { type: 'and' as const, children: [labelPart, tagPart] }
-      : (labelPart ?? tagPart)!;
-
-    const text = serializeQuery(ast);
-    useQueryStore.getState().setText(text);
-    useQueryStore.getState().execute();
-    useUIStore.getState().setSidePanelTab('query');
-  }, [contextMenu, elements, getSelectedElementIds]);
-
-  // Open a URL from an element property in a new tab.
-  const handleOpenUrl = useCallback((url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
-    closeContextMenu();
-  }, [closeContextMenu]);
-
-  // Copy a URL from an element property to the clipboard.
-  const handleCopyUrl = useCallback((url: string) => {
-    navigator.clipboard.writeText(url)
-      .then(() => toast.success(tPages('dossier.urlCopied')))
-      .catch(() => toast.error(tPages('dossier.urlCopyFailed')));
-    closeContextMenu();
-  }, [closeContextMenu, tPages]);
-
-  // Query: Query from selection (multiple elements — search by labels)
-  const handleQueryFromSelection = useCallback(() => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length < 2) return;
-
-    const conditions: import('../../services/query/types').QueryCondition[] = selectedEls
-      .map(id => elements.find(e => e.id === id))
-      .filter(Boolean)
-      .map(el => ({
-        type: 'condition' as const,
-        field: 'label',
-        operator: 'eq' as const,
-        value: el!.label,
-      }));
-
-    if (conditions.length === 0) return;
-
-    const ast = conditions.length === 1
-      ? conditions[0]
-      : { type: 'or' as const, children: conditions } as import('../../services/query/types').QueryOr;
-
-    const text = serializeQuery(ast);
-    useQueryStore.getState().setText(text);
-    useQueryStore.getState().execute();
-    useUIStore.getState().setSidePanelTab('query');
-  }, [getSelectedElementIds, elements]);
-
-  // Copy the selection as a Mermaid flowchart (Markdown notes, wikis, reports)
-  const handleCopyAsMermaid = useCallback(() => {
-    const ids = new Set(getSelectedElementIds());
-    if (ids.size === 0) return;
-    // Children of selected groups come along
-    for (const el of elements) if (el.parentGroupId && ids.has(el.parentGroupId)) ids.add(el.id);
-    const selected = elements.filter(el => ids.has(el.id));
-    const between = links.filter(l => ids.has(l.fromId) && ids.has(l.toId));
-    navigator.clipboard.writeText(buildMermaidExport(selected, between))
-      .then(() => { emitExport('clipboard-mermaid'); toast.success(tPages('dossier.mermaidCopied')); })
-      .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
-  }, [getSelectedElementIds, elements, links, tPages]);
-
-  // Copy the selection as a DOT graph (Graphviz, NetworkX)
-  const handleCopyAsDot = useCallback(() => {
-    const ids = new Set(getSelectedElementIds());
-    if (ids.size === 0) return;
-    // Children of selected groups come along
-    for (const el of elements) if (el.parentGroupId && ids.has(el.parentGroupId)) ids.add(el.id);
-    const selected = elements.filter(el => ids.has(el.id));
-    const between = links.filter(l => ids.has(l.fromId) && ids.has(l.toId));
-    navigator.clipboard.writeText(buildDOTExport(currentDossier?.name ?? '', selected, between))
-      .then(() => { emitExport('clipboard-dot'); toast.success(tPages('dossier.dotCopied')); })
-      .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
-  }, [getSelectedElementIds, elements, links, tPages, currentDossier?.name]);
-
-  // Paste from canvas context menu (at cursor position)
-  const handleCanvasContextMenuPaste = useCallback(async () => {
-    if (!canvasContextMenu) return;
-
-    const { canvasX, canvasY } = canvasContextMenu;
-
-    // Try to read clipboard for external content (images, files)
-    let pastedFromClipboard = false;
-    try {
-      const clipboardItems = await navigator.clipboard.read();
-      let imageFile: File | null = null;
-
-      // Only take the first image found (clipboard may have multiple representations)
-      let textItem: ClipboardItem | null = null;
-      for (const item of clipboardItems) {
-        if (imageFile) break;
-        for (const type of item.types) {
-          if (type.startsWith('image/')) {
-            const blob = await item.getType(type);
-            imageFile = new File([blob], `image.${type.split('/')[1]}`, { type });
-            break;
-          }
-          if (type === 'text/plain' && !textItem) textItem = item;
-        }
-      }
-
-      // Mermaid flowchart text → import placement mode (same as Ctrl+V)
-      if (!imageFile && textItem && currentDossier) {
-        const text = (await (await textItem.getType('text/plain')).text()).trim();
-        if (isMermaidFlowchart(text)) {
-          const res = startMermaidPlacement(text, currentDossier.id);
-          if (!res.ok) toast.error(res.error);
-          return;
-        }
-        // DOT graph (Graphviz) → import placement mode
-        if (isDotGraph(text)) {
-          const res = startDotPlacement(text, currentDossier.id);
-          if (!res.ok) toast.error(res.error);
-          return;
-        }
-      }
-
-      // If we found an image in clipboard, create element with it
-      if (imageFile) {
-        pastedFromClipboard = true;
-        const position = { x: canvasX, y: canvasY };
-        const label = imageFile.name.replace(/\.[^/.]+$/, '') || 'Image';
-        const newElement = await createElement(label, position, { date: new Date() });
-        // Auto-add to active tab
-        if (activeTabId) {
-          addTabMembers(activeTabId, [newElement.id]);
-        }
-
-        try {
-          await addAsset(newElement.id, imageFile);
-        } catch (assetError) {
-          console.error('Failed to add asset:', assetError);
-          // Element was created, asset failed - still consider it a success
-        }
-
-        pushAction({
-          type: 'create-element',
-          undo: {},
-          redo: { elements: [newElement], elementIds: [newElement.id] },
-        });
-
-        selectElements([newElement.id]);
-        return;
-      }
-    } catch {
-      // Clipboard API not available or permission denied
-      // Only fall back to internal paste if we didn't already create an element
-    }
-
-    // Fall back to internal copied elements (only if we didn't paste from clipboard)
-    const clip = useClipboardStore.getState();
-    if (pastedFromClipboard || clip.elements.length === 0 || !currentDossier) return;
-
-    const { newElements, newLinks } = cloneClipboardForPaste(clip, currentDossier.id, canvasX, canvasY);
-
-    // Single Y.js transaction
-    pasteElements(newElements, newLinks);
-
-    // Save for undo (include both element and link IDs)
-    const newElementIds = newElements.map(el => el.id);
-    if (activeTabId) {
-      addTabMembers(activeTabId, newElementIds);
-    }
-    const newLinkIds = newLinks.map(l => l.id);
-    pushAction({
-      type: 'create-elements',
-      undo: {},
-      redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
-    });
-
-    // Select all pasted elements
-    selectElements(newElementIds);
-  }, [canvasContextMenu, links, currentDossier, pasteElements, selectElements, pushAction, addAsset, createElement, activeTabId, addTabMembers]);
-
-  // Context menu actions
-  // Focus: the element's neighbourhood as a ZNQuery, which the user can then
-  // edit, save or keep in a view. The target is the label, readable; the id
-  // only when another element bears the same label (label = is case-insensitive)
-  const handleContextMenuFocus = useCallback(
-    (depth: number) => {
-      if (!contextMenu) return;
-      const el = elements.find((e) => e.id === contextMenu.elementId);
-      if (!el) return;
-      const label = el.label.toLowerCase();
-      const shared = elements.some((e) => e.id !== el.id && e.label.toLowerCase() === label);
-      const text = serializeQuery({
-        type: 'within',
-        hops: depth,
-        target: shared
-          ? { type: 'condition', field: '_id', operator: 'eq', value: el.id }
-          : { type: 'condition', field: 'label', operator: 'eq', value: el.label },
-      });
-      useQueryStore.getState().setText(text);
-      useUIStore.getState().setSidePanelTab('query');
-    },
-    [contextMenu, elements]
-  );
-
-  const handleContextMenuHide = useCallback(() => {
-    if (contextMenu) {
-      const selectedEls = getSelectedElementIds();
-      if (selectedEls.length > 1 && selectedEls.includes(contextMenu.elementId)) {
-        hideElements(selectedEls);
-        clearSelection();
-      } else {
-        hideElement(contextMenu.elementId);
-      }
-    }
-  }, [contextMenu, hideElement, hideElements, getSelectedElementIds, clearSelection]);
-
-  const handleContextMenuShow = useCallback(() => {
-    if (contextMenu) {
-      showElement(contextMenu.elementId);
-    }
-  }, [contextMenu, showElement]);
-
-  const handleContextMenuDelete = useCallback(async () => {
-    if (contextMenu) {
-      await deleteElementsWithHistory([contextMenu.elementId]);
-      clearSelection();
-    }
-  }, [contextMenu, deleteElementsWithHistory, clearSelection]);
-
-  // Preview handler for context menu
-  const handleContextMenuPreview = useCallback(() => {
-    if (contextMenu?.previewAsset) {
-      setPreviewAsset(contextMenu.previewAsset);
-    }
-  }, [contextMenu]);
-
-  // Copy handler for context menu
-  const handleContextMenuCopy = useCallback(() => {
-    const selectedEls = getSelectedElementIds();
-    const elsToCopy = selectedEls.length > 0
-      ? elements.filter(el => selectedEls.includes(el.id))
-      : contextMenu
-        ? elements.filter(el => el.id === contextMenu.elementId)
-        : [];
-
-    if (elsToCopy.length > 0) {
-      writeClipboard(elsToCopy, [...selectedLinkIds]);
-    }
-  }, [elements, getSelectedElementIds, contextMenu, selectedLinkIds, writeClipboard]);
-
-  // Cut handler for context menu
-  const handleContextMenuCut = useCallback(async () => {
-    const selectedEls = getSelectedElementIds();
-    const elsToCut = selectedEls.length > 0
-      ? elements.filter(el => selectedEls.includes(el.id))
-      : contextMenu
-        ? elements.filter(el => el.id === contextMenu.elementId)
-        : [];
-
-    if (elsToCut.length > 0) {
-      writeClipboard(elsToCut, [...selectedLinkIds]);
-      await deleteElementsWithHistory(elsToCut.map(el => el.id));
-      clearSelection();
-    }
-  }, [elements, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElementsWithHistory, clearSelection, writeClipboard]);
-
-  // Duplicate handler for context menu
-  const handleContextMenuDuplicate = useCallback(() => {
-    if (!contextMenu) return;
-    const selectedEls = getSelectedElementIds();
-    const elIds = selectedEls.length > 0 ? selectedEls : [contextMenu.elementId];
-    const elsToDuplicate = elements.filter(el => elIds.includes(el.id));
-    if (elsToDuplicate.length === 0) return;
-
-    const now = new Date();
-    const offset = 40;
-    const oldToNewIdMap = new Map<string, string>();
-
-    // Build all elements with offset
-    const newElements: Element[] = elsToDuplicate.map(el => {
-      const newId = generateUUID();
-      oldToNewIdMap.set(el.id, newId);
-      return {
-        ...el,
-        id: newId,
-        dossierId: currentDossier!.id,
-        position: {
-          x: el.position.x + offset,
-          y: el.position.y + offset,
-        },
-        parentGroupId: null,
-        createdAt: now,
-        updatedAt: now,
-      };
-    });
-
-    // Build all links between duplicated elements
-    const elIdSet = new Set(elIds);
-    const relevantLinks = links.filter(l =>
-      elIdSet.has(l.fromId) && elIdSet.has(l.toId)
-    );
-    const newLinks: Link[] = relevantLinks.map(link => ({
-      ...link,
-      id: generateUUID(),
-      dossierId: currentDossier!.id,
-      fromId: oldToNewIdMap.get(link.fromId)!,
-      toId: oldToNewIdMap.get(link.toId)!,
-      createdAt: now,
-      updatedAt: now,
-    })).filter(l => l.fromId && l.toId);
-
-    // Single Y.js transaction
-    pasteElements(newElements, newLinks);
-
-    // Save for undo (include both element and link IDs)
-    const newElementIds = newElements.map(el => el.id);
-    if (activeTabId) {
-      addTabMembers(activeTabId, newElementIds);
-    }
-    const newLinkIds = newLinks.map(l => l.id);
-    pushAction({
-      type: 'create-elements',
-      undo: {},
-      redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
-    });
-    selectElements(newElementIds);
-  }, [contextMenu, elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
-
-  // Group selection handler for context menu
-  // Elements a new group can take: top-level, non-group elements. Groups are
-  // a single level (child position = group position + relative offset), and
-  // undo only knows how to put children back at the top level, so groups and
-  // elements already inside a group are left out.
-  const groupableSelectedIds = useMemo(() => {
-    const ids: string[] = [];
-    for (const id of selectedElementIds) {
-      const el = elementMap.get(id);
-      if (el && !el.isGroup && !el.parentGroupId) ids.push(id);
-    }
-    return ids;
-  }, [selectedElementIds, elementMap]);
-  const canGroupSelection = groupableSelectedIds.length >= 2;
-
-  const handleGroupSelection = useCallback(async () => {
-    const selectedElements = groupableSelectedIds
-      .map(id => elementMap.get(id))
-      .filter((el): el is Element => !!el);
-    if (selectedElements.length < 2) return;
-    const childIds = selectedElements.map(el => el.id);
-
-    // Snapshot absolute positions for undo
-    const absolutePositions = selectedElements.map(el => ({
-      id: el.id,
-      position: { ...el.position },
-    }));
-
-    // Bounding box of the selected elements, using the size they are drawn at.
-    // The padding also covers the diamond tips, which overhang the node box.
-    const padding = 40;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const el of selectedElements) {
-      const firstAssetId = el.assetIds?.[0];
-      const hasImage = Boolean(firstAssetId && assetMap.get(firstAssetId)) && el.visual.hideMedia !== true;
-      const shown = degreeMap ? scaleByDegree(el, degreeMap.get(el.id) ?? 0, hasImage) : el;
-      const { width: w, height: h } = computeElementDimensions(shown.visual, el.label || t('empty.unnamed'), hasImage);
-      minX = Math.min(minX, shown.position.x);
-      minY = Math.min(minY, shown.position.y);
-      maxX = Math.max(maxX, shown.position.x + w);
-      maxY = Math.max(maxY, shown.position.y + h);
-    }
-
-    const groupPos = { x: minX - padding, y: minY - padding };
-    const groupSize = {
-      width: maxX - minX + padding * 2,
-      height: maxY - minY + padding * 2,
-    };
-
-    const group = await createGroup('Groupe', groupPos, groupSize, childIds);
-
-    // Compute relative positions for redo
-    const relativePositions = selectedElements.map(el => ({
-      id: el.id,
-      position: { x: el.position.x - groupPos.x, y: el.position.y - groupPos.y },
-    }));
-
-    // Get fresh group snapshot from store (with childIds set)
-    const groupSnapshot = useDossierStore.getState().elements.find(el => el.id === group.id);
-    if (groupSnapshot) {
-      pushAction({
-        type: 'create-group',
-        undo: { positions: absolutePositions },
-        redo: { elements: [groupSnapshot], elementIds: [group.id], positions: relativePositions },
-      });
-    }
-
-    clearSelection();
-  }, [groupableSelectedIds, elementMap, assetMap, degreeMap, t, createGroup, clearSelection, pushAction]);
-
-  // Group the selection after packing it in a grid around its centre
-  const handleGroupGather = useCallback(async () => {
-    await groupElements(groupableSelectedIds, 'Groupe', t('empty.unnamed'), { gather: true });
-    clearSelection();
-  }, [groupableSelectedIds, t, clearSelection]);
-
-  // Pack the members of the group under the menu in a grid
-  const handleGatherGroup = useCallback(async () => {
-    if (!contextMenu?.elementId) return;
-    await gatherGroup(contextMenu.elementId, t('empty.unnamed'));
-  }, [contextMenu, t]);
-
-  // Dissolve group handler
-  const handleDissolveGroup = useCallback(async () => {
-    if (!contextMenu) return;
-    const group = elementMap.get(contextMenu.elementId);
-    if (!group?.isGroup) return;
-
-    // Snapshot group element and children's relative positions for undo
-    const groupSnapshot = { ...group };
-    const childPositions = group.childIds
-      .map(childId => {
-        const child = elementMap.get(childId);
-        return child ? { id: childId, position: { ...child.position } } : null;
-      })
-      .filter((p): p is { id: string; position: { x: number; y: number } } => p !== null);
-
-    await dissolveGroup(contextMenu.elementId);
-
-    pushAction({
-      type: 'dissolve-group',
-      undo: {
-        elements: [groupSnapshot],
-        positions: childPositions,
-      },
-      redo: {
-        elementIds: [contextMenu.elementId],
-      },
-    });
-
-    clearSelection();
-  }, [contextMenu, elementMap, dissolveGroup, clearSelection, pushAction]);
-
-  // Remove from group handler
-  const handleRemoveFromGroup = useCallback(async () => {
-    if (!contextMenu) return;
-    const child = elementMap.get(contextMenu.elementId);
-    if (!child?.parentGroupId) return;
-
-    const group = elementMap.get(child.parentGroupId);
-    if (!group) return;
-
-    // Snapshot old state for undo
-    const oldRelativePosition = { ...child.position };
-    const absolutePosition = {
-      x: child.position.x + group.position.x,
-      y: child.position.y + group.position.y,
-    };
-
-    await removeFromGroup([contextMenu.elementId]);
-
-    pushAction({
-      type: 'remove-from-group',
-      undo: {
-        elementId: contextMenu.elementId,
-        changes: { parentGroupId: child.parentGroupId, position: oldRelativePosition },
-      },
-      redo: {
-        elementId: contextMenu.elementId,
-        changes: { parentGroupId: null, position: absolutePosition },
-      },
-    });
-  }, [contextMenu, elementMap, removeFromGroup, pushAction]);
-
-  // Toggle position lock handler - applies to all selected elements
-  const handleToggleLock = useCallback(async () => {
-    if (!contextMenu) return;
-    const clickedElement = elementMap.get(contextMenu.elementId);
-    if (!clickedElement) return;
-
-    // Determine new lock state based on the clicked element
-    const newLockState = !clickedElement.isPositionLocked;
-
-    // Apply to all selected elements if multiple are selected
-    const targetIds = selectedElementIds.size > 1
-      ? Array.from(selectedElementIds)
-      : [contextMenu.elementId];
-
-    // Update all target elements
-    await Promise.all(
-      targetIds.map(id => updateElement(id, { isPositionLocked: newLockState }))
-    );
-  }, [contextMenu, elementMap, selectedElementIds, updateElement]);
-
-  const handleFindPaths = useCallback(
-    (fromId: string, toId: string) => {
-      // Ensure the analysis graph reflects current data (the Insights panel may
-      // never have been opened, so its graph would be stale/absent), then show
-      // the result in the Insights panel.
-      insightsService.buildGraph(elements, links);
-      findPaths(fromId, toId);
-      setSidePanelTab('insights');
-    },
-    [findPaths, elements, links, setSidePanelTab]
-  );
-
-  const handleFindAllPaths = useCallback(
-    (fromId: string, toId: string) => {
-      insightsService.buildGraph(elements, links);
-      findAllPaths(fromId, toId);
-      setSidePanelTab('insights');
-    },
-    [findAllPaths, elements, links, setSidePanelTab]
-  );
-
-  const handleMergeElements = useCallback(() => {
-    if (!contextMenu || selectedElementIds.size < 2) return;
-    const chosen = Array.from(selectedElementIds)
-      .map((id) => elementMap.get(id))
-      .filter((el): el is Element => !!el);
-    if (chosen.length >= 2) {
-      setMergeElements(chosen);
-      setContextMenu(null);
-    }
-  }, [contextMenu, selectedElementIds, elementMap]);
-
-  // Get the "other" selected element when exactly 2 are selected
-  const otherSelectedElement = useMemo(() => {
-    if (contextMenu && selectedElementIds.size === 2) {
-      const otherId = Array.from(selectedElementIds).find(
-        (id) => id !== contextMenu.elementId
-      );
-      if (otherId) {
-        return elementMap.get(otherId);
-      }
-    }
-    return undefined;
-  }, [contextMenu, selectedElementIds, elementMap]);
-
+  const {
+    addIdsToTab,
+    canCreateTab,
+    canGroupSelection,
+    createTabFromIds,
+    handleCanvasContextMenuCreate,
+    handleCanvasContextMenuCreateAnnotation,
+    handleCanvasContextMenuCreateGroup,
+    handleContextMenuCopy,
+    handleContextMenuCut,
+    handleContextMenuDelete,
+    handleContextMenuDuplicate,
+    handleContextMenuFocus,
+    handleContextMenuHide,
+    handleContextMenuPreview,
+    handleContextMenuShow,
+    handleContextMenuShowOnly,
+    handleCopyAsDot,
+    handleCopyAsMermaid,
+    handleCopyUrl,
+    handleDissolveGroup,
+    handleFindAllPaths,
+    handleFindPaths,
+    handleFindSimilar,
+    handleGatherGroup,
+    handleGroupGather,
+    handleGroupSelection,
+    handleMergeElements,
+    handleOpenUrl,
+    handleQueryFromSelection,
+    handleRemoveFromGroup,
+    handleSelectionCopy,
+    handleSelectionCut,
+    handleSelectionDelete,
+    handleSelectionDuplicate,
+    handleSelectionHide,
+    handleSelectionShowOnly,
+    handleSelectionToggleLock,
+    handleSelectLinks,
+    handleSuggestLinks,
+    handleToggleLock,
+    moveIdsHere,
+    moveIdsToTab,
+    otherSelectedElement,
+    removeIdsFromActiveTab,
+    selectionLocked,
+    showAllHidden,
+    viewTabIds,
+  } = useCanvasSelectionActions({
+    elements,
+    links,
+    elementMap,
+    assetMap,
+    degreeMap,
+    allEdges,
+    currentDossier,
+    contextMenu,
+    setContextMenu,
+    closeContextMenu,
+    canvasContextMenu,
+    setMergeElements,
+    setPreviewAsset,
+    overviewActiveRef,
+    overviewSceneRef,
+    selectedElementIds,
+    selectedLinkIds,
+    getSelectedElementIds,
+    clearSelection,
+    selectElement,
+    selectElements,
+    selectLinks,
+    createElement,
+    updateElement,
+    createGroup,
+    removeFromGroup,
+    dissolveGroup,
+    pasteElements,
+    deleteElementsWithHistory,
+    writeClipboard,
+    pushAction,
+    hideElement,
+    hideElements,
+    showElement,
+    showElements,
+    activeTabId,
+    extraTabIds,
+    canvasTabs,
+    addTabMembers,
+    removeTabMembers,
+    excludeFromTab,
+    setActiveTab,
+    createTab,
+    saveTabViewport,
+    findPaths,
+    findAllPaths,
+    setSidePanelTab,
+    t,
+    tPages,
+  });
   // Double-click detection for edges (since onEdgeDoubleClick doesn't work reliably)
   const edgeClickCountRef = useRef<{ id: string; count: number; timer: ReturnType<typeof setTimeout> | null }>({
     id: '',
@@ -3423,13 +2319,11 @@ export function Canvas() {
     timer: null,
   });
 
-  // Handle edge click (with double-click detection)
   const handleEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       // Shift / Ctrl / Cmd adds the link to the selection, or removes it
       const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
 
-      // Double-click detection
       const clickData = edgeClickCountRef.current;
 
       if (clickData.id === edge.id) {
@@ -3461,30 +2355,6 @@ export function Canvas() {
     [selectLink, toggleLink, startEditingLink]
   );
 
-  // Link suggestions for the selected elements, shown in their side-panel tab
-  const handleSuggestLinks = useCallback(() => {
-    useSuggestionsStore.getState().analyze(getSelectedElementIds());
-    useUIStore.getState().setSidePanelTab('suggestions');
-  }, [getSelectedElementIds]);
-
-  // Links shown on the canvas (filters, tab, hidden elements applied) touching
-  // the selected elements — or all of them when nothing is selected.
-  const handleSelectLinks = useCallback(() => {
-    const selected = useSelectionStore.getState().selectedElementIds;
-    // Overview: React Flow has no edges, the scene holds every drawn link
-    const scene = overviewSceneRef.current;
-    if (overviewActiveRef.current && scene) {
-      const picked: number[] = [];
-      for (let i = 0; i < scene.nodeCount; i++) if (selected.size === 0 || selected.has(scene.ids[i])) picked.push(i);
-      selectLinks(linksTouching(scene, picked));
-      return;
-    }
-    const ids = allEdges
-      .filter((edge) => selected.size === 0 || selected.has(edge.source) || selected.has(edge.target))
-      .map((edge) => edge.id);
-    selectLinks(ids);
-  }, [allEdges, selectLinks]);
-
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
   useEffect(() => {
     // Small delay to ensure the component is fully rendered
@@ -3494,276 +2364,30 @@ export function Canvas() {
     return () => clearTimeout(timer);
   }, []);
 
-  // State for import placement in progress
-  const [isImportingPlacement, setIsImportingPlacement] = useState(false);
+  const { isImportingPlacement, placeImport } = useImportPlacement({
+    reactFlowWrapper,
+    elements,
+    activeTabId,
+    addTabMembers,
+    pasteElements,
+    updateElement,
+    addAsset,
+    loadDossier,
+    pushAction,
+    selectElements,
+    exitImportPlacementMode,
+    requestFitView,
+    tPages,
+  });
 
   /** Click reach around a link drawn on a canvas, in screen pixels. */
   const LINK_HIT_TOLERANCE_PX = 4;
   /** More links than this under the click: a dense tangle, the click clears the selection. */
   const LINK_HIT_MAX_IN_REACH = 2;
 
-  // Handle pane click (deselect or placement import)
   const handlePaneClick = useCallback(async (event: React.MouseEvent) => {
-    // If in import placement mode, handle the placement
     if (importPlacementMode && importPlacementData && !isImportingPlacement) {
-      setIsImportingPlacement(true);
-
-      try {
-        // Counted for the progress shown in the placement bar
-        await withImportProgress(async () => {
-          // Calculate flow position from click
-          const viewport = useViewStore.getState().viewport;
-          if (!reactFlowWrapper.current) return;
-          const bounds = reactFlowWrapper.current.getBoundingClientRect();
-          const flowPosition = {
-            x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
-            y: (event.clientY - bounds.top - viewport.y) / viewport.zoom,
-          };
-
-          // Calculate offset: we want the top-left of the bounding box to be at the click position
-          const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
-          const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
-
-          // ── Pre-built elements/links (e.g. JSON mapping import): shift to click + paste ──
-          if (importPlacementData.prebuilt) {
-            const shifted = importPlacementData.prebuilt.elements.map((el) => ({
-              ...el,
-              position: { x: el.position.x + offsetX, y: el.position.y + offsetY },
-            }));
-            const placedLinks = importPlacementData.prebuilt.links;
-            pasteElements(shifted, placedLinks);
-            const placedIds = shifted.map((e) => e.id);
-            if (activeTabId) addTabMembers(activeTabId, placedIds);
-            // Events for elements already in the dossier: added to them, and
-            // taken back by the same undo as the elements created
-            const before: { id: string; changes: Partial<Element> }[] = [];
-            const calls: { kind: 'elements'; ids: string[]; changes: Partial<Element> }[] = [];
-            let attachedEvents = 0;
-            for (const { elementId, events } of importPlacementData.prebuilt.attached ?? []) {
-              const current = useDossierStore.getState().elements.find((el) => el.id === elementId);
-              if (!current) continue;
-              const merged = [...(current.events ?? []), ...events];
-              before.push({ id: elementId, changes: { events: current.events ?? [] } });
-              calls.push({ kind: 'elements', ids: [elementId], changes: { events: merged } });
-              await updateElement(elementId, { events: merged });
-              attachedEvents += events.length;
-            }
-            pushAction({
-              type: 'create-elements',
-              undo: before.length > 0 ? { bulkElements: before } : {},
-              redo: {
-                elements: shifted, links: placedLinks, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id),
-                ...(calls.length > 0 ? { bulkCalls: calls } : {}),
-              },
-            });
-            selectElements([...placedIds, ...before.map((b) => b.id)]);
-            toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
-            if (before.length > 0) {
-              toast.info(tPages('dossier.importPlacement.attached', { count: before.length, events: attachedEvents }));
-            }
-            importPlacementData.onComplete?.();
-            setIsImportingPlacement(false);
-            exitImportPlacementMode();
-
-            // Download + attach media assets (after creation). Network-dependent (CORS):
-            // attach what succeeds, report failures. Runs async; doesn't block placement.
-            const assetJobs = importPlacementData.prebuilt.assets ?? [];
-            if (assetJobs.length > 0) {
-              void (async () => {
-                let ok = 0, fail = 0;
-                for (const job of assetJobs) {
-                  for (const url of job.urls) {
-                    try {
-                      const res = await fetch(url);
-                      if (!res.ok) { fail++; continue; }
-                      const blob = await res.blob();
-                      if (blob.size > 50 * 1024 * 1024) { fail++; continue; } // 50 MB hard cap
-                      const name = (url.split('/').pop() || 'media').split('?')[0] || 'media';
-                      await addAsset(job.elementId, new File([blob], name, { type: blob.type || 'application/octet-stream' }));
-                      ok++;
-                    } catch { fail++; }
-                  }
-                }
-                if (ok > 0 || fail > 0) toast.success(tPages('dossier.importPlacement.mediaResult', { ok, fail }));
-              })();
-            }
-            return;
-          }
-
-          if (!importPlacementData.file) { setIsImportingPlacement(false); exitImportPlacementMode(); return; }
-          let result: Awaited<ReturnType<typeof importService.importFromZip>>;
-          const fileName = importPlacementData.file.name.toLowerCase();
-          // Snapshot element IDs before import (for tab assignment after reload)
-          const preImportIds = new Set(elements.map(e => e.id));
-          const snapshot = await snapshotBeforeImport(importPlacementData.dossierId);
-
-          if (importPlacementData.fileContent != null) {
-            // ── Non-ZIP format: import then shift new elements ──
-            const content = importPlacementData.fileContent;
-            const invId = importPlacementData.dossierId;
-
-            const existingIds = snapshot.elementIds;
-            const geojsonOptions = importPlacementData.importOptions?.geojson;
-
-            // Dispatch to the appropriate import function
-            if (geojsonOptions || fileName.endsWith('.geojson')) {
-              result = await importService.importFromGeoJSON(content, invId, geojsonOptions);
-            } else if (fileName.endsWith('.osintracker')) {
-              result = await importService.importFromOsintracker(content, invId);
-            } else if (fileName.endsWith('.csv')) {
-              result = await importService.importFromCSV(content, invId, {
-                createMissingElements: importPlacementData.importOptions?.createMissingElements ?? true,
-              });
-            } else if (fileName.endsWith('.gexf')) {
-              const { importGEXF } = await import('../../services/importGephi');
-              result = await importGEXF(content, invId);
-            } else if (fileName.endsWith('.gml')) {
-              const { importGML } = await import('../../services/importGML');
-              result = await importGML(content, invId);
-            } else if (fileName.endsWith('.anx')) {
-              const { importANX } = await import('../../services/importANX');
-              result = await importANX(content, invId);
-            } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml') || fileName.endsWith('.drawio')) {
-              const { isANXFormat } = await import('../../services/importANX');
-              const { isDrawioFormat, importDrawio } = await import('../../services/importDrawio');
-              if (isDrawioFormat(content)) {
-                result = await importDrawio(content, invId);
-              } else if (isANXFormat(content)) {
-                const { importANX } = await import('../../services/importANX');
-                result = await importANX(content, invId);
-              } else {
-                result = await importService.importFromGraphML(content, invId);
-              }
-            } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {
-              result = await importService.importFromGenealogy(importPlacementData.file, invId);
-            } else if (fileName.endsWith('.txt') || fileName.endsWith('.fec')) {
-              const { importFEC, isFECFormat } = await import('../../services/importFEC');
-              result = isFECFormat(content)
-                ? await importFEC(content, invId, importPlacementData.importOptions?.fec)
-                : { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
-            } else if (fileName.endsWith('.json') || fileName.endsWith('.excalidraw')) {
-              result = await importService.importFromJSON(content, invId);
-            } else {
-              // Fallback: try JSON
-              try {
-                JSON.parse(content);
-                result = await importService.importFromJSON(content, invId);
-              } catch {
-                result = { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
-              }
-            }
-
-            // Shift newly created elements to the click position
-            if (result.success && result.elementsImported > 0) {
-              const allElements = await elementRepository.getByDossier(invId);
-              const newElements = allElements.filter(e => !existingIds.has(e.id));
-
-              if (newElements.length > 0) {
-                // Compute bounding box of new elements
-                let minX = Infinity, minY = Infinity;
-                for (const el of newElements) {
-                  if (el.position.x < minX) minX = el.position.x;
-                  if (el.position.y < minY) minY = el.position.y;
-                }
-
-                // Shift so top-left of new elements lands at click position
-                const shiftX = flowPosition.x - minX;
-                const shiftY = flowPosition.y - minY;
-
-                const positionUpdates = newElements.map(el => ({
-                  id: el.id,
-                  position: {
-                    x: el.position.x + shiftX,
-                    y: el.position.y + shiftY,
-                  },
-                }));
-
-                await elementRepository.updatePositions(positionUpdates);
-              }
-            }
-          } else {
-            // ── ZIP format: import with built-in offset ──
-            result = await importService.importFromZip(
-              importPlacementData.file,
-              importPlacementData.dossierId,
-              { x: offsetX, y: offsetY },
-              importPlacementData.importOptions?.zipTabs,
-            );
-          }
-
-          if (result.success) {
-            toast.success(tPages('dossier.importPlacement.success', {
-              count: result.elementsImported
-            }));
-
-            // The import wrote to Dexie: bring it into the open Y.Doc (kept, with
-            // its comments and shared session), then reload assets and report.
-            await commitImportToYDoc(snapshot, importFormatOf(importPlacementData.file?.name));
-            await loadDossier(importPlacementData.dossierId);
-
-            // Request fitView to show all elements including imported ones
-            requestFitView();
-
-            // Chosen archive tabs: into the dossier's tab of the same name, or a
-            // new one; what no tab takes goes to the open tab
-            const placed = new Set<string>(result.linkedOnlyIds ?? []);
-            const createdTabIds: string[] = [];
-            for (const plan of result.tabPlan ?? []) {
-              if (plan.memberIds.length === 0) continue;
-              const { tabs } = useTabStore.getState();
-              const key = plan.name.trim().toLowerCase();
-              let target = tabs.find((tab) => tab.name.trim().toLowerCase() === key) ?? null;
-              if (!target) {
-                target = await useTabStore.getState().createTab(importPlacementData.dossierId, plan.name);
-                createdTabIds.push(target.id);
-              }
-              await addTabMembers(target.id, plan.memberIds);
-              plan.memberIds.forEach((id) => placed.add(id));
-            }
-
-            // Add imported elements to active tab
-            if (activeTabId) {
-              const importedIds = useDossierStore.getState().elements
-                .filter(el => !preImportIds.has(el.id) && !placed.has(el.id))
-                .map(el => el.id);
-              if (importedIds.length > 0) {
-                addTabMembers(activeTabId, importedIds);
-              }
-            }
-
-            // One undoable action: Ctrl+Z removes what the import added (and the
-            // tabs it created); the imported elements stay selected
-            {
-              const after = useDossierStore.getState();
-              const newElements = after.elements.filter((el) => !preImportIds.has(el.id));
-              const newLinks = after.links.filter((l) => !snapshot.linkIds.has(l.id));
-              if (newElements.length > 0) {
-                pushAction({
-                  type: 'create-elements',
-                  undo: { createdTabIds },
-                  redo: {
-                    elements: newElements,
-                    links: newLinks,
-                    elementIds: newElements.map((el) => el.id),
-                    linkIds: newLinks.map((l) => l.id),
-                  },
-                });
-                selectElements(newElements.map((el) => el.id));
-              }
-            }
-
-            // Call completion callback if provided
-            importPlacementData.onComplete?.();
-          } else {
-            toast.error(result.errors[0] || tPages('dossier.importPlacement.error'));
-          }
-        });
-      } catch {
-        toast.error(tPages('dossier.importPlacement.error'));
-      } finally {
-        setIsImportingPlacement(false);
-        exitImportPlacementMode();
-      }
+      await placeImport(event, importPlacementData);
       return;
     }
 
@@ -3800,9 +2424,8 @@ export function Canvas() {
     // Also reset any Insights highlight (bridges, clusters, centrality…) so a
     // click on empty canvas restores the normal display.
     clearHighlight();
-  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset, updateElement]);
+  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, placeImport]);
 
-  // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
       if (!reactFlowWrapper.current) return;
@@ -3843,7 +2466,6 @@ export function Canvas() {
       if (now - lastElementCreatedAtRef.current < 500) return;
       lastElementCreatedAtRef.current = now;
 
-      // Get position relative to the flow
       const viewport = useViewStore.getState().viewport;
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = {
@@ -3853,12 +2475,10 @@ export function Canvas() {
 
       const newElement = await createElement(t('labels.newElement'), position);
 
-      // Auto-add to active tab
       if (activeTabId) {
         addTabMembers(activeTabId, [newElement.id]);
       }
 
-      // Save for undo
       pushAction({
         type: 'create-element',
         undo: {},
@@ -3892,7 +2512,6 @@ export function Canvas() {
     [selectLink, startEditingLink]
   );
 
-  // Handle file drop on canvas
   const handleFileDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
@@ -3902,7 +2521,6 @@ export function Canvas() {
       if (files.length === 0) return;
       if (!reactFlowWrapper.current) return;
 
-      // Get drop position
       const viewport = useViewStore.getState().viewport;
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const basePosition = {
@@ -3958,11 +2576,9 @@ export function Canvas() {
           y: basePosition.y + i * 20,
         };
 
-        // Use filename as element label
         const label = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
         const newElement = await createElement(label, position, { date: new Date() });
         createdElements.push(newElement);
-        // Auto-add to active tab
         if (activeTabId) {
           addTabMembers(activeTabId, [newElement.id]);
         }
@@ -4013,450 +2629,50 @@ export function Canvas() {
     }
   }, []);
 
-  // Undo/redo go through the history store: one implementation for every
-  // entry point, and the replay marked as such (asUndo) for plugin events
-  const handleUndo = useCallback(() => useHistoryStore.getState().undo(), []);
-  const handleRedo = useCallback(() => useHistoryStore.getState().redo(), []);
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = async (event: KeyboardEvent) => {
-      const viewport = useViewStore.getState().viewport;
-      // Ignore if typing in an input or editable element
-      const target = event.target as HTMLElement;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target.isContentEditable ||
-        target.closest('[contenteditable="true"]')
-      ) {
-        return;
-      }
-
-      const isCtrlOrMeta = event.ctrlKey || event.metaKey;
-
-      // Escape: deselect all
-      if (event.key === 'Escape') {
-        clearSelection();
-        return;
-      }
-
-      // Arrow keys: move selected elements (1px, +Shift = 10px)
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        const selectedEls = getSelectedElementIds();
-        if (selectedEls.length === 0) return;
-        event.preventDefault();
-        const step = event.shiftKey ? 10 : 1;
-        const dx = event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0;
-        const dy = event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0;
-        const movableEls = elements.filter(el => selectedEls.includes(el.id) && !el.isPositionLocked);
-        if (movableEls.length === 0) return;
-        const undoPositions = movableEls.map(el => ({ id: el.id, position: { ...el.position } }));
-        const redoPositions = movableEls.map(el => ({
-          id: el.id,
-          position: { x: el.position.x + dx, y: el.position.y + dy },
-        }));
-        updateElementPositions(redoPositions);
-        pushAction({
-          type: 'move-elements',
-          undo: { positions: undoPositions },
-          redo: { positions: redoPositions },
-        });
-        return;
-      }
-
-      // Delete selected elements. The canvas's own key handler (focus on the
-      // canvas) may have done it already: it bubbles here first. Twice would
-      // stack two history entries, the second without tab membership, and an
-      // undo would bring the elements back outside their tabs.
-      if ((event.key === 'Delete' || event.key === 'Backspace') && !event.defaultPrevented) {
-        event.preventDefault();
-        const selectedEls = getSelectedElementIds();
-        const selectedLks = getSelectedLinkIds();
-
-        if (selectedEls.length > 0) {
-          await deleteElementsWithHistory(selectedEls);
-        }
-        if (selectedLks.length > 0) {
-          const linksToDelete = links.filter(l => selectedLks.includes(l.id));
-          pushAction({
-            type: 'delete-link',
-            undo: { links: linksToDelete },
-            redo: { linkIds: selectedLks },
-          });
-          await deleteLinks(selectedLks);
-        }
-        clearSelection();
-      }
-
-      // Select all visible links with Ctrl+Shift+A
-      if (event.key.toLowerCase() === 'a' && isCtrlOrMeta && event.shiftKey) {
-        event.preventDefault();
-        selectLinks(allEdges.map((edge) => edge.id));
-        return;
-      }
-
-      // Select all with Ctrl+A (only visible elements in active tab)
-      if (event.key === 'a' && isCtrlOrMeta) {
-        event.preventDefault();
-        const visibleIds = activeTabId !== null
-          ? elements.filter((el) => tabMemberSet.has(el.id)).map((el) => el.id)
-          : elements.map((el) => el.id);
-        selectElements(visibleIds);
-      }
-
-      // Text selected in a preview (PDF, text file): let the browser copy it.
-      // Writing elements to the clipboard here would overwrite it right after.
-      if ((event.key === 'c' || event.key === 'x') && isCtrlOrMeta && window.getSelection()?.toString()) {
-        return;
-      }
-
-      // Copy with Ctrl+C
-      if (event.key === 'c' && isCtrlOrMeta) {
-        const selectedEls = getSelectedElementIds();
-        if (selectedEls.length > 0) {
-          writeClipboard(elements.filter(el => selectedEls.includes(el.id)), [...selectedLinkIds]);
-        }
-      }
-
-      // Cut with Ctrl+X
-      if (event.key === 'x' && isCtrlOrMeta) {
-        event.preventDefault();
-        const selectedEls = getSelectedElementIds();
-        if (selectedEls.length > 0) {
-          const elsToCut = elements.filter(el => selectedEls.includes(el.id));
-          writeClipboard(elsToCut, [...selectedLinkIds]);
-          await deleteElementsWithHistory(selectedEls);
-          clearSelection();
-        }
-      }
-
-      // Duplicate with Ctrl+D
-      if (event.key === 'd' && isCtrlOrMeta) {
-        event.preventDefault();
-        const selectedEls = getSelectedElementIds();
-        if (selectedEls.length > 0) {
-          const elsToDuplicate = elements.filter(el => selectedEls.includes(el.id));
-          const now = new Date();
-          const offset = 40;
-          const oldToNewIdMap = new Map<string, string>();
-
-          const newElements: Element[] = elsToDuplicate.map(el => {
-            const newId = generateUUID();
-            oldToNewIdMap.set(el.id, newId);
-            return {
-              ...el,
-              id: newId,
-              dossierId: currentDossier!.id,
-              position: {
-                x: el.position.x + offset,
-                y: el.position.y + offset,
-              },
-              parentGroupId: el.parentGroupId && oldToNewIdMap.has(el.parentGroupId)
-                ? oldToNewIdMap.get(el.parentGroupId)!
-                : null,
-              createdAt: now,
-              updatedAt: now,
-            };
-          });
-
-          // Build links between duplicated elements
-          const selectedSet = new Set(selectedEls);
-          const relevantLinks = links.filter(l =>
-            selectedSet.has(l.fromId) && selectedSet.has(l.toId)
-          );
-          const newLinks: Link[] = relevantLinks.map(link => ({
-            ...link,
-            id: generateUUID(),
-            dossierId: currentDossier!.id,
-            fromId: oldToNewIdMap.get(link.fromId)!,
-            toId: oldToNewIdMap.get(link.toId)!,
-            createdAt: now,
-            updatedAt: now,
-          })).filter(l => l.fromId && l.toId);
-
-          // Single Y.js transaction
-          pasteElements(newElements, newLinks);
-
-          // Save for undo (include both element and link IDs)
-          const newElementIds = newElements.map(el => el.id);
-          if (activeTabId) {
-            addTabMembers(activeTabId, newElementIds);
-          }
-          const newLinkIds = newLinks.map(l => l.id);
-          pushAction({
-            type: 'create-elements',
-            undo: {},
-            redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
-          });
-          selectElements(newElementIds);
-        }
-      }
-
-      // New element with E (no modifier) at cursor position
-      if (event.key === 'e' && !isCtrlOrMeta && !event.shiftKey && !event.altKey) {
-        event.preventDefault();
-        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-        const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
-        const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
-        const el = await createElement('', { x: mx, y: my });
-        if (activeTabId) addTabMembers(activeTabId, [el.id]);
-        pushAction({ type: 'create-element', undo: {}, redo: { elements: [el], elementIds: [el.id] } });
-        selectElement(el.id);
-      }
-
-      // New note with N (no modifier) at cursor position
-      if (event.key === 'n' && !isCtrlOrMeta && !event.shiftKey && !event.altKey) {
-        event.preventDefault();
-        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-        const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
-        const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
-        const annotation = await createElement('', { x: mx, y: my }, {
-          isAnnotation: true,
-          notes: '',
-          visual: { color: '#ffffff', borderColor: '#e5e7eb', shape: 'rectangle', size: 'medium', icon: null, image: null, customWidth: 200 },
-        });
-        if (activeTabId) addTabMembers(activeTabId, [annotation.id]);
-        pushAction({ type: 'create-element', undo: {}, redo: { elements: [annotation], elementIds: [annotation.id] } });
-        selectElement(annotation.id);
-      }
-
-      // New visual group with G (no modifier) at cursor position
-      if (event.key === 'g' && !isCtrlOrMeta && !event.shiftKey && !event.altKey) {
-        event.preventDefault();
-        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-        const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
-        const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
-        const group = await createGroup('Groupe', { x: mx, y: my }, { width: 300, height: 200 });
-        pushAction({
-          type: 'create-element',
-          undo: {},
-          redo: { elements: [group], elementIds: [group.id] },
-        });
-        selectElement(group.id);
-      }
-
-      // Undo with Ctrl+Z
-      if (event.key === 'z' && isCtrlOrMeta && !event.shiftKey) {
-        event.preventDefault();
-        await handleUndo();
-      }
-
-      // Redo with Ctrl+Shift+Z or Ctrl+Y
-      if ((event.key === 'z' && isCtrlOrMeta && event.shiftKey) ||
-          (event.key === 'y' && isCtrlOrMeta)) {
-        event.preventDefault();
-        await handleRedo();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
+  useCanvasKeyboard({
+    reactFlowWrapper,
+    lastMousePosRef,
+    elements,
+    links,
+    allEdges,
+    currentDossier,
+    selectedLinkIds,
     getSelectedElementIds,
     getSelectedLinkIds,
-    selectedLinkIds,
-    deleteElementsWithHistory,
-    deleteLinks,
     clearSelection,
     selectElements,
     selectElement,
     selectLinks,
-    allEdges,
+    deleteElementsWithHistory,
+    deleteLinks,
     createElement,
     createGroup,
     pasteElements,
-    currentDossier,
-    elements,
-    links,
+    updateElementPositions,
     pushAction,
-    handleUndo,
-    handleRedo,
     writeClipboard,
     activeTabId,
     tabMemberSet,
     addTabMembers,
-    updateElementPositions,
-  ]);
+  });
 
-  // Handle paste (Ctrl+V) for elements or media
-  useEffect(() => {
-    const handlePaste = async (event: ClipboardEvent) => {
-      // Ignore if typing in an input
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      // Calculate paste position: mouse cursor if inside canvas, fallback to viewport center
-      const viewport = useViewStore.getState().viewport;
-      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-      const mouseX = lastMousePosRef.current.x;
-      const mouseY = lastMousePosRef.current.y;
-      const mouseInCanvas = bounds && mouseX >= bounds.left && mouseX <= bounds.right && mouseY >= bounds.top && mouseY <= bounds.bottom;
-      const centerX = mouseInCanvas
-        ? (mouseX - bounds.left - viewport.x) / viewport.zoom
-        : (-viewport.x + (reactFlowWrapper.current?.clientWidth || 800) / 2) / viewport.zoom;
-      const centerY = mouseInCanvas
-        ? (mouseY - bounds.top - viewport.y) / viewport.zoom
-        : (-viewport.y + (reactFlowWrapper.current?.clientHeight || 600) / 2) / viewport.zoom;
-
-      // Check clipboard text for our marker (to know if last copy was internal elements)
-      const clipboardText = event.clipboardData?.getData('text/plain') || '';
-      const hasInternalCopyMarker = clipboardText.startsWith(CLIPBOARD_MARKER);
-
-      // Collect files from clipboard (only if NO internal marker - external copy overwrites marker)
-      let files: File[] = [];
-      if (!hasInternalCopyMarker) {
-        const items = event.clipboardData?.items;
-        if (items) {
-          for (const item of items) {
-            if (item.kind === 'file') {
-              const file = item.getAsFile();
-              if (file) files.push(file);
-            }
-          }
-        }
-
-        // Deduplicate: if all files have generic names (image.xxx, blob, etc.), keep only the first
-        // This handles clipboard having multiple representations of the same image
-        if (files.length > 1) {
-          const allGeneric = files.every(f => /^(image|blob|pasted-|Capture|Screenshot)/i.test(f.name));
-          if (allGeneric) {
-            files = [files[0]];
-          }
-        }
-      }
-
-      // PRIORITY 0: External JSON text. A recognized format (ZN native, GeoJSON,
-      // STIX2, Excalidraw, OSINT Industries…) goes through the standard import
-      // (placement mode); otherwise, generic JSON opens the field mapper.
-      const trimmedClip = clipboardText.trim();
-
-      // PRIORITY 0a: Mermaid flowchart text (e.g. produced by an LLM) → placement mode
-      const inRichText = event.target instanceof HTMLElement && event.target.isContentEditable;
-      if (!inRichText && !hasInternalCopyMarker && files.length === 0 && currentDossier && isMermaidFlowchart(trimmedClip)) {
-        event.preventDefault();
-        const res = startMermaidPlacement(trimmedClip, currentDossier.id);
-        if (!res.ok) toast.error(res.error);
-        return;
-      }
-      // PRIORITY 0b: DOT graph (Graphviz, tool output) → placement mode
-      if (!inRichText && !hasInternalCopyMarker && files.length === 0 && currentDossier && isDotGraph(trimmedClip)) {
-        event.preventDefault();
-        const res = startDotPlacement(trimmedClip, currentDossier.id);
-        if (!res.ok) toast.error(res.error);
-        return;
-      }
-      if (!hasInternalCopyMarker && files.length === 0 && (trimmedClip.startsWith('{') || trimmedClip.startsWith('['))) {
-        try {
-          const data = JSON.parse(trimmedClip);
-          const format = importService.detectJsonFormat(data);
-          if (format !== 'unknown') {
-            // Known format → enter import placement mode with the pasted content
-            event.preventDefault();
-            if (currentDossier) {
-              const count = Array.isArray(data) ? data.length
-                : Array.isArray((data as { elements?: unknown[] }).elements) ? (data as { elements: unknown[] }).elements.length
-                : Array.isArray((data as { features?: unknown[] }).features) ? (data as { features: unknown[] }).features.length
-                : Array.isArray((data as { objects?: unknown[] }).objects) ? (data as { objects: unknown[] }).objects.length
-                : Array.isArray((data as { nodes?: unknown[] }).nodes) ? (data as { nodes: unknown[] }).nodes.length
-                : 10;
-              const grid = Math.ceil(Math.sqrt(Math.max(count, 1)));
-              const w = grid * 200, h = grid * 150;
-              useUIStore.getState().enterImportPlacementMode({
-                boundingBox: { minX: 0, minY: 0, maxX: w, maxY: h, width: w, height: h, elementCount: count },
-                file: new File([trimmedClip], 'pasted.json', { type: 'application/json' }),
-                dossierId: currentDossier.id,
-                fileContent: trimmedClip,
-                importOptions: { createMissingElements: true },
-              });
-            }
-            return;
-          }
-          if (isMappableJson(data)) {
-            // Unknown format but mappable → open the generic field mapper
-            event.preventDefault();
-            window.dispatchEvent(new CustomEvent('zn:json-mapping-paste', { detail: { text: trimmedClip } }));
-            return;
-          }
-        } catch { /* not JSON — fall through to normal paste handling */ }
-      }
-
-      // PRIORITY 1: External files (no internal marker means user copied externally)
-      if (files.length > 0) {
-        // If an element is selected, let AssetsPanel handle the paste
-        // (it will add the file to the selected element instead of creating a new one)
-        const selectedIds = getSelectedElementIds();
-        if (selectedIds.length > 0) {
-          return; // AssetsPanel will handle this via its own paste listener
-        }
-
-        // No element selected: create new element with the first file only
-        event.preventDefault();
-
-        const file = files[0];
-        const position = { x: centerX, y: centerY };
-        const label = file.name.replace(/\.[^/.]+$/, '') || 'Image';
-
-        const newElement = await createElement(label, position, { date: new Date() });
-        // Auto-add to active tab
-        if (activeTabId) {
-          addTabMembers(activeTabId, [newElement.id]);
-        }
-        try {
-          await addAsset(newElement.id, file);
-        } catch (err) {
-          console.error('Failed to add asset:', err);
-        }
-
-        // Save for undo
-        pushAction({
-          type: 'create-element',
-          undo: {},
-          redo: { elements: [newElement], elementIds: [newElement.id] },
-        });
-
-        // Select the created element
-        selectElements([newElement.id]);
-        return;
-      }
-
-      // PRIORITY 2: Internal copied elements (marker present)
-      const clip = useClipboardStore.getState();
-      if (clip.elements.length > 0 && currentDossier) {
-        event.preventDefault();
-
-        const { newElements, newLinks } = cloneClipboardForPaste(clip, currentDossier.id, centerX, centerY);
-
-        // Single Y.js transaction for all elements + links
-        pasteElements(newElements, newLinks);
-
-        // Save for undo (include both element and link IDs)
-        const newElementIds = newElements.map(el => el.id);
-        if (activeTabId) {
-          addTabMembers(activeTabId, newElementIds);
-        }
-        const newLinkIds = newLinks.map(l => l.id);
-        pushAction({
-          type: 'create-elements',
-          undo: {},
-          redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
-        });
-
-        // Select all pasted elements
-        selectElements(newElementIds);
-        return;
-      }
-
-      // No files and no copied elements - nothing to paste
-    };
-
-    window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
-  }, [pasteElements, currentDossier, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
+  const { handleCanvasContextMenuPaste } = useCanvasPaste({
+    reactFlowWrapper,
+    lastMousePosRef,
+    clipboardMarker: CLIPBOARD_MARKER,
+    canvasContextMenu,
+    elements,
+    links,
+    currentDossier,
+    getSelectedElementIds,
+    selectElements,
+    createElement,
+    addAsset,
+    pasteElements,
+    pushAction,
+    activeTabId,
+    addTabMembers,
+  });
 
   // Halo scale at load and after a programmatic viewport change (fit, tab
   // switch). Followed outside React: a re-render per zoom frame would cost more.
@@ -4469,7 +2685,6 @@ export function Canvas() {
     });
   }, []);
 
-  // Handle viewport change
   const handleViewportChange = useCallback(
     ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       setViewport({ x, y, zoom });
@@ -4532,7 +2747,6 @@ export function Canvas() {
     ({ nodes: selectedNodes, edges: selectedEdges }: { nodes: Node[]; edges: Edge[] }) => {
       if (isHandlingSelectionRef.current) return;
 
-      // Store the latest selection and throttle the update
       pendingSelectionRef.current = { nodes: selectedNodes, edges: selectedEdges };
 
       if (selectionChangeTimerRef.current) return; // already scheduled

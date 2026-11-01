@@ -13,8 +13,6 @@
     "lightMode": "Modu argia",
     "noDossiers": "Espedienterik ez",
     "createFirst": "Sortu zure lehen espediente hasteko",
-    "viewDossiers": "Espedientek ikusi",
-    "dossierCount": "{{count}} espediente",
     "loading": "Kargatzen...",
     "searchPlaceholder": "Izenaren edo deskribapenen arabera bilatu...",
     "filterByTag": "Etiketaren arabera iragazi",
@@ -24,7 +22,6 @@
     "activeFilters": "Iragazki aktiboak",
     "clearFilters": "Garbitu",
     "noResults": "Ez da espedienterik aurkitu",
-    "noResultsHint": "Saiatu beste termino batzuekin edo garbitu iragazkiak",
     "resultsCount": "{{count}} / {{total}} espediente",
     "card": {
       "modified": "Aldatua {{time}}",
@@ -119,11 +116,6 @@
     },
     "toolbar": {
       "select": "Hautapena",
-      "pan": "Mugimendua",
-      "addElement": "Elementua gehitu",
-      "addGroup": "Taldea gehitu",
-      "addAnnotation": "Oharpena gehitu",
-      "autoLayout": "Antolamendu automatikoa",
       "fitView": "Ikuspegia doitu",
       "zoomIn": "Handitu",
       "zoomOut": "Txikitu",
@@ -136,9 +128,6 @@
       "temporalUndatedHide": "Ezkutatu datarik gabekoak",
       "temporalUndatedShow": "Erakutsi datarik gabekoak (grisez)",
       "hideMinimap": "Minimapa ezkutatu",
-      "closeEsc": "Itxi (Esc)",
-      "close": "Itxi",
-      "loading": "Kargatzen...",
       "oneElement": "Elementu 1",
       "oneLink": "Lotura 1",
       "selectedCount": "{{count}} hautatuta"
@@ -226,17 +215,6 @@
       "matrix": "Matrizea",
       "report": "Txostena"
     },
-    "panels": {
-      "detail": "Xehetasuna",
-      "filters": "Iragazkiak",
-      "insights": "Analisiak",
-      "views": "Ikuspegiak"
-    },
-    "emptyCanvas": {
-      "title": "Arbela hutsa",
-      "hint": "Klik bikoitza elementu bat sortzeko",
-      "orDrop": "edo fitxategiak jaregin"
-    },
     "importPlacement": {
       "instructions": "Egin klik inportatutako elementuak kokatzeko",
       "importing": "Inportatzen...",
@@ -302,25 +280,15 @@
       "noKeyObjectHint": "Ctrl+klik erreferentzia-elementu bat aukeratzeko"
     },
     "toast": {
-      "elementCreated": "Elementua sortuta",
-      "elementsDeleted": "{{count}} elementu ezabatuta",
-      "linkCreated": "Lotura sortuta",
-      "copied": "Arbelean kopiatuta",
-      "pasted": "{{count}} elementu itsatsita",
-      "saved": "Gordeta",
-      "exportSuccess": "Esportazioa bukatuta",
-      "exportError": "Errorea esportatzean",
       "assetTooLargeToShare": "Fitxategia handiegia da sinkronizatzeko ({{size}}, gehienez {{max}}). Lokalean erabilgarri dago, baina ez da partekatzen.",
       "assetLargeToShare": "Fitxategi handia ({{size}}): sinkronizazioa motela izan daiteke."
     },
     "notFound": "Espediente ez da aurkitu",
     "header": {
-      "report": "Sintesia",
       "generateReport": "Sintesia",
       "export": "Esportatu",
       "search": "Bilatu",
       "clearFilters": "Iragazkiak garbitu",
-      "activeFilters": "Iragazki aktiboak",
       "shortcuts": "Teklatuko lasterbideak",
       "documentation": "Dokumentazioa",
       "supportKofi": "Ko-fi-n lagundu",
@@ -345,9 +313,6 @@
       "moveHere": "Fitxa honetara eraman",
       "addToTab": "Fitxara gehitu...",
       "removeFromTab": "Fitxatik kendu",
-      "emptyState": "Fitxa honetan elementurik ez",
-      "emptyHint": "Egin eskuin-klik elementuetan gehitzeko",
-      "ghostBadge": "{{tabs}}(e)n",
       "navigateTo": "{{name}} fitxara joan",
       "combine": "Konbinatu",
       "uncombine": "Ez konbinatu",
@@ -358,7 +323,6 @@
     "retentionExpiredBanner": "Atxikipena iraungita duela {{days}} egun",
     "retentionDeleteConfirm": "Espediente hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",
     "retentionDeleteAction": "Ezabatu behin betiko",
-    "retentionReadonly": "Espediente irakurtzeko soilik (atxikipena iraungita)",
     "retentionRedactConfirm": "Zentzurak testu-eduki guztiak betiko ezabatuko ditu (izenak, oharrak, propietateak). Grafoaren egitura mantenduko da. Ekintza hau itzulezina da.",
     "retentionRedactAction": "Behin betiko zentzuratu",
     "opfsUnavailable": "Nabigatzaile honek (edo modu pribatuak) tokiko multimedia-biltegiratzea eragozten du: irudiak ez dira bistaratuko. Ireki espedientea leiho normal batean.",
@@ -376,7 +340,6 @@
     "offMapLinked": "Kokapenik gabeko {{count}} elementu lotu",
     "offMapSelectRest": "Hautatu beste {{count}}ak",
     "addLocation": "Gehitu koordenatuak elementuei mapan ikusteko",
-    "pickLocation": "Egin klik mapan posizioa ezartzeko",
     "elementsLocated": "{{count}} elementu kokatuta",
     "elementsLocatedFiltered": "{{kept}} / {{count}} elementu kokatuta",
     "density": "Dentsitatea",
@@ -431,25 +394,17 @@
     "zoneSquare": "Karratua",
     "editZone": "Editatu forma",
     "geometry": "Geometria",
-    "vertices": "Erpinak",
-    "area": "Azalera",
-    "center": "Erdigunea",
     "viewOnMap": "Ikusi mapan",
-    "deleteVertex": "Ezabatu erpin hau",
     "geoJsonSave": "Aplikatu",
     "geoJsonParseError": "JSON baliogabea",
     "geoJsonMinVertices": "Gutxienez 3 erpin",
     "geoJsonInvalidCoord": "Koordenatu baliogabea: [lng, lat]"
   },
   "timeline": {
-    "noEvents": "Ez dago datatutako gertaerarik",
-    "addDates": "Gehitu datak elementuei edo sortu gertaerak",
     "noTemporalData": "Ez dago denbora daturik",
     "howToAddTimeline": "Denbora-lerroan elementuak ikusteko:",
     "addPeriodToLinks": "Gehitu epealdia loturei (hasiera/amaiera data)",
     "addEventsToHistory": "Gehitu gertaerak elementuen historian",
-    "eventsCount": "{{count}} gertaera",
-    "zoomHint": "Ctrl+gurpila: zoom | Arrastatu: mugitu",
     "zoomPresetCentury": "Mendea",
     "zoomPresetDecade": "10 urte",
     "zoomPreset1Year": "Urte 1",
@@ -495,7 +450,6 @@
     "relation": "erlazioa",
     "newElement": "Elementu berria",
     "filter": "Iragazkia",
-    "filteredEventsCount": "{{filtered}}/{{total}} gertaera",
     "temporalFilter": "Aldia",
     "temporalFilterHint": "Aldi tenporalez iragazi",
     "stepBackward": "Hilabete bat atzera",
@@ -528,7 +482,6 @@
     "source": "Iturria",
     "count": "{{count}}/{{total}} elementu",
     "properties": "{{count}} propietate",
-    "search": "Bilatu...",
     "columns": "Zutabeak erakutsi/ezkutatu",
     "noResults": "Emaitzarik ez",
     "empty": "Propietateak dituen elementurik ez",
@@ -551,19 +504,11 @@
   },
   "report": {
     "title": "Txostena",
-    "untitled": "Izenik gabe",
     "addSection": "Sekzioa gehitu",
     "sections": {
-      "title": "Izenburua",
-      "text": "Testua",
-      "canvas": "Arbela",
-      "map": "Mapa",
-      "timeline": "Denbora-lerroa",
-      "table": "Taula",
-      "insights": "Analisiak"
+      "map": "Mapa"
     },
-    "export": "PDF gisa esportatu",
-    "print": "Inprimatu"
+    "export": "PDF gisa esportatu"
   },
   "join": {
     "title": "Saio batera batu",
@@ -616,12 +561,9 @@
   },
   "tutorial": {
     "start": "Tutorial gidatua",
-    "restart": "Tutoriala berrabiarazi",
-    "progress": "{{current}}/{{total}} urratsa",
     "next": "Hurrengoa",
     "skip": "Saltatu",
     "quit": "Irten",
-    "finish": "Amaitu",
     "deleteDossier": "Tutorialaren espedientea ezabatu",
     "keepDossier": "Gorde",
     "offTrack": {

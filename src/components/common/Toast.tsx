@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useToastStore, type ToastType } from '../../stores/toastStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const icons: Record<ToastType, typeof CheckCircle> = {
   success: CheckCircle,
@@ -25,7 +26,7 @@ const iconStyles: Record<ToastType, string> = {
 };
 
 export function ToastContainer() {
-  const { toasts, removeToast } = useToastStore();
+  const { toasts, removeToast } = useToastStore(useShallow((s) => ({ toasts: s.toasts, removeToast: s.removeToast })));
 
   if (toasts.length === 0) return null;
 

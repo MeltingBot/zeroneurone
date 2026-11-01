@@ -19,7 +19,7 @@ async function openPdfPreview(page: Page, pdf: Buffer) {
 
   // Uploading a PDF surfaces the metadata import prompt asynchronously, and
   // it overlays the panel. Wait for it, dismiss it, and wait for it to go.
-  const ignore = page.getByRole('button', { name: 'Ignorer' });
+  const ignore = page.getByRole('button', { name: /^(Ignorer|Ignore)$/ });
   await ignore.waitFor({ state: 'visible', timeout: 20_000 }).catch(() => { /* no metadata found */ });
   if (await ignore.isVisible().catch(() => false)) {
     await ignore.click();
@@ -292,7 +292,7 @@ test.describe('PDF preview', () => {
     writeFileSync(file, buildMinimalPdf());
     await page.setInputFiles('input[type="file"]', file);
 
-    const ignore = page.getByRole('button', { name: 'Ignorer' });
+    const ignore = page.getByRole('button', { name: /^(Ignorer|Ignore)$/ });
     await ignore.waitFor({ state: 'visible', timeout: 20_000 }).catch(() => { /* none found */ });
     if (await ignore.isVisible().catch(() => false)) {
       await ignore.click();
@@ -309,7 +309,7 @@ test.describe('PDF preview', () => {
 
     // Either the proposal reappears, or a toast says there was nothing to find.
     await expect(
-      page.getByRole('button', { name: 'Ignorer' }).or(page.getByRole('alert'))
+      page.getByRole('button', { name: /^(Ignorer|Ignore)$/ }).or(page.getByRole('alert'))
     ).toBeVisible({ timeout: 30_000 });
   });
 });

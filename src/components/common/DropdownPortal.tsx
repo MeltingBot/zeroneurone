@@ -57,7 +57,6 @@ export function DropdownPortal({
     // Second pass once the dropdown has been laid out (real size known)
     const rafId = requestAnimationFrame(updatePosition);
 
-    // Update position on scroll/resize
     window.addEventListener('scroll', updatePosition, true);
     window.addEventListener('resize', updatePosition);
 
@@ -75,12 +74,10 @@ export function DropdownPortal({
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
 
-      // Check if click is inside dropdown
       if (dropdownRef.current?.contains(target)) {
         return;
       }
 
-      // Check if click is inside anchor
       if (anchorRef.current?.contains(target)) {
         return;
       }
@@ -98,6 +95,20 @@ export function DropdownPortal({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, onClose, anchorRef]);
+
+  // Escape closes. Listened on document, after the dropdown's own fields
+  // (a field that handles Escape calls preventDefault), and stopped there so
+  // the page shortcuts on window (Escape deselects on the canvas) do not act.
+  useEffect(() => {
+    if (!isOpen || !onClose) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.stopPropagation();
+      onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

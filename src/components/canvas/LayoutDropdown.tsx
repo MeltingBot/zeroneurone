@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
 import { layoutService, CIRCULAR_MAX_ELEMENTS, type LayoutType } from '../../services/layoutService';
@@ -9,38 +9,24 @@ import { buildLayoutScope } from '../../utils/layoutScope';
 import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { useProgressStore } from '../../stores/progressStore';
 import { avoidObstacles } from '../../utils/avoidObstacles';
+import { DropdownPortal } from '../common/DropdownPortal';
+import { useShallow } from 'zustand/react/shallow';
 
 export function LayoutDropdown() {
   const { t } = useTranslation('pages');
   const [isOpen, setIsOpen] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => setIsOpen(false), []);
 
-  const { elements, links, updateElementPositions } = useDossierStore();
-  const { pushAction } = useHistoryStore();
+  const { elements, links, updateElementPositions } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, updateElementPositions: s.updateElementPositions })));
+  const { pushAction } = useHistoryStore(useShallow((s) => ({ pushAction: s.pushAction })));
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const tabs = useTabStore((s) => s.tabs);
   const extraTabIds = useTabStore((s) => s.extraTabIds);
   const viewTabIds = activeTabId === null ? [] : [activeTabId, ...extraTabIds];
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
 
   const handleApplyLayout = useCallback(async (layoutType: LayoutType) => {
     if (elements.length === 0) return;
@@ -170,8 +156,9 @@ export function LayoutDropdown() {
   }
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         disabled={isApplying || elements.length === 0}
         className="flex items-center gap-1 px-2 h-7 text-xs text-text-secondary hover:bg-bg-tertiary rounded border border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
@@ -186,8 +173,7 @@ export function LayoutDropdown() {
         <ChevronDown size={12} />
       </button>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-56 bg-bg-primary border border-border-default rounded shadow-lg z-50">
+      <DropdownPortal anchorRef={buttonRef} isOpen={isOpen} onClose={close} className="w-56">
           <div className="py-1">
             <div className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
               {t('dossier.layout.title')}
@@ -223,8 +209,7 @@ export function LayoutDropdown() {
               {t('dossier.layout.undoHint')}
             </p>
           </div>
-        </div>
-      )}
+      </DropdownPortal>
     </div>
   );
 }

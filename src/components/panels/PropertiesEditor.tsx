@@ -117,7 +117,6 @@ export function PropertiesEditor({
       s.key.toLowerCase().includes(newKey.toLowerCase())
   );
 
-  // Show dropdown when focused and there are suggestions available
   const shouldShowSuggestions = showSuggestions && suggestions.length > 0;
 
   const resetForm = useCallback(() => {
@@ -498,7 +497,6 @@ export function PropertiesEditor({
   );
 }
 
-// Property row component for displaying existing properties
 interface PropertyRowProps {
   property: Property;
   onUpdate: (value: Property['value']) => void;
@@ -886,7 +884,6 @@ function PropertyValueInput({
   }
 }
 
-// Country picker component
 interface CountryPickerProps {
   value: string;
   onChange: (value: string | null) => void;
@@ -1092,12 +1089,10 @@ function ChoicePicker({ value, choices, onChange, compact = false, t }: ChoicePi
     ? 'w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary'
     : 'w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary';
 
-  // Filter choices based on input value
   const filteredChoices = choices.filter(choice =>
     choice.toLowerCase().includes(inputValue.toLowerCase())
   );
 
-  // Check if current input matches exactly one of the choices
   const isExactMatch = choices.some(c => c.toLowerCase() === inputValue.toLowerCase());
   const showAddOption = inputValue.trim() && !isExactMatch && filteredChoices.length === 0;
 

@@ -7,11 +7,14 @@
  */
 
 import * as Y from 'yjs';
-import type { Element, ElementVisual, ElementEvent, Property, Position } from '../../types';
+import type { Element, ElementVisual, ElementEvent, GeoData, GeoPoint, GeoPolygon, Property, Position } from '../../types';
 import { normalizeGeo } from '../../utils/geo';
 import { sanitizeEvaluation } from '../../utils/evaluation';
 import { DEFAULT_ELEMENT_VISUAL } from '../../types';
-import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs, isDatePrecision } from '../../types/yjs';
+import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs, isDatePrecision, yFields, type YMeta, type YStored } from '../../types/yjs';
+
+/** Fields of a point or polygon geo, as found in legacy Y.Map / plain objects */
+type GeoFields = Omit<GeoPoint, 'type'> & Omit<GeoPolygon, 'type'> & { type: GeoData['type'] };
 
 /**
  * Thrown by yMapToElement when no valid position can be read from the Y.Map.
@@ -39,7 +42,7 @@ export class MissingPositionError extends Error {
  * Uses primitive values that can be set before the map is added to a document.
  * After the map is in the document, nested Y types will be converted on first update.
  */
-export function elementToYMap(element: Element): Y.Map<any> {
+export function elementToYMap(element: Element): Y.Map<unknown> {
   const map = new Y.Map();
 
   // Simple fields (primitives)
@@ -126,7 +129,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
  * Convert a Y.Map to an Element.
  * Handles both Y types and primitive values (for backward compatibility).
  */
-export function yMapToElement(ymap: Y.Map<any>): Element {
+export function yMapToElement(ymap: Y.Map<unknown>): Element {
   const notesRaw = ymap.get('notes');
   const tagsRaw = ymap.get('tags');
   const propsRaw = ymap.get('properties');
@@ -152,7 +155,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   // Handle properties - can be Y.Array of Y.Map or plain array
   let properties: Property[] = [];
   if (propsRaw instanceof Y.Array) {
-    properties = propsRaw.toArray().map((item: any) => {
+    properties = propsRaw.toArray().map((item) => {
       if (item instanceof Y.Map) {
         return parsePropertyFromYMap(item);
       }
@@ -196,36 +199,38 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   const dateRange = dateRangeFromYjs(dateRangeRaw);
 
   // Handle geo - can be Y.Map, plain object (GeoData), or null
-  let geo: import('../../types').GeoData | null = null;
+  let geo: GeoData | null = null;
   if (geoRaw instanceof Y.Map) {
     // Legacy Y.Map format: extract and normalize
-    const type = geoRaw.get('type');
+    const g = yFields<GeoFields>(geoRaw);
+    const type = g.get('type');
     if (type === 'polygon') {
       geo = {
         type: 'polygon',
-        coordinates: geoRaw.get('coordinates') ?? [],
-        center: geoRaw.get('center') ?? { lat: 0, lng: 0 },
-        ...(geoRaw.get('shapeOrigin') ? { shapeOrigin: geoRaw.get('shapeOrigin') } : {}),
-        ...(geoRaw.get('radius') != null ? { radius: geoRaw.get('radius') } : {}),
-        ...(geoRaw.get('altitude') != null ? { altitude: geoRaw.get('altitude') } : {}),
-        ...(geoRaw.get('extrude') != null ? { extrude: geoRaw.get('extrude') } : {}),
+        coordinates: g.get('coordinates') ?? [],
+        center: g.get('center') ?? { lat: 0, lng: 0 },
+        ...(g.get('shapeOrigin') ? { shapeOrigin: g.get('shapeOrigin') } : {}),
+        ...(g.get('radius') != null ? { radius: g.get('radius') } : {}),
+        ...(g.get('altitude') != null ? { altitude: g.get('altitude') } : {}),
+        ...(g.get('extrude') != null ? { extrude: g.get('extrude') } : {}),
       };
     } else {
-      geo = { type: 'point', lat: geoRaw.get('lat') ?? 0, lng: geoRaw.get('lng') ?? 0 };
+      geo = { type: 'point', lat: g.get('lat') ?? 0, lng: g.get('lng') ?? 0 };
     }
   } else if (geoRaw && typeof geoRaw === 'object') {
     // Plain object — normalize legacy format
-    if (geoRaw.type === 'point' || geoRaw.type === 'polygon') {
-      geo = geoRaw;
+    const g = geoRaw as Partial<GeoFields>;
+    if (g.type === 'point' || g.type === 'polygon') {
+      geo = geoRaw as GeoData;
     } else {
-      geo = { type: 'point', lat: geoRaw.lat ?? 0, lng: geoRaw.lng ?? 0 };
+      geo = { type: 'point', lat: g.lat ?? 0, lng: g.lng ?? 0 };
     }
   }
 
   // Handle events - can be Y.Array or plain array
   let events: ElementEvent[] = [];
   if (eventsRaw instanceof Y.Array) {
-    events = eventsRaw.toArray().map((item: any) => {
+    events = eventsRaw.toArray().map((item) => {
       if (item instanceof Y.Map) {
         return yMapToEvent(item);
       }
@@ -242,34 +247,36 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
 
   let visual = { ...DEFAULT_ELEMENT_VISUAL };
   if (visualRaw instanceof Y.Map) {
+    const v = yFields<ElementVisual>(visualRaw);
     visual = {
-      color: visualRaw.get('color') ?? DEFAULT_ELEMENT_VISUAL.color,
-      borderColor: visualRaw.get('borderColor') ?? DEFAULT_ELEMENT_VISUAL.borderColor,
-      borderWidth: visualRaw.get('borderWidth') ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
-      borderStyle: visualRaw.get('borderStyle') ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
-      shape: normalizeShape(visualRaw.get('shape')) as typeof DEFAULT_ELEMENT_VISUAL.shape,
-      size: visualRaw.get('size') ?? DEFAULT_ELEMENT_VISUAL.size,
-      icon: visualRaw.get('icon') ?? null,
-      image: visualRaw.get('image') ?? null,
-      hideMedia: visualRaw.get('hideMedia'),
-      customWidth: visualRaw.get('customWidth'),
-      customHeight: visualRaw.get('customHeight'),
-      fontSize: visualRaw.get('fontSize'),
+      color: v.get('color') ?? DEFAULT_ELEMENT_VISUAL.color,
+      borderColor: v.get('borderColor') ?? DEFAULT_ELEMENT_VISUAL.borderColor,
+      borderWidth: v.get('borderWidth') ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
+      borderStyle: v.get('borderStyle') ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
+      shape: normalizeShape(v.get('shape')) as typeof DEFAULT_ELEMENT_VISUAL.shape,
+      size: v.get('size') ?? DEFAULT_ELEMENT_VISUAL.size,
+      icon: v.get('icon') ?? null,
+      image: v.get('image') ?? null,
+      hideMedia: v.get('hideMedia'),
+      customWidth: v.get('customWidth'),
+      customHeight: v.get('customHeight'),
+      fontSize: v.get('fontSize'),
     };
   } else if (visualRaw && typeof visualRaw === 'object') {
+    const v = visualRaw as Partial<ElementVisual>;
     visual = {
-      color: visualRaw.color ?? DEFAULT_ELEMENT_VISUAL.color,
-      borderColor: visualRaw.borderColor ?? DEFAULT_ELEMENT_VISUAL.borderColor,
-      borderWidth: visualRaw.borderWidth ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
-      borderStyle: visualRaw.borderStyle ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
-      shape: normalizeShape(visualRaw.shape) as typeof DEFAULT_ELEMENT_VISUAL.shape,
-      size: visualRaw.size ?? DEFAULT_ELEMENT_VISUAL.size,
-      icon: visualRaw.icon ?? null,
-      image: visualRaw.image ?? null,
-      hideMedia: visualRaw.hideMedia,
-      customWidth: visualRaw.customWidth,
-      customHeight: visualRaw.customHeight,
-      fontSize: visualRaw.fontSize,
+      color: v.color ?? DEFAULT_ELEMENT_VISUAL.color,
+      borderColor: v.borderColor ?? DEFAULT_ELEMENT_VISUAL.borderColor,
+      borderWidth: v.borderWidth ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
+      borderStyle: v.borderStyle ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
+      shape: normalizeShape(v.shape) as typeof DEFAULT_ELEMENT_VISUAL.shape,
+      size: v.size ?? DEFAULT_ELEMENT_VISUAL.size,
+      icon: v.icon ?? null,
+      image: v.image ?? null,
+      hideMedia: v.hideMedia,
+      customWidth: v.customWidth,
+      customHeight: v.customHeight,
+      fontSize: v.fontSize,
     };
   }
 
@@ -287,34 +294,37 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   let createdAt = new Date();
   let updatedAt = new Date();
   if (metaRaw instanceof Y.Map) {
-    createdAt = dateFromYjs(metaRaw.get('createdAt')) || new Date();
-    updatedAt = dateFromYjs(metaRaw.get('updatedAt')) || new Date();
+    const m = yFields<YMeta>(metaRaw);
+    createdAt = dateFromYjs(m.get('createdAt')) || new Date();
+    updatedAt = dateFromYjs(m.get('updatedAt')) || new Date();
   } else if (metaRaw && typeof metaRaw === 'object') {
-    createdAt = dateFromYjs(metaRaw.createdAt) || new Date();
-    updatedAt = dateFromYjs(metaRaw.updatedAt) || new Date();
+    const m = metaRaw as Partial<YMeta>;
+    createdAt = dateFromYjs(m.createdAt) || new Date();
+    updatedAt = dateFromYjs(m.updatedAt) || new Date();
   }
 
+  const fields = yFields<YStored<Element>>(ymap);
   return {
-    id: ymap.get('id') || '',
-    dossierId: ymap.get('dossierId') || '',
-    label: ymap.get('label') || '',
+    id: fields.get('id') || '',
+    dossierId: fields.get('dossierId') || '',
+    label: fields.get('label') || '',
     notes,
     tags,
     properties,
-    confidence: ymap.get('confidence') ?? null,
-    evaluation: readEvaluation(ymap.get('evaluation')),
-    source: ymap.get('source') || '',
-    date: dateFromYjs(ymap.get('date')),
+    confidence: fields.get('confidence') ?? null,
+    evaluation: readEvaluation(fields.get('evaluation')),
+    source: fields.get('source') || '',
+    date: dateFromYjs(fields.get('date')),
     dateRange,
     position,
-    isPositionLocked: ymap.get('isPositionLocked') ?? false,
+    isPositionLocked: fields.get('isPositionLocked') ?? false,
     geo,
     events,
     visual,
     assetIds,
-    parentGroupId: ymap.get('parentGroupId') ?? null,
-    isGroup: ymap.get('isGroup') ?? false,
-    isAnnotation: ymap.get('isAnnotation') ?? false,
+    parentGroupId: fields.get('parentGroupId') ?? null,
+    isGroup: fields.get('isGroup') ?? false,
+    isAnnotation: fields.get('isAnnotation') ?? false,
     childIds,
     createdAt,
     updatedAt,
@@ -330,7 +340,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
  * The map must already be part of a Y.Doc for this to work.
  */
 export function updateElementYMap(
-  ymap: Y.Map<any>,
+  ymap: Y.Map<unknown>,
   changes: Omit<Partial<Element>, 'visual'> & { visual?: Partial<ElementVisual> },
   ydoc: Y.Doc
 ): void {
@@ -446,7 +456,7 @@ export function updateElementYMap(
 // HELPER FUNCTIONS
 // ============================================================================
 
-function eventToPlainObject(event: ElementEvent): any {
+function eventToPlainObject(event: ElementEvent): Record<string, unknown> {
   return {
     id: event.id,
     date: dateToYjs(event.date),
@@ -483,7 +493,8 @@ function eventPropertiesFromYjs(raw: unknown): ElementEvent['properties'] {
   return list.map((p) => ({ ...p, value: deserializePropertyValue(p?.value) }));
 }
 
-function plainObjectToEvent(obj: any): ElementEvent {
+function plainObjectToEvent(raw: unknown): ElementEvent {
+  const obj = raw as Partial<YStored<ElementEvent>> & Record<string, unknown>;
   return {
     id: obj.id || '',
     date: dateFromYjs(obj.date) || new Date(),
@@ -497,31 +508,40 @@ function plainObjectToEvent(obj: any): ElementEvent {
   };
 }
 
-function yMapToEvent(ymap: Y.Map<any>): ElementEvent {
+function yMapToEvent(ymap: Y.Map<unknown>): ElementEvent {
   const geoMap = ymap.get('geo');
-  let geoRaw: any = undefined;
+  let geoRaw: unknown = undefined;
   if (geoMap instanceof Y.Map) {
-    // Convert Y.Map to plain object
     geoRaw = geoMap.toJSON();
   } else if (geoMap && typeof geoMap === 'object') {
     geoRaw = geoMap;
   }
   const geo = normalizeGeo(geoRaw) || undefined;
 
+  const fields = yFields<YStored<ElementEvent>>(ymap);
   return {
-    id: ymap.get('id') || '',
-    date: dateFromYjs(ymap.get('date')) || new Date(),
-    dateEnd: dateFromYjs(ymap.get('dateEnd')) || undefined,
-    label: ymap.get('label') || '',
-    description: ymap.get('description') || undefined,
+    id: fields.get('id') || '',
+    date: dateFromYjs(fields.get('date')) || new Date(),
+    dateEnd: dateFromYjs(fields.get('dateEnd')) || undefined,
+    label: fields.get('label') || '',
+    description: fields.get('description') || undefined,
     geo,
-    properties: eventPropertiesFromYjs(ymap.get('properties')),
-    source: ymap.get('source') || undefined,
+    properties: eventPropertiesFromYjs(fields.get('properties')),
+    source: fields.get('source') || undefined,
     ...eventPrecisionFromYjs((key) => ymap.get(key)),
   };
 }
 
-function parsePropertyFromYMap(ymap: Y.Map<any>): Property {
+/** A property as stored: value serialized (dates as { _type: 'date', value }) */
+interface YProperty {
+  key: string;
+  value: unknown;
+  type: Property['type'];
+  timeZone?: string;
+}
+
+function parsePropertyFromYMap(map: Y.Map<unknown>): Property {
+  const ymap = yFields<YProperty>(map);
   return {
     key: ymap.get('key') || '',
     value: deserializePropertyValue(ymap.get('value')),
@@ -530,7 +550,8 @@ function parsePropertyFromYMap(ymap: Y.Map<any>): Property {
   };
 }
 
-function parsePropertyFromPlain(obj: any): Property {
+function parsePropertyFromPlain(raw: unknown): Property {
+  const obj = raw as Partial<YProperty>;
   return {
     key: obj.key || '',
     value: deserializePropertyValue(obj.value),
@@ -544,18 +565,18 @@ function propertyTimeZone(raw: unknown): Pick<Property, 'timeZone'> {
   return typeof raw === 'string' && raw ? { timeZone: raw } : {};
 }
 
-function serializePropertyValue(value: Property['value']): any {
+function serializePropertyValue(value: Property['value']): unknown {
   if (value instanceof Date) {
     return { _type: 'date', value: value.toISOString() };
   }
   return value;
 }
 
-function deserializePropertyValue(value: any): Property['value'] {
-  if (value && typeof value === 'object' && value._type === 'date') {
-    return new Date(value.value);
+function deserializePropertyValue(value: unknown): Property['value'] {
+  if (value && typeof value === 'object' && (value as { _type?: unknown })._type === 'date') {
+    return new Date((value as { value: string }).value);
   }
-  return value;
+  return value as Property['value'];
 }
 
 /** Evaluation stored as a plain object (or a Y.Map, should a peer write one) */

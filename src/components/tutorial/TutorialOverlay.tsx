@@ -48,8 +48,8 @@ function TutorialOverlayInner() {
   const step = TUTORIAL_STEPS[stepIndex];
   const total = TUTORIAL_STEPS.length;
 
-  // Tick de re-render : certaines validations lisent le DOM (ex. modale montée)
-  // et ne sont déclenchées par aucun store.
+  // Re-render tick: some validations read the DOM (e.g. a mounted modal)
+  // and no store triggers them.
   const [, setTick] = useState(0);
   useEffect(() => {
     const interval = window.setInterval(() => setTick((n) => n + 1), 400);
@@ -94,8 +94,8 @@ function TutorialOverlayInner() {
   const [validated, setValidated] = useState(false);
   const advancingRef = useRef(false);
   const complete = !offTrack && step.advanceOn === 'auto' && !!step.isComplete?.(ctx);
-  // Étapes « à confirmer » : la condition est remplie mais on attend « Suivant »
-  // pour laisser le temps d'observer (vues Carte/Chronologie/Matrice).
+  // "Confirm" steps: the condition is met but "Next" is awaited,
+  // leaving time to look around (Map/Timeline/Matrix views).
   const confirmed = complete && !!step.confirmAfter;
   useEffect(() => {
     if (!complete || step.confirmAfter || advancingRef.current) return;
@@ -103,7 +103,7 @@ function TutorialOverlayInner() {
     setValidated(true);
     const timer = window.setTimeout(() => {
       const state = useTutorialStore.getState();
-      // Capture l'id du dossier tutoriel au moment de sa création.
+      // Capture the tutorial dossier id when it is created.
       if (step.id === 'nameDossier') {
         const id = useDossierStore.getState().currentDossier?.id;
         if (id) state.setTutorialDossierId(id);
@@ -157,7 +157,7 @@ function TutorialOverlayInner() {
     ? t(`tutorial.steps.${step.id}.explore`)
     : t(`tutorial.steps.${step.id}.body`);
 
-  // Étapes sans cible : carte centrée (intro, fin).
+  // Steps without a target: centered card (intro, end).
   if (!step.target) {
     const isDone = step.id === 'done';
     return createPortal(
@@ -178,7 +178,7 @@ function TutorialOverlayInner() {
     );
   }
 
-  // Marqueur de point d'action (étapes de création sur le canvas).
+  // Action point marker (creation steps on the canvas).
   let marker: { x: number; y: number } | null = null;
   if (rect && step.marker === 'canvas-center') {
     marker = { x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.45 };
@@ -189,7 +189,7 @@ function TutorialOverlayInner() {
     };
   }
 
-  // Anneau : uniquement sur les cibles compactes (pas le canvas entier).
+  // Ring: only on compact targets (not the whole canvas).
   const isLargeTarget =
     !!rect && rect.width > window.innerWidth * 0.6 && rect.height > window.innerHeight * 0.5;
   const ringRect = rect && !isLargeTarget && !marker ? rect : null;
@@ -246,7 +246,7 @@ function TutorialOverlayInner() {
   );
 }
 
-// ─── Drag (déplacement manuel de la bulle) ───────────────────
+// ─── Drag (moving the bubble by hand) ────────────────────────
 
 function useCardDrag(resetKey: string) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -326,11 +326,11 @@ function Bubble({
   let effective = placement;
 
   if (!anchor) {
-    // Cible pas encore montée : bulle centrée en haut de l'écran.
+    // Target not mounted yet: bubble centered at the top of the screen.
     top = 96;
     left = (window.innerWidth - BUBBLE_WIDTH) / 2;
   } else {
-    // Flip si la bulle déborde du viewport.
+    // Flip if the bubble overflows the viewport.
     if (effective === 'bottom' && anchor.top + anchor.height + GAP + height > window.innerHeight) {
       effective = 'top';
     } else if (effective === 'top' && anchor.top - GAP - height < 0) {
@@ -364,7 +364,7 @@ function Bubble({
     top = Math.max(8, Math.min(top, window.innerHeight - height - 8));
   }
 
-  // Flèche vers la cible (masquée dès que la bulle a été déplacée à la main).
+  // Arrow to the target (hidden once the bubble has been moved by hand).
   let arrow: React.CSSProperties | null = null;
   if (anchor && !moved) {
     const cx = anchor.left + anchor.width / 2;

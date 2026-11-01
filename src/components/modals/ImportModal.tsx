@@ -7,17 +7,10 @@ import { InvalidEncryptedZipError, WrongZipPasswordError } from '../../services/
 import { importGEXF } from '../../services/importGephi';
 import { importANX, isANXFormat } from '../../services/importANX';
 import { importANB, isANBFormat } from '../../services/importANB';
-import {
-  importFEC,
-  isFECFormat,
-  analyzeFEC,
-  DEFAULT_FEC_OPTIONS,
-  suggestMinLinkAmount,
-  type FECAggregate,
-  type FECImportOptions,
-} from '../../services/importFEC';
+import { importFEC } from '../../services/importFEC';
+import { useImportOptionSteps } from '../../hooks/useImportOptionSteps';
 import { FECOptionsPanel } from './FECOptionsPanel';
-import { GeoJSONOptionsPanel, type PendingGeoJSON } from './GeoJSONOptionsPanel';
+import { GeoJSONOptionsPanel } from './GeoJSONOptionsPanel';
 import { ImportProgressLine } from './ImportProgressLine';
 import { ImportDropZone, ImportMappingEntry, CsvTemplateCard } from './ImportSections';
 import { withImportProgress } from '../../services/importProgress';
@@ -26,6 +19,7 @@ import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { emitImported, importFormatOf } from '../../plugins/pluginEventBus';
+import { useShallow } from 'zustand/react/shallow';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -39,28 +33,24 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [targetDossierId, setTargetDossierId] = useState<string>('new');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Import en cours : Annuler l'interrompt (ZIP : entre deux médias)
+  // Import in progress: Cancel aborts it (ZIP: between two media files)
   const abortRef = useRef<AbortController | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  // Déchiffrement .znzip
+  // .znzip decryption
   const [pendingEncryptedFile, setPendingEncryptedFile] = useState<File | null>(null);
   const [znzipPassword, setZnzipPassword] = useState('');
   const [znzipError, setZnzipError] = useState<string | null>(null);
   const [showZnzipPassword, setShowZnzipPassword] = useState(false);
-  // Étape d'options FEC (le fichier est analysé une fois, les options filtrent)
-  const [pendingFEC, setPendingFEC] = useState<{
-    fileName: string;
-    content: string;
-    aggregate: FECAggregate;
-  } | null>(null);
-  const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
-  // Étape d'options GeoJSON : choix de la propriété qui sert de libellé
-  const [pendingGeoJSON, setPendingGeoJSON] = useState<PendingGeoJSON | null>(null);
-  const [geoJSONLabelField, setGeoJSONLabelField] = useState('');
-  const [geoJSONFields, setGeoJSONFields] = useState<Set<string>>(new Set());
-  const [geoJSONTag, setGeoJSONTag] = useState('');
+  const {
+    pendingFEC, setPendingFEC, fecOptions, setFecOptions,
+    pendingGeoJSON, setPendingGeoJSON,
+    geoJSONLabelField, setGeoJSONLabelField,
+    geoJSONFields, setGeoJSONFields,
+    geoJSONTag, setGeoJSONTag,
+    openOptionStep,
+  } = useImportOptionSteps();
 
-  const { dossiers, createDossier, deleteDossier } = useDossierStore();
+  const { dossiers, createDossier, deleteDossier } = useDossierStore(useShallow((s) => ({ dossiers: s.dossiers, createDossier: s.createDossier, deleteDossier: s.deleteDossier })));
   const setPendingDossierImport = useUIStore((state) => state.setPendingDossierImport);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
@@ -181,7 +171,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         }
       }
 
-      // Annulé : rien ne reste, même si l'import a fini entre-temps
+      // Cancelled: nothing remains, even if the import finished in the meantime
       if (controller.signal.aborted) {
         await deleteDossier(dossierId).catch(() => {});
         toast.info(t('import.cancelled'));
@@ -196,7 +186,6 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         toast.success(t('import.success'));
         // Request fitView to show the entire graph after import
         requestFitView();
-        // Navigate to the dossier
         setTimeout(() => {
           onClose();
           navigate(`/dossier/${dossierId}`);
@@ -240,7 +229,6 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       const decryptedFile = await decryptZipFile(encFile, password);
       setPendingEncryptedFile(null);
       setZnzipPassword('');
-      // Simuler un FileList pour réutiliser handleFileSelect
       await withImportProgress(() => processFile(decryptedFile));
     } catch (err) {
       setZnzipError(
@@ -257,7 +245,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Détection .znzip avant tout traitement
+    // Detect .znzip before any processing
     if (file.name.endsWith('.znzip') || await isEncryptedZipFile(file)) {
       setPendingEncryptedFile(file);
       setZnzipPassword('');
@@ -271,40 +259,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       return;
     }
 
-    // Détection FEC (par contenu — .txt est trop générique) : ouvre l'étape
-    // d'options au lieu d'importer directement. Le dossier n'est créé qu'à la
-    // confirmation, pour ne rien laisser derrière en cas d'annulation.
-    if (/\.(txt|fec)$/i.test(file.name)) {
+    // FEC and GeoJSON with properties open an options step instead of
+    // importing directly. The dossier is only created on confirmation, so a
+    // cancelled step leaves nothing behind.
+    if (/\.(txt|fec|json|geojson)$/i.test(file.name)) {
       const content = await importService.readFileAsText(file);
-      if (isFECFormat(content)) {
-        setIsProcessing(true);
-        try {
-          const aggregate = analyzeFEC(content);
-          setPendingFEC({ fileName: file.name, content, aggregate });
-          const base = {
-            ...DEFAULT_FEC_OPTIONS,
-            dateFrom: aggregate.dateMin,
-            dateTo: aggregate.dateMax,
-          };
-          // Seuil adaptatif : viser ~300 liens quel que soit le volume du FEC.
-          setFecOptions({ ...base, minLinkAmount: suggestMinLinkAmount(aggregate, base) });
-          setImportResult(null);
-        } finally {
-          setIsProcessing(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-        return;
-      }
-    }
-
-    // GeoJSON avec propriétés : l'utilisateur choisit le champ de libellé
-    if (/\.(geo)?json$/i.test(file.name)) {
-      const content = await importService.readFileAsText(file);
-      const analysis = importService.analyzeGeoJSONFields(content);
-      if (analysis && analysis.fields.length > 0) {
-        setPendingGeoJSON({ fileName: file.name, content, featureCount: analysis.featureCount, fields: analysis.fields });
-        setGeoJSONLabelField(analysis.suggested ?? analysis.fields[0].key);
-        setGeoJSONFields(new Set(analysis.fields.map((f) => f.key)));
+      if (openOptionStep(file, content)) {
         setImportResult(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
@@ -315,10 +275,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setImportResult(null);
     await withImportProgress(() => processFile(file));
     setIsProcessing(false);
-  }, [processFile, targetDossierId, importIntoExistingDossier]);
+  }, [processFile, targetDossierId, importIntoExistingDossier, openOptionStep]);
 
-  // Confirmation d'une étape d'options (FEC, GeoJSON) : le dossier est créé
-  // ici seulement, et supprimé si l'import échoue.
+  // Confirming an options step (FEC, GeoJSON): the dossier is created
+  // only here, and deleted if the import fails.
   const runPendingImport = useCallback(async (
     format: string,
     dossierName: string,
@@ -375,7 +335,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       (dossierId) => importFEC(pendingFEC.content, dossierId, fecOptions),
       () => setPendingFEC(null),
     );
-  }, [pendingFEC, fecOptions, runPendingImport]);
+  }, [pendingFEC, fecOptions, runPendingImport, setPendingFEC]);
 
   const handleGeoJSONImport = useCallback(() => {
     if (!pendingGeoJSON) return;
@@ -389,7 +349,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       }),
       () => setPendingGeoJSON(null),
     );
-  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, runPendingImport]);
+  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, runPendingImport, setPendingGeoJSON]);
 
   // The mapping lives in a dossier: the chosen one, or a new one created here
   const setPendingJsonMapping = useUIStore((state) => state.setPendingJsonMapping);
@@ -412,14 +372,14 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   }, []);
 
   const handleClose = useCallback(() => {
-    // Pendant l'import, seul Annuler permet de sortir
+    // While importing, only Cancel can close the modal
     if (abortRef.current) return;
     setImportResult(null);
     setTargetDossierId('new');
     setPendingFEC(null);
     setPendingGeoJSON(null);
     onClose();
-  }, [onClose]);
+  }, [onClose, setPendingFEC, setPendingGeoJSON]);
 
   const downloadCSVTemplate = useCallback(() => {
     const template = exportService.generateCSVTemplate();
@@ -430,21 +390,19 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useDialogA11y(isOpen, dialogRef, handleClose);
-  // Import lancé depuis la zone (pas une étape FEC/GeoJSON, qui a ses boutons)
+  // Import started from the drop zone (not an FEC/GeoJSON step, which has its own buttons)
   const importRunning = isProcessing && !pendingFEC && !pendingGeoJSON && !pendingEncryptedFile;
 
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={handleClose}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -452,7 +410,6 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         aria-labelledby={titleId}
         className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow flex flex-col max-h-[calc(100dvh-2rem)]" data-testid="import-modal"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 id={titleId} className="text-sm font-semibold text-text-primary">
             {t('import.title')}
@@ -499,7 +456,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             data-testid="import-file-input"
           />
 
-          {/* Étape d'options FEC */}
+          {/* FEC options step */}
           {pendingFEC && (
             <div className="space-y-2">
               <ImportProgressLine />
@@ -529,7 +486,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </div>
           )}
 
-          {/* Étape d'options GeoJSON */}
+          {/* GeoJSON options step */}
           {pendingGeoJSON && (
             <div className="space-y-2">
               <ImportProgressLine />
@@ -562,7 +519,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </div>
           )}
 
-          {/* Déchiffrement .znzip */}
+          {/* .znzip decryption */}
           {pendingEncryptedFile && (
             <div className="p-3 border border-border-default rounded bg-bg-secondary space-y-2">
               <p className="text-xs text-text-secondary">
@@ -615,7 +572,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </div>
           )}
 
-          {/* Import running: zone replaced by status and Annuler */}
+          {/* Import running: zone replaced by status and Cancel */}
           {importRunning && (
             <div className="w-full flex flex-col items-center gap-2 p-6 rounded border-2 border-dashed border-border-default bg-bg-secondary" data-testid="import-running">
               <Loader2 size={24} className="animate-spin text-text-tertiary" />

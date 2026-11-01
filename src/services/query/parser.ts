@@ -369,7 +369,6 @@ class Parser {
   private parseCondition(): QueryNode {
     const field = this.parseField();
 
-    // Check for operator
     const t = this.peek();
 
     // Symbol operators: = != > < >= <=
@@ -500,7 +499,6 @@ class Parser {
 
   // NEAR lat,lng radiusUnit  →  value = "lat,lng,radiusKm"
   private parseNear(field: { value: string; position: number }): QueryCondition {
-    // Parse latitude
     const latToken = this.peek();
     if (latToken.type !== 'NUMBER') {
       throw this.error('Expected latitude after NEAR', latToken.position, 'number');

@@ -1,6 +1,6 @@
 import { db } from '../database';
 import { generateUUID } from '../../utils';
-import type { Link, LinkId, ElementId, DossierId } from '../../types';
+import type { Link, LinkId, LinkVisual, ElementId, DossierId } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
 
 // Helper to rehydrate dates from IndexedDB (they come back as strings)
@@ -118,13 +118,17 @@ export const linkRepository = {
 
   async update(
     id: LinkId,
-    changes: Partial<Omit<Link, 'id' | 'dossierId' | 'createdAt'>>
+    changes: Omit<Partial<Link>, 'id' | 'dossierId' | 'createdAt' | 'visual'> & { visual?: Partial<LinkVisual> }
   ): Promise<void> {
     const link = await db.links.get(id);
     if (!link) return;
 
+    // Callers send only the visual fields they change: merge, since Dexie
+    // replaces a nested object as a whole
+    const { visual, ...rest } = changes;
     await db.links.update(id, {
-      ...changes,
+      ...rest,
+      ...(visual ? { visual: { ...link.visual, ...visual } } : {}),
       updatedAt: new Date(),
     });
 

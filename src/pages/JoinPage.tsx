@@ -107,7 +107,6 @@ export function JoinPage() {
   const isServerConfigured = serverUrl.trim() !== '';
   const isServerFromUrl = !!serverFromUrl;
 
-  // Check if server from URL is different from saved server
   const serverMismatch = serverFromUrl && savedServer && serverFromUrl !== savedServer;
   // Server is new if URL has one but we have nothing saved
   const serverIsNew = serverFromUrl && !savedServer;
@@ -185,7 +184,6 @@ export function JoinPage() {
       // Ensure syncService has the correct server URL before connecting
       syncService.setServerUrl(trimmedUrl);
 
-      // Check if dossier already exists locally
       let existingDossier = await dossierRepository.getById(dossierId);
 
       if (!existingDossier) {
@@ -290,7 +288,6 @@ export function JoinPage() {
         setTimeout(checkConnection, 100);
       });
 
-      // Navigate to the dossier
       navigate(`/dossier/${existingDossier.id}`, { replace: true });
     } catch (err) {
       setError((err as Error).message || t('join.errors.connectionError'));
@@ -418,7 +415,6 @@ export function JoinPage() {
     <Layout>
       <div className="h-full flex flex-col items-center justify-center">
         <div className="w-full max-w-md p-6 bg-bg-primary border border-border-default rounded">
-          {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
               <Users size={20} className="text-accent" />

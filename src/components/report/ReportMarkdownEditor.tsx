@@ -97,7 +97,6 @@ function serializeContent(element: HTMLElement): string {
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as HTMLElement;
 
-      // Check if it's a link span
       if (el.hasAttribute('data-link-id')) {
         const id = el.getAttribute('data-link-id');
         const label = el.getAttribute('data-link-label');
@@ -118,7 +117,6 @@ function serializeContent(element: HTMLElement): string {
   return result;
 }
 
-// Get caret position in pixels
 function getCaretCoordinates(editorElement?: HTMLElement | null): { top: number; left: number } | null {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return null;
@@ -159,7 +157,6 @@ function getTextPosition(element: HTMLElement): number {
     if (found) return true;
 
     if (node === range.startContainer) {
-      // Found the cursor node
       if (node.nodeType === Node.TEXT_NODE) {
         // Count characters before cursor, excluding zero-width spaces
         const textBefore = (node.textContent || '').slice(0, range.startOffset);
@@ -183,7 +180,6 @@ function getTextPosition(element: HTMLElement): number {
       } else if (el.tagName === 'BR') {
         position += 1; // newline
       } else {
-        // Recurse into children
         for (const child of Array.from(el.childNodes)) {
           if (walkNodes(child)) return true;
         }
@@ -272,7 +268,6 @@ function setCaretToSerializedPosition(element: HTMLElement, targetPosition: numb
         }
         currentPosition += 1;
       } else {
-        // Recurse into children
         for (const child of Array.from(el.childNodes)) {
           if (walkNodes(child)) return true;
         }
@@ -382,7 +377,6 @@ export function ReportMarkdownEditor({
     return ids;
   }, [elements, links]);
 
-  // States
   const [isWriteMode, setIsWriteMode] = useState(false); // false = read mode (links navigate), true = write mode (edit text)
   const [localContent, setLocalContent] = useState(value); // Local buffer for editing (synced only on validate)
   const [autocomplete, setAutocomplete] = useState<AutocompleteState | null>(null);
@@ -492,7 +486,6 @@ export function ReportMarkdownEditor({
         if (segment.id === editingLinkId) {
           fragment.appendChild(document.createTextNode(segment.content));
         } else {
-          // Create link span
           const span = document.createElement('span');
           span.setAttribute('data-link-id', segment.id);
           span.setAttribute('data-link-label', segment.label);
@@ -546,7 +539,6 @@ export function ReportMarkdownEditor({
     }
   }, [value, localContent]);
 
-  // Handle input in contenteditable
   // Optimized: only check for [[ trigger near cursor, defer full serialization to validation
   const handleInput = useCallback(() => {
     if (!editorRef.current) return;
@@ -579,7 +571,6 @@ export function ReportMarkdownEditor({
         });
       }
     } else if (autocomplete) {
-      // Close autocomplete if it was open
       setAutocomplete(null);
     }
 
@@ -640,7 +631,6 @@ export function ReportMarkdownEditor({
       return;
     }
 
-    // Reset editing link state on blur
     if (editingLinkId) {
       setEditingLinkId(null);
     }
@@ -657,7 +647,6 @@ export function ReportMarkdownEditor({
   // Unsaved modal actions
   const handleUnsavedSave = useCallback(() => {
     setShowUnsavedModal(false);
-    // Save and exit write mode
     const currentContent = editorRef.current ? serializeContent(editorRef.current) : value;
     setLocalContent(currentContent);
     setEditingLinkId(null);
@@ -673,7 +662,6 @@ export function ReportMarkdownEditor({
 
   const handleUnsavedDiscard = useCallback(() => {
     setShowUnsavedModal(false);
-    // Discard and exit write mode
     setLocalContent(value);
     setEditingLinkId(null);
     updateEditingReportSection(null);
@@ -687,7 +675,6 @@ export function ReportMarkdownEditor({
     setTimeout(() => editorRef.current?.focus(), 0);
   }, []);
 
-  // Navigate to element on canvas
   const navigateToElement = useCallback(
     (id: string) => {
       const element = elementMap.get(id);
@@ -763,7 +750,6 @@ export function ReportMarkdownEditor({
     };
   }, [isWriteMode, updateEditingReportSection, onEditingChange]);
 
-  // Toggle write mode
   const handleToggleWriteMode = useCallback(() => {
     // Don't allow entering write mode if locked by another user
     if (!isWriteMode && isLockedByOther) {
@@ -792,13 +778,10 @@ export function ReportMarkdownEditor({
     } else {
       // Entering write mode - acquire the collaborative lock
       updateEditingReportSection(sectionId);
-      // Notify parent we're starting to edit
       onEditingChange?.(true);
       // Allow one DOM build in the sync effect to populate the contentEditable
       justEnteredWriteModeRef.current = true;
-      // Copy current value to local buffer
       setLocalContent(value);
-      // Focus editor
       setTimeout(() => {
         if (editorRef.current) {
           editorRef.current.focus();
@@ -815,7 +798,6 @@ export function ReportMarkdownEditor({
     setIsWriteMode(!isWriteMode);
   }, [isWriteMode, isLockedByOther, value, onChange, onEditingChange, sectionId, updateEditingReportSection]);
 
-  // Handle click in editor
   const handleEditorClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const linkSpan = target.closest('[data-link-id]') as HTMLElement | null;
@@ -862,7 +844,6 @@ export function ReportMarkdownEditor({
     }
   }, [isWriteMode, editingLinkId, existingIds, navigateToElement]);
 
-  // Handle autocomplete selection
   const handleAutocompleteSelect = useCallback(
     (item: { type: string; id: string; label: string }) => {
       if (!editorRef.current || !autocomplete) return;
@@ -890,7 +871,6 @@ export function ReportMarkdownEditor({
           // Find where [[ starts (should be cursorPos - query.length - 2)
           const triggerPos = cursorPos - query.length - 2;
           if (triggerPos >= 0 && text.slice(triggerPos, cursorPos) === `[[${query}`) {
-            // Create new text content
             const before = text.slice(0, triggerPos);
             const after = text.slice(cursorPos);
             node.textContent = before + insertion + after;
@@ -1024,7 +1004,6 @@ export function ReportMarkdownEditor({
 
   return (
     <div className="relative">
-      {/* Toggle button */}
       <button
         onClick={handleToggleWriteMode}
         disabled={isLockedByOther}
@@ -1096,7 +1075,6 @@ export function ReportMarkdownEditor({
         </div>
       )}
 
-      {/* Autocomplete dropdown */}
       {autocomplete && isWriteMode && (
         <ElementAutocomplete
           query={autocomplete.query}

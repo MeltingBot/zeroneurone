@@ -26,15 +26,14 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links, assets, comments } = useDossierStore();
-  const { selectElement, selectLink, clearSelection } = useSelectionStore();
+  const { elements, links, assets, comments } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, assets: s.assets, comments: s.comments })));
+  const { selectElement, selectLink, clearSelection } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectLink: s.selectLink, clearSelection: s.clearSelection })));
   const { requestViewportChange } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange })));
   const canvasTabs = useTabStore((s) => s.tabs);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const setActiveTab = useTabStore((s) => s.setActiveTab);
 
-  // Create maps for quick lookup
   const elementsMap = useMemo(
     () => new Map(elements.map((el) => [el.id, el])),
     [elements]
@@ -45,7 +44,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   );
 
   const dialogRef = useRef<HTMLDivElement>(null);
-  // autoFocus desactive : le composant met deja le focus dans le champ de saisie.
+  // autoFocus off: the component already focuses the search input itself.
   useDialogA11y(isOpen, dialogRef, onClose, { autoFocus: false });
 
   // Focus input when opened
@@ -233,7 +232,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [elementsMap, linksMap, t]
   );
 
-  // Get matching property info from search result
   const getMatchingProperty = useCallback(
     (result: SearchResult): { key: string; value: string } | null => {
       if (!query.trim()) return null;
@@ -277,7 +275,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [elementsMap, linksMap, query, i18n.language]
   );
 
-  // Get tags for a result
   const getResultTags = useCallback(
     (result: SearchResult): string[] => {
       if (result.type === 'element') {

@@ -75,9 +75,6 @@
     }
   },
   "detail": {
-    "noSelection": "Ningún elemento seleccionado",
-    "multipleSelection": "{{count}} elementos seleccionados",
-    "element": "Elemento",
     "link": {
       "linkedElements": "Elementos enlazados",
       "deletedElement": "Elemento eliminado",
@@ -86,8 +83,6 @@
       "periodStart": "Inicio",
       "periodEnd": "Fin (dejar vacío si en curso)"
     },
-    "group": "Grupo",
-    "annotation": "Anotación",
     "sections": {
       "identity": "Identidad",
       "content": "Contenido",
@@ -105,9 +100,7 @@
       "linkLabel": "Relación sin nombre",
       "notes": "Notas...",
       "source": "Fuente de la información...",
-      "markdown": "Markdown: **negrita**, *cursiva*, [enlace](url), listas...",
-      "keyName": "Nombre...",
-      "keyValue": "Valor..."
+      "markdown": "Markdown: **negrita**, *cursiva*, [enlace](url), listas..."
     },
     "labels": {
       "name": "Nombre",
@@ -154,7 +147,6 @@
       "goToTab": "Ir a la pestaña {{name}}"
     },
     "events": {
-      "title": "Eventos",
       "description": "Historial de eventos fechados (visibles en la línea de tiempo)",
       "add": "Añadir un evento",
       "labelPlaceholder": "Etiqueta (ej: Escala Marsella, Sitio hackeado...)",
@@ -164,7 +156,6 @@
       "delete": "Eliminar",
       "dateFrom": "De",
       "dateTo": "A",
-      "dateEndOptional": "Fin (opcional)",
       "descriptionLabel": "Descripción",
       "descriptionPlaceholder": "Descripción detallada...",
       "sourceLabel": "Fuente",
@@ -185,7 +176,6 @@
       "geoJsonMinPoints": "Mínimo 3 puntos"
     },
     "location": {
-      "title": "Localización",
       "description": "Posición fija del elemento (visible en el mapa)",
       "gpsCoordinates": "Coordenadas GPS",
       "latitude": "Latitud",
@@ -196,7 +186,6 @@
       "clearLocation": "Borrar",
       "removeLocation": "Eliminar la localización",
       "saveLocation": "Guardar",
-      "noLocation": "Sin posición definida",
       "copyCoordinates": "Copiar coordenadas",
       "coordinatesCopied": "Coordenadas copiadas",
       "altitude": "Altitud",
@@ -210,7 +199,6 @@
       "selectAll": "Seleccionar todo",
       "deselectAll": "Deseleccionar todo",
       "ignore": "Ignorar",
-      "keyPlaceholder": "Clave",
       "valuePlaceholder": "Valor",
       "typePlaceholder": "Tipo",
       "optionsPlaceholder": "Opciones separadas por comas",
@@ -255,13 +243,11 @@
       "editChoices": "Editar opciones"
     },
     "appearance": {
-      "title": "Apariencia",
       "color": "Color",
       "borderColor": "Color del borde",
       "defaultGray": "Gris por defecto",
       "customColor": "Color personalizado",
       "shape": "Forma",
-      "size": "Tamaño",
       "style": "Estilo",
       "thickness": "Grosor",
       "textSize": "Tamaño del texto",
@@ -273,11 +259,6 @@
       "borderStyle": "Estilo de borde"
     },
     "files": {
-      "title": "Archivos",
-      "drop": "Suelte archivos aquí",
-      "noFiles": "Sin archivos",
-      "delete": "Eliminar el archivo",
-      "download": "Descargar",
       "preview": "Vista previa",
       "defaultThumbnail": "Miniatura por defecto",
       "closeEsc": "Cerrar (Esc)",
@@ -351,7 +332,6 @@
     }
   },
   "filters": {
-    "title": "Filtros",
     "elementsCount": "{{matching}}/{{total}} elementos",
     "countBreakdown": "Filtros {{filters}} · Consulta {{query}}",
     "queryBadge": "Consulta",
@@ -371,11 +351,7 @@
       "quickFilters": "Filtros rápidos",
       "textSearch": "Búsqueda de texto",
       "tags": "Tags",
-      "tabs": "Pestañas",
-      "types": "Tipos",
-      "confidence": "Confianza",
-      "property": "Propiedad",
-      "date": "Fecha"
+      "tabs": "Pestañas"
     },
     "placeholders": {
       "textSearch": "Filtrar por nombre o notas...",
@@ -427,9 +403,7 @@
     },
     "hiddenElements": {
       "title": "Ocultos",
-      "count": "{{count}} elemento(s) oculto(s)",
-      "showAll": "Mostrar todo",
-      "noHidden": "Ningún elemento oculto"
+      "showAll": "Mostrar todo"
     },
     "evaluation": {
       "hint": "Solo permanecen visibles los elementos valorados en el modelo activo con un código seleccionado."
@@ -497,7 +471,6 @@
     "syntaxExample5": "WITHIN 2 HOPS OF tag = \"sospechoso\""
   },
   "insights": {
-    "title": "Análisis",
     "computing": "Análisis en curso...",
     "between": {
       "title": "Entre {{a}} y {{b}}",
@@ -511,18 +484,9 @@
     "noData": "Añada elementos y enlaces para ver los análisis.",
     "noInsights": "Sin análisis detectados. Añada más enlaces entre los elementos.",
     "lastComputed": "Último análisis:",
-    "refresh": "Actualizar",
     "noName": "Sin nombre",
     "noResults": "Sin resultados",
     "links": "{{count}} enlaces",
-    "elements": "{{count}} elementos",
-    "sections": {
-      "clusters": "Clusters",
-      "bridges": "Puentes",
-      "centrality": "Centralidad",
-      "isolated": "Aislados",
-      "similar": "Similares"
-    },
     "roles": {
       "title": "Roles",
       "soleConnector": "{{x}} es el único vínculo entre {{groups}}",
@@ -544,9 +508,7 @@
     },
     "clusters": {
       "title": "Clusters",
-      "description": "Grupos de elementos fuertemente conectados",
       "name": "Cluster {{id}}",
-      "count": "{{count}} cluster(s)",
       "elements": "{{count}} elementos",
       "actions": {
         "select": "Select.",
@@ -561,8 +523,6 @@
     "bridges": {
       "title": "Puentes",
       "description": "Elementos que conectan diferentes partes del grafo",
-      "count": "{{count}} puente(s)",
-      "noBridges": "Sin puentes detectados",
       "showBridges": "Mostrar puentes",
       "hideBridges": "Ocultar resaltado",
       "selectAll": "Seleccionar todos",
@@ -571,15 +531,11 @@
     },
     "centrality": {
       "title": "Más conectados",
-      "description": "Elementos más conectados",
-      "degree": "Grado",
       "betweenness": "Intermediación"
     },
     "isolated": {
       "title": "Aislados",
       "description": "Elementos sin ninguna conexión",
-      "count": "{{count}} elemento(s) aislado(s)",
-      "noIsolated": "Sin elementos aislados",
       "showIsolated": "Mostrar aislados",
       "hideIsolated": "Ocultar resaltado",
       "selectAll": "Seleccionar todos",
@@ -598,7 +554,6 @@
       "maxDepth": "Profundidad máx.",
       "highlightThisPath": "Resaltar esta ruta",
       "noPath": "Sin camino encontrado entre estos elementos",
-      "pathLength": "{{count}} paso(s)",
       "blockedByConstraints": "Camino excluido por las restricciones",
       "constraints": {
         "title": "Restricciones",
@@ -630,7 +585,6 @@
     }
   },
   "views": {
-    "title": "Vistas",
     "canvasDisplay": "Visualización en el lienzo",
     "tags": "Tags",
     "tagSize": "Tamaño:",
@@ -660,9 +614,7 @@
     "noPropertiesDefined": "Sin propiedades definidas en los elementos",
     "savedViews": "Vistas guardadas",
     "save": "Guardar vista",
-    "load": "Cargar",
     "delete": "Eliminar",
-    "rename": "Renombrar",
     "noViews": "Sin vistas guardadas",
     "namePlaceholder": "Nombre de la vista...",
     "includePositions": "Incluir posiciones ({{count}} elementos)",
@@ -672,32 +624,20 @@
     "savedPositions": "Posiciones guardadas",
     "deleteView": "Eliminar la vista",
     "activeView": "Vista activa. Filtros y vista restaurados.",
-    "positionsRestored": "Posiciones de {{count}} elementos restauradas.",
-    "saveDescription": "Guarda los filtros, el zoom y los elementos ocultos"
+    "positionsRestored": "Posiciones de {{count}} elementos restauradas."
   },
   "assets": {
-    "title": "Archivos",
-    "noAssets": "Sin archivos",
     "drop": "Suelte archivos",
     "deleteConfirm": "¿Eliminar este archivo?",
-    "usedBy": "Usado por {{count}} elemento(s)",
     "hideMediaOnNode": "Ocultar el medio en el nodo",
     "showMediaOnNode": "Mostrar el medio en el nodo",
     "uploading": "Subiendo…",
     "dropOrPaste": "Arrastra archivos o pulsa Ctrl+V para pegar",
     "browse": "o examinar"
   },
-  "history": {
-    "title": "Historial",
-    "noHistory": "Sin acciones",
-    "undo": "Deshacer",
-    "redo": "Rehacer"
-  },
   "collaboration": {
     "title": "Colaboración",
     "connected": "Conectado",
-    "disconnected": "Desconectado",
-    "users": "{{count}} usuario(s)",
     "you": "Usted",
     "others": "otros",
     "local": "Local",

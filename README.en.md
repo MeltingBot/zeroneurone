@@ -26,6 +26,16 @@ User documentation: [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - **The visual is the analysis** — position, colours and shapes carry the meaning the user gives them.
 - **Zero imposed ontology** — users create their own concepts; no entity type is forced.
 
+> [!WARNING]
+> **Back up your data.** Everything is stored in the browser, and nowhere else. Clearing the site data, reinstalling the browser or losing its profile erases the dossiers. There is no copy on a server.
+>
+> - **Full backup**: home page > **Storage** > **Export all**. The archive holds every dossier in full (elements, links, groups, tabs, comments, queries, report, attached files, closure and retention), plus the tag sets, icons and import templates. **Import** restores it, adding to the existing dossiers.
+> - **One dossier**: in the dossier, **Export** > **Backup** > **ZIP**; or **Export ZIP** in the menu of its card on the home page.
+> - **Automatic**: the VaultNeurone extension sends encrypted backups to S3 or WebDAV.
+> - With encryption at rest, the data is lost without the password: there is no recovery.
+>
+> Full backups made before version 2.88 hold no tabs, groups, comments or saved queries: make a new one.
+
 ## Features
 
 ### Canvas
@@ -166,7 +176,7 @@ For a plain Apache host, including under a sub-directory (`VITE_BASE=/Zeroneuron
 
 > In async mode, keep the share link: it is the only way to join the session and decrypt the data.
 
-The bundled relay server (`relay-server.js`) handles real-time and async mode:
+The bundled relay server (`relay/index.js`) handles real-time and async mode:
 
 ```bash
 npm run relay-server   # ws://localhost:4444

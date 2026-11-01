@@ -160,13 +160,13 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
             description: entry.description || `Plugin: ${entry.id}`,
             icon: 'Puzzle',
             trust,
-          } as any, entry.id);
+          }, entry.id);
         } else {
           // Inject trust level into plugin-registered cards
           const allCards = getPlugins('home:card', { includeDisabled: true });
           for (const card of allCards) {
-            if (card.id === entry.id && !(card as any).trust) {
-              (card as any).trust = trust;
+            if (card.id === entry.id && !card.trust) {
+              card.trust = trust;
             }
           }
         }

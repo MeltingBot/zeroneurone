@@ -7,9 +7,9 @@
  */
 
 import * as Y from 'yjs';
-import type { Link, LinkVisual, Property } from '../../types';
+import type { Link, LinkVisual, Position, Property } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
-import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs } from '../../types/yjs';
+import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs, yFields, type YMeta, type YStored } from '../../types/yjs';
 import { sanitizeEvaluation } from '../../utils/evaluation';
 
 // ============================================================================
@@ -20,7 +20,7 @@ import { sanitizeEvaluation } from '../../utils/evaluation';
  * Convert a Link to a Y.Map for initial insertion into Y.Doc.
  * Uses primitive values that can be set before the map is added to a document.
  */
-export function linkToYMap(link: Link): Y.Map<any> {
+export function linkToYMap(link: Link): Y.Map<unknown> {
   const map = new Y.Map();
 
   // Simple fields (primitives)
@@ -91,7 +91,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
  * Convert a Y.Map to a Link.
  * Handles both Y types and primitive values (for backward compatibility).
  */
-export function yMapToLink(ymap: Y.Map<any>): Link {
+export function yMapToLink(ymap: Y.Map<unknown>): Link {
   const notesRaw = ymap.get('notes');
   const tagsRaw = ymap.get('tags');
   const propsRaw = ymap.get('properties');
@@ -114,7 +114,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
   // Handle properties - can be Y.Array of Y.Map or plain array
   let properties: Property[] = [];
   if (propsRaw instanceof Y.Array) {
-    properties = propsRaw.toArray().map((item: any) => {
+    properties = propsRaw.toArray().map((item) => {
       if (item instanceof Y.Map) {
         return parsePropertyFromYMap(item);
       }
@@ -130,63 +130,70 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
   // Handle visual - can be Y.Map or plain object
   let visual = { ...DEFAULT_LINK_VISUAL };
   if (visualRaw instanceof Y.Map) {
+    const v = yFields<LinkVisual>(visualRaw);
     visual = {
-      color: visualRaw.get('color') ?? DEFAULT_LINK_VISUAL.color,
-      style: visualRaw.get('style') ?? DEFAULT_LINK_VISUAL.style,
-      thickness: visualRaw.get('thickness') ?? DEFAULT_LINK_VISUAL.thickness,
-      fontSize: visualRaw.get('fontSize'),
+      color: v.get('color') ?? DEFAULT_LINK_VISUAL.color,
+      style: v.get('style') ?? DEFAULT_LINK_VISUAL.style,
+      thickness: v.get('thickness') ?? DEFAULT_LINK_VISUAL.thickness,
+      fontSize: v.get('fontSize'),
     };
   } else if (visualRaw && typeof visualRaw === 'object') {
+    const v = visualRaw as Partial<LinkVisual>;
     visual = {
-      color: visualRaw.color ?? DEFAULT_LINK_VISUAL.color,
-      style: visualRaw.style ?? DEFAULT_LINK_VISUAL.style,
-      thickness: visualRaw.thickness ?? DEFAULT_LINK_VISUAL.thickness,
-      fontSize: visualRaw.fontSize,
+      color: v.color ?? DEFAULT_LINK_VISUAL.color,
+      style: v.style ?? DEFAULT_LINK_VISUAL.style,
+      thickness: v.thickness ?? DEFAULT_LINK_VISUAL.thickness,
+      fontSize: v.fontSize,
     };
   }
 
   // Handle curveOffset - can be Y.Map or plain object
   let curveOffset = { x: 0, y: 0 };
   if (curveRaw instanceof Y.Map) {
-    curveOffset = { x: curveRaw.get('x') ?? 0, y: curveRaw.get('y') ?? 0 };
+    const c = yFields<Position>(curveRaw);
+    curveOffset = { x: c.get('x') ?? 0, y: c.get('y') ?? 0 };
   } else if (curveRaw && typeof curveRaw === 'object') {
-    curveOffset = { x: curveRaw.x ?? 0, y: curveRaw.y ?? 0 };
+    const c = curveRaw as Partial<Position>;
+    curveOffset = { x: c.x ?? 0, y: c.y ?? 0 };
   }
 
   // Handle orthogonalOffset - plain object, null or absent (older links)
   const orthogonalOffset = orthogonalRaw && typeof orthogonalRaw === 'object'
-    ? { x: orthogonalRaw.x ?? 0, y: orthogonalRaw.y ?? 0 }
+    ? { x: (orthogonalRaw as Partial<Position>).x ?? 0, y: (orthogonalRaw as Partial<Position>).y ?? 0 }
     : undefined;
 
   // Handle metadata - can be Y.Map or plain object
   let createdAt = new Date();
   let updatedAt = new Date();
   if (metaRaw instanceof Y.Map) {
-    createdAt = dateFromYjs(metaRaw.get('createdAt')) || new Date();
-    updatedAt = dateFromYjs(metaRaw.get('updatedAt')) || new Date();
+    const m = yFields<YMeta>(metaRaw);
+    createdAt = dateFromYjs(m.get('createdAt')) || new Date();
+    updatedAt = dateFromYjs(m.get('updatedAt')) || new Date();
   } else if (metaRaw && typeof metaRaw === 'object') {
-    createdAt = dateFromYjs(metaRaw.createdAt) || new Date();
-    updatedAt = dateFromYjs(metaRaw.updatedAt) || new Date();
+    const m = metaRaw as Partial<YMeta>;
+    createdAt = dateFromYjs(m.createdAt) || new Date();
+    updatedAt = dateFromYjs(m.updatedAt) || new Date();
   }
 
+  const fields = yFields<YStored<Link>>(ymap);
   return {
-    id: ymap.get('id') || '',
-    dossierId: ymap.get('dossierId') || '',
-    fromId: ymap.get('fromId') || '',
-    toId: ymap.get('toId') || '',
-    sourceHandle: ymap.get('sourceHandle') ?? null,
-    targetHandle: ymap.get('targetHandle') ?? null,
-    anchorMode: ymap.get('anchorMode') ?? undefined,
-    label: ymap.get('label') || '',
+    id: fields.get('id') || '',
+    dossierId: fields.get('dossierId') || '',
+    fromId: fields.get('fromId') || '',
+    toId: fields.get('toId') || '',
+    sourceHandle: fields.get('sourceHandle') ?? null,
+    targetHandle: fields.get('targetHandle') ?? null,
+    anchorMode: fields.get('anchorMode') ?? undefined,
+    label: fields.get('label') || '',
     notes,
     tags,
     properties,
-    directed: ymap.get('directed') ?? false,
-    direction: ymap.get('direction') ?? 'none',
-    confidence: ymap.get('confidence') ?? null,
-    evaluation: readEvaluation(ymap.get('evaluation')),
-    source: ymap.get('source') || '',
-    date: dateFromYjs(ymap.get('date')),
+    directed: fields.get('directed') ?? false,
+    direction: fields.get('direction') ?? 'none',
+    confidence: fields.get('confidence') ?? null,
+    evaluation: readEvaluation(fields.get('evaluation')),
+    source: fields.get('source') || '',
+    date: dateFromYjs(fields.get('date')),
     dateRange,
     visual,
     curveOffset,
@@ -205,7 +212,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
  * The map must already be part of a Y.Doc for this to work.
  */
 export function updateLinkYMap(
-  ymap: Y.Map<any>,
+  ymap: Y.Map<unknown>,
   changes: Omit<Partial<Link>, 'visual'> & { visual?: Partial<LinkVisual> },
   ydoc: Y.Doc
 ): void {
@@ -315,7 +322,16 @@ export function updateLinkYMap(
 // HELPER FUNCTIONS
 // ============================================================================
 
-function parsePropertyFromYMap(ymap: Y.Map<any>): Property {
+/** A property as stored: value serialized (dates as { _type: 'date', value }) */
+interface YProperty {
+  key: string;
+  value: unknown;
+  type: Property['type'];
+  timeZone?: string;
+}
+
+function parsePropertyFromYMap(map: Y.Map<unknown>): Property {
+  const ymap = yFields<YProperty>(map);
   return {
     key: ymap.get('key') || '',
     value: deserializePropertyValue(ymap.get('value')),
@@ -324,7 +340,8 @@ function parsePropertyFromYMap(ymap: Y.Map<any>): Property {
   };
 }
 
-function parsePropertyFromPlain(obj: any): Property {
+function parsePropertyFromPlain(raw: unknown): Property {
+  const obj = raw as Partial<YProperty>;
   return {
     key: obj.key || '',
     value: deserializePropertyValue(obj.value),
@@ -338,18 +355,18 @@ function propertyTimeZone(raw: unknown): Pick<Property, 'timeZone'> {
   return typeof raw === 'string' && raw ? { timeZone: raw } : {};
 }
 
-function serializePropertyValue(value: Property['value']): any {
+function serializePropertyValue(value: Property['value']): unknown {
   if (value instanceof Date) {
     return { _type: 'date', value: value.toISOString() };
   }
   return value;
 }
 
-function deserializePropertyValue(value: any): Property['value'] {
-  if (value && typeof value === 'object' && value._type === 'date') {
-    return new Date(value.value);
+function deserializePropertyValue(value: unknown): Property['value'] {
+  if (value && typeof value === 'object' && (value as { _type?: unknown })._type === 'date') {
+    return new Date((value as { value: string }).value);
   }
-  return value;
+  return value as Property['value'];
 }
 
 /** Evaluation stored as a plain object (or a Y.Map, should a peer write one) */

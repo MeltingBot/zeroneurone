@@ -632,7 +632,6 @@ export function evaluateQuery(
 ): QueryResult {
   const start = performance.now();
 
-  // Build element map if not provided
   const elMap = elementMap ?? new Map(elements.map(e => [e.id, e]));
 
   // Precompute graph-reachability sets for any WITHIN predicates.

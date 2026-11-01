@@ -96,7 +96,8 @@
       "marriage": "Małżeństwo",
       "filiation": "Filiacja",
       "siblinghood": "Rodzeństwo"
-    }
+    },
+    "importError": "Błąd importu genealogii: {{message}}"
   },
   "gephi": {
     "errors": {
@@ -209,5 +210,118 @@
     "skippedLines_few": "Pominięto {{count}} nierozpoznane wiersze Mermaid",
     "skippedLines_many": "Pominięto {{count}} nierozpoznanych wierszy Mermaid",
     "skippedLines_other": "Pominięto {{count}} nierozpoznanych wierszy Mermaid"
+  },
+  "common": {
+    "importError": "Błąd importu: {{message}}",
+    "formatImportError": "Błąd importu {{format}}: {{message}}",
+    "unknownError": "Nieznany błąd",
+    "error": "Błąd",
+    "cancelled": "Import anulowany",
+    "lineError": "Wiersz {{row}}: {{message}}",
+    "linkMissingEndpoints": "Pominięto połączenie: brak źródła lub celu",
+    "linkMissingElements": "Pominięto połączenie: nie znaleziono elementów źródłowych/docelowych ({{label}})",
+    "imageConversionFailed": "Pominięto obraz dla „{{label}}”: błąd konwersji",
+    "imageNotImported": "Obraz nie został zaimportowany ({{name}})",
+    "reportExists": "Ta teczka ma już raport: raport nie został zaimportowany",
+    "reportFailed": "Raport nie został zaimportowany: {{message}}",
+    "assetError": "Pominięto załącznik: {{name}} - {{message}}",
+    "skippedElements": "Pominięte elementy (bez pozycji): {{count}}",
+    "skippedLinks": "Pominięte połączenia (nieprawidłowe elementy): {{count}}",
+    "nodeNoId": "Pominięto węzeł bez ID"
+  },
+  "archive": {
+    "tooLarge": "Archiwum jest zbyt duże. Maks. rozmiar: {{max}} MB",
+    "tooManyFiles": "Zbyt wiele plików w archiwum. Maks.: {{max}}",
+    "missingDossierJson": "Nieprawidłowe archiwum: brak dossier.json",
+    "jsonTooLarge": "Plik JSON jest zbyt duży. Maks. rozmiar: {{max}} MB",
+    "invalidJson": "Nieprawidłowy format JSON: brak pól",
+    "tooManyElements": "Zbyt wiele elementów. Maks.: {{max}}",
+    "tooManyLinks": "Zbyt wiele połączeń. Maks.: {{max}}",
+    "tooManyAssets": "Zbyt wiele załączników. Maks.: {{max}}",
+    "assetMissing": "Nie znaleziono załącznika w archiwum: {{name}}",
+    "assetTooLarge": "Pominięto załącznik (zbyt duży, maks. {{max}} MB): {{name}}",
+    "totalTooLarge": "Łączny rozmiar po rozpakowaniu jest zbyt duży. Maks.: {{max}} GB",
+    "suspiciousRatio": "Podejrzany współczynnik kompresji (możliwa bomba ZIP)"
+  },
+  "json": {
+    "unrecognized": "Nierozpoznany format JSON. Obsługiwane formaty: {{formats}}"
+  },
+  "backup": {
+    "missingBackupJson": "Nieprawidłowe archiwum: brak backup.json",
+    "backupTooLarge": "Nieprawidłowe archiwum: backup.json jest zbyt duży",
+    "invalidFormat": "Nieprawidłowy format kopii zapasowej",
+    "incompatibleVersion": "Kopia zapasowa w wersji {{version}}, niezgodna z tą wersją aplikacji (format {{expected}}). Zaktualizuj ZeroNeurone przed przywróceniem.",
+    "progress": {
+      "reading": "Odczyt archiwum…",
+      "files": "Import plików…",
+      "elements": "Import elementów…",
+      "writing": "Zapis danych…",
+      "done": "Import zakończony",
+      "exportDossier": "Teczka {{index}} / {{count}}: {{name}}",
+      "importDossier": "Przywracanie {{index}} / {{count}}: {{name}}"
+    },
+    "missingDossier": "Brak „{{name}}” w archiwum",
+    "dossierFailed": "Nie przywrócono „{{name}}”: {{message}}"
+  },
+  "csv": {
+    "empty": "Pusty plik CSV",
+    "emptyLabel": "Wiersz {{row}}: pusta etykieta, element pominięty",
+    "emptyLabelRow": "Wiersz {{row}}: pusta etykieta, wiersz pominięty",
+    "emptyEndpoints": "Wiersz {{row}}: puste from/to, połączenie pominięte",
+    "emptyEndpointsRow": "Wiersz {{row}}: puste from/to, wiersz pominięty",
+    "elementsNotFound": "Wiersz {{row}}: nie znaleziono elementów: {{names}}",
+    "emptyParent": "Wiersz {{row}}: pusty element nadrzędny (from), zdarzenie pominięte",
+    "parentNotFound": "Wiersz {{row}}: nie znaleziono elementu nadrzędnego: {{name}}",
+    "invalidDate": "Wiersz {{row}}: brak daty lub data nieprawidłowa, zdarzenie pominięte",
+    "missingLabelColumn": "Nie znaleziono wymaganej kolumny „label”",
+    "missingFromToColumns": "Nie znaleziono wymaganych kolumn „from” i „to” (lub „de” i „vers”)"
+  },
+  "graphml": {
+    "parseError": "Nieprawidłowy format GraphML: błąd odczytu XML",
+    "missingGraphml": "Nieprawidłowy format GraphML: brak elementu <graphml>",
+    "missingGraph": "Nieprawidłowy format GraphML: brak elementu <graph>",
+    "linkNoEndpoints": "Pominięto połączenie {{id}}: brak źródła lub celu",
+    "linkMissingNode": "Pominięto połączenie {{id}}: nie znaleziono węzła źródłowego lub docelowego",
+    "noId": "bez ID"
+  },
+  "excalidraw": {
+    "noElements": "Nieprawidłowy format Excalidraw: brak elementów",
+    "imageNotImported": "Obraz nie został zaimportowany: {{id}}…",
+    "skippedArrows": "Pominięte strzałki (niepołączone z kształtami): {{count}}",
+    "imagesImported": "Zaimportowane obrazy z pliku Excalidraw: {{count}}",
+    "orphanArrows": "Pominięte wolne strzałki (bez połączenia): {{count}}"
+  },
+  "predicagraph": {
+    "missingNodes": "Nieprawidłowy format PredicaGraph: brak pola „nodes”",
+    "nodeSkipped": "Pominięto węzeł: brak ID lub pozycji",
+    "linkMissingNode": "Pominięto połączenie: nie znaleziono węzła źródłowego ({{source}}) lub docelowego ({{target}})"
+  },
+  "graphPalette": {
+    "missingNodes": "Nieprawidłowy format Graph Palette: brak pola „nodes”",
+    "nodeTypeSkipped": "Pominięto typ węzła: {{type}} ({{label}})",
+    "unsupportedType": "Nieobsługiwany typ: {{type}}",
+    "unexpectedNode": "Pominięto węzeł: nieoczekiwany format ({{id}})"
+  },
+  "drawio": {
+    "pageUnreadable": "Strona {{page}} nieczytelna (nieprawidłowa skompresowana zawartość)",
+    "pagesStacked": "Zaimportowane strony, ułożone pionowo: {{count}}",
+    "connectorsSkipped": "Pominięte łączniki (niepołączone z dwoma kształtami): {{count}}",
+    "empty": "Diagram draw.io pusty lub nierozpoznany"
+  },
+  "osintIndustries": {
+    "invalid": "Nieprawidłowy format OSINT Industries: pusta tablica lub niepoprawny format",
+    "noFound": "Nie znaleziono żadnego modułu o statusie „found”"
+  },
+  "geojson": {
+    "invalid": "Nieprawidłowy format GeoJSON: oczekiwano FeatureCollection",
+    "noGeometry": "Pominięto Feature bez geometrii",
+    "polygonTooSmall": "\"{{label}}\": wielokąt z mniej niż 3 punktami, pominięty",
+    "multiPointReduced": "\"{{label}}\": MultiPoint zredukowany do pierwszego punktu",
+    "unsupportedGeometry": "\"{{label}}\": nieobsługiwana geometria \"{{type}}\", pominięta",
+    "invalidCoordinates": "\"{{label}}\": nieprawidłowe współrzędne, pominięto",
+    "outOfRange": "Obiekty o współrzędnych poza WGS 84 (szerokość/długość w stopniach): {{count}}. Przed importem przeprojektuj plik do EPSG:4326 (WGS 84).",
+    "outOfRangeCrs": "Obiekty o współrzędnych poza WGS 84 (szerokość/długość w stopniach): {{count}}, zadeklarowane odwzorowanie: {{crs}}. Przed importem przeprojektuj plik do EPSG:4326 (WGS 84).",
+    "outOfRangeSkipped": "{{message}} Te obiekty zostaną pominięte.",
+    "multiPolygonsReduced": "MultiPolygon zredukowane do największego wielokąta: {{count}}"
   }
 }

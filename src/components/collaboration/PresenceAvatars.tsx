@@ -4,6 +4,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useSyncStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 
 interface AvatarProps {
   name: string;
@@ -38,7 +39,7 @@ function Avatar({ name, color, isLocal, youLabel }: AvatarProps) {
 
 export function PresenceAvatars() {
   const { t } = useTranslation('panels');
-  const { mode, localUser, remoteUsers } = useSyncStore();
+  const { mode, localUser, remoteUsers } = useSyncStore(useShallow((s) => ({ mode: s.mode, localUser: s.localUser, remoteUsers: s.remoteUsers })));
 
   // Don't show in local mode
   if (mode === 'local') {

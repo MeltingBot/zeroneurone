@@ -1,13 +1,13 @@
 /**
- * zipEncryption — Chiffrement d'archives ZIP avec mot de passe
+ * zipEncryption — password encryption of ZIP archives
  *
- * Format d'un fichier .znzip :
+ * .znzip file layout:
  *   [magic: 4 bytes "ZNEZ"]
  *   [salt:  16 bytes]
  *   [iv:    12 bytes]
- *   [ciphertext: reste]
+ *   [ciphertext: rest]
  *
- * Dérivation clé : PBKDF2-SHA256, 200 000 itérations → AES-256-GCM
+ * Key derivation: PBKDF2-SHA256, 200,000 iterations → AES-256-GCM
  */
 
 const MAGIC = new Uint8Array([0x5a, 0x4e, 0x45, 0x5a]); // "ZNEZ"
@@ -35,14 +35,14 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
   );
 }
 
-/** Retourne true si le buffer commence par le magic header ZNEZ */
+/** True when the buffer starts with the ZNEZ magic header */
 export function isEncryptedZipBuffer(buf: ArrayBuffer): boolean {
   if (buf.byteLength < HEADER_LEN) return false;
   const view = new Uint8Array(buf, 0, MAGIC_LEN);
   return MAGIC.every((b, i) => view[i] === b);
 }
 
-/** Chiffre un Blob (ZIP) avec le mot de passe fourni → ArrayBuffer .znzip */
+/** Encrypts a Blob (ZIP) with the given password → .znzip ArrayBuffer */
 export async function encryptZip(blob: Blob, password: string): Promise<ArrayBuffer> {
   const plaintext = await blob.arrayBuffer();
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LEN));
@@ -65,8 +65,8 @@ export class WrongZipPasswordError extends Error {}
 export class InvalidEncryptedZipError extends Error {}
 
 /**
- * Déchiffre un ArrayBuffer .znzip avec le mot de passe fourni.
- * Lance une erreur si le magic est absent ou si le déchiffrement échoue.
+ * Decrypts a .znzip ArrayBuffer with the given password.
+ * Throws when the magic is missing or decryption fails.
  */
 export async function decryptZip(buf: ArrayBuffer, password: string): Promise<ArrayBuffer> {
   if (!isEncryptedZipBuffer(buf)) {

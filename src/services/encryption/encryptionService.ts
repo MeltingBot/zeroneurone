@@ -1,17 +1,17 @@
 /**
- * EncryptionService — Gestion des clés DEK/KEK et métadonnées de chiffrement
+ * EncryptionService — DEK/KEK key management and encryption metadata
  *
- * Architecture :
- *   Mot de passe → PBKDF2 → KEK → déchiffre DEK → ouvre Dexie + y-indexeddb
+ * Architecture:
+ *   Password → PBKDF2 → KEK → decrypts DEK → opens Dexie + y-indexeddb
  *
- * La DEK (Data Encryption Key) est générée une seule fois, stockée chiffrée
- * dans la table `_encryptionMeta` de Dexie. Changer le mot de passe = re-chiffrer
- * la DEK uniquement, pas toute la base.
+ * The DEK (Data Encryption Key) is generated once and stored encrypted
+ * in the Dexie `_encryptionMeta` table. Changing the password re-encrypts
+ * the DEK only, not the whole database.
  *
- * Versions du schéma :
- *   v1 — PBKDF2-SHA256 100 000 itérations (legacy)
- *   v2 — PBKDF2-SHA256 600 000 itérations (NIST SP 800-132 recommandation 2023+)
- *        Upgrade automatique au premier déverrouillage d'un meta v1.
+ * Schema versions:
+ *   v1 — PBKDF2-SHA256 100,000 iterations (legacy)
+ *   v2 — PBKDF2-SHA256 600,000 iterations (NIST SP 800-132 recommendation, 2023+)
+ *        Upgraded automatically on the first unlock of a v1 meta.
  */
 
 // ============================================================================
@@ -20,9 +20,9 @@
 
 export interface WebAuthnCredentialEntry {
   credentialId: ArrayBuffer;
-  /** 32 bytes random, unique par credential */
+  /** 32 random bytes, unique per credential */
   prfSalt: ArrayBuffer;
-  /** DEK chiffré avec KEK dérivée du PRF (AES-256-GCM) */
+  /** DEK encrypted with the PRF-derived KEK (AES-256-GCM) */
   encryptedDEK: ArrayBuffer;
   /** IV AES-GCM 12 bytes */
   dekIV: ArrayBuffer;
@@ -32,26 +32,26 @@ export interface WebAuthnCredentialEntry {
 
 export interface EncryptionMeta {
   id: 'main';
-  /** Sel PBKDF2, 16 bytes, généré une seule fois */
+  /** PBKDF2 salt, 16 bytes, generated once */
   salt: ArrayBuffer;
-  /** DEK chiffrée avec la KEK (AES-256-GCM) */
+  /** DEK encrypted with the KEK (AES-256-GCM) */
   encryptedDEK: ArrayBuffer;
-  /** IV du chiffrement AES-GCM de la DEK */
+  /** IV of the DEK's AES-GCM encryption */
   dekIV: ArrayBuffer;
-  /** Version du schéma de chiffrement (pour migrations futures) */
+  /** Encryption schema version (for future migrations) */
   version: number;
   createdAt: string;
-  /** Credentials WebAuthn PRF pour déverrouillage par clé physique */
+  /** WebAuthn PRF credentials for hardware-key unlocking */
   webauthnCredentials?: WebAuthnCredentialEntry[];
-  /** Délai d'auto-verrouillage en minutes (null = désactivé) */
+  /** Auto-lock delay in minutes (null = disabled) */
   autoLockMinutes?: number | null;
 }
 
 // ============================================================================
-// CONSTANTES
+// CONSTANTS
 // ============================================================================
 
-/** Itérations PBKDF2 par version de schéma */
+/** PBKDF2 iterations per schema version */
 const PBKDF2_ITERATIONS: Record<number, number> = {
   1: 100_000,  // legacy
   2: 600_000,  // NIST SP 800-132 (2023)
@@ -66,7 +66,7 @@ const AES_GCM_IV_LENGTH = 12; // bytes
 // HELPERS
 // ============================================================================
 
-/** Génère des bytes aléatoires avec le bon type ArrayBuffer */
+/** Random bytes typed with a plain ArrayBuffer */
 function randomBytes(length: number): Uint8Array<ArrayBuffer> {
   const buf = new ArrayBuffer(length);
   const arr = new Uint8Array(buf);
@@ -75,12 +75,12 @@ function randomBytes(length: number): Uint8Array<ArrayBuffer> {
 }
 
 // ============================================================================
-// DÉRIVATION DE CLÉ
+// KEY DERIVATION
 // ============================================================================
 
 /**
- * Dérive une KEK (Key Encryption Key) depuis un mot de passe et un sel
- * via PBKDF2. La KEK est utilisée uniquement pour chiffrer/déchiffrer la DEK.
+ * Derives a KEK (Key Encryption Key) from a password and a salt
+ * with PBKDF2. The KEK is only used to encrypt/decrypt the DEK.
  */
 async function deriveKEK(password: string, salt: ArrayBuffer, iterations: number): Promise<CryptoKey> {
   const encoder = new TextEncoder();
@@ -107,7 +107,7 @@ async function deriveKEK(password: string, salt: ArrayBuffer, iterations: number
 }
 
 // ============================================================================
-// CHIFFREMENT / DÉCHIFFREMENT DE LA DEK
+// DEK ENCRYPTION / DECRYPTION
 // ============================================================================
 
 async function encryptDEK(
@@ -140,13 +140,13 @@ async function decryptDEK(
 }
 
 // ============================================================================
-// API PUBLIQUE
+// PUBLIC API
 // ============================================================================
 
 /**
- * Initialise le chiffrement pour la première fois.
- * Génère sel + DEK, chiffre la DEK avec la KEK dérivée du mot de passe.
- * Retourne les métadonnées à stocker dans `_encryptionMeta`.
+ * Sets up encryption for the first time.
+ * Generates salt + DEK and encrypts the DEK with the password-derived KEK.
+ * Returns the metadata to store in `_encryptionMeta`.
  */
 export async function initializeEncryption(password: string): Promise<{
   meta: EncryptionMeta;
@@ -172,12 +172,12 @@ export async function initializeEncryption(password: string): Promise<{
 }
 
 /**
- * Déchiffre la DEK depuis les métadonnées stockées et le mot de passe fourni.
- * Retourne la DEK (Uint8Array 32 bytes) ou lance une erreur si mot de passe incorrect.
+ * Decrypts the DEK from the stored metadata and the given password.
+ * Returns the DEK (32-byte Uint8Array), or throws when the password is wrong.
  *
- * Si le meta est en version legacy (v1), re-chiffre la DEK avec les paramètres
- * courants (v2) et retourne le meta mis à jour dans `upgradedMeta`.
- * L'appelant est responsable de persister `upgradedMeta` dans `_encryptionMeta`.
+ * When the meta is legacy (v1), re-encrypts the DEK with the current
+ * parameters (v2) and returns the updated meta in `upgradedMeta`.
+ * The caller is responsible for persisting `upgradedMeta` to `_encryptionMeta`.
  */
 export async function unlockEncryption(
   meta: EncryptionMeta,
@@ -190,7 +190,7 @@ export async function unlockEncryption(
   const dekBuffer = await decryptDEK(meta.encryptedDEK, meta.dekIV, kek);
   const dek = new Uint8Array(dekBuffer);
 
-  // Upgrade automatique vers la version courante
+  // Automatic upgrade to the current version
   if (version < PBKDF2_CURRENT_VERSION) {
     const newIterations = PBKDF2_ITERATIONS[PBKDF2_CURRENT_VERSION];
     const newSalt = randomBytes(SALT_LENGTH);
@@ -212,9 +212,9 @@ export async function unlockEncryption(
 }
 
 /**
- * Change le mot de passe en re-chiffrant la DEK avec la nouvelle KEK.
- * Opération quasi-instantanée (seule la DEK ~32 octets est re-chiffrée).
- * Toujours écrit en version courante.
+ * Changes the password by re-encrypting the DEK with the new KEK.
+ * Near-instant (only the ~32-byte DEK is re-encrypted).
+ * Always written in the current version.
  */
 export async function changePassword(
   meta: EncryptionMeta,

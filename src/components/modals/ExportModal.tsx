@@ -13,6 +13,7 @@ import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { isExportedNode, withLayersAt } from '../canvas/overview/exportLayers';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { downloadBlob } from '../../utils/download';
+import { useShallow } from 'zustand/react/shallow';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -80,7 +81,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
   const [showZipPassword, setShowZipPassword] = useState(false);
 
-  const { currentDossier, elements, links, comments } = useDossierStore();
+  const { currentDossier, elements, links, comments } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, comments: s.comments })));
 
   const handleExport = useCallback(async (format: ExportFormat, obsidianFolderByTag?: boolean, csvOptions?: CSVExportOptions) => {
     if (!currentDossier) return;
@@ -361,14 +362,12 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -376,7 +375,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         aria-labelledby={titleId}
         className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-3xl h-[min(560px,calc(100dvh-2rem))] bg-bg-primary sketchy-border-soft modal-shadow flex flex-col"
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <div className="min-w-0">
             <h2 id={titleId} className="text-sm font-semibold text-text-primary">
@@ -534,7 +532,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
           <button
             onClick={onClose}

@@ -100,7 +100,6 @@ export const dossierRepository = {
     description: string = '',
     origin: 'created' | 'joined' = 'joined',
   ): Promise<Dossier> {
-    // Check if dossier with this ID already exists
     const existing = await db.dossiers.get(id);
     if (existing) {
       return rehydrateDossier(existing);
@@ -268,7 +267,6 @@ export const dossierRepository = {
     const rehydrated = rehydrateDossier(dossier);
     const suggestedProperties = rehydrated.settings.suggestedProperties;
 
-    // Check if property with same key already exists
     const exists = suggestedProperties.some(p => p.key === propertyDef.key);
     if (!exists) {
       await db.dossiers.update(id, {
@@ -311,14 +309,11 @@ export const dossierRepository = {
       if (!associations[tag]) {
         associations[tag] = [];
       }
-      // Check if property with same key already exists for this tag
       const existingIndex = associations[tag].findIndex(p => p.key === propertyDef.key);
       if (existingIndex === -1) {
-        // Add new property
         associations[tag] = [...associations[tag], propertyDef];
         updated = true;
       } else if (associations[tag][existingIndex].type !== propertyDef.type) {
-        // Update type if different
         associations[tag] = associations[tag].map((p, i) =>
           i === existingIndex ? propertyDef : p
         );

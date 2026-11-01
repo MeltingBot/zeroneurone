@@ -24,7 +24,7 @@ interface AccordionSectionProps {
   defaultOpen?: boolean;
   isOpen?: boolean;
   onToggle?: (id: string, isOpen: boolean) => void;
-  /** Ancrage pour le tutoriel guidé (rendu en data-tutorial sur le conteneur). */
+  /** Anchor for the guided tutorial (rendered as data-tutorial on the container). */
   dataTutorial?: string;
 }
 

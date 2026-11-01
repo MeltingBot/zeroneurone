@@ -14,8 +14,10 @@ import {
   Anchor,
 } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
+import { DropdownPortal } from '../common/DropdownPortal';
 import { useDossierStore, useHistoryStore, useSelectionStore } from '../../stores';
 import type { Position } from '../../types';
+import { useShallow } from 'zustand/react/shallow';
 
 type AlignAction = 'left' | 'centerH' | 'right' | 'top' | 'centerV' | 'bottom' | 'distributeH' | 'distributeV';
 
@@ -111,10 +113,11 @@ function computeAlignedPositions(
 export function AlignDropdown() {
   const { t } = useTranslation('pages');
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => setIsOpen(false), []);
 
-  const { elements, updateElementPositions } = useDossierStore();
-  const { pushAction } = useHistoryStore();
+  const { elements, updateElementPositions } = useDossierStore(useShallow((s) => ({ elements: s.elements, updateElementPositions: s.updateElementPositions })));
+  const { pushAction } = useHistoryStore(useShallow((s) => ({ pushAction: s.pushAction })));
   const selectedElementIds = useSelectionStore(s => s.selectedElementIds);
   const lastClickedElementId = useSelectionStore(s => s.lastClickedElementId);
   const { getNodes } = useReactFlow();
@@ -129,21 +132,6 @@ export function AlignDropdown() {
 
   const selectedCount = selectedElements.length;
   const hasKeyObject = lastClickedElementId !== null && selectedElementIds.has(lastClickedElementId) && selectedCount > 1;
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside, true); // capture phase
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
-  }, [isOpen]);
 
   // Close dropdown when selection changes (e.g. clicking canvas nodes)
   useEffect(() => {
@@ -244,8 +232,9 @@ export function AlignDropdown() {
   }, [lastClickedElementId]);
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         disabled={selectedCount < 2}
         className="flex items-center gap-1 px-2 h-7 text-xs text-text-secondary hover:bg-bg-tertiary rounded border border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
@@ -256,8 +245,7 @@ export function AlignDropdown() {
         <ChevronDown size={12} />
       </button>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-56 bg-bg-primary border border-border-default rounded shadow-lg z-50 max-h-[70vh] overflow-y-auto">
+      <DropdownPortal anchorRef={buttonRef} isOpen={isOpen} onClose={close} className="w-56 max-h-[70vh] overflow-y-auto">
           {/* Reference object picker */}
           <div className="py-1 border-b border-border-default">
             <div className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
@@ -333,8 +321,7 @@ export function AlignDropdown() {
               {t('dossier.align.undoHint')}
             </p>
           </div>
-        </div>
-      )}
+      </DropdownPortal>
     </div>
   );
 }
