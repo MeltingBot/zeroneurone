@@ -723,6 +723,31 @@ if (shownIds.length < total) {
 }
 ```
 
+## Requetes ZNQuery (`api.query`, ZN 2.88.2+)
+
+Analyse et evalue un texte ZNQuery (la syntaxe du panneau Requete) sur le dossier ouvert, sans rien changer : ni le panneau Requete, ni le canvas, ni l'historique des requetes, ni l'evenement `query:executed`. Testez `api.features?.queryEngine`. Pour un plugin `community`, la permission `stores:dossier:read` suffit ; sans elle, `api.query` est absent.
+
+```typescript
+api.query.parse('label CONTAINS "Dupont"');
+// { ok: true }
+api.query.parse('label CONTAINS');
+// { ok: false, error: { message, position, expected? } }
+
+const r = api.query.evaluate('tag = "suspect"', { within: candidateIds });
+if ('error' in r) {
+  // r.error.position : rang du caractere dans le texte donne
+} else {
+  // r.elementIds, r.linkIds : tableaux d'identifiants
+}
+
+const { fields, operators } = api.query.vocabulary();
+```
+
+- `evaluate` donne le resultat du panneau Requete, sur tout le dossier (le panneau, lui, se limite a l'onglet ouvert).
+- `within` (tout iterable d'identifiants) garde ces elements et les liens entre deux d'entre eux. La requete est evaluee sur tout le dossier : `WITHIN n HOPS OF`, `from.*` et `to.*` voient aussi les elements hors de `within`.
+- Le plugin passe du texte, jamais un arbre : la forme interne des requetes peut evoluer.
+- `vocabulary()` liste les champs reserves et les operateurs. Les proprietes libres des elements s'interrogent aussi par leur nom.
+
 ## Services entre plugins (`api.pluginServices`, ZN 2.64+)
 
 Un plugin peut offrir un service aux autres plugins, et utiliser celui d'un autre plugin lorsqu'il est present. ZN ne fait que tenir le registre : il n'appelle jamais un service lui-meme. Testez `api.features?.pluginServices` avant de vous en servir. Pour un plugin `community`, la permission `pluginServices` est necessaire.
