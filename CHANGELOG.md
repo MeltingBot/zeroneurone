@@ -1,6 +1,6 @@
 # Changelog
 
-## Non publié
+## 2.88.0
 
 ### Sauvegarde complète refaite
 
