@@ -199,6 +199,9 @@ export interface UIStoreAPI {
   openModal: (type: string, data?: unknown) => void;
   /** @deprecated No effect, see `openModal`. */
   closeModal: () => void;
+  /** Opens the side panel on a tab: a native one or a plugin tab id (`panel:right`). */
+  setSidePanelTab: (tab: string) => void;
+  closeSidePanel: () => void;
 }
 
 // ─── Repository types ─────────────────────────────────────────

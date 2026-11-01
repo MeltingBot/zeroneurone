@@ -1,5 +1,23 @@
 # Changelog
 
+## Non publié
+
+### Plugins
+
+- **Membres internes des stores retirés** — fonctions et états jamais
+  appelés et absents de `plugin-api.d.ts` : `useUIStore.openSidePanel`,
+  `toggleSidePanel`, `activeTool`/`setActiveTool` ; `useViewStore.panTo`,
+  `addExcludeTag`, `removeExcludeTag` ; `useSelectionStore.clearElementSelection`,
+  `clearLinkSelection` ; `useQueryStore.toggleFilter`, `setTableColumns` ;
+  `useTabStore.recomputeGhosts`, `isMember` ;
+  `useDossierStore.getCommentsForTarget` ; `useReportStore.clearReport`,
+  `isDirty` ; `useInsightsStore.computeProgress`, `computePhase`. Un plugin
+  qui les appelait reçoit une erreur à l'exécution. Seuls les membres
+  déclarés dans `plugin-api.d.ts` sont stables.
+- `useUIStore.setSidePanelTab` et `closeSidePanel` déclarés dans
+  `plugin-api.d.ts` (ouvrir l'onglet d'un plugin) ; `toasts`, `openModal`
+  et `closeModal`, sans effet, marqués obsolètes.
+
 ## 2.87.0
 
 ### Chemins contraints
