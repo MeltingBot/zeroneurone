@@ -72,6 +72,7 @@ import { dossierRepository } from '../db/repositories/dossierRepository';
 import { fileService } from '../services/fileService';
 import { exportService } from '../services/exportService';
 import { importService } from '../services/importService';
+import { loadDossierSnapshot } from '../services/dossierSnapshot';
 import { generateUUID } from '../utils';
 
 // ─── Encryption ────────────────────────────────────────────────
@@ -246,13 +247,12 @@ export const pluginAPI = {
       const dossier = state.dossiers.find((d) => d.id === dossierId) ?? await dossierRepository.getById(dossierId);
       if (!dossier) throw new Error(`Dossier ${dossierId} not found`);
 
-      const elements = await elementRepository.getByDossier(dossierId);
-      const links = await linkRepository.getByDossier(dossierId);
-      const assets = await db.assets.where({ dossierId }).toArray();
-      const report = (await db.reports.where({ dossierId }).first()) ?? null;
-      const tabs = await db.canvasTabs.where({ dossierId }).toArray();
-
-      return exportService.exportToZip(dossier, elements, links, assets, report, tabs);
+      // The same content as the dossier export: comments, queries and views
+      // included, read from the Y.Doc when the dossier is closed
+      const s = await loadDossierSnapshot(dossierId);
+      return exportService.exportToZip(
+        dossier, s.elements, s.links, s.assets, s.report, s.tabs, s.views, s.queries, s.queryHistory, s.comments,
+      );
     },
 
     /**

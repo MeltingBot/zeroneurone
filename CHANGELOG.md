@@ -19,6 +19,11 @@
 - **Export ZIP depuis la liste des dossiers** — il contient désormais les
   commentaires, les requêtes enregistrées et les vues, comme l'export fait
   dossier ouvert.
+- **Extensions : `api.services.exportDossier`** (sauvegardes VaultNeurone)
+  — même contenu que l'export de dossier : commentaires, requêtes
+  enregistrées et vues inclus, lus dans les données de synchronisation pour
+  un dossier fermé. Les sauvegardes VaultNeurone faites jusqu'à 2.87.0 ne
+  les contenaient pas.
 
 ### Performances
 
