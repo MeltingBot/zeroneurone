@@ -52,6 +52,7 @@ import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNa
 import { metadataService } from '../../services/metadataService';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { captureTabMembership } from './canvasClipboard';
+import { LinkWidthScale } from './LinkWidthScale';
 import { CanvasCaptureHandler, CanvasZoomControls, RevealSelectionOnOpen, FitViewController } from './CanvasControllers';
 import { elementToNode } from './canvasConversion';
 import { useCanvasKeyboard } from './useCanvasKeyboard';
@@ -2982,6 +2983,7 @@ export function Canvas() {
                 />
               )}
               <LinksLayer scene={linksLayerScene} themeMode={themeMode} />
+              <LinkWidthScale />
               <FlowStoreBridge storeRef={flowStoreRef} />
               <CanvasCaptureHandler />
               <LowDetailHandleRepair isLowDetail={isLowDetail} />
