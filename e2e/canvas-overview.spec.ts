@@ -93,13 +93,13 @@ test('the overview layer draws the whole graph and keeps selection working', asy
   await page.mouse.click(p0.x, p0.y, { button: 'right' });
   const menu = page.locator('[role="menu"]').first();
   await expect(menu).toBeVisible();
-  await expect(menu).toContainText('Jean Dupont 0 ↔ Marie Martin 1');
+  await expect(menu).toContainText('Jean Dupont 0, Marie Martin 1');
   await page.keyboard.press('Escape');
   await expect(page.locator('[role="menu"]')).toHaveCount(0);
   // Right-click on empty canvas: the canvas menu, selection untouched
   await page.mouse.click(empty.x, empty.y, { button: 'right' });
   await expect(menu).toBeVisible();
-  await expect(menu).not.toContainText('↔');
+  await expect(menu).not.toContainText('Jean Dupont 0, Marie Martin 1');
   await page.keyboard.press('Escape');
   await expect.poll(() => selectedLabels(page)).toEqual(['Jean Dupont 0', 'Marie Martin 1']);
 

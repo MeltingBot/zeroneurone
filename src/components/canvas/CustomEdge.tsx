@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
+import { scaledLinkWidth } from '../../utils/linkWidthScale';
 import { useDossierStore, useUIStore } from '../../stores';
 import { FONT_SIZE_PX, type FontSize } from '../../types';
 import type { EvaluationBadge } from '../../utils/evaluation';
@@ -245,8 +246,7 @@ function CustomEdgeComponent(props: EdgeProps) {
         <path
           d={edgePath}
           fill="none"
-          style={{ stroke: haloColor }}
-          strokeWidth={haloThickness}
+          style={{ stroke: haloColor, strokeWidth: scaledLinkWidth(haloThickness) }}
           strokeLinecap="round"
         />
       )}
@@ -271,7 +271,7 @@ function CustomEdgeComponent(props: EdgeProps) {
         stroke={color}
         strokeWidth={thickness}
         strokeDasharray={dashArray}
-        style={{ stroke: color, strokeWidth: thickness }}
+        style={{ stroke: color, strokeWidth: scaledLinkWidth(thickness) }}
       />
 
       {/* Cycle: accent dashes moving the way the cycle runs */}

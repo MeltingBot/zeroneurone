@@ -193,7 +193,8 @@
       "copyAsDot": "Copiar com a DOT",
       "selectLinks": "Selecciona els seus enllaços",
       "selectAllLinks": "Selecciona tots els enllaços",
-      "suggestLinks": "Suggerir enllaços"
+      "suggestLinks": "Suggerir enllaços",
+      "openDetail": "Obre el detall"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",

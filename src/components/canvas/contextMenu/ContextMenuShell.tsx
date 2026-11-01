@@ -200,6 +200,10 @@ interface ContextMenuShellProps {
   x: number;
   y: number;
   header?: ReactNode;
+  /** Makes the header a button (the menu closes after it) */
+  onHeaderClick?: () => void;
+  /** Tooltip of the header button */
+  headerTitle?: string;
   sections: MenuSection[];
   onClose: () => void;
   /** Tailwind min-width class of the root panel */
@@ -211,7 +215,7 @@ interface ContextMenuShellProps {
  * submenus (hover or click, flipped near the right edge) and keyboard
  * navigation (↑ ↓ Home End → ← Enter Esc).
  */
-export function ContextMenuShell({ x, y, header, sections, onClose, minWidthClass = 'min-w-48' }: ContextMenuShellProps) {
+export function ContextMenuShell({ x, y, header, onHeaderClick, headerTitle, sections, onClose, minWidthClass = 'min-w-48' }: ContextMenuShellProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
 
@@ -289,7 +293,19 @@ export function ContextMenuShell({ x, y, header, sections, onClose, minWidthClas
         className={`${PANEL_CLASS} ${minWidthClass} max-w-80 outline-none`}
         style={{ left: position.x, top: position.y }}
       >
-        {header && <div className="px-3 py-1.5 mb-1 border-b border-border-default">{header}</div>}
+        {header && (onHeaderClick ? (
+          <button
+            type="button"
+            title={headerTitle}
+            data-testid="context-menu-header"
+            onClick={() => { onHeaderClick(); onClose(); }}
+            className="w-full text-left px-3 py-1.5 mb-1 border-b border-border-default hover:bg-bg-secondary"
+          >
+            {header}
+          </button>
+        ) : (
+          <div className="px-3 py-1.5 mb-1 border-b border-border-default">{header}</div>
+        ))}
         <MenuList sections={cleanSections} onClose={onClose} />
       </div>
     </>

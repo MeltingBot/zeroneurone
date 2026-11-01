@@ -52,6 +52,8 @@ import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNa
 import { metadataService } from '../../services/metadataService';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { captureTabMembership } from './canvasClipboard';
+import { LinkWidthScale } from './LinkWidthScale';
+import { LinkEndsTooltip } from './LinkEndsTooltip';
 import { CanvasCaptureHandler, CanvasZoomControls, RevealSelectionOnOpen, FitViewController } from './CanvasControllers';
 import { elementToNode } from './canvasConversion';
 import { useCanvasKeyboard } from './useCanvasKeyboard';
@@ -66,7 +68,6 @@ interface LinkContextMenuState {
   x: number;
   y: number;
   linkId: string;
-  linkLabel: string;
 }
 
 /** Zoom below which nodes render as plain boxes. Labels are unreadable there. */
@@ -181,6 +182,7 @@ export function Canvas() {
 
   // O(1) element lookup map — avoids O(n) .find() in hot paths (drag, resize, context menu)
   const elementMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
+  const linkMap = useMemo(() => new Map(links.map(l => [l.id, l])), [links]);
   const assets = useDossierStore((s) => s.assets);
   const comments = useDossierStore((s) => s.comments);
   const createElement = useDossierStore((s) => s.createElement);
@@ -357,8 +359,11 @@ export function Canvas() {
   const isViewportMovingRef = useRef(false);
   const cullingViewportRef = useRef(useViewStore.getState().viewport);
   const [isViewportMoving, setIsViewportMoving] = useState(false);
+  // Clicked link with an end outside the view: its ends, where it was clicked
+  const [linkTip, setLinkTip] = useState<{ linkId: string; x: number; y: number; toLeft: boolean } | null>(null);
 
   const handleMoveStart = useCallback(() => {
+    setLinkTip(null);
     isViewportMovingRef.current = true;
     setIsViewportMoving(true);
   }, []);
@@ -2165,17 +2170,30 @@ export function Canvas() {
       setContextMenu(null);
       setCanvasContextMenu(null);
 
-      const link = links.find((l) => l.id === edge.id);
-
       setLinkContextMenu({
         x: event.clientX,
         y: event.clientY,
         linkId: edge.id,
-        linkLabel: link?.label || '',
       });
     },
-    [links]
+    []
   );
+
+  /** Link drawn on a canvas (overview, links layer) under a screen point */
+  const canvasLinkAt = useCallback((clientX: number, clientY: number): string | null => {
+    const linkScene = overviewActiveRef.current ? overviewSceneRef.current : linksLayerSceneRef.current;
+    if (!linkScene || !reactFlowWrapper.current) return null;
+    const bounds = reactFlowWrapper.current.getBoundingClientRect();
+    const { x: vx, y: vy, zoom } = useViewStore.getState().viewport;
+    const l = hitLink(
+      linkScene,
+      (clientX - bounds.left - vx) / zoom,
+      (clientY - bounds.top - vy) / zoom,
+      LINK_HIT_TOLERANCE_PX / zoom,
+      LINK_HIT_MAX_IN_REACH,
+    );
+    return l >= 0 ? linkScene.linkIds[l] : null;
+  }, []);
 
   const handlePaneContextMenu = useCallback(
     (event: MouseEvent | React.MouseEvent<globalThis.Element, MouseEvent>) => {
@@ -2192,6 +2210,15 @@ export function Canvas() {
       }
       setContextMenu(null);
       setLinkContextMenu(null);
+
+      // A link drawn on a canvas: its own menu, as on a React Flow edge
+      const linkId = canvasLinkAt(event.clientX, event.clientY);
+      if (linkId) {
+        setCanvasContextMenu(null);
+        selectLink(linkId);
+        setLinkContextMenu({ x: event.clientX, y: event.clientY, linkId });
+        return;
+      }
 
       // Calculate canvas position from screen position (same formula as double-click)
       const viewport = useViewStore.getState().viewport;
@@ -2210,7 +2237,7 @@ export function Canvas() {
         canvasY,
       });
     },
-    [handleNodeContextMenu]
+    [handleNodeContextMenu, canvasLinkAt, selectLink]
   );
 
   const {
@@ -2319,6 +2346,28 @@ export function Canvas() {
     timer: null,
   });
 
+  /** Shows the ends of a clicked link when one of them is outside the view */
+  const showLinkEnds = useCallback((linkId: string, clientX: number, clientY: number) => {
+    const wrapper = reactFlowWrapper.current;
+    const link = links.find((l) => l.id === linkId);
+    if (!wrapper || !link) return;
+    const bounds = wrapper.getBoundingClientRect();
+    const { x: vx, y: vy, zoom } = useViewStore.getState().viewport;
+    const onScreen = (id: string) => {
+      const pos = nodePositionsRef.current.get(id);
+      if (!pos) return false;
+      const sx = pos.x * zoom + vx, sy = pos.y * zoom + vy;
+      return sx >= 0 && sx <= bounds.width && sy >= 0 && sy <= bounds.height;
+    };
+    if (onScreen(link.fromId) && onScreen(link.toId)) {
+      setLinkTip(null);
+      return;
+    }
+    const x = clientX - bounds.left;
+    // Near the right edge it opens to the left of the pointer
+    setLinkTip({ linkId, x, y: clientY - bounds.top, toLeft: x > bounds.width - 440 });
+  }, [links]);
+
   const handleEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       // Shift / Ctrl / Cmd adds the link to the selection, or removes it
@@ -2338,7 +2387,10 @@ export function Canvas() {
       if (clickData.count === 1) {
         // First click - select and start timer
         if (isMultiSelect) toggleLink(edge.id);
-        else selectLink(edge.id);
+        else {
+          selectLink(edge.id);
+          showLinkEnds(edge.id, event.clientX, event.clientY);
+        }
         clickData.timer = setTimeout(() => {
           clickData.count = 0;
         }, 300);
@@ -2352,7 +2404,7 @@ export function Canvas() {
         startEditingLink(edge.id);
       }
     },
-    [selectLink, toggleLink, startEditingLink]
+    [selectLink, toggleLink, startEditingLink, showLinkEnds]
   );
 
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
@@ -2401,21 +2453,14 @@ export function Canvas() {
     }
 
     // Links drawn on a canvas (overview, links layer) reach the pane too
-    const linkScene = overviewActiveRef.current ? overviewSceneRef.current : linksLayerSceneRef.current;
-    if (linkScene && reactFlowWrapper.current) {
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const { x: vx, y: vy, zoom } = useViewStore.getState().viewport;
-      const l = hitLink(
-        linkScene,
-        (event.clientX - bounds.left - vx) / zoom,
-        (event.clientY - bounds.top - vy) / zoom,
-        LINK_HIT_TOLERANCE_PX / zoom,
-        LINK_HIT_MAX_IN_REACH,
-      );
-      if (l >= 0) {
-        const linkId = linkScene.linkIds[l];
+    {
+      const linkId = canvasLinkAt(event.clientX, event.clientY);
+      if (linkId) {
         if (event.shiftKey || event.ctrlKey || event.metaKey) toggleLink(linkId);
-        else selectLink(linkId);
+        else {
+          selectLink(linkId);
+          showLinkEnds(linkId, event.clientX, event.clientY);
+        }
         return;
       }
     }
@@ -2424,7 +2469,7 @@ export function Canvas() {
     // Also reset any Insights highlight (bridges, clusters, centrality…) so a
     // click on empty canvas restores the normal display.
     clearHighlight();
-  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, placeImport]);
+  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, placeImport, showLinkEnds, canvasLinkAt]);
 
   const handlePaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
@@ -2922,6 +2967,20 @@ export function Canvas() {
             }
           }}
         >
+          {/* Gone with the selection: a click elsewhere, Escape, another link */}
+          {linkTip && selectedLinkIds.has(linkTip.linkId) && (() => {
+            const link = links.find((l) => l.id === linkTip.linkId);
+            return link ? (
+              <LinkEndsTooltip
+                link={link}
+                from={elementMap.get(link.fromId)}
+                to={elementMap.get(link.toId)}
+                x={linkTip.x}
+                y={linkTip.y}
+                toLeft={linkTip.toLeft}
+              />
+            ) : null;
+          })()}
           <LowDetailContext.Provider value={isLowDetail}>
             <ReactFlow
               nodes={flowNodes}
@@ -2982,6 +3041,7 @@ export function Canvas() {
                 />
               )}
               <LinksLayer scene={linksLayerScene} themeMode={themeMode} />
+              <LinkWidthScale />
               <FlowStoreBridge storeRef={flowStoreRef} />
               <CanvasCaptureHandler />
               <LowDetailHandleRepair isLowDetail={isLowDetail} />
@@ -3050,6 +3110,10 @@ export function Canvas() {
               y={contextMenu.y}
               elementId={contextMenu.elementId}
               elementLabel={contextMenu.elementLabel}
+              onOpenDetail={() => {
+                selectElement(contextMenu.elementId);
+                useUIStore.getState().setSidePanelTab('detail');
+              }}
               isHidden={hiddenElementIds.has(contextMenu.elementId)}
               hasPreviewableAsset={!!contextMenu.previewAsset}
               otherSelectedId={otherSelectedElement?.id}
@@ -3172,11 +3236,17 @@ export function Canvas() {
           )}
 
           {/* Context menu for links */}
-          {linkContextMenu && (
+          {linkContextMenu && linkMap.has(linkContextMenu.linkId) && (
             <LinkContextMenu
               x={linkContextMenu.x}
               y={linkContextMenu.y}
-              linkLabel={linkContextMenu.linkLabel}
+              link={linkMap.get(linkContextMenu.linkId)!}
+              from={elementMap.get(linkMap.get(linkContextMenu.linkId)!.fromId)}
+              to={elementMap.get(linkMap.get(linkContextMenu.linkId)!.toId)}
+              onOpenDetail={() => {
+                selectLink(linkContextMenu.linkId);
+                useUIStore.getState().setSidePanelTab('detail');
+              }}
               onEditLabel={() => {
                 startEditingLink(linkContextMenu.linkId);
                 closeLinkContextMenu();

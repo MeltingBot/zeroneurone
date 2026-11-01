@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { type EdgeProps } from '@xyflow/react';
+import { scaledLinkWidth } from '../../utils/linkWidthScale';
 import { arrowPolygon, EDGE_ARROW_LENGTH } from '../../utils/edgeRouting';
 
 /**
@@ -54,8 +55,7 @@ function SimpleEdgeComponent(props: EdgeProps) {
         <path
           d={path}
           fill="none"
-          style={{ stroke: 'var(--color-accent)' }}
-          strokeWidth={thickness + 6}
+          style={{ stroke: 'var(--color-accent)', strokeWidth: scaledLinkWidth(thickness + 6) }}
           strokeLinecap="round"
           opacity={0.25}
         />
@@ -70,7 +70,7 @@ function SimpleEdgeComponent(props: EdgeProps) {
         d={path}
         fill="none"
         stroke={color}
-        strokeWidth={thickness}
+        style={{ strokeWidth: scaledLinkWidth(thickness) }}
         strokeDasharray={dashArray}
         strokeLinecap="round"
       />

@@ -193,7 +193,8 @@
       "copyAsDot": "Copier en DOT",
       "selectLinks": "Sélectionner leurs liens",
       "selectAllLinks": "Sélectionner tous les liens",
-      "suggestLinks": "Suggérer des liens"
+      "suggestLinks": "Suggérer des liens",
+      "openDetail": "Ouvrir le détail"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",

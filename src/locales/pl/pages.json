@@ -193,7 +193,8 @@
       "copyAsDot": "Kopiuj jako DOT",
       "selectLinks": "Zaznacz ich połączenia",
       "selectAllLinks": "Zaznacz wszystkie połączenia",
-      "suggestLinks": "Zaproponuj połączenia"
+      "suggestLinks": "Zaproponuj połączenia",
+      "openDetail": "Otwórz szczegóły"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",

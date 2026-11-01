@@ -22,6 +22,8 @@ interface ContextMenuProps {
   otherSelectedId?: string;
   otherSelectedLabel?: string;
   onFocus: (depth: number) => void;
+  /** Selects the element and opens its detail panel */
+  onOpenDetail: () => void;
   onHide: () => void;
   onShowOnly: () => void;
   onShow: () => void;
@@ -96,6 +98,7 @@ function ContextMenuComponent({
   otherSelectedId,
   otherSelectedLabel,
   onFocus,
+  onOpenDetail,
   onHide,
   onShowOnly,
   onShow,
@@ -259,12 +262,14 @@ function ContextMenuComponent({
       header={
         <span className="text-xs font-medium text-text-primary truncate block max-w-56">
           {hasTwoSelected
-            ? `${elementLabel} ↔ ${otherSelectedLabel}`
+            ? `${elementLabel}, ${otherSelectedLabel}`
             : selectedCount > 2
               ? t('dossier.toolbar.selectedCount', { count: selectedCount })
               : elementLabel}
         </span>
       }
+      onHeaderClick={!hasTwoSelected && selectedCount <= 1 ? onOpenDetail : undefined}
+      headerTitle={cm('openDetail')}
       sections={[
         [
           hasPreviewableAsset && onPreview && { id: 'preview', label: cm('preview'), icon: Image, onSelect: onPreview },

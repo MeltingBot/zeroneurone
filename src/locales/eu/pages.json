@@ -193,7 +193,8 @@
       "copyAsDot": "Kopiatu DOT gisa",
       "selectLinks": "Haien loturak hautatu",
       "selectAllLinks": "Lotura guztiak hautatu",
-      "suggestLinks": "Loturak iradoki"
+      "suggestLinks": "Loturak iradoki",
+      "openDetail": "Ireki xehetasuna"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",

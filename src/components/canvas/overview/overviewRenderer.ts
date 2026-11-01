@@ -59,6 +59,9 @@ const MIN_LINE_PX = 0.5;
 /** Result glow around links: extra width in screen pixels, and its opacity. */
 const LINK_GLOW_PX = 6;
 const LINK_GLOW_ALPHA = 0.35;
+/** Links with neither end on screen only cross the view: faded so the links
+ *  of the elements on screen stay readable */
+const PASSING_ALPHA = 0.2;
 /** Link colour when none can be resolved, as SimpleEdge. */
 const FALLBACK_LINK_COLOR = '#9a948d';
 const CSS_VAR = /^var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)$/;
@@ -236,15 +239,19 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
       if (linkFlags[l] & LINK_HIGHLIGHTED) glowLinks.push(l);
       if (linkFlags[l] & LINK_SELECTED) { selectedLinks.push(l); continue; }
       const widthBucket = Math.min(8, Math.max(1, Math.round(linkWidth[l])));
-      const key = ((linkColor[l] * 9 + widthBucket) * 3 + linkStyle[l]) * 2 + (linkFlags[l] & LINK_DIMMED ? 1 : 0);
+      const passing = !inView(a) && !inView(b) ? 1 : 0;
+      const key = (((linkColor[l] * 9 + widthBucket) * 3 + linkStyle[l]) * 2 + (linkFlags[l] & LINK_DIMMED ? 1 : 0)) * 2 + passing;
       pushTo(linkBuckets, key, l);
     }
     const arrows = EDGE_ARROW_LENGTH * zoom >= MIN_ARROW_PX;
+    // Zoomed in, a link keeps its width in screen pixels instead of growing
+    // with the view (a 3-unit link was 10 px wide at zoom 3)
+    const widthScale = Math.min(1, px);
     const strokeLinks = (list: number[], color: string, width: number, style: number, alpha: number) => {
       ctx.globalAlpha = alpha;
       ctx.strokeStyle = color || FALLBACK_LINK_COLOR;
-      ctx.lineWidth = Math.max(width, MIN_LINE_PX * px);
-      setDash(ctx, style, width, zoom);
+      ctx.lineWidth = Math.max(width * widthScale, MIN_LINE_PX * px);
+      setDash(ctx, style, width * widthScale, zoom);
       ctx.beginPath();
       for (const l of list) {
         const a = from[l], b = to[l];
@@ -275,19 +282,20 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
         ctx.lineTo(x[b] + w[b] / 2, y[b] + h[b] / 2);
         widest = Math.max(widest, linkWidth[l]);
       }
-      ctx.lineWidth = Math.max(widest, MIN_LINE_PX * px) + LINK_GLOW_PX * px;
+      ctx.lineWidth = Math.max(widest * widthScale, MIN_LINE_PX * px) + LINK_GLOW_PX * px;
       ctx.stroke();
       ctx.lineCap = 'butt';
     }
     for (const [key, list] of linkBuckets) {
-      const dimmed = key % 2;
-      const style = Math.floor(key / 2) % 3;
-      const widthBucket = Math.floor(key / 6) % 9;
-      const color = palette[Math.floor(key / 54)];
-      strokeLinks(list, color, widthBucket, style, dimmed ? DIMMED_ALPHA : 1);
+      const passing = key % 2;
+      const dimmed = Math.floor(key / 2) % 2;
+      const style = Math.floor(key / 4) % 3;
+      const widthBucket = Math.floor(key / 12) % 9;
+      const color = palette[Math.floor(key / 108)];
+      strokeLinks(list, color, widthBucket, style, (dimmed ? DIMMED_ALPHA : 1) * (passing ? PASSING_ALPHA : 1));
     }
     if (selectedLinks.length > 0) {
-      strokeLinks(selectedLinks, this.theme.accent, Math.max(2, 2 * px), 0, 1);
+      strokeLinks(selectedLinks, this.theme.accent, Math.max(3, 2 * px), 0, 1);
     }
     ctx.setLineDash([]);
     if (this.linksOnly) {
