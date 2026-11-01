@@ -3104,6 +3104,21 @@ export function Canvas() {
                 ? [{ key: t('labels.source'), url: toUrl(ctxEl.source) }]
                 : sourceWebLinks(ctxEl.source).map(l => ({ key: `${t('labels.source')} · ${l.label}`, url: l.target }));
             const elementUrls = [...sourceUrls, ...propertyUrls];
+            // Shown alone: every element still shown is a target or a group
+            // holding one (what "show only" keeps)
+            let shownAloneHiddenCount = 0;
+            if (hiddenElementIds.size > 0) {
+              const targets = new Set(selectedElementIds.size > 1 && selectedElementIds.has(contextMenu.elementId)
+                ? selectedElementIds : [contextMenu.elementId]);
+              const kept = new Set(targets);
+              for (const id of targets) {
+                let parent = elementMap.get(id)?.parentGroupId ?? null;
+                while (parent && !kept.has(parent)) { kept.add(parent); parent = elementMap.get(parent)?.parentGroupId ?? null; }
+              }
+              const shownAlone = [...targets].every((id) => !hiddenElementIds.has(id))
+                && elements.every((el) => hiddenElementIds.has(el.id) || kept.has(el.id));
+              if (shownAlone) shownAloneHiddenCount = hiddenElementIds.size;
+            }
             return (
             <ContextMenu
               x={contextMenu.x}
@@ -3122,6 +3137,8 @@ export function Canvas() {
               onHide={handleContextMenuHide}
               onShowOnly={handleContextMenuShowOnly}
               onShow={handleContextMenuShow}
+              shownAloneHiddenCount={shownAloneHiddenCount}
+              onShowHidden={showAllHidden}
               onDelete={handleContextMenuDelete}
               onCopy={handleContextMenuCopy}
               onCut={handleContextMenuCut}

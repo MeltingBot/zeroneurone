@@ -27,6 +27,9 @@ interface ContextMenuProps {
   onHide: () => void;
   onShowOnly: () => void;
   onShow: () => void;
+  /** Elements hidden while the target is the only one shown: 0 otherwise */
+  shownAloneHiddenCount?: number;
+  onShowHidden?: () => void;
   onDelete: () => void;
   onCopy: () => void;
   onCut: () => void;
@@ -102,6 +105,8 @@ function ContextMenuComponent({
   onHide,
   onShowOnly,
   onShow,
+  shownAloneHiddenCount = 0,
+  onShowHidden,
   onDelete,
   onCopy,
   onCut,
@@ -286,10 +291,15 @@ function ContextMenuComponent({
           analyzeItem,
           organizeItem,
           tabsItem,
-          isHidden
-            ? { id: 'show', label: cm('showElement'), icon: Eye, onSelect: onShow }
-            : { id: 'hide', label: hasMultipleSelected ? cm('hideSelection') : cm('hideElement'), icon: EyeOff, onSelect: onHide },
-          { id: 'show-only', label: hasMultipleSelected ? cm('showOnlySelection') : cm('showOnlyElement'), icon: Eye, onSelect: onShowOnly },
+          // Already the only one shown: hiding it or showing it alone means nothing
+          ...(shownAloneHiddenCount > 0 && onShowHidden
+            ? [{ id: 'show-hidden', label: t('dossier.contextMenu.showHidden', { count: shownAloneHiddenCount }), icon: Eye, onSelect: onShowHidden }]
+            : [
+                isHidden
+                  ? { id: 'show', label: cm('showElement'), icon: Eye, onSelect: onShow }
+                  : { id: 'hide', label: hasMultipleSelected ? cm('hideSelection') : cm('hideElement'), icon: EyeOff, onSelect: onHide },
+                { id: 'show-only', label: hasMultipleSelected ? cm('showOnlySelection') : cm('showOnlyElement'), icon: Eye, onSelect: onShowOnly },
+              ]),
         ],
         pluginItems,
         [{ id: 'delete', label: cm('delete'), icon: Trash2, danger: true, onSelect: onDelete }],
