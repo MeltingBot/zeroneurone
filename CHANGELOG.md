@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.88.3
+
+### Corrections
+
+- **Menu d'un élément affiché seul** — après « Afficher uniquement »,
+  le menu de l'élément (ou de la sélection) propose « Afficher les
+  masqués (N) » au lieu de « Masquer » et « Afficher uniquement », qui
+  n'avaient plus de sens.
+- **Ouverture d'un dossier** — un second chargement du même dossier lancé
+  dans la foulée (double montage de la page en développement) reprend le
+  premier au lieu de relire le dossier : ouverture plus rapide, plus de
+  blocage ni de dossier qui grossit à chaque ouverture. Pas de compaction
+  à la fermeture tant que la lecture initiale n'est pas terminée.
+
 ## 2.88.2
 
 ### API plugin : requêtes ZNQuery
