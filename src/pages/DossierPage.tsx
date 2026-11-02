@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, MoreVertical, Tags, Lock } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, MoreVertical, Tags, Lock } from 'lucide-react';
 import { retentionExpiresAt } from '../utils/dossierLock';
 import { WriteLockBanner } from '../components/common/WriteLockBanner';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
@@ -45,6 +45,7 @@ import { useEvaluationModel } from '../hooks/useEvaluationModel';
 import { usePlugins } from '../plugins/usePlugins';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { useShallow } from 'zustand/react/shallow';
+import { useThemeToggle } from '../components/common/useThemeToggle';
 
 const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; labelKey: string; shortcut: string }[] = [
   { mode: 'canvas', icon: LayoutGrid, labelKey: 'canvas', shortcut: '1' },
@@ -83,7 +84,8 @@ export function DossierPage() {
     unloadDossier,
   } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, assets: s.assets, comments: s.comments, isLoading: s.isLoading, loadingPhase: s.loadingPhase, loadingDetail: s.loadingDetail, loadingProgress: s.loadingProgress, error: s.error, loadDossier: s.loadDossier, unloadDossier: s.unloadDossier })));
 
-  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide } = useUIStore(useShallow((s) => ({ searchOpen: s.searchOpen, toggleSearch: s.toggleSearch, closeSearch: s.closeSearch, resetDossierState: s.resetDossierState, themeMode: s.themeMode, toggleThemeMode: s.toggleThemeMode, showToast: s.showToast, panelSide: s.panelSide })));
+  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, showToast, panelSide } = useUIStore(useShallow((s) => ({ searchOpen: s.searchOpen, toggleSearch: s.toggleSearch, closeSearch: s.closeSearch, resetDossierState: s.resetDossierState, showToast: s.showToast, panelSide: s.panelSide })));
+  const { Icon: ThemeIcon, labelKey: themeLabelKey, toggle: toggleThemeMode } = useThemeToggle();
   // One selector per field: the viewport changes on every frame of a pan, and
   // subscribing to the whole store would re-render the page each time
   const displayMode = useViewStore((s) => s.displayMode);
@@ -674,9 +676,9 @@ export function DossierPage() {
             <button
               onClick={toggleThemeMode}
               className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-              title={themeMode === 'light' ? t('dossier.viewToolbar.darkMode') : t('dossier.viewToolbar.lightMode')}
+              title={t(`dossier.viewToolbar.${themeLabelKey}`)}
             >
-              {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+              <ThemeIcon size={14} />
             </button>
             <button
               onClick={() => setShortcutsOpen(true)}
@@ -729,8 +731,8 @@ export function DossierPage() {
                   onClick={() => { toggleThemeMode(); setHeaderMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
                 >
-                  {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-                  {themeMode === 'light' ? t('dossier.viewToolbar.darkMode') : t('dossier.viewToolbar.lightMode')}
+                  <ThemeIcon size={14} />
+                  {t(`dossier.viewToolbar.${themeLabelKey}`)}
                 </button>
                 <div className="h-px bg-border-default my-1" />
                 <button

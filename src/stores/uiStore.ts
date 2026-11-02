@@ -64,6 +64,36 @@ export interface ImportPlacementData {
 }
 
 export type ThemeMode = 'light' | 'dark';
+/** What the user picked: a fixed mode, or follow the OS setting. */
+export type ThemePreference = ThemeMode | 'system';
+
+const DARK_QUERY = '(prefers-color-scheme: dark)';
+
+function systemThemeMode(): ThemeMode {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia?.(DARK_QUERY).matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function resolveThemeMode(pref: ThemePreference): ThemeMode {
+  return pref === 'system' ? systemThemeMode() : pref;
+}
+
+function applyThemeMode(mode: ThemeMode): void {
+  if (typeof document !== 'undefined') document.documentElement.setAttribute('data-theme', mode);
+}
+
+/**
+ * Next preference for the theme button. From "system", go to the opposite
+ * of the OS mode so the first click always changes what is shown; then to
+ * the OS mode set explicitly; then back to "system".
+ */
+export function nextThemePreference(pref: ThemePreference, system: ThemeMode = systemThemeMode()): ThemePreference {
+  if (pref === 'system') return system === 'dark' ? 'light' : 'dark';
+  return pref === system ? 'system' : system;
+}
 
 // Capture handler type - each view registers a function that fits content and returns screenshot
 export type CaptureHandler = () => Promise<string | null>;
@@ -84,8 +114,9 @@ interface UIState {
   // Search
   searchOpen: boolean;
 
-  // Theme mode (entire interface)
+  // Theme (entire interface): themeMode is the mode shown, themePreference what the user picked
   themeMode: ThemeMode;
+  themePreference: ThemePreference;
 
   // Hide media on elements
   hideMedia: boolean;
@@ -185,7 +216,10 @@ interface UIState {
   toggleSearch: () => void;
 
   // Actions - Theme mode
+  /** Show a mode without changing the preference (temporary, e.g. screenshots). */
   setThemeMode: (mode: ThemeMode) => void;
+  setThemePreference: (pref: ThemePreference) => void;
+  /** Cycle the preference (see nextThemePreference). */
   toggleThemeMode: () => void;
 
   // Actions - Hide media
@@ -243,7 +277,8 @@ export const useUIStore = create<UIState>()(
   panelSide: 'right' as 'left' | 'right' | 'bottom' | 'detached',
   toasts: [],
   searchOpen: false,
-  themeMode: 'light' as ThemeMode,
+  themeMode: resolveThemeMode('system'),
+  themePreference: 'system' as ThemePreference,
   hideMedia: false,
   anonymousMode: false,
   showCommentBadges: true,
@@ -352,15 +387,17 @@ export const useUIStore = create<UIState>()(
   // Theme mode (applies to entire interface via CSS)
   setThemeMode: (mode) => {
     set({ themeMode: mode });
-    document.documentElement.setAttribute('data-theme', mode);
+    applyThemeMode(mode);
+  },
+
+  setThemePreference: (pref) => {
+    const mode = resolveThemeMode(pref);
+    set({ themePreference: pref, themeMode: mode });
+    applyThemeMode(mode);
   },
 
   toggleThemeMode: () => {
-    set((state) => {
-      const newMode = state.themeMode === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', newMode);
-      return { themeMode: newMode };
-    });
+    get().setThemePreference(nextThemePreference(get().themePreference));
   },
 
   // Hide media
@@ -450,15 +487,24 @@ export const useUIStore = create<UIState>()(
 }),
     {
       name: 'zeroneurone-ui-settings',
+      version: 1,
+      // v0 stored the mode shown (default light). Dark was a choice: keep it.
+      // Light was mostly the default: follow the system from now on.
+      migrate: (persisted, version) => {
+        const p = (persisted ?? {}) as Record<string, unknown>;
+        if (version < 1) {
+          p.themePreference = p.themeMode === 'dark' ? 'dark' : 'system';
+          delete p.themeMode;
+        }
+        return p as never;
+      },
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, sidePanelTab: state.sidePanelTab, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
+      partialize: (state) => ({ themePreference: state.themePreference, sidePanelTab: state.sidePanelTab, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
       onRehydrateStorage: () => (state) => {
         // v2.76.2 saved this flag: drop what it stored, the default applies
         if (state) state.canvasOverviewLayer = CANVAS_OVERVIEW_DEFAULT;
         // Apply theme on rehydration
-        if (state?.themeMode) {
-          document.documentElement.setAttribute('data-theme', state.themeMode);
-        }
+        if (state) state.setThemePreference(state.themePreference ?? 'system');
         // Migrate old osmLatin → osmLocalized
         if (state && state.mapBaseLayer === 'osmLatin') {
           state.mapBaseLayer = 'osmLocalized';
@@ -478,3 +524,15 @@ export const useUIStore = create<UIState>()(
     }
   )
 );
+
+applyThemeMode(useUIStore.getState().themeMode);
+
+// Follow OS changes while the preference is "system"
+try {
+  window.matchMedia?.(DARK_QUERY).addEventListener('change', () => {
+    const { themePreference, setThemePreference } = useUIStore.getState();
+    if (themePreference === 'system') setThemePreference('system');
+  });
+} catch {
+  // No matchMedia (tests, old browsers): the theme stays as set
+}

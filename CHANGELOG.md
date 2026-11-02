@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.88.5
+
+### Interface
+
+- **Thème système** — par défaut, l'interface suit le mode clair ou
+  sombre du système et bascule en même temps que lui. Le bouton du thème
+  passe par trois états : mode inverse du système, mode du système choisi
+  explicitement, puis retour au thème système.
+- Mise à jour : un mode sombre déjà choisi est conservé ; un mode clair
+  enregistré (jusqu'ici la valeur par défaut) devient « thème système ».
+  Qui préfère le clair avec un système en sombre reclique sur le bouton.
+
 ## 2.88.4
 
 ### Carte

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Download, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, GraduationCap, icons } from 'lucide-react';
+import { Plus, Download, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, ExternalLink, Settings, ChevronRight, HardDrive, Lock, GraduationCap, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 import { WelcomeBanner } from '../onboarding/WelcomeBanner';
 import { usePlugins } from '../../plugins/usePlugins';
@@ -9,6 +9,7 @@ import { isPluginRequired } from '../../plugins/requiredPlugins';
 import { useTutorialStore } from '../../stores/tutorialStore';
 import type { HomeCardRegistration } from '../../types/plugins';
 import { appPath } from '../../utils/basePath';
+import { useThemeToggle } from '../common/useThemeToggle';
 
 interface LandingSectionProps {
   onNewDossier: () => void;
@@ -19,8 +20,6 @@ interface LandingSectionProps {
   isEncryptionEnabled: boolean;
   dossierCount: number;
   onViewDossiers: () => void;
-  themeMode: 'light' | 'dark';
-  onToggleTheme: () => void;
   onTryExample: () => void;
 }
 
@@ -35,11 +34,10 @@ export function LandingSection({
   isEncryptionEnabled,
   dossierCount,
   onViewDossiers,
-  themeMode,
-  onToggleTheme,
   onTryExample,
 }: LandingSectionProps) {
   const { t } = useTranslation('pages');
+  const { Icon: ThemeIcon, labelKey: themeLabelKey, toggle: toggleTheme } = useThemeToggle();
   const homePlugins = usePlugins('home:actions');
   const bannerPlugins = usePlugins('home:banner');
   // includeDisabled: show all cards, manage enabled/disabled in UI
@@ -285,11 +283,11 @@ export function LandingSection({
             {t('home.storage')}
           </button>
           <button
-            onClick={onToggleTheme}
+            onClick={toggleTheme}
             className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-            title={themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
+            title={t(`home.${themeLabelKey}`)}
           >
-            {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+            <ThemeIcon size={14} />
           </button>
           <LanguageSwitcher size="sm" direction="up" />
           <button

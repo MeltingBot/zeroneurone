@@ -33,7 +33,7 @@ Once loaded, ZeroNeurone couldn't care less about internet. Cut the cable, it ke
 
 ### Is there a dark mode?
 
-Yes. The **moon** icon in the toolbar. Your eyes at 2 a.m. will thank you.
+Yes. By default, ZeroNeurone follows your system theme and switches along with it. The theme button in the toolbar cycles through dark, light, then back to the **system theme** (screen icon). Your eyes at 2 a.m. will thank you.
 
 ### What about other languages?
 

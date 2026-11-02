@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Download, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive, GraduationCap, Check } from 'lucide-react';
+import { Plus, FolderOpen, Download, Tags, Home, Info, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive, GraduationCap, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher, DropdownPortal } from '../components/common';
 import { DossierCard, LandingSection } from '../components/home';
@@ -18,13 +18,14 @@ import {
   EncryptionModal,
 } from '../components/modals';
 import { useEncryptionStore } from '../stores/encryptionStore';
-import { useDossierStore, useUIStore, useViewStore, useTutorialStore, toast } from '../stores';
+import { useDossierStore, useViewStore, useTutorialStore, toast } from '../stores';
 import { dossierRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
 import { importService } from '../services/importService';
 import { buildSampleZipFile } from '../components/onboarding/sampleDossier';
 import { WriteLockBanner } from '../components/common/WriteLockBanner';
 import { useShallow } from 'zustand/react/shallow';
+import { useThemeToggle } from '../components/common/useThemeToggle';
 
 type ViewMode = 'landing' | 'list';
 type SortMode = 'updated' | 'created' | 'name';
@@ -45,7 +46,7 @@ export function HomePage() {
     deleteDossier,
   } = useDossierStore(useShallow((s) => ({ dossiers: s.dossiers, isLoading: s.isLoading, loadDossiers: s.loadDossiers, createDossier: s.createDossier, updateDossier: s.updateDossier, deleteDossier: s.deleteDossier })));
 
-  const { themeMode, toggleThemeMode } = useUIStore(useShallow((s) => ({ themeMode: s.themeMode, toggleThemeMode: s.toggleThemeMode })));
+  const { Icon: ThemeIcon, labelKey: themeLabelKey, toggle: toggleThemeMode } = useThemeToggle();
   const tutorialActive = useTutorialStore((s) => s.active);
   const suggestedTutorialName = useTutorialStore((s) => s.suggestedDossierName);
   const homePlugins = usePlugins('home:actions');
@@ -324,9 +325,9 @@ export function HomePage() {
               variant="ghost"
               size="sm"
               onClick={toggleThemeMode}
-              title={themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
+              title={t(`home.${themeLabelKey}`)}
             >
-              {themeMode === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+              <ThemeIcon size={16} />
             </Button>
             <Button
               variant="ghost"
@@ -401,8 +402,6 @@ export function HomePage() {
           isEncryptionEnabled={isEncryptionEnabled}
           dossierCount={dossiers.length}
           onViewDossiers={() => setViewMode('list')}
-          themeMode={themeMode}
-          onToggleTheme={toggleThemeMode}
           onTryExample={handleTryExample}
         />
       ) : (

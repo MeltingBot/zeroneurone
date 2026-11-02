@@ -33,7 +33,7 @@ Une fois chargé, ZeroNeurone se fiche complètement d'internet. Coupez le câbl
 
 ### Il y a un mode sombre ?
 
-Oui. L'icône **lune** dans la barre d'outils. Vos yeux à 2 h du matin vous remercient.
+Oui. Par défaut, ZeroNeurone suit le thème de votre système, et bascule avec lui. Le bouton du thème dans la barre d'outils passe d'un mode à l'autre : sombre, clair, puis retour au **thème système** (icône écran). Vos yeux à 2 h du matin vous remercient.
 
 ### Et en anglais ? En espagnol ?
 
