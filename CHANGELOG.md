@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.88.4
+
+### Carte
+
+- **Éléments au même endroit** — en cliquant sur leur pastille, ils
+  s'étalent en cercle jusqu'à 8, sur une grille compacte au-delà, sans
+  que les étiquettes se chevauchent. Une vingtaine d'éléments sur une même
+  antenne ne dessinent plus une grande spirale en escargot.
+- Les points de trace ne sont plus étalés : ceux de plusieurs éléments au
+  même endroit se superposent.
+
 ## 2.88.3
 
 ### Corrections

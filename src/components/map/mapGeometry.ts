@@ -41,31 +41,64 @@ export function breadcrumbSize(count: number): number {
 // not distort with latitude. (A previous version perturbed lng/lat in degrees, which made
 // co-located markers drift away from their true position during zoom and only snap back on
 // zoomend, and corrupted the saved position when such a marker was dragged.)
-export function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number }[]): Map<string, [number, number]> {
+export function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number; tall?: boolean }[]): Map<string, [number, number]> {
   const offsets = new Map<string, [number, number]>();
-  const groups = new Map<string, string[]>();
+  const groups = new Map<string, { id: string; tall?: boolean }[]>();
 
   // Group by position (rounded to ~1m precision at high zoom)
   elements.forEach(el => {
     const key = `${el.lat.toFixed(5)},${el.lng.toFixed(5)}`;
     const group = groups.get(key) || [];
-    group.push(el.id);
+    group.push(el);
     groups.set(key, group);
   });
 
-  // For groups with >1 element, apply spiral offset (in pixels)
-  groups.forEach(ids => {
-    if (ids.length <= 1) return;
-    const radius = 25; // px
-    ids.forEach((id, i) => {
-      if (i === 0) return; // keep first at original position
-      const angle = (2 * Math.PI * i) / ids.length;
-      const spiralRadius = radius * (1 + i * 0.2);
-      offsets.set(id, [
-        Math.cos(angle) * spiralRadius,
-        Math.sin(angle) * spiralRadius,
-      ]);
-    });
+  groups.forEach(group => {
+    if (group.length <= 1) return;
+    const grid = spreadAround(group.length, group.some(el => el.tall));
+    group.forEach((el, i) => offsets.set(el.id, grid[i]));
   });
   return offsets;
+}
+
+// Markers sharing one spot, spread around it (pixel offsets) so that none
+// overlap, labels included: on a circle up to 8, on a compact grid beyond (a
+// circle wide enough for more labels would cover the whole area). A spiral
+// whose radius grew with each marker drew a large "snail" of overlapping
+// labels for a few dozen elements on the same cell tower.
+const CELL_W = 84;
+const CIRCLE_MAX = 8;
+
+export function spreadAround(count: number, tall = false): [number, number][] {
+  const cellH = tall ? 76 : 40;
+  if (count <= CIRCLE_MAX) return spreadCircle(count, cellH);
+  // About as wide as tall overall
+  const cols = Math.max(1, Math.ceil(Math.sqrt((count * cellH) / CELL_W)));
+  const rows = Math.ceil(count / cols);
+  const result: [number, number][] = [];
+  for (let i = 0; i < count; i++) {
+    const row = Math.floor(i / cols);
+    const inRow = row === rows - 1 ? count - row * cols : cols;
+    const col = i % cols;
+    result.push([(col - (inRow - 1) / 2) * CELL_W, (row - (rows - 1) / 2) * cellH]);
+  }
+  return result;
+}
+
+// Smallest circle (first marker on top) on which no two marker boxes overlap
+function spreadCircle(count: number, cellH: number): [number, number][] {
+  const place = (r: number) =>
+    Array.from({ length: count }, (_, i): [number, number] => {
+      const angle = -Math.PI / 2 + (2 * Math.PI * i) / count;
+      return [Math.cos(angle) * r, Math.sin(angle) * r];
+    });
+  const overlaps = (pts: [number, number][]) =>
+    pts.some((a, i) => pts.some((b, j) => j > i && Math.abs(a[0] - b[0]) < CELL_W && Math.abs(a[1] - b[1]) < cellH));
+  let r = 24;
+  let pts = place(r);
+  while (overlaps(pts) && r < 400) {
+    r += 4;
+    pts = place(r);
+  }
+  return pts;
 }

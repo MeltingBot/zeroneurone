@@ -10,7 +10,7 @@ import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml'
 import { getGeoCenter, isGeoPolygon } from '../../utils/geo';
 import type { TemporalEventSummary } from '../../utils/temporalUtils';
 import { resolveCssColor } from './ZoneLayers';
-import { breadcrumbSize, computeSpiderfyOffsets } from './mapGeometry';
+import { breadcrumbSize, computeSpiderfyOffsets, spreadAround } from './mapGeometry';
 import type { ClusterMeta, ClusterState, EventPopoverHandlers, MapGeoElement, MapRef, MarkerMapRef } from './mapHookTypes';
 
 type DossierStore = ReturnType<typeof useDossierStore.getState>;
@@ -312,19 +312,17 @@ export function useMapMarkers({
       return state && !state.clustered;
     });
     const spiderfyOffsets = computeSpiderfyOffsets(
-      unclusteredElements.map(el => { const c = getGeoCenter(el.geo); return { id: el._markerKey, lng: c.lng, lat: c.lat }; }),
+      unclusteredElements
+        .filter(el => !el._isBreadcrumb)
+        .map(el => { const c = getGeoCenter(el.geo); return { id: el._markerKey, lng: c.lng, lat: c.lat, tall: !!getThumbnail(el) }; }),
     );
 
     // Members of a cluster the user force-expanded are spread explicitly around the cluster
     // center (they may not share the exact coordinate that the automatic spiderfy groups by).
     if (forced.size > 0) {
-      const forcedKeys = effectiveGeoElements.map(el => el._markerKey).filter(k => forced.has(k));
-      forcedKeys.forEach((key, i) => {
-        if (i === 0) { spiderfyOffsets.set(key, [0, 0]); return; }
-        const angle = (2 * Math.PI * i) / forcedKeys.length;
-        const spiralRadius = 28 * (1 + i * 0.18); // px
-        spiderfyOffsets.set(key, [Math.cos(angle) * spiralRadius, Math.sin(angle) * spiralRadius]);
-      });
+      const forcedEls = effectiveGeoElements.filter(el => forced.has(el._markerKey));
+      const grid = spreadAround(forcedEls.length, forcedEls.some(el => !!getThumbnail(el)));
+      forcedEls.forEach((el, i) => spiderfyOffsets.set(el._markerKey, grid[i]));
     }
 
     const existingMarkers = markersRef.current;
@@ -577,7 +575,7 @@ export function useMapMarkers({
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t, clusterMarkersRef, clusterMetaRef, clusterStateRef, dragStartGeoRef, effectiveGeoElementsRef, elementIdToFirstMarkerKeyRef, eventPopoverHandlersRef, forceSpiderfyKeysRef, isDraggingRef, mapRef, markerOffsetsRef, markersRef, setClusteringVersion, setDraggedPositions, superclusterRef, toggleOffMapRef]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, getThumbnail, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t, clusterMarkersRef, clusterMetaRef, clusterStateRef, dragStartGeoRef, effectiveGeoElementsRef, elementIdToFirstMarkerKeyRef, eventPopoverHandlersRef, forceSpiderfyKeysRef, isDraggingRef, mapRef, markerOffsetsRef, markersRef, setClusteringVersion, setDraggedPositions, superclusterRef, toggleOffMapRef]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
