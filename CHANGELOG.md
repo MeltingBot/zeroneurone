@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.88.6
+
+### Corrections
+
+- **Sélection au rectangle (Maj + glisser)** — en production, le
+  rectangle se dessinait sans rien sélectionner. Depuis React Flow 12.12,
+  les éléments pris par le rectangle ne sont plus marqués directement ;
+  ZN les reporte maintenant lui-même dans la sélection.
+
 ## 2.88.5
 
 ### Interface

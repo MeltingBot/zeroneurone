@@ -87,6 +87,8 @@ const LOW_DETAIL_MIN_ELEMENTS = 400;
 const OVERVIEW_ENTER_VISIBLE = 1500;
 const OVERVIEW_EXIT_VISIBLE = 1000;
 const OVERVIEW_EXIT_ZOOM = 0.4;
+/** Selection box: how often the nodes it takes are written to the store */
+const BOX_SELECTION_THROTTLE_MS = 80;
 
 /** No cycle highlighted: a stable empty map, so the edges are not rebuilt. */
 const EMPTY_LINK_FLOW: ReadonlyMap<string, 'forward' | 'backward' | 'both'> = new Map();
@@ -1736,10 +1738,47 @@ export function Canvas() {
   const lastDragSyncRef = useRef<number>(0);
   const DRAG_SYNC_THROTTLE_MS = 200; // Sync positions every 200ms during drag (reduced for performance)
 
+  // Selection box (Shift + drag): since React Flow 12.12 the nodes the box
+  // takes only come as 'select' changes (it no longer flags its own copies,
+  // so onSelectionChange sees nothing). They are applied to the selection
+  // store here while the box is drawn. The box replaces the selection.
+  // Nothing is written without such a change: in the overview, React Flow's
+  // nodes are hidden and the overview layer does the box selection.
+  const boxSelectionRef = useRef<Set<string> | null>(null);
+  const boxSelectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushBoxSelection = useCallback(() => {
+    if (!boxSelectionTimerRef.current) return; // no change since the last write
+    clearTimeout(boxSelectionTimerRef.current);
+    boxSelectionTimerRef.current = null;
+    const ids = boxSelectionRef.current;
+    if (ids) selectBoth([...ids], [], false);
+  }, [selectBoth]);
+  const handleSelectionStart = useCallback(() => {
+    // Changes are relative to what React Flow shows as selected
+    boxSelectionRef.current = new Set(nodesRef.current.filter((n) => n.selected).map((n) => n.id));
+  }, []);
+  const handleSelectionEnd = useCallback(() => {
+    flushBoxSelection();
+    boxSelectionRef.current = null;
+  }, [flushBoxSelection]);
+
   // Handle node changes (position, selection)
   // HYBRID: Apply position changes locally for smooth drag, sync to Zustand periodically and on drag end
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
+      const box = boxSelectionRef.current;
+      if (box) {
+        let boxChanged = false;
+        for (const c of changes) {
+          if (c.type !== 'select') continue;
+          if (c.selected) box.add(c.id); else box.delete(c.id);
+          boxChanged = true;
+        }
+        if (boxChanged && !boxSelectionTimerRef.current) {
+          boxSelectionTimerRef.current = setTimeout(flushBoxSelection, BOX_SELECTION_THROTTLE_MS);
+        }
+      }
+
       // Filter out changes we handle ourselves:
       // - 'remove': deletion controlled by Zustand
       // - 'select': selection controlled by selectionStore (avoid double-processing)
@@ -1940,7 +1979,7 @@ export function Canvas() {
         setEdgeVersion(v => v + 1);
       }
     },
-    [updateElementPositions, updateDragging, elementMap, pushAction, showAlignGuides, toStoredPosition]
+    [updateElementPositions, updateDragging, elementMap, pushAction, showAlignGuides, toStoredPosition, flushBoxSelection]
   );
 
   // Handle edge changes - in controlled mode, we don't need to handle edge changes
@@ -3005,6 +3044,8 @@ export function Canvas() {
               onMoveStart={handleMoveStart}
               onMoveEnd={handleMoveEnd}
               onSelectionChange={handleSelectionChange}
+              onSelectionStart={handleSelectionStart}
+              onSelectionEnd={handleSelectionEnd}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               defaultViewport={initialViewport}
