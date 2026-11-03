@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { DropdownMenu, DropdownItem } from './DropdownMenu';
+import { LanguageFlag } from './LanguageFlag';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '../../i18n';
 
 interface LanguageSwitcherProps {
@@ -28,7 +29,7 @@ export function LanguageSwitcher({ size = 'sm', showLabel = false, direction = '
           }`}
           title={t('language.switch')}
         >
-          <span className={size === 'sm' ? 'text-sm' : 'text-base'}>{currentLangData.flag}</span>
+          <span className={size === 'sm' ? 'text-sm' : 'text-base'}><LanguageFlag flag={currentLangData.flag} /></span>
           {showLabel && <span>{currentLangData.code.toUpperCase()}</span>}
         </button>
       }
@@ -40,7 +41,7 @@ export function LanguageSwitcher({ size = 'sm', showLabel = false, direction = '
           onClick={() => void changeLanguage(lang.code)}
         >
           <span className="flex items-center gap-2 w-full">
-            <span>{lang.flag}</span>
+            <span><LanguageFlag flag={lang.flag} /></span>
             <span className="flex-1">{lang.label}</span>
             {currentLang === lang.code && <Check size={14} className="text-accent" />}
           </span>
