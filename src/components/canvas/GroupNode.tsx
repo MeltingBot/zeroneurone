@@ -1,4 +1,5 @@
 import { memo, useRef, useCallback, useMemo } from 'react';
+import { useResizeEnd } from './useResizeEnd';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useTranslation } from 'react-i18next';
 import { Gauge, Lock } from 'lucide-react';
@@ -61,12 +62,12 @@ function GroupNodeComponent({ data }: NodeProps) {
   // Subscribe to custom icons so tag icons appear once the store loads
   useCustomIconStore((state) => state.icons);
 
-  const handleResizeEnd = useCallback(
-    (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
+  const resizer = useResizeEnd(useCallback(
+    (params: { x: number; y: number; width: number; height: number }) => {
       onResize?.(params.width, params.height, { x: params.x, y: params.y });
     },
     [onResize]
-  );
+  ));
 
   const handleLabelSubmit = useCallback(() => {
     if (inputRef.current && onLabelChange) {
@@ -146,7 +147,9 @@ function GroupNodeComponent({ data }: NodeProps) {
         <NodeResizer
           minWidth={MIN_WIDTH}
           minHeight={MIN_HEIGHT}
-          onResizeEnd={handleResizeEnd}
+          onResizeStart={resizer.onResizeStart}
+          onResize={resizer.onResize}
+          onResizeEnd={resizer.onResizeEnd}
           lineClassName="!border-transparent"
           handleClassName="!w-2 !h-2 !bg-text-secondary !border !border-white !rounded-sm"
         />

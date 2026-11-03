@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.88.7
+
+### Corrections
+
+- **Redimensionnement** — un simple clic sur une poignée de
+  redimensionnement, sans la déplacer, figeait la taille d'un élément,
+  d'un groupe ou d'une annotation jusque-là automatique. La taille n'est
+  plus enregistrée que si elle a changé.
+
+### Technique
+
+- React Flow 12.12.1 aussi en développement (la production l'utilisait
+  déjà) : les deux tournent sur la même version.
+- Test e2e de la sélection au rectangle et du clic sur une poignée.
+
 ## 2.88.6
 
 ### Corrections

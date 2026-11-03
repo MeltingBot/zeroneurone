@@ -1,5 +1,5 @@
 ==============================================================================
-ZeroNeurone 2.88.3 — Licences des composants tiers
+ZeroNeurone 2.88.7 — Licences des composants tiers
 ==============================================================================
 
 ZeroNeurone est distribué sous licence MIT (voir le fichier LICENSE).
@@ -43,9 +43,9 @@ Sommaire
   @types/d3-color@3.1.3 — MIT
   @types/d3-drag@3.0.7 — MIT
   @types/d3-interpolate@3.0.4 — MIT
-  @types/d3-selection@3.0.11 — MIT
+  @types/d3-selection@3.0.12 — MIT
   @types/d3-transition@3.0.9 — MIT
-  @types/d3-zoom@3.0.8 — MIT
+  @types/d3-zoom@3.0.9 — MIT
   @types/debug@4.1.13 — MIT
   @types/estree@1.0.9 — MIT
   @types/estree-jsx@1.0.5 — MIT
@@ -58,8 +58,8 @@ Sommaire
   @types/trusted-types@2.0.7 — MIT
   @types/unist@3.0.3 — MIT
   @ungap/structured-clone@1.3.2 — ISC
-  @xyflow/react@12.11.2 — MIT
-  @xyflow/system@0.0.79 — MIT
+  @xyflow/react@12.12.1 — MIT
+  @xyflow/system@0.0.84 — MIT
   @yomguithereal/helpers@1.1.1 — MIT
   adler-32@1.3.1 — Apache-2.0
   bail@2.0.2 — MIT
@@ -76,15 +76,15 @@ Sommaire
   core-util-is@1.0.3 — MIT
   crc-32@1.2.2 — Apache-2.0
   csstype@3.2.3 — MIT
-  d3-color@3.1.0 — ISC
-  d3-dispatch@3.0.1 — ISC
-  d3-drag@3.0.0 — ISC
-  d3-ease@3.0.1 — BSD-3-Clause
-  d3-interpolate@3.0.1 — ISC
-  d3-selection@3.0.0 — ISC
-  d3-timer@3.0.1 — ISC
-  d3-transition@3.0.1 — ISC
-  d3-zoom@3.0.0 — ISC
+  d3-color@3.1.1 — ISC
+  d3-dispatch@3.0.2 — ISC
+  d3-drag@3.0.1 — ISC
+  d3-ease@3.0.2 — BSD-3-Clause
+  d3-interpolate@3.0.2 — ISC
+  d3-selection@3.0.1 — ISC
+  d3-timer@3.0.2 — ISC
+  d3-transition@3.0.2 — ISC
+  d3-zoom@3.0.1 — ISC
   debug@4.4.3 — MIT
   decode-named-character-reference@1.3.0 — MIT
   dequal@2.0.3 — MIT
@@ -237,7 +237,7 @@ Sommaire
   y-protocols@1.0.7 — MIT
   y-websocket@3.0.0 — MIT
   yjs@13.6.31 — MIT
-  zeroneurone-app@2.88.3 — MIT
+  zeroneurone-app@2.88.7 — MIT
   zustand@5.0.14 — MIT
   zwitch@2.0.4 — MIT
 
@@ -1123,7 +1123,7 @@ MIT License
     SOFTWARE
 
 ==============================================================================
-@types/d3-selection@3.0.11
+@types/d3-selection@3.0.12
 ==============================================================================
 
 Licence déclarée : MIT
@@ -1181,7 +1181,7 @@ MIT License
     SOFTWARE
 
 ==============================================================================
-@types/d3-zoom@3.0.8
+@types/d3-zoom@3.0.9
 ==============================================================================
 
 Licence déclarée : MIT
@@ -1552,7 +1552,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 ==============================================================================
-@xyflow/react@12.11.2
+@xyflow/react@12.12.1
 ==============================================================================
 
 Licence déclarée : MIT
@@ -1581,7 +1581,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-@xyflow/system@0.0.79
+@xyflow/system@0.0.84
 ==============================================================================
 
 Licence déclarée : MIT
@@ -2596,13 +2596,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-d3-color@3.1.0
+d3-color@3.1.1
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-color/
 
-Copyright 2010-2022 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2617,13 +2617,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-dispatch@3.0.1
+d3-dispatch@3.0.2
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-dispatch/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2638,13 +2638,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-drag@3.0.0
+d3-drag@3.0.1
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-drag/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2659,13 +2659,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-ease@3.0.1
+d3-ease@3.0.2
 ==============================================================================
 
 Licence déclarée : BSD-3-Clause
 Source           : https://d3js.org/d3-ease/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 Copyright 2001 Robert Penner
 All rights reserved.
 
@@ -2695,13 +2695,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==============================================================================
-d3-interpolate@3.0.1
+d3-interpolate@3.0.2
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-interpolate/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2716,13 +2716,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-selection@3.0.0
+d3-selection@3.0.1
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-selection/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2737,13 +2737,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-timer@3.0.1
+d3-timer@3.0.2
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-timer/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2758,13 +2758,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-transition@3.0.1
+d3-transition@3.0.2
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-transition/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -2779,13 +2779,13 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 ==============================================================================
-d3-zoom@3.0.0
+d3-zoom@3.0.1
 ==============================================================================
 
 Licence déclarée : ISC
 Source           : https://d3js.org/d3-zoom/
 
-Copyright 2010-2021 Mike Bostock
+Copyright 2010-2026 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -8442,7 +8442,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-zeroneurone-app@2.88.3
+zeroneurone-app@2.88.7
 ==============================================================================
 
 Licence déclarée : MIT

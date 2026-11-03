@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.88.6",
+  "version": "2.88.7",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -53,7 +53,7 @@
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
     "@tanstack/react-virtual": "^3.13.24",
-    "@xyflow/react": "^12.11.2",
+    "@xyflow/react": "^12.12.1",
     "cfb": "^1.2.2",
     "dexie": "^4.2.1",
     "dompurify": "^3.4.17",

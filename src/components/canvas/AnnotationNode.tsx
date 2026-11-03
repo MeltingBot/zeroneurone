@@ -1,4 +1,5 @@
 import { memo, useRef, useCallback, useMemo, useState, useEffect } from 'react';
+import { useResizeEnd } from './useResizeEnd';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
 import { StickyNote, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -133,12 +134,12 @@ function AnnotationNodeComponent({ data }: NodeProps) {
     }
   }, [isEditing]);
 
-  const handleResizeEnd = useCallback(
-    (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
+  const resizer = useResizeEnd(useCallback(
+    (params: { x: number; y: number; width: number; height: number }) => {
       onResize?.(params.width, params.height, { x: params.x, y: params.y });
     },
     [onResize]
-  );
+  ));
 
   const handleSave = useCallback(() => {
     if (onLabelChange) onLabelChange(editValue);
@@ -234,7 +235,9 @@ function AnnotationNodeComponent({ data }: NodeProps) {
         <NodeResizer
           minWidth={MIN_WIDTH}
           minHeight={MIN_HEIGHT}
-          onResizeEnd={handleResizeEnd}
+          onResizeStart={resizer.onResizeStart}
+          onResize={resizer.onResize}
+          onResizeEnd={resizer.onResizeEnd}
           lineClassName="!border-transparent hover:!border-accent/30 !border-2"
           handleClassName="!w-2.5 !h-2.5 !bg-text-secondary !border !border-white !rounded-sm"
         />

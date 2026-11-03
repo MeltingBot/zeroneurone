@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo, useMemo, createContext, useContext } from 'react';
+import { useResizeEnd } from './useResizeEnd';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { Handle, Position, NodeResizer, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
@@ -265,17 +266,11 @@ function FullElementNode({ data }: NodeProps) {
   const handleShift = (side: 'top' | 'bottom' | 'left' | 'right') =>
     diamondHandleStyles?.[side];
 
-  // Live resize handler - updates visual preview
-  const handleResize = (_event: unknown, params: { width: number; height: number }) => {
-    setDimensions({ width: params.width, height: params.height });
-  };
-
-  // Final resize handler - persists to database
-  const handleResizeEnd = (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
-    if (onResize) {
-      onResize(params.width, params.height, { x: params.x, y: params.y });
-    }
-  };
+  // Live resize updates the visual preview; the end persists to database
+  const resizer = useResizeEnd(
+    (params) => onResize?.(params.width, params.height, { x: params.x, y: params.y }),
+    (params) => setDimensions({ width: params.width, height: params.height }),
+  );
 
   const { width, height } = dimensions;
 
@@ -375,8 +370,9 @@ function FullElementNode({ data }: NodeProps) {
         keepAspectRatio={keepAspect || isDiamond}
         lineClassName="!border-accent"
         handleClassName="!w-3 !h-3 !bg-accent !border-2 !border-white !rounded"
-        onResize={handleResize}
-        onResizeEnd={handleResizeEnd}
+        onResizeStart={resizer.onResizeStart}
+        onResize={resizer.onResize}
+        onResizeEnd={resizer.onResizeEnd}
       />
 
       {/* Source handles on all 4 sides */}
