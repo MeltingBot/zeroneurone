@@ -133,6 +133,8 @@ Clic droit sur un élément ▸ **Mode focus**, puis la profondeur, pour isoler 
 | **Voisins à 2 liens** | + voisins des voisins |
 | **Voisins à 3 liens** | Voisinage étendu |
 
+Avec plusieurs éléments sélectionnés, le focus porte sur toute la sélection : le voisinage de chacun, réuni.
+
 Le focus écrit et lance la [requête ZNQuery]({{< relref "queries" >}}) correspondante, par exemple `WITHIN 2 HOPS OF label = "Jean Dupont"`, et ouvre son panneau : on peut la modifier, la sauvegarder ou la garder dans une vue. L'élément est désigné par son libellé, ou par son identifiant (`_id = "…"`) quand un autre élément porte le même libellé. Dans un onglet, seuls ses membres sont gardés.
 
 Pour sortir du focus, effacez la requête dans le panneau ZNQuery.

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, MousePointerClick, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import type { Element, Link } from '../../types';
@@ -18,6 +18,10 @@ interface LinkContextMenuProps {
   onEditLabel: () => void;
   /** Present only when the link has a manual route offset in the current route style */
   onResetRoute?: () => void;
+  /** Turn the arrow round; present only on a one-way link */
+  onReverse?: () => void;
+  /** Select the two elements the link joins */
+  onSelectEnds?: () => void;
   onDelete: () => void;
   onClose: () => void;
   pluginExtensions?: readonly ContextMenuExtension[];
@@ -33,6 +37,8 @@ function LinkContextMenuComponent({
   onOpenDetail,
   onEditLabel,
   onResetRoute,
+  onReverse,
+  onSelectEnds,
   onDelete,
   onClose,
   pluginExtensions,
@@ -57,7 +63,9 @@ function LinkContextMenuComponent({
           ...(onResetRoute
             ? [{ id: 'reset-route', label: cm('resetLinkRoute'), icon: RotateCcw, onSelect: onResetRoute }]
             : []),
+          onReverse && { id: 'reverse', label: cm('reverseLink'), icon: ArrowLeftRight, onSelect: onReverse },
         ],
+        [onSelectEnds && { id: 'select-ends', label: cm('selectLinkEnds'), icon: MousePointerClick, onSelect: onSelectEnds }],
         pluginItems,
         [{ id: 'delete', label: cm('deleteLink'), icon: Trash2, danger: true, onSelect: onDelete }],
       ]}

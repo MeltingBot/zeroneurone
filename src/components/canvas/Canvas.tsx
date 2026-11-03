@@ -2287,6 +2287,7 @@ export function Canvas() {
     createTabFromIds,
     handleCanvasContextMenuCreate,
     handleCanvasContextMenuCreateAnnotation,
+    canLinkSelection,
     handleAddToGroup,
     handleCanvasContextMenuCreateGroup,
     handleContextMenuCopy,
@@ -2319,7 +2320,10 @@ export function Canvas() {
     handleSelectionHide,
     handleSelectionShowOnly,
     handleSelectionToggleLock,
+    handleLinkSelection,
+    handleSelectionFocus,
     handleSelectLinks,
+    handleSelectNeighbors,
     handleSuggestLinks,
     handleToggleLock,
     moveIdsHere,
@@ -2353,6 +2357,7 @@ export function Canvas() {
     selectElements,
     selectLinks,
     createElement,
+    createLink,
     updateElement,
     createGroup,
     removeFromGroup,
@@ -3230,6 +3235,10 @@ export function Canvas() {
               }}
               onFindSimilar={selectedElementIds.size === 1 ? handleFindSimilar : undefined}
               onQueryFromSelection={selectedElementIds.size > 1 ? handleQueryFromSelection : undefined}
+              onSuggestLinks={handleSuggestLinks}
+              onSelectNeighbors={handleSelectNeighbors}
+              onSelectLinks={allEdges.length > 0 || (overviewScene?.linkCount ?? 0) > 0 ? handleSelectLinks : undefined}
+              onLinkSelection={canLinkSelection && selectedElementIds.has(contextMenu.elementId) ? handleLinkSelection : undefined}
               urls={elementUrls}
               onOpenUrl={handleOpenUrl}
               onCopyUrl={handleCopyUrl}
@@ -3270,6 +3279,13 @@ export function Canvas() {
               onAddToGroup={canAddToGroup ? handleAddToGroup : undefined}
               onCopyAsMermaid={handleCopyAsMermaid}
               onCopyAsDot={handleCopyAsDot}
+              onFocusSelection={handleSelectionFocus}
+              pathPair={selectedElementIds.size === 2 ? Array.from(selectedElementIds) as [string, string] : null}
+              onFindPaths={handleFindPaths}
+              onFindAllPaths={handleFindAllPaths}
+              onMerge={selectedElementIds.size >= 2 ? handleMergeElements : undefined}
+              onLinkSelection={canLinkSelection ? handleLinkSelection : undefined}
+              onSelectNeighbors={handleSelectNeighbors}
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
               onSelectLinks={allEdges.length > 0 || (overviewScene?.linkCount ?? 0) > 0 ? handleSelectLinks : undefined}
@@ -3325,6 +3341,25 @@ export function Canvas() {
                   closeLinkContextMenu();
                 };
               })()}
+              onReverse={(() => {
+                // Turns the arrow round, as the Direction setting of the detail panel
+                const menuLink = linkMap.get(linkContextMenu.linkId)!;
+                const direction = menuLink.direction || (menuLink.directed ? 'forward' : 'none');
+                if (direction !== 'forward' && direction !== 'backward') return undefined;
+                const reversed = direction === 'forward' ? 'backward' : 'forward';
+                return () => {
+                  updateLink(menuLink.id, { direction: reversed, directed: true });
+                  pushAction({
+                    type: 'update-link',
+                    undo: { linkId: menuLink.id, linkChanges: { direction: menuLink.direction, directed: menuLink.directed } },
+                    redo: { linkId: menuLink.id, linkChanges: { direction: reversed, directed: true } },
+                  });
+                };
+              })()}
+              onSelectEnds={() => {
+                const menuLink = linkMap.get(linkContextMenu.linkId)!;
+                selectElements([menuLink.fromId, menuLink.toId]);
+              }}
               onDelete={() => {
                 const linkToDelete = links.find((l) => l.id === linkContextMenu.linkId);
                 if (linkToDelete) {

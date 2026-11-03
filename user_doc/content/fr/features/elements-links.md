@@ -101,6 +101,8 @@ Un lien représente une relation entre deux éléments. Les liens sont des **cit
 1. **Glisser** depuis un élément vers un autre élément
 2. Le lien est créé avec un label par défaut
 
+Pour deux éléments éloignés : sélectionnez-les, puis clic droit → **Relier**. Le lien part de l'élément sous le menu (depuis le fond ou le cadre du lasso : du premier sélectionné) vers l'autre.
+
 
 ### Créer un élément lié
 
@@ -124,6 +126,11 @@ Pour repérer les liens qui manquent, voir aussi les [suggestions de liens]({{< 
 | **Période** | Date de début et fin, avec fuseau de la source si besoin ([Dates et fuseaux horaires]({{< relref "dates-timezones" >}})) |
 | **Dirigé** | Flèche indiquant le sens |
 | **Propriétés** | Champs personnalisés |
+
+Clic droit sur un lien :
+
+- **Inverser la direction** : la flèche change de sens, comme avec le réglage Direction du panneau Détail. La source et la cible du lien restent les mêmes. L'entrée n'apparaît que sur un lien à une seule flèche
+- **Sélectionner les extrémités** : sélectionne les deux éléments reliés
 
 Pour qu'un lien tracé à la main (glisser d'un élément à un autre, élément lié) porte d'office une flèche vers la cible, cochez **Flèche par défaut sur les relations** dans les **Options** du dossier (panneau du dossier). Les suggestions acceptées, les imports et les plugins n'en tiennent pas compte.
 
@@ -151,13 +158,19 @@ Cliquez-glissez sur le fond du canvas pour dessiner un rectangle de sélection.
 
 **Ctrl+clic** pour ajouter ou retirer un élément de la sélection.
 
+Clic droit → **Sélectionner les voisins** : ajoute à la sélection les éléments reliés par un lien affiché (filtres, éléments masqués et onglet actif pris en compte).
+
+### Menu de la sélection
+
+Le clic droit sur un élément de la sélection, sur le cadre du lasso ou sur le fond ouvre le même menu, qui agit sur toute la sélection : **Mode focus**, **Analyser**, **Organiser** (grouper, ajouter au groupe, fusionner, verrouiller), **Onglets**, **Masquer**, **Afficher uniquement**. Sur un élément hors de la sélection, le menu ne porte que sur lui.
+
 ### Sélectionner des liens
 
 | Action | Résultat |
 |--------|----------|
 | **Maj+clic** ou **Ctrl+clic** sur un lien | Ajoute le lien à la sélection, ou l'en retire |
 | **Ctrl+Shift+A** | Sélectionne tous les liens affichés |
-| Clic droit sur le fond → **Sélectionner leurs liens** | Remplace la sélection d'éléments par les liens qui les touchent |
+| Clic droit sur la sélection → **Sélectionner leurs liens** | Remplace la sélection d'éléments par les liens qui les touchent |
 | Clic droit sur le fond, sans sélection → **Sélectionner tous les liens** | Comme Ctrl+Shift+A |
 
 Les liens affichés tiennent compte des filtres, des éléments masqués et de l'onglet actif.
@@ -221,7 +234,7 @@ Organisez vos éléments en **groupes** visuels.
 ### Créer un groupe
 
 1. Sélectionnez plusieurs éléments
-2. Clic-droit → **Grouper**
+2. Clic-droit → **Organiser** → **Grouper**
 
 Après une sélection au lasso (Maj + glisser), le clic-droit se fait sur le cadre de sélection.
 
@@ -234,7 +247,7 @@ Pour des éléments dispersés, **Grouper et rapprocher** (même menu) les range
 
 - **Clic sur le groupe** : sélectionne le groupe entier
 - **Double-clic** : entre dans le groupe pour éditer les membres
-- **Ajouter au groupe** : sélectionnez le groupe et les éléments à y mettre, puis clic-droit → **Ajouter au groupe** (sous **Organiser** sur un élément). Les éléments se rangent dans le cadre, sous les membres actuels, et le cadre s'agrandit pour les contenir. Les éléments déjà dans un autre groupe ne sont pas repris
+- **Ajouter au groupe** : sélectionnez le groupe et les éléments à y mettre, puis clic-droit → **Ajouter au groupe** (sous **Organiser**). Les éléments se rangent dans le cadre, sous les membres actuels, et le cadre s'agrandit pour les contenir. Les éléments déjà dans un autre groupe ne sont pas repris
 - **Clic-droit sur un membre → Retirer du groupe** : l'élément sort du groupe et reste à sa place
 - **Clic-droit → Rapprocher les membres** : range les membres en grille dans le coin haut gauche du groupe, dans leur ordre de lecture (de haut en bas, puis de gauche à droite), et ajuste le cadre. Utile quand les membres étaient dispersés sur le canvas. Leur place d'avant n'est rendue que par **Ctrl+Z**, tant que l'historique de la session existe (il disparaît au rechargement de la page ou à la fermeture du dossier)
 

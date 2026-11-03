@@ -1,8 +1,7 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Image, Group, Ungroup,
-  BoxSelect, Lock, LockOpen, Layers, ArrowRight, ArrowDownLeft, Plus, SquarePlus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2,
+  Eye, EyeOff, Trash2, X, Copy, CopyPlus, Scissors, Image, Layers, ArrowRight, ArrowDownLeft, Plus, ExternalLink, Link2,
 } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -10,6 +9,7 @@ import { ContextMenuShell } from './contextMenu/ContextMenuShell';
 import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
 import { submenu, type MenuItem } from './contextMenu/types';
 import { copyAsItem } from './contextMenu/copyAsItem';
+import { analyzeSubmenu, focusSubmenu, linkSelectionItem, organizeSubmenu, selectFromItems } from './contextMenu/selectionItems';
 
 interface ContextMenuProps {
   x: number;
@@ -77,6 +77,12 @@ interface ContextMenuProps {
   // Query actions
   onFindSimilar?: () => void;
   onQueryFromSelection?: () => void;
+  onSuggestLinks?: () => void;
+  /** Extend the selection to the linked elements, or to the links */
+  onSelectNeighbors?: () => void;
+  onSelectLinks?: () => void;
+  /** Exactly two linkable elements selected: a link between them */
+  onLinkSelection?: () => void;
   /** URL properties on the element (open / copy from the context menu) */
   urls?: { key: string; url: string }[];
   onOpenUrl?: (url: string) => void;
@@ -86,12 +92,6 @@ interface ContextMenuProps {
   menuContext?: MenuContext;
   onClose: () => void;
 }
-
-const focusDepthOptions = [
-  { depth: 1, labelKey: 'dossier.contextMenu.focusNeighbors1' },
-  { depth: 2, labelKey: 'dossier.contextMenu.focusNeighbors2' },
-  { depth: 3, labelKey: 'dossier.contextMenu.focusNeighbors3' },
-] as const;
 
 function ContextMenuComponent({
   x,
@@ -144,6 +144,10 @@ function ContextMenuComponent({
   onGoToTab,
   onFindSimilar,
   onQueryFromSelection,
+  onSuggestLinks,
+  onSelectNeighbors,
+  onSelectLinks,
+  onLinkSelection,
   urls,
   onOpenUrl,
   onCopyUrl,
@@ -176,36 +180,29 @@ function ContextMenuComponent({
     }];
   }
 
-  const focusItem: MenuItem | null = submenu('focus', cm('focusMode'), Focus, focusDepthOptions.map((o) => ({
-        id: `focus-${o.depth}`,
-        label: t(o.labelKey),
-        icon: Focus,
-        onSelect: () => onFocus(o.depth),
-      })));
+  const focusItem = focusSubmenu(cm, onFocus);
 
-  const analyzeItem = submenu('analyze', cm('analyze'), ScanSearch, [
-    hasTwoSelected && onFindPaths && { id: 'find-paths', label: cm('findPaths'), icon: Route, onSelect: () => onFindPaths(elementId, otherSelectedId!) },
-    hasTwoSelected && onFindAllPaths && { id: 'find-all-paths', label: cm('findAllPaths'), icon: Waypoints, onSelect: () => onFindAllPaths(elementId, otherSelectedId!) },
-    onFindSimilar && { id: 'find-similar', label: cm('findSimilar'), icon: Search, onSelect: onFindSimilar },
-    onQueryFromSelection && { id: 'query-selection', label: cm('queryFromSelection'), icon: Search, onSelect: onQueryFromSelection },
-  ]);
+  const analyzeItem = analyzeSubmenu(cm, {
+    pathPair: hasTwoSelected ? [elementId, otherSelectedId!] : null,
+    onFindPaths,
+    onFindAllPaths,
+    onFindSimilar,
+    onQueryFromSelection,
+    onSuggestLinks,
+  });
 
-  const organizeItem = submenu('organize', cm('organize'), Boxes, [
-    hasMultipleSelected && !isGroup && onGroupSelection && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
-    hasMultipleSelected && !isGroup && onGroupGather && { id: 'group-gather', label: cm('groupGather'), icon: Group, onSelect: onGroupGather },
-    onAddToGroup && { id: 'add-to-group', label: cm('addToGroup'), icon: SquarePlus, onSelect: onAddToGroup },
-    isGroup && onGatherGroup && { id: 'gather-group', label: cm('gatherGroup'), icon: Group, onSelect: onGatherGroup },
-    isGroup && { id: 'dissolve-group', label: cm('dissolveGroup'), icon: Ungroup, onSelect: onDissolveGroup },
-    isInGroup && { id: 'remove-from-group', label: cm('removeFromGroup'), icon: BoxSelect, onSelect: onRemoveFromGroup },
+  const organizeItem = organizeSubmenu(cm, {
+    onGroup: hasMultipleSelected && !isGroup ? onGroupSelection : undefined,
+    onGroupGather: hasMultipleSelected && !isGroup ? onGroupGather : undefined,
+    onAddToGroup,
+    onGatherGroup: isGroup ? onGatherGroup : undefined,
+    onDissolveGroup: isGroup ? onDissolveGroup : undefined,
+    onRemoveFromGroup: isInGroup ? onRemoveFromGroup : undefined,
     // Two elements or more selected (the caller passes onMerge only then)
-    onMerge && { id: 'merge', label: cm('merge'), icon: Combine, onSelect: onMerge },
-    {
-      id: 'toggle-lock',
-      label: isPositionLocked ? cm('unlockPosition') : cm('lockPosition'),
-      icon: isPositionLocked ? LockOpen : Lock,
-      onSelect: onToggleLock,
-    },
-  ]);
+    onMerge,
+    locked: isPositionLocked,
+    onToggleLock,
+  });
 
   // ── Tabs: go to source tab (ghosts), add to tab, remove from the active tab ──
   const tabsItem = tabs.length > 0 || onNewTabFromSelection ? submenu('tabs', cm('tabs'), Layers, [
@@ -290,6 +287,7 @@ function ContextMenuComponent({
           { id: 'duplicate', label: cm('duplicate'), icon: CopyPlus, shortcut: 'Ctrl+D', onSelect: onDuplicate },
           hasMultipleSelected && copyAsItem(cm, onCopyAsMermaid, onCopyAsDot),
         ],
+        [linkSelectionItem(cm, onLinkSelection)],
         [
           focusItem,
           analyzeItem,
@@ -301,10 +299,11 @@ function ContextMenuComponent({
             : [
                 isHidden
                   ? { id: 'show', label: cm('showElement'), icon: Eye, onSelect: onShow }
-                  : { id: 'hide', label: hasMultipleSelected ? cm('hideSelection') : cm('hideElement'), icon: EyeOff, onSelect: onHide },
-                { id: 'show-only', label: hasMultipleSelected ? cm('showOnlySelection') : cm('showOnlyElement'), icon: Eye, onSelect: onShowOnly },
+                  : { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHide },
+                { id: 'show-only', label: cm('showOnly'), icon: Eye, onSelect: onShowOnly },
               ]),
         ],
+        selectFromItems(cm, onSelectNeighbors, onSelectLinks),
         pluginItems,
         [{ id: 'delete', label: cm('delete'), icon: Trash2, danger: true, onSelect: onDelete }],
       ]}

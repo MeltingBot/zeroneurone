@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, SquarePlus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Search, ScanSearch, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Spline, Layers, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -7,6 +7,7 @@ import { ContextMenuShell } from './contextMenu/ContextMenuShell';
 import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
 import { submenu } from './contextMenu/types';
 import { copyAsItem } from './contextMenu/copyAsItem';
+import { analyzeSubmenu, focusSubmenu, linkSelectionItem, organizeSubmenu, selectFromItems } from './contextMenu/selectionItems';
 
 interface CanvasContextMenuProps {
   x: number;
@@ -34,6 +35,15 @@ interface CanvasContextMenuProps {
   onAddToGroup?: () => void;
   onCopyAsMermaid?: () => void;
   onCopyAsDot?: () => void;
+  /** Same entries as the element menu, for the whole selection */
+  onFocusSelection?: (depth: number) => void;
+  /** Exactly two elements selected: [first, second] */
+  pathPair?: [string, string] | null;
+  onFindPaths?: (fromId: string, toId: string) => void;
+  onFindAllPaths?: (fromId: string, toId: string) => void;
+  onMerge?: () => void;
+  onLinkSelection?: () => void;
+  onSelectNeighbors?: () => void;
   // Query actions
   onFindSimilar?: () => void;
   onQueryFromSelection?: () => void;
@@ -79,6 +89,13 @@ function CanvasContextMenuComponent({
   onAddToGroup,
   onCopyAsMermaid,
   onCopyAsDot,
+  onFocusSelection,
+  pathPair = null,
+  onFindPaths,
+  onFindAllPaths,
+  onMerge,
+  onLinkSelection,
+  onSelectNeighbors,
   onFindSimilar,
   onQueryFromSelection,
   onSelectLinks,
@@ -118,15 +135,25 @@ function CanvasContextMenuComponent({
           onDuplicateSelection && { id: 'duplicate', label: cm('duplicate'), icon: CopyPlus, shortcut: 'Ctrl+D', onSelect: onDuplicateSelection },
           selectedCount > 1 && copyAsItem(cm, onCopyAsMermaid, onCopyAsDot),
         ] : [],
+        hasSelection ? [linkSelectionItem(cm, onLinkSelection)] : [],
         hasSelection ? [
-          submenu('analyze', cm('analyze'), ScanSearch, [
-            selectedCount === 1 && onFindSimilar && { id: 'find-similar', label: cm('findSimilar'), icon: Search, onSelect: onFindSimilar },
-            selectedCount > 1 && onQueryFromSelection && { id: 'query-selection', label: cm('queryFromSelection'), icon: Search, onSelect: onQueryFromSelection },
-            onSuggestLinks && { id: 'suggest-links', label: cm('suggestLinks'), icon: Lightbulb, onSelect: onSuggestLinks },
-          ]),
-          selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
-          selectedCount > 1 && onGroupGather && { id: 'group-gather', label: cm('groupGather'), icon: Group, onSelect: onGroupGather },
-          onAddToGroup && { id: 'add-to-group', label: cm('addToGroup'), icon: SquarePlus, onSelect: onAddToGroup },
+          focusSubmenu(cm, onFocusSelection),
+          analyzeSubmenu(cm, {
+            pathPair,
+            onFindPaths,
+            onFindAllPaths,
+            onFindSimilar: selectedCount === 1 ? onFindSimilar : undefined,
+            onQueryFromSelection: selectedCount > 1 ? onQueryFromSelection : undefined,
+            onSuggestLinks,
+          }),
+          organizeSubmenu(cm, {
+            onGroup: selectedCount > 1 ? onGroupSelection : undefined,
+            onGroupGather: selectedCount > 1 ? onGroupGather : undefined,
+            onAddToGroup,
+            onMerge: selectedCount > 1 ? onMerge : undefined,
+            locked: selectionLocked,
+            onToggleLock: onToggleLockSelection,
+          }),
           (onNewTabFromSelection || onRemoveSelectionFromTab || (tabs.length > 0 && onAddSelectionToTab)) && submenu('tabs', cm('tabs'), Layers, [
             onNewTabFromSelection && {
               id: 'new-tab-from-selection',
@@ -159,15 +186,10 @@ function CanvasContextMenuComponent({
           ]),
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
           onShowOnlySelection && { id: 'show-only', label: cm('showOnly'), icon: Eye, onSelect: onShowOnlySelection },
-          onToggleLockSelection && {
-            id: 'lock',
-            label: selectionLocked ? cm('unlockPosition') : cm('lockPosition'),
-            icon: selectionLocked ? LockOpen : Lock,
-            onSelect: onToggleLockSelection,
-          },
         ] : [],
+        hasSelection ? selectFromItems(cm, onSelectNeighbors, onSelectLinks) : [],
         [
-          onSelectLinks && { id: 'select-links', label: cm(hasSelection ? 'selectLinks' : 'selectAllLinks'), icon: Spline, shortcut: hasSelection ? undefined : 'Ctrl+Shift+A', onSelect: onSelectLinks },
+          !hasSelection && onSelectLinks && { id: 'select-links', label: cm('selectAllLinks'), icon: Spline, shortcut: 'Ctrl+Shift+A', onSelect: onSelectLinks },
           hiddenCount > 0 && onShowHidden && { id: 'show-hidden', label: t('dossier.contextMenu.showHidden', { count: hiddenCount }), icon: Eye, onSelect: onShowHidden },
         ],
         // Creating or pasting has nothing to do with a multiple selection

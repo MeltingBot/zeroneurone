@@ -26,13 +26,13 @@ test('an element shown alone offers to show the hidden ones', async ({ page }) =
   const menu = page.getByRole('menu');
 
   await node.click({ button: 'right' });
-  await expect(menu.getByText('Hide element')).toBeVisible();
-  await menu.getByText('Show only this element').click();
+  await expect(menu.getByText('Hide', { exact: true })).toBeVisible();
+  await menu.getByText('Show only', { exact: true }).click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
 
   await node.click({ button: 'right' });
-  await expect(menu.getByText('Hide element')).toHaveCount(0);
-  await expect(menu.getByText('Show only this element')).toHaveCount(0);
+  await expect(menu.getByText('Hide', { exact: true })).toHaveCount(0);
+  await expect(menu.getByText('Show only', { exact: true })).toHaveCount(0);
   await menu.getByText('Show hidden (9)').click();
   // Only on-screen nodes are rendered: read what is hidden from the view store
   await expect.poll(() => page.evaluate(async () =>

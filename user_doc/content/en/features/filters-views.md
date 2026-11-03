@@ -133,6 +133,8 @@ Right-click an element ▸ **Focus mode**, then the depth, to isolate the elemen
 | **2-link neighbors** | + neighbors of neighbors |
 | **3-link neighbors** | Extended neighborhood |
 
+With several elements selected, focus applies to the whole selection: the neighborhood of each, combined.
+
 Focus writes and runs the matching [ZNQuery query]({{< relref "queries" >}}), for instance `WITHIN 2 HOPS OF label = "John Smith"`, and opens its panel: you can edit it, save it or keep it in a view. The element is designated by its label, or by its id (`_id = "…"`) when another element bears the same label. In a tab, only its members are kept.
 
 To leave focus, clear the query in the ZNQuery panel.

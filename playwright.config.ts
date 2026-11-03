@@ -37,12 +37,12 @@ export default defineConfig({
     // fine here and breaks in production. Layout specs also run on the build.
     {
       name: 'chromium-build',
-      testMatch: /canvas-node-layout\.spec\.ts/,
+      testMatch: /canvas-(node-layout|export-png)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4173' },
     },
     {
       name: 'firefox-build',
-      testMatch: /canvas-node-layout\.spec\.ts/,
+      testMatch: /canvas-(node-layout|export-png)\.spec\.ts/,
       use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:4173' },
     },
   ],

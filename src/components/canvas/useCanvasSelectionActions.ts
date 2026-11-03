@@ -16,6 +16,7 @@ import { buildDOTExport } from '../../services/exportDOT';
 import { serializeQuery } from '../../services/query/serializer';
 import { insightsService } from '../../services/insightsService';
 import { emitExport } from '../../plugins/pluginEventBus';
+import { withDossierLinkDefaults } from '../../utils/dossierOptions';
 import { linksTouching } from './overview/overviewHitTest';
 import type { OverviewScene } from './overview/overviewTypes';
 import type { CanvasMenuPosition, ContextMenuState, DeleteElementsWithHistory, DossierStore, HistoryStore, SelectionStore, TabStore, UIStore, ViewStore, WriteClipboard } from './canvasHookTypes';
@@ -46,6 +47,7 @@ export interface CanvasSelectionActionsParams {
   selectElements: SelectionStore['selectElements'];
   selectLinks: SelectionStore['selectLinks'];
   createElement: DossierStore['createElement'];
+  createLink: DossierStore['createLink'];
   updateElement: DossierStore['updateElement'];
   createGroup: DossierStore['createGroup'];
   removeFromGroup: DossierStore['removeFromGroup'];
@@ -102,6 +104,7 @@ export function useCanvasSelectionActions({
   selectElements,
   selectLinks,
   createElement,
+  createLink,
   updateElement,
   createGroup,
   removeFromGroup,
@@ -547,27 +550,41 @@ export function useCanvasSelectionActions({
       .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
   }, [getSelectedElementIds, elements, links, tPages, currentDossier?.name]);
 
-  // Focus: the element's neighbourhood as a ZNQuery, which the user can then
-  // edit, save or keep in a view. The target is the label, readable; the id
+  // Element menu targets: the whole selection when the clicked element is part
+  // of a multiple one, the clicked element alone otherwise
+  const menuTargetIds = useCallback((): string[] => {
+    if (!contextMenu) return getSelectedElementIds();
+    const selected = getSelectedElementIds();
+    return selected.length > 1 && selected.includes(contextMenu.elementId) ? selected : [contextMenu.elementId];
+  }, [contextMenu, getSelectedElementIds]);
+
+  // Focus: the neighbourhood of the targets as a ZNQuery, which the user can
+  // then edit, save or keep in a view. A target is its label, readable; its id
   // only when another element bears the same label (label = is case-insensitive)
-  const handleContextMenuFocus = useCallback(
-    (depth: number) => {
-      if (!contextMenu) return;
-      const el = elements.find((e) => e.id === contextMenu.elementId);
-      if (!el) return;
+  const focusOn = useCallback((ids: string[], depth: number) => {
+    const conditions: QueryCondition[] = [];
+    for (const id of ids) {
+      const el = elementMap.get(id);
+      if (!el) continue;
       const label = el.label.toLowerCase();
       const shared = elements.some((e) => e.id !== el.id && e.label.toLowerCase() === label);
-      const text = serializeQuery({
-        type: 'within',
-        hops: depth,
-        target: shared
-          ? { type: 'condition', field: '_id', operator: 'eq', value: el.id }
-          : { type: 'condition', field: 'label', operator: 'eq', value: el.label },
-      });
-      useQueryStore.getState().setText(text);
-      useUIStore.getState().setSidePanelTab('query');
-    },
-    [contextMenu, elements]
+      conditions.push(shared
+        ? { type: 'condition', field: '_id', operator: 'eq', value: el.id }
+        : { type: 'condition', field: 'label', operator: 'eq', value: el.label });
+    }
+    if (conditions.length === 0) return;
+    const target: QueryNode = conditions.length === 1 ? conditions[0] : { type: 'or', children: conditions };
+    useQueryStore.getState().setText(serializeQuery({ type: 'within', hops: depth, target }));
+    useUIStore.getState().setSidePanelTab('query');
+  }, [elements, elementMap]);
+
+  const handleContextMenuFocus = useCallback(
+    (depth: number) => focusOn(menuTargetIds(), depth),
+    [focusOn, menuTargetIds]
+  );
+  const handleSelectionFocus = useCallback(
+    (depth: number) => focusOn(getSelectedElementIds(), depth),
+    [focusOn, getSelectedElementIds]
   );
 
   const handleContextMenuHide = useCallback(() => {
@@ -881,7 +898,7 @@ export function useCanvasSelectionActions({
   );
 
   const handleMergeElements = useCallback(() => {
-    if (!contextMenu || selectedElementIds.size < 2) return;
+    if (selectedElementIds.size < 2) return;
     const chosen = Array.from(selectedElementIds)
       .map((id) => elementMap.get(id))
       .filter((el): el is Element => !!el);
@@ -889,7 +906,7 @@ export function useCanvasSelectionActions({
       setMergeElements(chosen);
       setContextMenu(null);
     }
-  }, [contextMenu, selectedElementIds, elementMap, setContextMenu, setMergeElements]);
+  }, [selectedElementIds, elementMap, setContextMenu, setMergeElements]);
 
   // Exactly 2 selected: the one not under the menu
   const otherSelectedElement = useMemo(() => {
@@ -906,14 +923,15 @@ export function useCanvasSelectionActions({
 
   // Link suggestions for the selected elements, shown in their side-panel tab
   const handleSuggestLinks = useCallback(() => {
-    useSuggestionsStore.getState().analyze(getSelectedElementIds());
+    useSuggestionsStore.getState().analyze(menuTargetIds());
     useUIStore.getState().setSidePanelTab('suggestions');
-  }, [getSelectedElementIds]);
+  }, [menuTargetIds]);
 
   // Links shown on the canvas (filters, tab, hidden elements applied) touching
   // the selected elements — or all of them when nothing is selected.
   const handleSelectLinks = useCallback(() => {
-    const selected = useSelectionStore.getState().selectedElementIds;
+    // From the element menu: its targets; elsewhere the selection (none: every link)
+    const selected = contextMenu ? new Set(menuTargetIds()) : useSelectionStore.getState().selectedElementIds;
     // Overview: React Flow has no edges, the scene holds every drawn link
     const scene = overviewSceneRef.current;
     if (overviewActiveRef.current && scene) {
@@ -926,12 +944,51 @@ export function useCanvasSelectionActions({
       .filter((edge) => selected.size === 0 || selected.has(edge.source) || selected.has(edge.target))
       .map((edge) => edge.id);
     selectLinks(ids);
-  }, [allEdges, selectLinks, overviewActiveRef, overviewSceneRef]);
+  }, [contextMenu, menuTargetIds, allEdges, selectLinks, overviewActiveRef, overviewSceneRef]);
+
+  // Adds to the targets the elements linked to them by a link shown on the
+  // canvas (filters, tab and hidden elements applied)
+  const handleSelectNeighbors = useCallback(() => {
+    const base = new Set(menuTargetIds());
+    if (base.size === 0) return;
+    const result = new Set(base);
+    const scene = overviewSceneRef.current;
+    if (overviewActiveRef.current && scene) {
+      for (let l = 0; l < scene.linkCount; l++) {
+        const a = scene.ids[scene.from[l]], b = scene.ids[scene.to[l]];
+        if (base.has(a)) result.add(b);
+        if (base.has(b)) result.add(a);
+      }
+    } else {
+      for (const edge of allEdges) {
+        if (base.has(edge.source)) result.add(edge.target);
+        if (base.has(edge.target)) result.add(edge.source);
+      }
+    }
+    selectElements(Array.from(result));
+  }, [menuTargetIds, allEdges, selectElements, overviewActiveRef, overviewSceneRef]);
+
+  // Exactly two linkable elements selected: a link between them, from the one
+  // under the menu (or the first selected) to the other
+  const linkPair = useMemo((): [string, string] | null => {
+    if (selectedElementIds.size !== 2) return null;
+    const ids = Array.from(selectedElementIds);
+    if (ids.some((id) => !elementMap.get(id) || elementMap.get(id)!.isAnnotation)) return null;
+    return contextMenu?.elementId === ids[1] ? [ids[1], ids[0]] : [ids[0], ids[1]];
+  }, [selectedElementIds, elementMap, contextMenu]);
+
+  const handleLinkSelection = useCallback(async () => {
+    if (!linkPair) return;
+    const dossier = useDossierStore.getState().currentDossier;
+    const created = await createLink(linkPair[0], linkPair[1], withDossierLinkDefaults(dossier));
+    pushAction({ type: 'create-link', undo: {}, redo: { linkIds: [created.id], links: [created] } });
+  }, [linkPair, createLink, pushAction]);
 
   return {
     addIdsToTab,
     canCreateTab,
     canAddToGroup: addToGroupTargetId !== null,
+    canLinkSelection: linkPair !== null,
     canGroupSelection,
     createTabFromIds,
     handleCanvasContextMenuCreate,
@@ -968,7 +1025,10 @@ export function useCanvasSelectionActions({
     handleSelectionHide,
     handleSelectionShowOnly,
     handleSelectionToggleLock,
+    handleLinkSelection,
+    handleSelectionFocus,
     handleSelectLinks,
+    handleSelectNeighbors,
     handleSuggestLinks,
     handleToggleLock,
     moveIdsHere,

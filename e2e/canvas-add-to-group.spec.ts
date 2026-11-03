@@ -24,6 +24,21 @@ const exposeImporter = (page: Page) =>
     };
   });
 
+
+/** A point of the element that no link covers, or null */
+const uncoveredPoint = (page: Page, id: string) =>
+  page.evaluate((id) => {
+    const node = document.querySelector(`.react-flow__node[data-id="${id}"]`);
+    if (!node) return null;
+    const r = node.getBoundingClientRect();
+    for (let y = Math.ceil(r.top) + 1; y < r.bottom - 1; y += 2) {
+      for (let x = Math.ceil(r.left) + 1; x < r.right - 1; x += 3) {
+        if (node.contains(document.elementFromPoint(x, y))) return { x, y };
+      }
+    }
+    return null;
+  }, id);
+
 /** The group, and where the element `id` stands */
 const readState = (page: Page, groupId: string, id: string) =>
   page.evaluate(async ([groupId, id]) => {
@@ -57,14 +72,22 @@ test('free elements of the selection can be added to its group', async ({ page }
   await page.waitForSelector('.react-flow__node');
   await page.waitForTimeout(1000);
 
-  // Group the first two on-screen nodes; keep a third outside
-  const { groupId, outsider } = await page.evaluate(async () => {
-    const ids = [...document.querySelectorAll('.react-flow__node')].slice(0, 3).map((n) => n.getAttribute('data-id')!);
+  // Group the first two on-screen nodes; keep outside another one that links
+  // do not cover entirely (its menu is opened by a right-click on it)
+  const { groupId, rest } = await page.evaluate(async () => {
+    const ids = [...document.querySelectorAll('.react-flow__node')].map((n) => n.getAttribute('data-id')!);
     const { groupElements } = await window.__znImport('/src/utils/groupElements.ts');
     const groupId = await groupElements(ids.slice(0, 2), 'Groupe', 'Unnamed');
-    return { groupId: groupId as string, outsider: ids[2] };
+    return { groupId: groupId as string, rest: ids.slice(2) };
   });
   await page.waitForTimeout(500);
+  let outsider = '';
+  let point: { x: number; y: number } | null = null;
+  for (const id of rest) {
+    point = await uncoveredPoint(page, id);
+    if (point) { outsider = id; break; }
+  }
+  expect(point).not.toBeNull();
   const before = await readState(page, groupId, outsider);
   expect(before.parent).toBeNull();
   expect(before.childIds).toHaveLength(2);
@@ -73,8 +96,7 @@ test('free elements of the selection can be added to its group', async ({ page }
     (await window.__znImport('/src/stores/selectionStore.ts')).useSelectionStore.getState().selectElements(ids);
   }, [groupId, outsider]);
   await page.waitForTimeout(300);
-  // A link may cross the node centre: click a corner
-  await page.locator(`.react-flow__node[data-id="${outsider}"]`).click({ button: 'right', position: { x: 4, y: 4 } });
+  await page.mouse.click(point!.x, point!.y, { button: 'right' });
   await page.getByRole('menuitem', { name: 'Organize' }).hover();
   await page.getByRole('menuitem', { name: 'Add to group' }).click();
   await page.waitForTimeout(500);

@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.88.9
+
+### Ajouts
+
+- **Relier** — avec deux éléments sélectionnés, clic droit → **Relier** crée
+  un lien de l'élément sous le menu vers l'autre, sans avoir à le tirer.
+- **Sélectionner les voisins** — ajoute à la sélection les éléments reliés
+  par un lien affiché.
+- **Menu d'un lien** — **Inverser la direction** tourne la flèche (lien à une
+  seule flèche), comme le réglage Direction du panneau Détail ; la source et
+  la cible ne changent pas. **Sélectionner les extrémités** sélectionne les
+  deux éléments reliés.
+- **Export PNG** — test de bout en bout (dev et production, Chromium et
+  Firefox) : fichier, résolution, graphe dessiné, fond transparent.
+
+### Modifications
+
+- **Un seul menu pour une sélection** — le clic droit sur un élément de la
+  sélection, sur le cadre du lasso ou sur le fond ouvre le même menu, avec
+  les mêmes entrées au même endroit. Grouper, Ajouter au groupe, Fusionner
+  et Verrouiller sont sous **Organiser** partout ; le menu du lasso gagne
+  Mode focus, Fusionner et Trouver les chemins, celui d'un élément Suggérer
+  des liens et Sélectionner leurs liens.
+- **Le mode focus porte sur toute la sélection** quand l'élément cliqué en
+  fait partie (le voisinage de chacun, réuni), comme les autres actions du
+  menu. Sur un élément hors de la sélection, il ne porte que sur lui.
+- Libellés courts et identiques dans les deux menus : « Grouper »,
+  « Masquer », « Afficher uniquement ».
+
 ## 2.88.8
 
 ### Ajouts

@@ -101,6 +101,8 @@ A link represents a relationship between two elements. Links are **first-class c
 1. **Drag** from one element to another element
 2. The link is created with a default label
 
+For two elements far apart: select them, then right-click → **Connect**. The link goes from the element under the menu (from the background or the lasso frame: from the first selected) to the other.
+
 
 ### Create a Linked Element
 
@@ -124,6 +126,11 @@ To spot missing links, see also [link suggestions]({{< relref "link-suggestions"
 | **Period** | Start and end date, with the source's time zone if needed ([Dates and Time Zones]({{< relref "dates-timezones" >}})) |
 | **Directed** | Arrow indicating direction |
 | **Properties** | Custom fields |
+
+Right-click a link:
+
+- **Reverse direction**: the arrow turns round, as with the Direction setting of the Detail panel. The link's source and target stay the same. The entry only shows on a one-arrow link
+- **Select both ends**: selects the two linked elements
 
 To give a hand-drawn link (drag from one element to another, linked element) an arrow towards the target from the start, check **Arrow on new links by default** in the dossier's **Options** (dossier panel). Accepted suggestions, imports and plugins ignore it.
 
@@ -151,13 +158,19 @@ Click-drag on the canvas background to draw a selection rectangle.
 
 **Ctrl+click** to add or remove an element from the selection.
 
+Right-click → **Select neighbors**: adds to the selection the elements joined by a shown link (filters, hidden elements and the active tab taken into account).
+
+### Selection Menu
+
+Right-clicking an element of the selection, the lasso frame or the background opens the same menu, acting on the whole selection: **Focus mode**, **Analyze**, **Organize** (group, add to group, merge, lock), **Tabs**, **Hide**, **Show only**. On an element outside the selection, the menu acts on it alone.
+
 ### Select Links
 
 | Action | Result |
 |--------|--------|
 | **Shift+click** or **Ctrl+click** a link | Adds the link to the selection, or removes it |
 | **Ctrl+Shift+A** | Selects all shown links |
-| Right-click the background → **Select their links** | Replaces the element selection with the links touching them |
+| Right-click the selection → **Select their links** | Replaces the element selection with the links touching them |
 | Right-click the background, nothing selected → **Select all links** | Same as Ctrl+Shift+A |
 
 Shown links take filters, hidden elements and the active tab into account.
@@ -221,7 +234,7 @@ Organize your elements into visual **groups**.
 ### Create a Group
 
 1. Select multiple elements
-2. Right-click → **Group**
+2. Right-click → **Organize** → **Group**
 
 After a lasso selection (Shift + drag), right-click on the selection frame.
 
@@ -234,7 +247,7 @@ For scattered elements, **Group and gather** (same menu) first packs them in a g
 
 - **Click on the group**: selects the entire group
 - **Double-click**: enter the group to edit members
-- **Add to group**: select the group and the elements to put in it, then right-click → **Add to group** (under **Organize** on an element). The elements are laid out inside the frame, under the current members, and the frame grows to hold them. Elements already in another group are left out
+- **Add to group**: select the group and the elements to put in it, then right-click → **Add to group** (under **Organize**). The elements are laid out inside the frame, under the current members, and the frame grows to hold them. Elements already in another group are left out
 - **Right-click a member → Remove from group**: the element leaves the group and stays where it is
 - **Right-click → Gather members**: packs the members in a grid at the group's top left, in reading order (top to bottom, then left to right), and fits the frame. Useful when the members were scattered over the canvas. Only **Ctrl+Z** brings back where they were, as long as the session history lasts (it is lost when the page reloads or the dossier closes)
 
