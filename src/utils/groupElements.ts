@@ -193,3 +193,103 @@ export async function gatherGroup(groupId: string, unnamedLabel: string): Promis
   });
   return true;
 }
+
+interface Box { id: string; x: number; y: number; w: number; h: number }
+
+/**
+ * Room for elements entering a group: a row under the members already in it
+ * (relative coordinates), wrapping at the frame width, in reading order. The
+ * frame grows to hold them, never shrinks. Positions are of the drawn boxes.
+ */
+export function placeInGroup(
+  size: { width: number; height: number },
+  members: Box[],
+  entering: Box[],
+): { positions: Map<string, { x: number; y: number }>; size: { width: number; height: number } } {
+  const positions = new Map<string, { x: number; y: number }>();
+  const bottom = members.length > 0 ? Math.max(...members.map((b) => b.y + b.h)) : null;
+  let y = bottom === null ? GROUP_PADDING : bottom + GATHER_GAP;
+  let x = GROUP_PADDING;
+  let rowH = 0;
+  let maxX = 0, maxY = 0;
+  const ordered = [...entering].sort((a, b) => a.y - b.y || a.x - b.x);
+  for (const b of ordered) {
+    if (x > GROUP_PADDING && x + b.w > size.width - GROUP_PADDING) {
+      x = GROUP_PADDING;
+      y += rowH + GATHER_GAP;
+      rowH = 0;
+    }
+    positions.set(b.id, { x, y });
+    maxX = Math.max(maxX, x + b.w);
+    maxY = Math.max(maxY, y + b.h);
+    rowH = Math.max(rowH, b.h);
+    x += b.w + GATHER_GAP;
+  }
+  return {
+    positions,
+    size: {
+      width: Math.max(size.width, maxX + GROUP_PADDING),
+      height: Math.max(size.height, maxY + GROUP_PADDING),
+    },
+  };
+}
+
+/**
+ * Moves the groupable elements among `ids` into an existing group, in a row
+ * under its members, and grows the frame to hold them, as one undo step.
+ * Returns the number of elements added.
+ */
+export async function addElementsToGroup(groupId: string, ids: Iterable<string>, unnamedLabel: string): Promise<number> {
+  const { elements, addToGroup } = useDossierStore.getState();
+  const group = elements.find((el) => el.id === groupId && el.isGroup);
+  if (!group) return 0;
+  const added = groupableElements(ids);
+  if (added.length === 0) return 0;
+
+  const members = elements.filter((el) => el.parentGroupId === groupId);
+  const before = {
+    visual: { ...group.visual },
+    childIds: [...group.childIds],
+    added: added.map((el) => ({ id: el.id, position: { ...el.position } })),
+  };
+
+  const addedBoxes = memberBoxes(added, unnamedLabel);
+  const placed = placeInGroup(
+    { width: group.visual.customWidth || 300, height: group.visual.customHeight || 200 },
+    memberBoxes(members, unnamedLabel),
+    addedBoxes,
+  );
+  // Drawn box position back to the element's own position
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const b of addedBoxes) {
+    const pos = placed.positions.get(b.id)!;
+    positions[b.id] = { x: pos.x - b.dx, y: pos.y - b.dy };
+  }
+
+  const addedIds = addToGroup(added.map((el) => el.id), groupId, { positions, size: placed.size });
+  if (addedIds.length === 0) return 0;
+
+  const groupAfter = useDossierStore.getState().elements.find((el) => el.id === groupId)!;
+  useHistoryStore.getState().pushAction({
+    type: 'update-bulk',
+    undo: {
+      bulkElements: [
+        ...before.added
+          .filter((a) => addedIds.includes(a.id))
+          .map((a) => ({ id: a.id, changes: { parentGroupId: null, position: a.position } })),
+        { id: groupId, changes: { visual: before.visual, childIds: before.childIds } },
+      ],
+    },
+    redo: {
+      bulkCalls: [
+        { kind: 'elements' as const, ids: [groupId], changes: { visual: { ...groupAfter.visual }, childIds: [...groupAfter.childIds] } },
+        ...addedIds.map((id) => ({
+          kind: 'elements' as const,
+          ids: [id],
+          changes: { parentGroupId: groupId, position: positions[id] },
+        })),
+      ],
+    },
+  });
+  return addedIds.length;
+}

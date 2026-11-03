@@ -234,7 +234,8 @@ For scattered elements, **Group and gather** (same menu) first packs them in a g
 
 - **Click on the group**: selects the entire group
 - **Double-click**: enter the group to edit members
-- **Drag an element** in/out of the group to change membership
+- **Add to group**: select the group and the elements to put in it, then right-click → **Add to group** (under **Organize** on an element). The elements are laid out inside the frame, under the current members, and the frame grows to hold them. Elements already in another group are left out
+- **Right-click a member → Remove from group**: the element leaves the group and stays where it is
 - **Right-click → Gather members**: packs the members in a grid at the group's top left, in reading order (top to bottom, then left to right), and fits the frame. Useful when the members were scattered over the canvas. Only **Ctrl+Z** brings back where they were, as long as the session history lasts (it is lost when the page reloads or the dossier closes)
 
 ---

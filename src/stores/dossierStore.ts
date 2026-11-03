@@ -23,6 +23,13 @@ import type {
 type ElementChanges = Omit<Partial<Element>, 'visual'> & { visual?: Partial<ElementVisual> };
 /** Link changes with partial visual support for collab-safe updates */
 type LinkChanges = Omit<Partial<Link>, 'visual'> & { visual?: Partial<LinkVisual> };
+
+/** Where elements added to a group go, and the group's size after */
+export interface GroupAddLayout {
+  /** Relative to the group, by element id */
+  positions?: Record<string, Position>;
+  size?: { width: number; height: number };
+}
 import {
   dossierRepository,
   elementRepository,
@@ -158,7 +165,12 @@ interface DossierState {
 
   // Actions - Groups
   createGroup: (label: string, position: Position, size: { width: number; height: number }, childIds?: ElementId[]) => Promise<Element>;
-  addToGroup: (elementIds: ElementId[], groupId: ElementId) => Promise<void>;
+  /**
+   * Puts top-level, non-group elements in an existing group. `layout` gives
+   * their positions relative to the group and the group's new size; without
+   * it they join where they stand. Returns the ids added.
+   */
+  addToGroup: (elementIds: ElementId[], groupId: ElementId, layout?: GroupAddLayout) => ElementId[];
   removeFromGroup: (elementIds: ElementId[]) => Promise<void>;
   dissolveGroup: (groupId: ElementId) => Promise<void>;
 
@@ -2008,43 +2020,67 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     return group;
   },
 
-  addToGroup: async (elementIds: ElementId[], groupId: ElementId) => {
-    const { elements, updateElement } = get();
+  addToGroup: (elementIds: ElementId[], groupId: ElementId, layout?: GroupAddLayout) => {
+    const { elements } = get();
     assertWritable(get);
-    const group = elements.find(el => el.id === groupId);
-    if (!group || !group.isGroup) return;
+    const group = elements.find(el => el.id === groupId && el.isGroup);
+    if (!group) return [];
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) return [];
 
-    const newChildIds = [...group.childIds];
+    // Top-level, non-group elements only: groups are a single level
+    const wanted = new Set(elementIds);
+    const added = elements.filter(el => wanted.has(el.id) && !el.isGroup && !el.parentGroupId);
+    if (added.length === 0) return [];
 
-    for (const elementId of elementIds) {
-      const child = elements.find(el => el.id === elementId);
-      if (!child || child.isGroup) continue; // Don't nest groups
-      if (child.parentGroupId === groupId) continue; // Already in this group
+    const visual = layout?.size
+      ? { ...group.visual, customWidth: layout.size.width, customHeight: layout.size.height }
+      : group.visual;
+    const childIds = [...group.childIds, ...added.map(el => el.id).filter(id => !group.childIds.includes(id))];
 
-      if (child.parentGroupId) {
-        const prevGroup = elements.find(el => el.id === child.parentGroupId);
-        if (prevGroup) {
-          await updateElement(prevGroup.id, {
-            childIds: prevGroup.childIds.filter(id => id !== elementId),
-          });
-        }
-      }
-
-      // Convert position to relative (subtract group position)
-      await updateElement(elementId, {
-        parentGroupId: groupId,
-        position: {
-          x: child.position.x - group.position.x,
-          y: child.position.y - group.position.y,
-        },
-      });
-
-      if (!newChildIds.includes(elementId)) {
-        newChildIds.push(elementId);
-      }
+    // Member positions are relative to the group; without a layout, the
+    // elements join where they stand
+    const childChanges = new Map<ElementId, { position: Position; parentGroupId: ElementId }>();
+    for (const el of added) {
+      const position = layout?.positions?.[el.id]
+        ?? { x: el.position.x - group.position.x, y: el.position.y - group.position.y };
+      childChanges.set(el.id, { position, parentGroupId: groupId });
     }
 
-    await updateElement(groupId, { childIds: newChildIds });
+    // Zustand first for an instant update, then Y.Doc in one transaction
+    localOpPending = true;
+    const now = new Date();
+    set((state) => ({
+      elements: state.elements.map(el => {
+        if (el.id === groupId) return { ...el, visual, childIds, updatedAt: now };
+        const changes = childChanges.get(el.id);
+        return changes ? { ...el, ...changes, updatedAt: now } : el;
+      }),
+    }));
+
+    const { elements: elementsMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      const groupMap = elementsMap.get(groupId) as Y.Map<unknown> | undefined;
+      if (groupMap) updateElementYMap(groupMap, { visual, childIds }, ydoc);
+      for (const [id, changes] of childChanges) {
+        const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
+        if (ymap) updateElementYMap(ymap, changes, ydoc);
+      }
+    });
+
+    elementRepository.update(groupId, { visual, childIds })
+      .catch((err) => onPersistFailure(err, 'element.update(addToGroup)'));
+    for (const [id, changes] of childChanges) {
+      elementRepository.update(id, changes).catch((err) => onPersistFailure(err, 'element.update(addToGroup)'));
+    }
+    const dossierId = get().currentDossier?.id;
+    if (dossierId) {
+      emitPluginEvent('element:updated', dossierId, groupId, { fields: ['visual', 'childIds'] });
+      for (const id of childChanges.keys()) {
+        emitPluginEvent('element:updated', dossierId, id, { fields: ['position', 'parentGroupId'] });
+      }
+    }
+    return added.map(el => el.id);
   },
 
   removeFromGroup: async (elementIds: ElementId[]) => {

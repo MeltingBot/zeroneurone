@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.88.8
+
+### Ajouts
+
+- **Ajouter au groupe** — un élément peut rejoindre un groupe existant :
+  sélectionner le groupe et les éléments, puis clic-droit → **Ajouter au
+  groupe** (sous **Organiser** sur un élément). Les éléments se rangent
+  dans le cadre, sous les membres actuels, et le cadre s'agrandit pour les
+  contenir. Une seule annulation remet tout en place.
+
+### Documentation
+
+- La doc annonçait qu'on pouvait faire entrer un élément dans un groupe en
+  le glissant dedans, ce que l'application n'a jamais fait. Elle décrit
+  maintenant **Ajouter au groupe**.
+
 ## 2.88.7
 
 ### Corrections

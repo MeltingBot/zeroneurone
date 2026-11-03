@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Image, Group, Ungroup,
-  BoxSelect, Lock, LockOpen, Layers, ArrowRight, ArrowDownLeft, Plus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2,
+  BoxSelect, Lock, LockOpen, Layers, ArrowRight, ArrowDownLeft, Plus, SquarePlus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2,
 } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -49,6 +49,8 @@ interface ContextMenuProps {
   onGroupSelection?: () => void;
   /** Group the selection after packing it in a grid */
   onGroupGather?: () => void;
+  /** Move the free elements of the selection into its one group */
+  onAddToGroup?: () => void;
   /** Pack the members of the group under the menu in a grid */
   onGatherGroup?: () => void;
   onDissolveGroup: () => void;
@@ -123,6 +125,7 @@ function ContextMenuComponent({
   selectedCount,
   onGroupSelection,
   onGroupGather,
+  onAddToGroup,
   onGatherGroup,
   onDissolveGroup,
   onRemoveFromGroup,
@@ -190,6 +193,7 @@ function ContextMenuComponent({
   const organizeItem = submenu('organize', cm('organize'), Boxes, [
     hasMultipleSelected && !isGroup && onGroupSelection && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
     hasMultipleSelected && !isGroup && onGroupGather && { id: 'group-gather', label: cm('groupGather'), icon: Group, onSelect: onGroupGather },
+    onAddToGroup && { id: 'add-to-group', label: cm('addToGroup'), icon: SquarePlus, onSelect: onAddToGroup },
     isGroup && onGatherGroup && { id: 'gather-group', label: cm('gatherGroup'), icon: Group, onSelect: onGatherGroup },
     isGroup && { id: 'dissolve-group', label: cm('dissolveGroup'), icon: Ungroup, onSelect: onDissolveGroup },
     isInGroup && { id: 'remove-from-group', label: cm('removeFromGroup'), icon: BoxSelect, onSelect: onRemoveFromGroup },

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Search, ScanSearch, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
+import { Plus, SquarePlus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Search, ScanSearch, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -30,6 +30,8 @@ interface CanvasContextMenuProps {
   onGroupSelection?: () => void;
   /** Group the selection after packing it in a grid */
   onGroupGather?: () => void;
+  /** Move the free elements of the selection into its one group */
+  onAddToGroup?: () => void;
   onCopyAsMermaid?: () => void;
   onCopyAsDot?: () => void;
   // Query actions
@@ -74,6 +76,7 @@ function CanvasContextMenuComponent({
   onToggleLockSelection,
   onGroupSelection,
   onGroupGather,
+  onAddToGroup,
   onCopyAsMermaid,
   onCopyAsDot,
   onFindSimilar,
@@ -123,6 +126,7 @@ function CanvasContextMenuComponent({
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
           selectedCount > 1 && onGroupGather && { id: 'group-gather', label: cm('groupGather'), icon: Group, onSelect: onGroupGather },
+          onAddToGroup && { id: 'add-to-group', label: cm('addToGroup'), icon: SquarePlus, onSelect: onAddToGroup },
           (onNewTabFromSelection || onRemoveSelectionFromTab || (tabs.length > 0 && onAddSelectionToTab)) && submenu('tabs', cm('tabs'), Layers, [
             onNewTabFromSelection && {
               id: 'new-tab-from-selection',

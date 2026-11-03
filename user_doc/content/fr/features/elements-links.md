@@ -234,7 +234,8 @@ Pour des éléments dispersés, **Grouper et rapprocher** (même menu) les range
 
 - **Clic sur le groupe** : sélectionne le groupe entier
 - **Double-clic** : entre dans le groupe pour éditer les membres
-- **Glisser un élément** dans/hors du groupe pour modifier l'appartenance
+- **Ajouter au groupe** : sélectionnez le groupe et les éléments à y mettre, puis clic-droit → **Ajouter au groupe** (sous **Organiser** sur un élément). Les éléments se rangent dans le cadre, sous les membres actuels, et le cadre s'agrandit pour les contenir. Les éléments déjà dans un autre groupe ne sont pas repris
+- **Clic-droit sur un membre → Retirer du groupe** : l'élément sort du groupe et reste à sa place
 - **Clic-droit → Rapprocher les membres** : range les membres en grille dans le coin haut gauche du groupe, dans leur ordre de lecture (de haut en bas, puis de gauche à droite), et ajuste le cadre. Utile quand les membres étaient dispersés sur le canvas. Leur place d'avant n'est rendue que par **Ctrl+Z**, tant que l'historique de la session existe (il disparaît au rechargement de la page ou à la fermeture du dossier)
 
 ---

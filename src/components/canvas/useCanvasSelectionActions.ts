@@ -10,7 +10,7 @@ import type { QueryCondition, QueryNode, QueryOr } from '../../services/query/ty
 import { generateUUID } from '../../utils';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { scaleByDegree, type buildDegreeMap } from '../../utils/degreeSize';
-import { gatherGroup, groupElements } from '../../utils/groupElements';
+import { addElementsToGroup, gatherGroup, groupElements } from '../../utils/groupElements';
 import { buildMermaidExport } from '../../services/exportMermaid';
 import { buildDOTExport } from '../../services/exportDOT';
 import { serializeQuery } from '../../services/query/serializer';
@@ -700,6 +700,24 @@ export function useCanvasSelectionActions({
   }, [selectedElementIds, elementMap]);
   const canGroupSelection = groupableSelectedIds.length >= 2;
 
+  // The group the free elements of the selection can join: exactly one group selected
+  const addToGroupTargetId = useMemo(() => {
+    if (groupableSelectedIds.length === 0) return null;
+    let target: string | null = null;
+    for (const id of selectedElementIds) {
+      if (!elementMap.get(id)?.isGroup) continue;
+      if (target) return null;
+      target = id;
+    }
+    return target;
+  }, [groupableSelectedIds, selectedElementIds, elementMap]);
+
+  const handleAddToGroup = useCallback(async () => {
+    if (!addToGroupTargetId) return;
+    await addElementsToGroup(addToGroupTargetId, groupableSelectedIds, t('empty.unnamed'));
+    clearSelection();
+  }, [addToGroupTargetId, groupableSelectedIds, t, clearSelection]);
+
   const handleGroupSelection = useCallback(async () => {
     const selectedElements = groupableSelectedIds
       .map(id => elementMap.get(id))
@@ -913,11 +931,13 @@ export function useCanvasSelectionActions({
   return {
     addIdsToTab,
     canCreateTab,
+    canAddToGroup: addToGroupTargetId !== null,
     canGroupSelection,
     createTabFromIds,
     handleCanvasContextMenuCreate,
     handleCanvasContextMenuCreateAnnotation,
     handleCanvasContextMenuCreateGroup,
+    handleAddToGroup,
     handleContextMenuCopy,
     handleContextMenuCut,
     handleContextMenuDelete,

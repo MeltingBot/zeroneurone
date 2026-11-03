@@ -2281,11 +2281,13 @@ export function Canvas() {
 
   const {
     addIdsToTab,
+    canAddToGroup,
     canCreateTab,
     canGroupSelection,
     createTabFromIds,
     handleCanvasContextMenuCreate,
     handleCanvasContextMenuCreateAnnotation,
+    handleAddToGroup,
     handleCanvasContextMenuCreateGroup,
     handleContextMenuCopy,
     handleContextMenuCut,
@@ -3196,6 +3198,7 @@ export function Canvas() {
               selectedCount={selectedElementIds.size}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onGroupGather={canGroupSelection ? handleGroupGather : undefined}
+              onAddToGroup={canAddToGroup ? handleAddToGroup : undefined}
               onGatherGroup={handleGatherGroup}
               onDissolveGroup={handleDissolveGroup}
               onRemoveFromGroup={handleRemoveFromGroup}
@@ -3264,6 +3267,7 @@ export function Canvas() {
               onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onGroupGather={canGroupSelection ? handleGroupGather : undefined}
+              onAddToGroup={canAddToGroup ? handleAddToGroup : undefined}
               onCopyAsMermaid={handleCopyAsMermaid}
               onCopyAsDot={handleCopyAsDot}
               onFindSimilar={handleFindSimilar}
