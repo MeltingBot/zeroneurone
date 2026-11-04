@@ -82,6 +82,12 @@ function ms(fn: () => unknown): number {
   return Math.round(performance.now() - t0);
 }
 
+async function msAsync(fn: () => Promise<unknown>): Promise<number> {
+  const t0 = performance.now();
+  await fn();
+  return Math.round(performance.now() - t0);
+}
+
 it('graph compute paths', async () => {
   const { insightsService } = await import('../insightsService');
   const { searchService } = await import('../searchService');
@@ -98,7 +104,7 @@ it('graph compute paths', async () => {
     row.clusters = ms(() => insightsService.getClusters());
     row.centrality = ms(() => insightsService.getCentrality());
     row.bridges = ms(() => insightsService.getBridges());
-    row.searchIndex = ms(() => searchService.loadDossier('bench', elements, links, []));
+    row.searchIndex = await msAsync(() => searchService.loadDossier('bench', elements, links, []));
     row.searchReindex = ms(() => searchService.syncIncremental(elements, links, []));
     row.filters = ms(() =>
       getDimmedElementIds(elements, { ...DEFAULT_FILTERS, textSearch: 'Martin' }, new Set())

@@ -4,7 +4,8 @@ import { Search, Box, Link2, X, Tag, MessageSquare } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useTabStore, useUIStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { useQueryStore } from '../../stores/queryStore';
-import { searchService } from '../../services/searchService';
+import { searchService, SEARCH_INDEX_TASK } from '../../services/searchService';
+import { useProgressStore } from '../../stores/progressStore';
 import type { SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -23,6 +24,8 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showTags, setShowTags] = useState(true);
+  // A large dossier is indexed in slices after it opens: search again once done
+  const indexing = useProgressStore((s) => SEARCH_INDEX_TASK in s.tasks);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +85,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [query, onClose, searchMode]);
+  }, [query, onClose, searchMode, indexing]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -463,7 +466,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         <div ref={resultsRef} className="max-h-96 overflow-y-auto">
           {query && results.length === 0 && (
             <div className="px-4 py-8 text-center text-text-tertiary">
-              <p className="text-sm">{t('search.noResults', { query })}</p>
+              <p className="text-sm">{indexing ? t('common:activity.searchIndex') : t('search.noResults', { query })}</p>
             </div>
           )}
 

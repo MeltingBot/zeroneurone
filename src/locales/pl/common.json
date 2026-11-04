@@ -303,7 +303,8 @@
     "layout": "Układ",
     "view": "Zmiana widoku",
     "suggestions": "Sugestie powiązań",
-    "export": "Tworzenie archiwum"
+    "export": "Tworzenie archiwum",
+    "searchIndex": "Indeksowanie wyszukiwania"
   },
   "dossierLock": {
     "closed": "Sprawa zamknięta: tylko do odczytu.",

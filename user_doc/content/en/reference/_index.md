@@ -11,3 +11,4 @@ Technical documentation and shortcuts.
 - [Keyboard shortcuts]({{< relref "keyboard-shortcuts" >}}) — All keys
 - [Data storage]({{< relref "data-storage" >}}) — IndexedDB and OPFS
 - [Storage and maintenance]({{< relref "maintenance" >}}) — Backup, history purge, freeing space
+- [Limits and performance]({{< relref "performance" >}}) — What ZeroNeurone handles, measured

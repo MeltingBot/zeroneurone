@@ -220,6 +220,50 @@ export function overlaps(interval: TimeInterval, window: TimeInterval): boolean 
   return interval.from <= window.until && interval.until >= window.from;
 }
 
+function minuteTime(d: Date | string | null | undefined): number | null {
+  if (!d) return null;
+  const t = toMinuteStart(d).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/** Key for the cache when no date property dates the elements */
+const NO_DATE_RULES = {};
+/**
+ * Dates of each element, per rules object. Store updates replace the element
+ * object they change and keep the others, so an edit reads only the edited
+ * element's properties again instead of every property of the dossier.
+ */
+const elementTimesCache = new WeakMap<object, WeakMap<Element, number[]>>();
+
+/** Factual dates of one element (minute precision, may repeat) */
+function elementTemporalTimes(el: Element, keepDateProperty?: DatePropertyRulesLike): number[] {
+  const rulesKey = keepDateProperty ?? NO_DATE_RULES;
+  let byElement = elementTimesCache.get(rulesKey);
+  if (!byElement) {
+    byElement = new WeakMap();
+    elementTimesCache.set(rulesKey, byElement);
+  }
+  const cached = byElement.get(el);
+  if (cached) return cached;
+
+  const times: number[] = [];
+  const add = (d: Date | string | null | undefined) => {
+    const t = minuteTime(d);
+    if (t !== null) times.push(t);
+  };
+  for (const ev of el.events ?? []) {
+    add(ev.date);
+    add(ev.dateEnd);
+  }
+  add(el.dateRange?.start);
+  add(el.dateRange?.end);
+  if (keepDateProperty) {
+    for (const interval of propertyDateIntervals(el, keepDateProperty)) add(new Date(interval.from));
+  }
+  byElement.set(el, times);
+  return times;
+}
+
 /**
  * Distinct factual dates of the dossier (minute precision), sorted ascending:
  * the steps of the temporal navigator.
@@ -232,20 +276,11 @@ export function collectTemporalDates(
 ): Date[] {
   const times = new Set<number>();
   const add = (d: Date | string | null | undefined) => {
-    if (!d) return;
-    const t = toMinuteStart(d).getTime();
-    if (!Number.isNaN(t)) times.add(t);
+    const t = minuteTime(d);
+    if (t !== null) times.add(t);
   };
   for (const el of elements) {
-    for (const ev of el.events ?? []) {
-      add(ev.date);
-      add(ev.dateEnd);
-    }
-    add(el.dateRange?.start);
-    add(el.dateRange?.end);
-    if (keepDateProperty) {
-      for (const interval of propertyDateIntervals(el, keepDateProperty)) add(new Date(interval.from));
-    }
+    for (const t of elementTemporalTimes(el, keepDateProperty)) times.add(t);
   }
   for (const link of links) {
     add(link.date);

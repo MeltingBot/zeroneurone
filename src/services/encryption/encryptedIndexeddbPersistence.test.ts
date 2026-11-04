@@ -57,6 +57,43 @@ describe('EncryptedIndexeddbPersistence', () => {
     await provider.destroy();
   });
 
+  it('does not keep its store listener attached while stored updates are applied', async () => {
+    const dbName = `zn-persist-test-${++counter}`;
+    await write(dbName, undefined, ['a', 'b']);
+
+    const doc = new Y.Doc();
+    const listenersDuringLoad: number[] = [];
+    doc.on('afterTransaction', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listenersDuringLoad.push((doc as any)._observers.get('update')?.size ?? 0);
+    });
+    const provider = new EncryptedIndexeddbPersistence(dbName, doc);
+    await provider.whenSynced;
+
+    expect(doc.getMap('elements').get('a')).toBe('a');
+    expect(listenersDuringLoad.length).toBeGreaterThan(0);
+    expect(listenersDuringLoad.every((n) => n === 0)).toBe(true);
+    // Reattached once, not twice
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((doc as any)._observers.get('update')?.size).toBe(1);
+    await provider.destroy();
+  });
+
+  it('still stores the updates made after opening, compacted or not', async () => {
+    const dbName = `zn-persist-test-${++counter}`;
+    await write(dbName, KEY_A, ['a']);
+
+    const first = await open(dbName, KEY_A);
+    first.doc.getMap('elements').set('b', 'b');
+    await first.provider.compact();
+    first.doc.getMap('elements').set('c', 'c');
+    await first.provider.destroy();
+
+    const { doc, provider } = await open(dbName, KEY_A);
+    expect([...doc.getMap('elements').keys()].sort()).toEqual(['a', 'b', 'c']);
+    await provider.destroy();
+  });
+
   it('rejects whenSynced when the database cannot be opened', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const openSpy = vi.spyOn(indexedDB, 'open').mockImplementation(() => {

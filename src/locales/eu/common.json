@@ -303,7 +303,8 @@
     "layout": "Antolaketa",
     "view": "Ikuspegi aldaketa",
     "suggestions": "Lotura-iradokizunak",
-    "export": "Artxiboa sortzen"
+    "export": "Artxiboa sortzen",
+    "searchIndex": "Bilaketa indexatzen"
   },
   "dossierLock": {
     "closed": "Espedientea itxita: irakurtzeko soilik.",

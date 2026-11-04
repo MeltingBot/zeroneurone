@@ -303,7 +303,8 @@
     "layout": "Disposición",
     "view": "Cambio de vista",
     "suggestions": "Sugerencias de vínculos",
-    "export": "Creación del archivo"
+    "export": "Creación del archivo",
+    "searchIndex": "Indexación de la búsqueda"
   },
   "dossierLock": {
     "closed": "Expediente cerrado: solo lectura.",

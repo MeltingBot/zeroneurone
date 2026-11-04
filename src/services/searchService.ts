@@ -1,6 +1,20 @@
 import MiniSearch from 'minisearch';
 import type { Asset, Comment, Element, Link, SearchDocument, SearchResult, Property } from '../types';
 import { getCountryByCode, getCountryName } from '../data/countries';
+import { useProgressStore } from '../stores/progressStore';
+
+/** Activity bar task shown while a large dossier is being indexed */
+export const SEARCH_INDEX_TASK = 'searchIndex';
+
+/** Indexing time per slice before yielding, well under a 50 ms long task */
+const SLICE_MS = 25;
+
+/** Lets the page render and handle input between two indexing slices */
+function yieldToPage(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+type SyncArgs = [elements: Element[], links: Link[], assets: Asset[], comments: Comment[]];
 
 class SearchService {
   private index: MiniSearch<SearchDocument>;
@@ -34,17 +48,31 @@ class SearchService {
   // otherwise the document content is compared.
   private indexedFrom = new Map<string, { source: Element | Link; assetText: string; commentText: string; content: string }>();
 
+  /** Bumped by every full load and by clear(): a load that sees another value stops */
+  private loadGeneration = 0;
+  private loading = false;
+  /** Latest sync asked for while a full load runs, applied when it ends */
+  private pendingSync: SyncArgs | null = null;
+
   /**
    * Load and index all elements and links for a dossier (full rebuild).
    * Use syncIncremental() for subsequent updates.
+   *
+   * Indexes in slices of about SLICE_MS, yielding to the page in between: a
+   * large dossier no longer freezes the screen while it opens. A small one
+   * fits in the first slice and is indexed before this returns. Until the
+   * promise resolves, search answers from the documents indexed so far.
    */
-  loadDossier(
+  async loadDossier(
     dossierId: string,
     elements: Element[],
     links: Link[],
     assets: Asset[] = [],
     comments: Comment[] = [],
-  ): void {
+  ): Promise<void> {
+    const generation = ++this.loadGeneration;
+    this.loading = true;
+    this.pendingSync = null;
     if (this.currentDossierId !== dossierId) {
       this.index = this.createIndex();
       this.indexedIds.clear();
@@ -55,24 +83,50 @@ class SearchService {
     this.buildAssetTextMap(elements, assets);
     this.buildCommentTextMap(comments);
 
-    // Index elements
-    for (const element of elements) {
-      this.indexElement(element);
-      this.indexedIds.add(element.id);
+    let sliceStart = performance.now();
+    const total = elements.length + links.length;
+    for (let i = 0; i < total; i++) {
+      if (i < elements.length) {
+        const element = elements[i];
+        this.indexElement(element);
+        this.indexedIds.add(element.id);
+      } else {
+        const link = links[i - elements.length];
+        this.indexLink(link);
+        this.indexedIds.add(link.id);
+      }
+      if (i < total - 1 && performance.now() - sliceStart > SLICE_MS) {
+        // Shown only when the load spans several slices: a small dossier
+        // never flashes the activity bar
+        const percent = Math.round((100 * (i + 1)) / total);
+        const progress = useProgressStore.getState();
+        if (!progress.tasks[SEARCH_INDEX_TASK]) progress.start(SEARCH_INDEX_TASK, 'activity.searchIndex', percent);
+        else if (progress.tasks[SEARCH_INDEX_TASK].percent !== percent) progress.update(SEARCH_INDEX_TASK, percent);
+        await yieldToPage();
+        // Another load, or clear(), took over meanwhile
+        if (generation !== this.loadGeneration) return;
+        sliceStart = performance.now();
+      }
     }
 
-    // Index links
-    for (const link of links) {
-      this.indexLink(link);
-      this.indexedIds.add(link.id);
-    }
+    this.loading = false;
+    useProgressStore.getState().end(SEARCH_INDEX_TASK);
+    // Set by syncIncremental() during the awaits above
+    const pending = this.pendingSync as SyncArgs | null;
+    this.pendingSync = null;
+    if (pending) this.syncIncremental(...pending);
   }
 
   /**
    * Incrementally sync the search index with the current elements/links.
-   * Detects adds, removes, and updates.
+   * Detects adds, removes, and updates. During a full load, only the latest
+   * call is kept, and applied once the load ends.
    */
   syncIncremental(elements: Element[], links: Link[], assets: Asset[] = [], comments: Comment[] = []): void {
+    if (this.loading) {
+      this.pendingSync = [elements, links, assets, comments];
+      return;
+    }
     this.buildAssetTextMap(elements, assets);
     this.buildCommentTextMap(comments);
     const currentIds = new Set<string>();
@@ -182,6 +236,10 @@ class SearchService {
    * Clear the entire index
    */
   clear(): void {
+    this.loadGeneration++;
+    this.loading = false;
+    this.pendingSync = null;
+    useProgressStore.getState().end(SEARCH_INDEX_TASK);
     this.index = this.createIndex();
     this.indexedIds.clear();
     this.indexedFrom.clear();

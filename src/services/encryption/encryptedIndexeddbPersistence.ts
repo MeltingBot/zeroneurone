@@ -102,23 +102,33 @@ function fetchUpdatesEncrypted(
         beforeApplyUpdatesCallback(updatesStore);
 
         let undecryptable = 0;
-        Y.transact(persistence.doc, () => {
-          rawUpdates.forEach(raw => {
-            let update: Uint8Array | null = raw;
+        // While the doc has an 'update' listener, Y.js encodes every
+        // transaction back into an update. Ours skips this origin, and it is
+        // the only listener while a dossier opens (the WebSocket connects
+        // after): detached, opening no longer encodes again the whole
+        // document it has just decoded.
+        persistence._pauseStoreUpdates();
+        try {
+          Y.transact(persistence.doc, () => {
+            rawUpdates.forEach(raw => {
+              let update: Uint8Array | null = raw;
 
-            if (isEncryptedUpdate(raw)) {
-              update = persistence._encryptionKey
-                ? decryptUpdate(unwrapEncryptedUpdate(raw), persistence._encryptionKey)
-                : null;
-            }
+              if (isEncryptedUpdate(raw)) {
+                update = persistence._encryptionKey
+                  ? decryptUpdate(unwrapEncryptedUpdate(raw), persistence._encryptionKey)
+                  : null;
+              }
 
-            if (update) {
-              Y.applyUpdate(persistence.doc, update);
-            } else {
-              undecryptable++;
-            }
-          });
-        }, persistence, false);
+              if (update) {
+                Y.applyUpdate(persistence.doc, update);
+              } else {
+                undecryptable++;
+              }
+            });
+          }, persistence, false);
+        } finally {
+          persistence._resumeStoreUpdates();
+        }
 
         if (undecryptable > 0 && persistence._undecryptableCount !== undecryptable) {
           console.warn(`[encryptedIndexeddbPersistence] ${persistence.name}: ${undecryptable}/${rawUpdates.length} updates cannot be decrypted; compaction disabled to keep them.`);
@@ -271,6 +281,16 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
     doc.on('update', this._storeUpdate);
     this.destroy = this.destroy.bind(this);
     doc.on('destroy', this.destroy);
+  }
+
+  /** @internal Detaches the store listener while stored updates are applied */
+  _pauseStoreUpdates(): void {
+    this.doc.off('update', this._storeUpdate);
+  }
+
+  /** @internal Reattaches it, unless the provider was destroyed */
+  _resumeStoreUpdates(): void {
+    if (!this._destroyed) this.doc.on('update', this._storeUpdate);
   }
 
   /**

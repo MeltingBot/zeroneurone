@@ -116,15 +116,9 @@ Recent searches are remembered:
 
 ## Performance
 
-Search is optimized to stay fast even on large dossiers:
+The index is rebuilt each time a dossier opens. On a large dossier, it is built in slices: the screen stays usable, and the activity bar shows **Indexing for search** until it ends. A search run meanwhile covers the part already indexed; the search window runs it again once the index is complete.
 
-| Size | Performance |
-|------|-------------|
-| < 1000 elements | Instant |
-| 1000-10000 | < 100ms |
-| > 10000 | < 500ms |
-
-The index is rebuilt each time a dossier is opened.
+A word is found in under 20 ms on 10,000 elements with 50 properties. The start of an identifier (number, hash) can take 0.4 s when the dossier holds many unique values. Details in [Limits and performance]({{< relref "../reference/performance" >}}).
 
 ---
 

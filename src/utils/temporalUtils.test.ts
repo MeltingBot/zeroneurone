@@ -4,6 +4,7 @@ import {
   computeCanvasTemporalClassification,
   closestDateIndex,
   collectTemporalDates,
+  datePropertyRules,
   eventInterval,
   linkInterval,
   shiftNavigator,
@@ -83,6 +84,35 @@ describe('collectTemporalDates', () => {
       d('2024-02-01T00:00:00').getTime(),
       d('2024-03-12T00:00:00').getTime(),
     ]);
+  });
+
+  describe('per-element cache', () => {
+    const times = (dates: Date[]) => dates.map((x) => x.getTime());
+    const withProps = (props: { key: string; value: string }[]) =>
+      el('a', [], { properties: props.map((p) => ({ ...p, type: 'date' })) } as Partial<Element>);
+    const keepAll = datePropertyRules({});
+
+    it('follows an edit, which replaces the element object', () => {
+      const before = withProps([{ key: 'faits', value: '2024-01-01' }]);
+      expect(times(collectTemporalDates([before], [], keepAll))).toEqual([d('2024-01-01T00:00:00').getTime()]);
+      const after = withProps([{ key: 'faits', value: '2024-05-01' }]);
+      expect(times(collectTemporalDates([after], [], keepAll))).toEqual([d('2024-05-01T00:00:00').getTime()]);
+    });
+
+    it('follows a change of rules for the same element', () => {
+      const a = withProps([{ key: 'faits', value: '2024-01-01' }, { key: 'naissance', value: '1990-05-12' }]);
+      expect(collectTemporalDates([a], [], keepAll)).toHaveLength(2);
+      expect(collectTemporalDates([a], [], datePropertyRules({ excludedDateProperties: ['naissance'] }))).toHaveLength(1);
+      expect(collectTemporalDates([a], [])).toHaveLength(0);
+      expect(collectTemporalDates([a], [], keepAll)).toHaveLength(2);
+    });
+
+    it('returns the same dates when read again from the cache', () => {
+      const a = el('a', [{ date: d('2024-03-12T10:30:00') }], { dateRange: { start: d('2024-01-01T00:00:00'), end: null } });
+      const first = times(collectTemporalDates([a], [], keepAll));
+      expect(times(collectTemporalDates([a], [], keepAll))).toEqual(first);
+      expect(first).toHaveLength(2);
+    });
   });
 });
 

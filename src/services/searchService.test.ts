@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type MiniSearch from 'minisearch';
-import { searchService } from './searchService';
+import { searchService, SEARCH_INDEX_TASK } from './searchService';
 import type { Asset, Element, SearchDocument } from '../types';
 
 function element(i: number, changes: Partial<Element> = {}): Element {
@@ -18,10 +18,10 @@ const index = () => (searchService as unknown as { index: MiniSearch<SearchDocum
 describe('searchService.syncIncremental', () => {
   let elements: Element[];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     searchService.clear();
     elements = Array.from({ length: 2000 }, (_, i) => element(i));
-    searchService.loadDossier('d', elements, []);
+    await searchService.loadDossier('d', elements, []);
   });
 
   it('does not re-index elements whose indexed text is unchanged (a layout moves them all)', () => {
@@ -60,9 +60,9 @@ describe('searchService.syncIncremental', () => {
 });
 
 describe('searchService.search modes', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     searchService.clear();
-    searchService.loadDossier('modes', [
+    await searchService.loadDossier('modes', [
       element(1, { label: 'Jean Martin', tags: [] }),
       element(2, { label: 'Jean Dupont', tags: [] }),
       element(3, { label: 'Paul Marin', tags: [] }),
@@ -90,13 +90,79 @@ describe('searchService comments', () => {
     content, resolved: false, resolvedBy: null, resolvedAt: null, createdAt: new Date(),
   }) as unknown as import('../types').Comment;
 
-  it('finds an element by the text of its comments, and forgets it once the comment is gone', () => {
+  it('finds an element by the text of its comments, and forgets it once the comment is gone', async () => {
     searchService.clear();
     const elements = [element(1, { label: 'Alpha' }), element(2, { label: 'Beta' })];
-    searchService.loadDossier('c', elements, [], [], [comment('el-2', 'vérifier le virement suspect')]);
+    await searchService.loadDossier('c', elements, [], [], [comment('el-2', 'vérifier le virement suspect')]);
     expect(searchService.search('virement').map((r) => r.id)).toEqual(['el-2']);
 
     searchService.syncIncremental(elements, [], [], []);
     expect(searchService.search('virement')).toEqual([]);
+  });
+});
+
+describe('searchService.loadDossier in slices', () => {
+  // Each read of the clock advances 10 ms: a slice (25 ms) holds a few documents
+  let now = 0;
+  beforeEach(() => {
+    searchService.clear();
+    now = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => (now += 10));
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  const many = (n: number) => Array.from({ length: n }, (_, i) => element(i, { label: `Nom${i}` }));
+
+  it('yields before the end, then indexes everything', async () => {
+    const elements = many(50);
+    const loaded = searchService.loadDossier('s', elements, []);
+    expect(index().documentCount).toBeLessThan(50);
+    await loaded;
+    expect(index().documentCount).toBe(50);
+    expect(searchService.search('Nom49', 5, 'exact').map((r) => r.id)).toEqual(['el-49']);
+  });
+
+  it('applies the changes synced during the load once it ends', async () => {
+    const elements = many(50);
+    const loaded = searchService.loadDossier('s', elements, []);
+    const changed = [...elements.slice(1), element(99, { label: 'Ajout' })];
+    searchService.syncIncremental(changed, []);
+    await loaded;
+    expect(searchService.search('Ajout', 5, 'exact').map((r) => r.id)).toEqual(['el-99']);
+    expect(searchService.search('Nom0', 5, 'exact')).toEqual([]);
+  });
+
+  it('shows the activity bar task during a sliced load only', async () => {
+    const { useProgressStore } = await import('../stores/progressStore');
+    const task = () => useProgressStore.getState().tasks[SEARCH_INDEX_TASK];
+
+    await searchService.loadDossier('small', [element(1)], []);
+    expect(task()).toBeUndefined();
+
+    const loaded = searchService.loadDossier('s', many(50), []);
+    expect(task()?.labelKey).toBe('activity.searchIndex');
+    expect(task()?.percent).toBeGreaterThan(0);
+    await loaded;
+    expect(task()).toBeUndefined();
+
+    void searchService.loadDossier('s2', many(50), []);
+    expect(task()).toBeDefined();
+    searchService.clear();
+    expect(task()).toBeUndefined();
+  });
+
+  it('stops when the dossier is closed during the load', async () => {
+    const loaded = searchService.loadDossier('s', many(50), []);
+    searchService.clear();
+    await loaded;
+    expect(index().documentCount).toBe(0);
+  });
+
+  it('lets a newer load of another dossier take over', async () => {
+    const first = searchService.loadDossier('s', many(50), []);
+    const second = searchService.loadDossier('t', [element(1, { label: 'Autre' })], []);
+    await Promise.all([first, second]);
+    expect(index().documentCount).toBe(1);
+    expect(searchService.search('Autre', 5, 'exact').map((r) => r.id)).toEqual(['el-1']);
   });
 });

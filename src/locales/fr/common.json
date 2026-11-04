@@ -303,7 +303,8 @@
     "layout": "Disposition",
     "view": "Changement de vue",
     "suggestions": "Suggestions de liens",
-    "export": "Construction de l'archive"
+    "export": "Construction de l'archive",
+    "searchIndex": "Indexation de la recherche"
   },
   "dossierLock": {
     "closed": "Dossier clôturé : lecture seule.",

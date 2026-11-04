@@ -303,7 +303,8 @@
     "layout": "Anordnung",
     "view": "Ansichtswechsel",
     "suggestions": "Verknüpfungsvorschläge",
-    "export": "Archiv wird erstellt"
+    "export": "Archiv wird erstellt",
+    "searchIndex": "Suchindexierung"
   },
   "dossierLock": {
     "closed": "Dossier abgeschlossen: schreibgeschützt.",

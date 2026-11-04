@@ -303,7 +303,8 @@
     "layout": "Disposició",
     "view": "Canvi de vista",
     "suggestions": "Suggeriments d'enllaços",
-    "export": "Creació de l'arxiu"
+    "export": "Creació de l'arxiu",
+    "searchIndex": "Indexació de la cerca"
   },
   "dossierLock": {
     "closed": "Dossier tancat: només lectura.",

@@ -393,6 +393,8 @@ ZeroNeurone est mesuré et testé, collaboration comprise, sur des dossiers de *
 
 Pour un dossier plus volumineux, **segmentez-le en onglets** (par thème, par source, par période) : un onglet ne dessine que ses éléments et leurs voisins directs, la navigation reste rapide quel que soit le volume total du dossier. Voir [Onglets du canvas]({{< relref "features/canvas-tabs" >}}).
 
+Ce qui pèse aussi, ce sont les **propriétés** : un dossier ouvert est chargé entier en mémoire. Les mesures (import, ouverture, recherche, matrice) selon le nombre d'éléments et de propriétés sont dans [Limites et performances]({{< relref "reference/performance" >}}).
+
 ### Je peux bosser offline pendant une session partagée ?
 
 Oui. Vos modifs sont stockées localement. Rouvrez le dossier une fois reconnecté, il retrouve la session tout seul.

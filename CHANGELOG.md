@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.89.2
+
+### Performances (mesurées sur la version de production, 10 000 éléments à 50 propriétés)
+
+- **Ouverture d'un gros dossier** — le chargement ne réencode plus tout le
+  dossier qu'il vient de lire. Le plus long gel de l'écran passe de 2,1 s à
+  1,2 s, et l'ouverture de 4,2 s à 3,2 s.
+- **Index de recherche** — construit par tranches à l'ouverture : l'écran ne
+  se fige plus pendant l'indexation. La barre d'activité affiche
+  « Indexation de la recherche » jusqu'à la fin, et la fenêtre de recherche
+  relance la requête une fois l'index complet.
+- **Modifier un élément** — les dates du curseur temporel ne relisent plus
+  toutes les propriétés du dossier à chaque modification.
+
+### Documentation
+
+- Nouvelle page **Limites et performances** (Référence) : import,
+  ouverture, mémoire, recherche et matrice mesurés selon le nombre
+  d'éléments et de propriétés, et ce qui n'est pas encore mesuré. La FAQ et
+  la page Recherche y renvoient ; les anciens chiffres de la recherche, jamais
+  mesurés, sont remplacés.
+
+### Technique
+
+- Banc d'essai des volumes (`e2e/volume-limits.spec.ts`) : import,
+  réouverture, recherche, modification d'une propriété et matrice, selon le
+  nombre d'éléments, de propriétés et de clés. Il tourne aussi sur une build
+  (`vite build --mode bench`).
+
 ## 2.89.1
 
 ### Corrections

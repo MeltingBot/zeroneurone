@@ -306,8 +306,10 @@ export function DossierPage() {
     if (!currentDossier) return;
 
     if (searchInitializedRef.current !== currentDossier.id) {
-      // First load or dossier changed: full rebuild
-      searchService.loadDossier(currentDossier.id, elements, links, assets, comments);
+      // First load or dossier changed: full rebuild, in slices (changes
+      // made meanwhile are applied when it ends)
+      searchService.loadDossier(currentDossier.id, elements, links, assets, comments)
+        .catch((err) => console.warn('[ZN] Search index build failed', err));
       searchInitializedRef.current = currentDossier.id;
     } else {
       // Subsequent changes: incremental sync (only diffs)

@@ -303,7 +303,8 @@
     "layout": "Indeling",
     "view": "Weergave wisselen",
     "suggestions": "Linksuggesties",
-    "export": "Archief maken"
+    "export": "Archief maken",
+    "searchIndex": "Zoekindex opbouwen"
   },
   "dossierLock": {
     "closed": "Dossier afgesloten: alleen-lezen.",

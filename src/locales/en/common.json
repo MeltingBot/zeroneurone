@@ -303,7 +303,8 @@
     "layout": "Layout",
     "view": "Switching view",
     "suggestions": "Link suggestions",
-    "export": "Building the archive"
+    "export": "Building the archive",
+    "searchIndex": "Indexing for search"
   },
   "dossierLock": {
     "closed": "Dossier closed: read-only.",

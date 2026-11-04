@@ -393,6 +393,8 @@ ZeroNeurone is measured and tested, collaboration included, on dossiers of **10,
 
 For a larger dossier, **split it into tabs** (by theme, source or period): a tab only draws its elements and their direct neighbours, so navigation stays fast whatever the total size of the dossier. See [Canvas tabs]({{< relref "features/canvas-tabs" >}}).
 
+**Properties** weigh too: an open dossier is loaded whole in memory. Measurements (import, opening, search, matrix) by number of elements and properties are in [Limits and performance]({{< relref "reference/performance" >}}).
+
 ### Can I work offline during a shared session?
 
 Yes. Your edits are stored locally. Reopen the dossier once you're back online, it finds the session on its own.

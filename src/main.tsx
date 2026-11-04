@@ -24,6 +24,26 @@ async function createDatabaseFirst(): Promise<void> {
   }
 }
 
+// Volume benchmark on a build (`vite build --mode bench`, see
+// e2e/volume-limits.spec.ts): exposes the modules the bench drives, as the dev
+// server does through /src URLs. The condition is false in every other build,
+// which drops the block.
+if (import.meta.env.MODE === 'bench') {
+  void Promise.all([
+    import('./stores/dossierStore'),
+    import('./stores/selectionStore'),
+    import('./stores/viewStore'),
+    import('./services/searchService'),
+  ]).then(([dossierStore, selectionStore, viewStore, searchService]) => {
+    (window as unknown as { __znBenchModules: Record<string, unknown> }).__znBenchModules = {
+      '/src/stores/dossierStore.ts': dossierStore,
+      '/src/stores/selectionStore.ts': selectionStore,
+      '/src/stores/viewStore.ts': viewStore,
+      '/src/services/searchService.ts': searchService,
+    }
+  })
+}
+
 // Order matters: plugins call api.i18n.addResourceBundle() while registering,
 // which needs an initialised instance. i18n used to be set up synchronously at
 // import time, so this keeps the same sequence. Both must settle before the

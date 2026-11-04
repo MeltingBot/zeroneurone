@@ -116,15 +116,9 @@ Les recherches récentes sont mémorisées :
 
 ## Performance
 
-La recherche est optimisée pour rester rapide même sur de gros dossiers :
+L'index est reconstruit à chaque ouverture de dossier. Sur un gros dossier, il se construit par tranches : l'écran reste utilisable, et la barre d'activité affiche **Indexation de la recherche** jusqu'à la fin. Une recherche lancée pendant ce temps porte sur la partie déjà indexée ; la fenêtre de recherche la relance une fois l'index complet.
 
-| Taille | Performance |
-|--------|-------------|
-| < 1000 éléments | Instantané |
-| 1000-10000 | < 100ms |
-| > 10000 | < 500ms |
-
-L'index est reconstruit à chaque ouverture de dossier.
+Un mot se trouve en moins de 20 ms sur 10 000 éléments à 50 propriétés. Le début d'un identifiant (numéro, hash) peut prendre 0,4 s quand le dossier contient beaucoup de valeurs uniques. Détail dans [Limites et performances]({{< relref "../reference/performance" >}}).
 
 ---
 
