@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.89.1
+
+### Corrections
+
+- **Export i2 (ANX) : dates des liens** — la date d'un lien arrivait sans
+  date dans Analyst's Notebook : elle n'était écrite que dans une carte, pas
+  dans la date de l'élément i2. Elle est maintenant la Date & Time du lien
+  (et de l'élément) dans ANB, sans heure quand la date est au jour. La fin
+  d'une période saisie sur un lien part dans l'attribut « Date end », comme
+  pour les éléments.
+- **Import i2 (ANX)** — la date portée par l'élément i2 lui-même est lue, et
+  prime sur celle de la première carte : les graphes produits par i2 gardent
+  les dates de leurs liens.
+
 ## 2.89.0
 
 ### Ajouts

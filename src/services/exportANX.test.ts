@@ -451,3 +451,74 @@ describe('buildANXExport — round trip through importANX', () => {
     expect(link.dateRange?.precision).toBe('minute');
   });
 });
+
+// ANB shows an item's Date & Time from ChartItem/@DateTime, not from its cards:
+// a link dated only through a card arrives undated in ANB.
+describe('buildANXExport — item dates', () => {
+  const ends = [makeElement({ id: 'e1' }), makeElement({ id: 'e2', label: 'B' })];
+  const linkItem = (doc: Document) => doc.querySelector('Link')?.parentElement;
+
+  it('puts a link date on the ChartItem itself', () => {
+    const xml = buildANXExport(DOSSIER, ends, [makeLink({
+      dateRange: { start: new Date(2026, 9, 18, 8, 30), end: null, precision: 'minute' } as never,
+    })]);
+    const item = linkItem(expectWellFormed(xml));
+    expect(item?.getAttribute('DateTime')).toBe('2026-10-18T08:30:00.000');
+    expect(item?.getAttribute('DateSet')).toBe('true');
+    expect(item?.getAttribute('TimeSet')).toBe('true');
+  });
+
+  it('leaves TimeSet false for a day-only link date', () => {
+    const xml = buildANXExport(DOSSIER, ends, [makeLink({
+      dateRange: { start: new Date(2026, 9, 18), end: null, precision: 'day' } as never,
+    })]);
+    const item = linkItem(expectWellFormed(xml));
+    expect(item?.getAttribute('DateTime')).toBe('2026-10-18T00:00:00.000');
+    expect(item?.getAttribute('TimeSet')).toBe('false');
+  });
+
+  it('carries the end of a link period as a Date end attribute', () => {
+    const xml = buildANXExport(DOSSIER, ends, [makeLink({
+      dateRange: { start: new Date(2026, 0, 1), end: new Date(2026, 5, 30), precision: 'day' } as never,
+    })]);
+    const attr = linkItem(expectWellFormed(xml))?.querySelector('Attribute[AttributeClass="Date end"]');
+    expect(attr?.getAttribute('Value')).toBe('2026-06-30T00:00:00.000');
+  });
+
+  it('puts an element date on the ChartItem itself', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({ date: new Date(2026, 2, 9, 14, 5) as never })], []);
+    const item = expectWellFormed(xml).querySelector('ChartItem');
+    expect(item?.getAttribute('DateTime')).toBe('2026-03-09T14:05:00.000');
+    expect(item?.getAttribute('DateSet')).toBe('true');
+  });
+
+  it('leaves an undated link undated', () => {
+    const item = linkItem(expectWellFormed(buildANXExport(DOSSIER, ends, [makeLink()])));
+    expect(item?.hasAttribute('DateTime')).toBe(false);
+    expect(item?.getAttribute('DateSet')).toBe('false');
+  });
+});
+
+describe('importANX — ChartItem dates written by i2', () => {
+  beforeEach(async () => {
+    await db.elements.clear();
+    await db.links.clear();
+  });
+
+  it('reads a link date set on the ChartItem without any card', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Chart>
+  <ChartItemCollection>
+    <ChartItem Id="ID1" Label="A" DateSet="false" TimeSet="false"><End X="0" Y="0"><Entity Identity="A"><Icon><IconStyle Type="Other" /></Icon></Entity></End></ChartItem>
+    <ChartItem Id="ID2" Label="B" DateSet="false" TimeSet="false"><End X="200" Y="0"><Entity Identity="B"><Icon><IconStyle Type="Other" /></Icon></Entity></End></ChartItem>
+    <ChartItem Id="ID3" Label="appel" DateTime="2026-10-18T08:30:00.000" DateSet="true" TimeSet="true">
+      <Link End1Reference="ID1" End2Reference="ID2"><LinkStyle ArrowStyle="ArrowOnHead" /></Link>
+    </ChartItem>
+  </ChartItemCollection>
+</Chart>`;
+    await importANX(xml, 'd-target' as never);
+    const [link] = await db.links.where({ dossierId: 'd-target' }).toArray();
+    expect(link.dateRange?.start).toEqual(new Date(2026, 9, 18, 8, 30));
+    expect(link.dateRange?.precision).toBe('minute');
+  });
+});

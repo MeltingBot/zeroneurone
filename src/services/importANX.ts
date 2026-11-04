@@ -64,6 +64,13 @@ function colorrefToHex(colorref: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+/** The Date & Time i2 shows for an item: ChartItem/@DateTime, set only when DateSet is true. */
+function readChartItemDate(ci: globalThis.Element): { date: Date; hasTime: boolean } | null {
+  if (ci.getAttribute('DateSet') !== 'true') return null;
+  const date = parseDateValue(ci.getAttribute('DateTime'));
+  return date ? { date, hasTime: ci.getAttribute('TimeSet') === 'true' } : null;
+}
+
 function mapEnlargementToSize(enlargement: string | null): ElementSize {
   switch (enlargement) {
     // i2's default (Single) is ZN's default (medium); see exportANX's inverse.
@@ -411,6 +418,10 @@ export async function importANX(
         }
       }
 
+      // i2's own item date lives on the ChartItem; cards only carry their own
+      const ciDate = readChartItemDate(ci);
+      if (ciDate) date = ciDate.date;
+
       // Also check ChartItem-level source
       const ciSrcRef = ci.getAttribute('SourceReference') || '';
       const ciSrcType = ci.getAttribute('SourceType') || '';
@@ -569,6 +580,12 @@ export async function importANX(
         const srcRef = card0.getAttribute('SourceReference') || '';
         const srcType = card0.getAttribute('SourceType') || '';
         if (srcRef || srcType) linkSource = [srcType, srcRef].filter(Boolean).join(' — ');
+      }
+      // The item date shown by i2 is on the ChartItem, and wins over the first card
+      const linkCiDate = readChartItemDate(ci);
+      if (linkCiDate) {
+        linkDate = linkCiDate.date;
+        linkHasTime = linkCiDate.hasTime;
       }
 
       // ── Build Link ──

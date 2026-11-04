@@ -12,6 +12,8 @@
  * that i2 is known to accept. Do not add plausible-looking attributes: the
  * schema is only partially public, and an invented attribute is how a chart
  * gets refused. When extending this file, grep a real .anx first.
+ * One exception, ChartItem/@DateTime, comes from anxwritter (MIT, ANB 9+):
+ * without it, i2 shows no date on the item.
  *
  * The template followed is a third-party-generated chart that i2 opens, so it
  * documents the *minimal sufficient* subset: no lcx:LibraryCatalogue, no
@@ -37,11 +39,11 @@
  */
 
 import type {
-  Dossier, Element, EvaluationModel, Link, Position, PropertyType, Property,
+  DatePrecision, Dossier, Element, EvaluationModel, Link, Position, PropertyType, Property,
 } from '../types';
 import { getGeoCenter } from '../utils/geo';
 import { EVALUATION_GRIDS, getEvaluationModel, getModelScale } from '../utils/evaluation';
-import { parseDateValue, toLocalDateKey } from '../utils/dates';
+import { effectivePrecision, parseDateValue, toLocalDateKey } from '../utils/dates';
 import { flattenSourceLines, sourceToPlainText } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 import { hexToRgb } from '../utils/themeColors';
@@ -147,6 +149,20 @@ function formatI2Date(date: Date | string | number | null | undefined): string |
   if (!d) return null;
   const pad = (n: number, len = 2) => String(n).padStart(len, '0');
   return `${toLocalDateKey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+}
+
+/**
+ * Date attributes of a ChartItem. i2 shows an item's Date & Time (label,
+ * properties, timeline) from ChartItem/@DateTime, not from its cards: a
+ * DateSet="true" without DateTime leaves the item undated in ANB. Same
+ * attributes as anxwritter, which targets ANB 9+. TimeSet stays false for a
+ * day-only date, otherwise i2 would print 00:00.
+ */
+function chartItemDateAttrs(value: unknown, precision?: DatePrecision): string {
+  const d = parseDateValue(value as Date | string | number | null | undefined);
+  if (!d) return 'DateSet="false" TimeSet="false"';
+  const timeSet = effectivePrecision(d, precision) === 'minute';
+  return `DateTime="${formatI2Date(d)}" DateSet="true" TimeSet="${timeSet ? 'true' : 'false'}"`;
 }
 
 // ============================================================================
@@ -503,7 +519,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const entityAttrs = EMIT_IBASE_DIALECT ? ` EntityId="${escapeAttr(chartId)}"` : '';
 
     items.push(
-      `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" DateSet="${mainDate ? 'true' : 'false'}" TimeSet="${mainDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(el, model).one}" GradeTwoIndex="${itemGrades(el, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(el.source)}" SourceType="ZeroNeurone" XPosition="${x}">`,
+      `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" ${chartItemDateAttrs(el.date)} GradeOneIndex="${itemGrades(el, model).one}" GradeTwoIndex="${itemGrades(el, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(el.source)}" SourceType="ZeroNeurone" XPosition="${x}">`,
       `      <End X="${x}" Y="${y}" Z="0">`,
       `        <Entity${entityAttrs} Identity="${escapeAttr(identity)}" LabelIsIdentity="${identity === el.label ? 'true' : 'false'}">`,
       '          <Icon TextX="0" TextY="16">',
@@ -531,7 +547,15 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const linkWhen = link.date ?? link.dateRange?.start ?? null;
     collectDate(linkWhen);
 
-    const attributes = attributesFor(link, (link.tags ?? []).slice(1).map((t) => ({ key: ATTR_TAG, value: t })));
+    const extra: Array<{ key: string; value: string; type?: PropertyType }> =
+      (link.tags ?? []).slice(1).map((t) => ({ key: ATTR_TAG, value: t }));
+    // i2 has one date per item: the end of a period goes in an attribute
+    const linkEnd = parseDateValue(link.dateRange?.end ?? null);
+    const linkStart = parseDateValue(linkWhen);
+    if (linkEnd && (!linkStart || linkEnd.getTime() !== linkStart.getTime())) {
+      extra.push({ key: ATTR_DATE_END, value: formatI2Date(linkEnd) ?? '', type: 'date' });
+    }
+    const attributes = attributesFor(link, extra);
 
     const cards: string[] = [];
     const linkDate = formatI2Date(linkWhen);
@@ -547,7 +571,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
       : ` End1Reference="${end1}" End2Reference="${end2}"`;
 
     items.push(
-      `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" DateSet="${linkDate ? 'true' : 'false'}" TimeSet="${linkDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
+      `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" ${chartItemDateAttrs(linkWhen, link.dateRange?.precision)} GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
       `      <Link LabelPos="50" LabelSegment="0" Offset="0"${ends}>`,
       ...(cards.length ? ['        <CardCollection>', ...cards.map((c) => `  ${c}`), '        </CardCollection>'] : []),
       `        <LinkStyle ArrowStyle="${directionToArrowStyle(link)}" LineWidth="${width}" LineColour="${hexToColorref(link.visual?.color)}" Strength="${escapeAttr(strength.name)}" Type="${escapeAttr(linkType.name)}" LinkTypeReference="${linkType.id}" StrengthReference="${strength.id}" />`,
