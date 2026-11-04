@@ -115,8 +115,9 @@ export function parseSourceLinks(source: string, pluginSchemes?: PluginSchemes):
 }
 
 /**
- * Sources listed in one field: one per line. Blank lines are dropped and the
- * spaces around each line trimmed.
+ * Sources listed in one field, separated by " ; " (a ";" followed by a space,
+ * so a URL holding one stays whole) or, in older fields, one per line. Empty
+ * items are dropped and the spaces around each item trimmed.
  */
 export function splitSourceItems(segments: readonly SourceSegment[]): SourceSegment[][] {
   const items: SourceSegment[][] = [[]];
@@ -125,7 +126,7 @@ export function splitSourceItems(segments: readonly SourceSegment[]): SourceSegm
       items[items.length - 1].push(seg);
       continue;
     }
-    seg.text.split(/\r?\n/).forEach((part, i) => {
+    seg.text.split(/\r?\n|;(?=\s)/).forEach((part, i) => {
       if (i > 0) items.push([]);
       if (part) items[items.length - 1].push({ kind: 'text', text: part });
     });
@@ -145,6 +146,9 @@ export function splitSourceItems(segments: readonly SourceSegment[]): SourceSegm
 /** Separator of the sources when they are shown on one line */
 export const SOURCE_LINE_SEPARATOR = ' · ';
 
+/** Separator of several sources in a Source field, which holds no line break */
+export const SOURCE_SEPARATOR = ' ; ';
+
 /** Joins the lines of a source for a one-line output (table cell, list line). */
 export function joinSourceLines(text: string, separator = SOURCE_LINE_SEPARATOR): string {
   return text
@@ -152,6 +156,15 @@ export function joinSourceLines(text: string, separator = SOURCE_LINE_SEPARATOR)
     .map((line) => line.trim())
     .filter(Boolean)
     .join(separator);
+}
+
+/**
+ * Source on one line: line breaks become " ; " (pasted text, fields written
+ * before sources were one-line). Text without a line break is returned as is,
+ * spaces included, so it can be applied while typing.
+ */
+export function flattenSourceLines(text: string): string {
+  return /[\r\n]/.test(text) ? joinSourceLines(text, SOURCE_SEPARATOR) : text;
 }
 
 export function hasSourceLinks(source: string | null | undefined, pluginSchemes?: PluginSchemes): boolean {

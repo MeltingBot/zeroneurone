@@ -31,12 +31,13 @@ Un élément représente n'importe quel concept : personne, lieu, organisation, 
 
 ### Liens dans la source
 
-Le champ **Source** contient une source par ligne (**Entrée** pour passer à la ligne suivante) et accepte des liens au format Markdown `[libellé](cible)` :
+Le champ **Source** tient sur une ligne : plusieurs sources sont séparées par « ; » (un point-virgule suivi d'un espace). **Entrée** n'ajoute pas de ligne, et un texte collé sur plusieurs lignes est mis bout à bout avec « ; ». Le champ s'agrandit avec son contenu. Il accepte des liens au format Markdown `[libellé](cible)` :
 
 ```text
-[Pièce 12](asset:3fa1c2d9)
-[Article](https://exemple.fr/a)
+[Pièce 12](asset:3fa1c2d9) ; [Article](https://exemple.fr/a)
 ```
+
+Les sources saisies sur plusieurs lignes avant ce changement, ou apportées par un import, sont converties à l'ouverture du dossier (sauf dossier clos ou en lecture seule). i2 Analyst's Notebook, entre autres, refuse une source contenant un saut de ligne.
 
 | Cible | Au clic |
 |-------|---------|
@@ -45,7 +46,7 @@ Le champ **Source** contient une source par ligne (**Entrée** pour passer à la
 
 Hors édition, seuls les libellés s'affichent, une source par ligne ; au-delà de trois, **+N autres** déplie la liste. Cliquez à côté d'un lien pour modifier le texte brut. Un fichier absent du dossier s'affiche grisé. Les autres cibles restent du texte. Certaines extensions ajoutent leurs propres liens.
 
-Dans la matrice, la timeline, les rapports et les exports ANX et Obsidian, les liens sont remplacés par leur libellé (les liens web restent des liens dans les rapports et Obsidian), et les sources tiennent sur une ligne, séparées par « · ». Les exports CSV et JSON gardent le texte tel quel. Dans la matrice, une source de plusieurs lignes se modifie dans le panneau de détail.
+Dans la matrice, la timeline, les rapports et les exports ANX et Obsidian, les liens sont remplacés par leur libellé (les liens web restent des liens dans les rapports et Obsidian), et les sources tiennent sur une ligne. Les exports CSV et JSON gardent le texte tel quel.
 
 ### Apparence visuelle
 

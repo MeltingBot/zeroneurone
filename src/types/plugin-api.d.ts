@@ -477,6 +477,8 @@ export interface PluginFeatures {
   sourceLinks?: boolean;
   /** Slot `source:scheme` (2.62+) */
   sourceSchemes?: boolean;
+  /** `locate` of a `source:scheme` registration, used by the Obsidian export (2.89+) */
+  sourceSchemeLocate?: boolean;
   /** pluginData.shareKeys / list / onRemoteChange (2.63+) */
   sharedPluginData?: boolean;
   /** pluginServices (2.64+) */

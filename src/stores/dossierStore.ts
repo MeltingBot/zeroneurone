@@ -38,7 +38,8 @@ import {
 import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
 import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
-import { assertNoPluginLock, refuseWrite, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
+import { assertNoPluginLock, refuseWrite, retentionExpiresAt, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
+import { flattenSourceLines } from '../utils/sourceLinks';
 import { deriveRoomId } from '../services/cryptoService';
 import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
@@ -434,6 +435,39 @@ function rebuildElementsFromYDoc(elementsMap: Y.Map<Y.Map<unknown>>, target: Map
       if (fallback) target.set(key, fallback);
     }
   });
+}
+
+/**
+ * Sources are one-line (several separated by " ; "). Fields written before,
+ * or brought in by an import, may still hold line breaks: rewrite them once
+ * the dossier is open, through the ordinary updates (Y.Doc, Dexie, peers).
+ * Skipped when the dossier cannot be written: closed, retention expired
+ * (DossierPage sets read-only only after the load), locked by a plugin.
+ */
+async function flattenMultilineSources(get: () => DossierState): Promise<void> {
+  const { currentDossier: dossier } = get();
+  if (!dossier || lockReasonOf(get())) return;
+  if (dossier.retentionDays && (dossier.retentionPolicy ?? 'warn') !== 'warn') {
+    const expiresAt = retentionExpiresAt(dossier, dossier.retentionDays);
+    if (expiresAt && expiresAt.getTime() < Date.now()) return;
+  }
+  const flat = (source: string | undefined) => (source ? flattenSourceLines(source) : source);
+  try {
+    for (const el of get().elements) {
+      const changes: ElementChanges = {};
+      if (flat(el.source) !== el.source) changes.source = flat(el.source);
+      if (el.events?.some((ev) => flat(ev.source) !== ev.source)) {
+        changes.events = el.events.map((ev) => ({ ...ev, source: flat(ev.source) }));
+      }
+      if (Object.keys(changes).length > 0) await get().updateElement(el.id, changes);
+    }
+    for (const link of get().links) {
+      if (flat(link.source) !== link.source) await get().updateLink(link.id, { source: flat(link.source) });
+    }
+  } catch (err) {
+    // A lock set meanwhile, or the dossier closed: the next opening finishes
+    console.warn('Source line conversion stopped:', err);
+  }
 }
 
 /**
@@ -1210,6 +1244,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       // through a share link, a rebuilt Y.Doc) never went through it: rewrite
       // the copy once when its row counts differ from the Y.Doc.
       void reconcileDexieMirror(id, get).catch((err) => onPersistFailure(err, 'dexie.reconcile'));
+
+      void flattenMultilineSources(get);
 
       // In shared mode, schedule safety re-syncs to catch data that arrives
       // after the initial Y.Doc read. This covers:

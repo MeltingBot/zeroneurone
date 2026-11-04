@@ -116,6 +116,10 @@ La rédaction permanente ne plaisante pas. La structure du graphe survit, mais p
 
 Oui, depuis la v2.82.0 : panneau Détail ▸ **Dates** ▸ **Clôturer**. Le dossier passe en lecture seule jusqu'à ce que vous le rouvriez, et la rétention peut compter depuis la première clôture. Voir [Clôture et rétention]({{< relref "features/retention" >}}).
 
+### Je peux partager un dossier sans les noms ?
+
+Oui, depuis la v2.89.0 : dans la fenêtre d'export, cochez **Caviarder** (en bas). Libellés, notes, sources, propriétés, géolocalisation et fichiers joints sont retirés de l'export, dans tous les formats ; la structure du graphe, les dates et les tags restent. Votre dossier n'est pas modifié. Voir [Export caviardé]({{< relref "import-export/export#export-caviardé" >}}).
+
 ### ZeroNeurone grossit, c'est normal ?
 
 Un peu. Chaque dossier garde la trace de tout ce que vous avez bougé, retouché, supprimé. Et jusqu'à la v2.60.0, chaque fichier joint était stocké en double. Ça pèse.

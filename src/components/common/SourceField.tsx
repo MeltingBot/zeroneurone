@@ -8,6 +8,10 @@
  *   three until expanded; a click outside a link (or focus) switches to the
  *   raw input, leaving it switches back
  *
+ * The field holds no line break: several sources are separated by " ; "
+ * (Enter does nothing, pasted lines are joined). i2 Analyst's Notebook, among
+ * others, refuses a source reference with a line break.
+ *
  * Plugin schemes (slot `source:scheme`) are resolved and opened by their
  * plugin; a failing plugin only greys its own links out.
  */
@@ -15,7 +19,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExternalLink } from 'lucide-react';
-import { parseSourceLinks, sourceToPlainText, splitSourceItems } from '../../utils/sourceLinks';
+import { flattenSourceLines, parseSourceLinks, sourceToPlainText, splitSourceItems } from '../../utils/sourceLinks';
 import { useSourceLinkRenderer } from '../../hooks/useSourceLinkRenderer';
 import { isUrl, toUrl } from '../../utils';
 
@@ -70,8 +74,11 @@ export function SourceField({ value, onChange, onBlur, placeholder, className }:
           ref={inputRef}
           rows={1}
           value={value}
-          // One source per line
-          onChange={(e) => onChange(e.target.value)}
+          // One line: several sources are separated by " ; "
+          onChange={(e) => onChange(flattenSourceLines(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) e.preventDefault();
+          }}
           onBlur={() => {
             setEditing(false);
             onBlur?.();

@@ -464,14 +464,17 @@ registerPlugin('source:scheme', {
   scheme: 'mn',                                   // [PV p.3](mn:1a2b3c4d)
   resolve: (value, ctx) => annotationExists(ctx.dossierId, value), // false → libelle grise, non cliquable
   open: (value, ctx) => openReader(ctx.dossierId, value),
+  // Optionnel : fichier du dossier (et page PDF) vise par le lien, pour les exports
+  locate: (value, ctx) => ({ assetId: annotationAsset(ctx.dossierId, value), page: 3 }),
   pluginId: 'markneurone',
 });
 ```
 
 - `value` est le texte apres `schema:` (ici `1a2b3c4d`) ; `ctx` vaut `{ dossierId }`.
+- `locate` (optionnel, synchrone) renvoie `{ assetId, page? }` ou `null`. L'export Obsidian en fait un lien vers la copie du fichier dans `attachments/`, a la page donnee pour un PDF (`#page=3`). Sans `locate`, ou s'il renvoie `null` ou leve une exception, le lien reste son libelle. Pris en compte si `api.features?.sourceSchemeLocate` est vrai (2.89+) ; ignore par les versions precedentes.
 - `resolve` est appele a chaque affichage : il doit etre synchrone et rapide.
 - Nom de schema : minuscules, `[a-z][a-z0-9+.-]*`. Les schemas `http`, `https`, `asset`, `javascript`, `vbscript`, `data`, `file`, `blob`, `about`, `mailto` et `tel` sont refuses. Si deux plugins declarent le meme schema, le premier enregistre l'emporte.
-- Dans les sorties (matrice, timeline, rapports, exports ANX et Obsidian), un lien de plugin est remplace par son libelle.
+- Dans les sorties (matrice, timeline, rapports, export ANX), un lien de plugin est remplace par son libelle ; dans l'export Obsidian aussi, sauf s'il est localise par `locate`.
 - Une exception dans `resolve` grise le lien ; une exception dans `open` est loguee, sans autre effet.
 - Disponible si `api.features?.sourceSchemes` est vrai.
 

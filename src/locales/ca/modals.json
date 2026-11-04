@@ -199,6 +199,12 @@
       "semicolon": "Punt i coma",
       "tab": "Tabulació",
       "excel": "Compatible amb Excel"
+    },
+    "redact": "Censurar",
+    "redactConfirm": {
+      "title": "Exportació censurada",
+      "message": "Textos, geolocalitzacions, fitxers adjunts, comentaris, informe i consultes se suprimiran de l'exportació. L'expedient no es modifica.",
+      "action": "Exporta censurat"
     }
   },
   "search": {

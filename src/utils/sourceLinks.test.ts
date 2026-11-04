@@ -7,6 +7,7 @@ import {
   sourceWebLinks,
   splitSourceItems,
   joinSourceLines,
+  flattenSourceLines,
   findAssetByHash,
   assetHashOf,
   targetValue,
@@ -179,8 +180,12 @@ describe('splitSourceItems', () => {
     expect(items('[P12](asset:3fa1c2d9)\n  [P14](asset:8be07a11)  \r\nnotes libres')).toEqual(['<P12>', '<P14>', 'notes libres']);
   });
 
-  it('le « ; » ne sépare pas', () => {
-    expect(items('PV 12; annexe ; [a](https://a.fr)')).toEqual(['PV 12; annexe ; <a>']);
+  it('« ; » suivi d\'un espace sépare les sources', () => {
+    expect(items('PV 12; annexe ; [a](https://a.fr)')).toEqual(['PV 12', 'annexe', '<a>']);
+  });
+
+  it('un « ; » collé dans une URL ne sépare pas', () => {
+    expect(items('https://a.fr/p;jsessionid=1 ; https://b.fr')).toEqual(['<https://a.fr/p;jsessionid=1>', '<https://b.fr>']);
   });
 
   it('texte et lien sur la même ligne', () => {
@@ -190,6 +195,17 @@ describe('splitSourceItems', () => {
   it('lignes vides ignorées', () => {
     expect(items('\n [a](https://a.fr) \n\n')).toEqual(['<a>']);
     expect(items('')).toEqual([]);
+  });
+});
+
+describe('flattenSourceLines', () => {
+  it('remplace les sauts de ligne par « ; »', () => {
+    expect(flattenSourceLines('https://a.fr\r\n  https://b.fr \n\nPV 12\r')).toBe('https://a.fr ; https://b.fr ; PV 12');
+  });
+
+  it('laisse intact un texte sans saut de ligne, espaces compris (saisie en cours)', () => {
+    expect(flattenSourceLines('PV 12 ')).toBe('PV 12 ');
+    expect(flattenSourceLines('')).toBe('');
   });
 });
 

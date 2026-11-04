@@ -199,6 +199,12 @@
       "semicolon": "Semikolon",
       "tab": "Tabulator",
       "excel": "Excel-kompatibel"
+    },
+    "redact": "Schwärzen",
+    "redactConfirm": {
+      "title": "Geschwärzter Export",
+      "message": "Texte, Geodaten, Anhänge, Kommentare, Bericht und Abfragen werden aus dem Export entfernt. Das Dossier bleibt unverändert.",
+      "action": "Geschwärzt exportieren"
     }
   },
   "search": {

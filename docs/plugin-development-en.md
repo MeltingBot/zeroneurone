@@ -464,14 +464,17 @@ registerPlugin('source:scheme', {
   scheme: 'mn',                                   // [PV p.3](mn:1a2b3c4d)
   resolve: (value, ctx) => annotationExists(ctx.dossierId, value), // false → greyed-out label, not clickable
   open: (value, ctx) => openReader(ctx.dossierId, value),
+  // Optional: dossier file (and PDF page) the link points to, for exports
+  locate: (value, ctx) => ({ assetId: annotationAsset(ctx.dossierId, value), page: 3 }),
   pluginId: 'markneurone',
 });
 ```
 
 - `value` is the text after `scheme:` (here `1a2b3c4d`); `ctx` is `{ dossierId }`.
+- `locate` (optional, synchronous) returns `{ assetId, page? }` or `null`. The Obsidian export turns the link into a link to the file's copy in `attachments/`, at the given page for a PDF (`#page=3`). Without `locate`, or when it returns `null` or throws, the link stays its label. Used when `api.features?.sourceSchemeLocate` is true (2.89+); earlier versions ignore it.
 - `resolve` runs on every render: keep it synchronous and fast.
 - Scheme name: lowercase, `[a-z][a-z0-9+.-]*`. `http`, `https`, `asset`, `javascript`, `vbscript`, `data`, `file`, `blob`, `about`, `mailto` and `tel` are refused. When two plugins declare the same scheme, the first registration wins.
-- In outputs (matrix, timeline, reports, ANX and Obsidian exports), a plugin link is replaced by its label.
+- In outputs (matrix, timeline, reports, ANX export), a plugin link is replaced by its label; in the Obsidian export too, unless `locate` locates it.
 - An exception in `resolve` greys the link out; an exception in `open` is logged, nothing else.
 - Available when `api.features?.sourceSchemes` is true.
 

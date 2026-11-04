@@ -146,6 +146,30 @@ describe('buildANXExport — escaping', () => {
     expect(doc.querySelector('ChartItem')?.getAttribute('Description')).toBe('ligne1\nligne2');
   });
 
+  // i2 rejects them ("Source reference must not contain newlines") and, in
+  // Rigorous mode, then drops every link of the chart.
+  it('flattens multi-line sources in every SourceReference', () => {
+    const multi = 'https://a.example/1\r\nhttps://b.example/2\n\n  note  \r';
+    const xml = buildANXExport(DOSSIER, [
+      makeElement({
+        id: 'e1',
+        source: multi,
+        date: new Date(2026, 2, 9) as never,
+        events: [{ id: 'ev1', date: new Date(2026, 2, 10), label: 'Séjour', source: multi }] as never,
+      }),
+      makeElement({ id: 'e2', label: 'B' }),
+    ], [makeLink({ source: multi, date: new Date(2026, 2, 11) as never })]);
+
+    const refs = xml.match(/SourceReference="[^"]*"/g) ?? [];
+    expect(refs.length).toBeGreaterThanOrEqual(5);
+    for (const ref of refs) {
+      expect(ref).not.toMatch(/&#xA;|&#xD;|[\r\n]/);
+    }
+    const doc = expectWellFormed(xml);
+    expect(doc.querySelector('ChartItem')?.getAttribute('SourceReference'))
+      .toBe('https://a.example/1 ; https://b.example/2 ; note');
+  });
+
   it('stays parsable when a note carries a control character', () => {
     const xml = buildANXExport(DOSSIER, [makeElement({ notes: 'a\u0000b\u0001c' })], []);
     expect(expectWellFormed(xml).querySelector('ChartItem')?.getAttribute('Description')).toBe('abc');
@@ -323,6 +347,37 @@ describe('buildANXExport — icon enlargement', () => {
   });
 });
 
+// i2 merges the entities that share an Identity
+describe('buildANXExport — namesakes', () => {
+  const entities = (xml: string) => [...expectWellFormed(xml).querySelectorAll('ChartItem')]
+    .filter((ci) => ci.querySelector('Entity'))
+    .map((ci) => ({
+      label: ci.getAttribute('Label'),
+      identity: ci.querySelector('Entity')!.getAttribute('Identity'),
+      labelIsIdentity: ci.querySelector('Entity')!.getAttribute('LabelIsIdentity'),
+    }));
+
+  it('gives namesakes distinct identities and keeps their label', () => {
+    const xml = buildANXExport(DOSSIER, [
+      makeElement({ id: 'e1', label: 'Jean Martin' }),
+      makeElement({ id: 'e2', label: 'Jean Martin' }),
+      makeElement({ id: 'e3', label: 'jean martin' }),
+      makeElement({ id: 'e4', label: 'Paul' }),
+    ], []);
+    expect(entities(xml)).toEqual([
+      { label: 'Jean Martin', identity: 'Jean Martin', labelIsIdentity: 'true' },
+      { label: 'Jean Martin', identity: 'Jean Martin (2)', labelIsIdentity: 'false' },
+      { label: 'jean martin', identity: 'jean martin (3)', labelIsIdentity: 'false' },
+      { label: 'Paul', identity: 'Paul', labelIsIdentity: 'true' },
+    ]);
+  });
+
+  it('never leaves an identity empty', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({ id: 'e1', label: '' }), makeElement({ id: 'e2', label: '  ' })], []);
+    expect(entities(xml).map((e) => e.identity)).toEqual(['(1)', '(2)']);
+  });
+});
+
 // The strongest check available without a copy of Analyst's Notebook: feed our
 // own output back through the reader that models the format.
 describe('buildANXExport — round trip through importANX', () => {
@@ -364,6 +419,17 @@ describe('buildANXExport — round trip through importANX', () => {
     const links = await db.links.where({ dossierId: 'd-target' }).toArray();
     expect(links[0].label).toBe('travaille chez');
     expect(links[0].direction).toBe('forward');
+  });
+
+  it('brings namesakes back as two elements with their own label', async () => {
+    const source = [
+      makeElement({ id: 'e1', label: 'Jean Martin', position: { x: 0, y: 0 } }),
+      makeElement({ id: 'e2', label: 'Jean Martin', position: { x: 200, y: 0 } }),
+    ];
+    const result = await importANX(buildANXExport(DOSSIER, source, []), 'd-target' as never);
+    expect(result.elementsImported).toBe(2);
+    const labels = (await db.elements.where({ dossierId: 'd-target' }).toArray()).map((e) => e.label);
+    expect(labels).toEqual(['Jean Martin', 'Jean Martin']);
   });
 
   it('carries a link date entered in ZN (dateRange) back onto the timeline', async () => {

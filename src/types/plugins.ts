@@ -132,7 +132,20 @@ export interface SourceSchemeExtension {
   resolve: (value: string, ctx: SourceSchemeContext) => boolean;
   /** Called when the user clicks the link */
   open: (value: string, ctx: SourceSchemeContext) => void | Promise<void>;
+  /**
+   * Optional: the dossier file the link points to, and its page for a PDF,
+   * so that exports carrying the files (Obsidian) link to it. Synchronous;
+   * null when unknown.
+   */
+  locate?: (value: string, ctx: SourceSchemeContext) => SourceSchemeLocation | null;
   pluginId?: string;
+}
+
+/** Dossier file a plugin source link points to */
+export interface SourceSchemeLocation {
+  assetId: string;
+  /** 1-based PDF page */
+  page?: number | null;
 }
 
 export interface PluginSlots {

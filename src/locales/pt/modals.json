@@ -199,6 +199,12 @@
       "semicolon": "Ponto e vírgula",
       "tab": "Tabulação",
       "excel": "Compatível com Excel"
+    },
+    "redact": "Ocultar dados",
+    "redactConfirm": {
+      "title": "Exportação com dados ocultos",
+      "message": "Textos, geolocalizações, ficheiros anexos, comentários, relatório e consultas serão removidos da exportação. O dossiê não é alterado.",
+      "action": "Exportar com dados ocultos"
     }
   },
   "search": {

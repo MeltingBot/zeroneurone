@@ -199,6 +199,12 @@
       "semicolon": "Punto y coma",
       "tab": "Tabulación",
       "excel": "Compatible con Excel"
+    },
+    "redact": "Censurar",
+    "redactConfirm": {
+      "title": "Exportación censurada",
+      "message": "Textos, geolocalizaciones, archivos adjuntos, comentarios, informe y consultas se eliminarán de la exportación. El expediente no se modifica.",
+      "action": "Exportar censurado"
     }
   },
   "search": {

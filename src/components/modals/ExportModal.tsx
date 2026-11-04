@@ -8,9 +8,10 @@ import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { fileService } from '../../services/fileService';
 import { reportRepository, tabRepository } from '../../db/repositories';
 import { db } from '../../db/database';
-import { useDossierStore, useQueryStore, toast } from '../../stores';
+import { useDossierStore, useQueryStore, useUIStore, toast } from '../../stores';
+import { redactExport, REDACTED_FILE_BASE } from '../../utils/redactExport';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { isExportedNode, withLayersAt } from '../canvas/overview/exportLayers';
+import { isExportedNode, isExportedRedactedNode, withLayersAt } from '../canvas/overview/exportLayers';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { downloadBlob } from '../../utils/download';
 import { useShallow } from 'zustand/react/shallow';
@@ -80,6 +81,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [zipPassword, setZipPassword] = useState('');
   const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
   const [showZipPassword, setShowZipPassword] = useState(false);
+  // Redacted export: on by default while the dossier is shown anonymised
+  const [redact, setRedact] = useState(() => useUIStore.getState().anonymousMode);
+  const [confirmRedact, setConfirmRedact] = useState(false);
 
   const { currentDossier, elements, links, comments } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, comments: s.comments })));
 
@@ -129,7 +133,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           }
         : undefined;
 
-      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions);
+      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions, redact);
       await (format === 'zip' || format === 'obsidian' ? withExportProgress(build) : build());
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
@@ -138,7 +142,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, comments, onClose, t]);
+  }, [currentDossier, elements, links, comments, redact, onClose, t]);
 
   const handleExportEncryptedZip = useCallback(async () => {
     if (!currentDossier || zipPassword.length < 1) return;
@@ -150,26 +154,29 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const views = await db.views.where({ dossierId: currentDossier.id }).toArray();
       const queries = await db.savedQueries.where({ dossierId: currentDossier.id }).toArray();
       const queryHistory = useQueryStore.getState().recentQueries;
+      const input = { dossier: currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments };
+      const data = redact ? redactExport(input) : input;
 
       const encBlob = await withExportProgress(() => exportService.exportToEncryptedZip(
         zipPassword,
-        currentDossier,
-        elements,
-        links,
-        assets,
-        report,
-        tabs,
-        views,
-        queries,
-        queryHistory,
-        comments
+        data.dossier,
+        data.elements,
+        data.links,
+        data.assets ?? [],
+        data.report,
+        data.tabs,
+        data.views,
+        data.queries,
+        data.queryHistory,
+        data.comments,
+        { pluginHooks: !redact },
       ));
 
       const now = new Date();
       const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
-      const baseName = `${currentDossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+      const baseName = `${redact ? REDACTED_FILE_BASE : currentDossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
       downloadBlob(encBlob, `${baseName}.znzip`);
-      emitExport('znzip', undefined, currentDossier.id);
+      emitExport('znzip', redact ? { redacted: true } : undefined, currentDossier.id);
 
       toast.success(t('export.zip.success'));
       setZipPassword('');
@@ -180,12 +187,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, comments, zipPassword, onClose, t]);
+  }, [currentDossier, elements, links, comments, zipPassword, redact, onClose, t]);
 
   const handleExportPng = useCallback(async (scale: number) => {
     if (!currentDossier) return;
 
     setIsProcessing(true);
+    // Redacted: the canvas drawn anonymised for the time of the capture, media left out
+    const ui = useUIStore.getState();
+    const shown = { anonymousMode: ui.anonymousMode, hideMedia: ui.hideMedia };
     try {
       const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
       if (!element) {
@@ -196,11 +206,17 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Dynamic import html-to-image (better SVG support than html2canvas)
       const { toPng } = await import('html-to-image');
 
+      if (redact) {
+        useUIStore.setState({ anonymousMode: true, hideMedia: true });
+        // Two frames: React commits the anonymised nodes, then the browser paints them
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      }
+
       // Canvas layers (overview, links beyond React Flow's cap) redrawn at the output ratio
       // Without grid or minimap: the graph alone, on white or transparent
       const dataUrl = await withLayersAt(scale, () => toPng(element, {
         backgroundColor: pngTransparent ? undefined : '#ffffff',
-        filter: isExportedNode,
+        filter: redact ? isExportedRedactedNode : isExportedNode,
         pixelRatio: scale, // Higher pixel ratio = higher resolution output
         skipFonts: true, // Skip font embedding to avoid errors
       }));
@@ -208,29 +224,30 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Download the PNG
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `${currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
+      link.download = `${redact ? REDACTED_FILE_BASE : currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      emitExport('png', { scale }, currentDossier.id);
+      emitExport('png', redact ? { scale, redacted: true } : { scale }, currentDossier.id);
       toast.success(t('export.successFormat', { format: `PNG (${scale}x)` }));
       onClose();
     } catch (err) {
       console.error('PNG export failed:', err);
       toast.error(t('export.errorPng'));
     } finally {
+      if (redact) useUIStore.setState(shown);
       setIsProcessing(false);
     }
-  }, [currentDossier, pngTransparent, onClose, t]);
+  }, [currentDossier, pngTransparent, redact, onClose, t]);
 
   const handleExportSvg = useCallback(async () => {
     if (!currentDossier) return;
 
     setIsProcessing(true);
     try {
-      // Fetch assets to embed media thumbnails in SVG nodes
-      const assets = await fileService.getAssetsByDossier(currentDossier.id);
+      // Fetch assets to embed media thumbnails in SVG nodes (none in a redacted export)
+      const assets = redact ? [] : await fileService.getAssetsByDossier(currentDossier.id);
       const assetDataUrls = new Map<string, string>();
       for (const asset of assets) {
         if (asset.thumbnailDataUrl) {
@@ -238,22 +255,23 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         }
       }
 
+      const data = redact ? redactExport({ dossier: currentDossier, elements, links }) : { elements, links };
       const settings = currentDossier.settings;
       // Drawn as on the canvas: larger with more links when the option is on
       const shownElements = currentDossier.settings?.sizeByDegree
-        ? scaleElementsByDegree(elements, links, (el) =>
+        ? scaleElementsByDegree(data.elements, data.links, (el) =>
           Boolean(el.assetIds?.[0] && assetDataUrls.has(el.assetIds[0])) && el.visual.hideMedia !== true)
-        : elements;
-      const svgString = buildSVGExport(shownElements, links, {
+        : data.elements;
+      const svgString = buildSVGExport(shownElements, data.links, {
         // Same default as the canvas
         linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
         linkCurveMode: settings?.linkCurveMode ?? 'curved',
         assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
         linkLabelWrap: currentDossier.options?.linkLabelWrap,
       });
-      const baseName = currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const baseName = redact ? REDACTED_FILE_BASE : currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
       exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
-      emitExport('svg', undefined, currentDossier.id);
+      emitExport('svg', redact ? { redacted: true } : undefined, currentDossier.id);
       toast.success(t('export.successFormat', { format: 'SVG' }));
       onClose();
     } catch (err) {
@@ -262,11 +280,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, onClose, t]);
+  }, [currentDossier, elements, links, redact, onClose, t]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useDialogA11y(isOpen, dialogRef, onClose);
+  const confirmRef = useRef<HTMLDivElement>(null);
+  const confirmTitleId = useId();
+  const closeConfirm = useCallback(() => setConfirmRedact(false), []);
+  useDialogA11y(isOpen && confirmRedact, confirmRef, closeConfirm);
 
   if (!isOpen) return null;
 
@@ -292,8 +314,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     if (on) setCsvDelimiter(i18n.language.startsWith('en') ? ',' : ';');
   };
 
-  const runExport = () => {
+  const runExport = (confirmed = false) => {
     if (!canExport) return;
+    // A redacted export is confirmed first: unchecking the box by mistake is easy to miss
+    if (redact && !confirmed) {
+      setConfirmRedact(true);
+      return;
+    }
+    setConfirmRedact(false);
     switch (format) {
       case 'png': return handleExportPng(pngScale);
       case 'svg': return handleExportSvg();
@@ -532,7 +560,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
+          {/* Applies to every format, hence here rather than among the format options */}
+          <div className="mr-auto">{checkbox(redact, setRedact, t('export.redact'))}</div>
           <button
             onClick={onClose}
             className="border border-border-default text-text-primary bg-bg-primary hover:bg-bg-secondary px-3 py-1.5 text-sm font-medium rounded sketchy-border"
@@ -540,7 +570,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             {t('common:actions.cancel')}
           </button>
           <button
-            onClick={runExport}
+            onClick={() => runExport()}
             disabled={!canExport}
             className="bg-accent text-white hover:bg-accent-hover px-3 py-1.5 text-sm font-medium rounded sketchy-border disabled:opacity-50"
           >
@@ -548,6 +578,40 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </button>
         </div>
       </div>
+
+      {confirmRedact && (
+        <>
+          <div className="fixed inset-0 z-[1001] bg-black/40" onClick={closeConfirm} aria-hidden="true" />
+          <div
+            ref={confirmRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={confirmTitleId}
+            className="fixed z-[1001] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm bg-bg-primary sketchy-border-soft modal-shadow flex flex-col"
+          >
+            <div className="px-4 py-3 border-b border-border-default">
+              <h2 id={confirmTitleId} className="text-sm font-semibold text-text-primary">
+                {t('export.redactConfirm.title')}
+              </h2>
+            </div>
+            <p className="px-4 py-3 text-sm text-text-primary">{t('export.redactConfirm.message')}</p>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
+              <button
+                onClick={closeConfirm}
+                className="border border-border-default text-text-primary bg-bg-primary hover:bg-bg-secondary px-3 py-1.5 text-sm font-medium rounded sketchy-border"
+              >
+                {t('common:actions.cancel')}
+              </button>
+              <button
+                onClick={() => runExport(true)}
+                className="bg-accent text-white hover:bg-accent-hover px-3 py-1.5 text-sm font-medium rounded sketchy-border"
+              >
+                {t('export.redactConfirm.action')}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

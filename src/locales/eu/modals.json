@@ -199,6 +199,12 @@
       "semicolon": "Puntu eta koma",
       "tab": "Tabulazioa",
       "excel": "Excelekin bateragarria"
+    },
+    "redact": "Ezkutatu datuak",
+    "redactConfirm": {
+      "title": "Datuak ezkutatuta esportatu",
+      "message": "Testuak, geokokapenak, erantsitako fitxategiak, iruzkinak, txostena eta kontsultak esportaziotik kenduko dira. Espedientea ez da aldatzen.",
+      "action": "Ezkutatuta esportatu"
     }
   },
   "search": {

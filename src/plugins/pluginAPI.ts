@@ -151,6 +151,8 @@ export const pluginAPI = {
     sourceLinks: true,
     /** Slot `source:scheme`: a plugin makes its own `[label](scheme:value)` links clickable */
     sourceSchemes: true,
+    /** `locate` of a `source:scheme` registration: exports link to the file and page */
+    sourceSchemeLocate: true,
     /** pluginData.shareKeys / list / onRemoteChange: keys shared with collaborators through the dossier's Y.Doc */
     sharedPluginData: true,
     /** pluginServices: a plugin offers a named service, another one uses it when it is there */

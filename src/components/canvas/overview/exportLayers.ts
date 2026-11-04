@@ -34,6 +34,11 @@ export function isExportedNode(node: HTMLElement): boolean {
   return !(node instanceof Element && node.matches(NOT_EXPORTED));
 }
 
+/** Same, also leaving out the attached media (redacted export). */
+export function isExportedRedactedNode(node: HTMLElement): boolean {
+  return isExportedNode(node) && !(node instanceof Element && node.matches('[data-export-media]'));
+}
+
 /** Runs a capture with every layer drawn at `pixelRatio`, then back to the screen's. */
 export async function withLayersAt<T>(pixelRatio: number, capture: () => Promise<T>): Promise<T> {
   for (const layer of layers) layer.redrawAt(pixelRatio);

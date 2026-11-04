@@ -199,6 +199,12 @@
       "semicolon": "Puntkomma",
       "tab": "Tab",
       "excel": "Compatibel met Excel"
+    },
+    "redact": "Zwartmaken",
+    "redactConfirm": {
+      "title": "Zwartgemaakte export",
+      "message": "Teksten, locaties, bijlagen, opmerkingen, rapport en zoekopdrachten worden uit de export verwijderd. Het dossier wordt niet gewijzigd.",
+      "action": "Zwartgemaakt exporteren"
     }
   },
   "search": {

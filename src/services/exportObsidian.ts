@@ -17,7 +17,11 @@
  * if the vault is dropped into a sub-folder of an existing vault. Canvas `file`
  * paths are vault-absolute: those only resolve when the ZIP is opened as a vault.
  *
- * This module is pure: binary assets are copied by the caller to `assetPaths`.
+ * Source links to a dossier file become wikilinks to its copy in `attachments/`:
+ * `asset:` links, and plugin links whose plugin locates the file (slot
+ * `source:scheme`, `locate`), at the PDF page when it gives one.
+ *
+ * Binary assets are copied by the caller to `assetPaths`.
  */
 
 import type {
@@ -28,8 +32,11 @@ import { getGeoCenter } from '../utils/geo';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { resolveAbsolutePosition } from './svgExportService';
 import { dateInputKeys, isDayOnly, parseDateValue, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
-import { joinSourceLines, sourceToMarkdown } from '../utils/sourceLinks';
-import { getSourceSchemeNames } from '../plugins/sourceSchemes';
+import {
+  SOURCE_LINE_SEPARATOR, assetHashOf, findAssetByHash, isWebScheme, parseSourceLinks, splitSourceItems, targetValue,
+  type SourceLink,
+} from '../utils/sourceLinks';
+import { getSourceSchemeNames, locateSourceLink } from '../plugins/sourceSchemes';
 import { LEGACY_ELEMENT_LINK_SOURCE, REPORT_REF_SOURCE } from '../utils/reportRefs';
 
 /** Translated strings used in the generated notes (provided by the caller). */
@@ -276,6 +283,29 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
   }
   const embed = (path: string) => (IMAGE_EXT.test(path) ? `![[${path}]]` : `[[${path}]]`);
 
+  // --- Sources: links to a dossier file point to its copy in the vault ---
+  const schemes = getSourceSchemeNames();
+  const vaultLink = (seg: SourceLink): string | null => {
+    let assetId: string | undefined;
+    let page: number | null | undefined = null;
+    if (seg.scheme === 'asset') {
+      assetId = findAssetByHash(assets, assetHashOf(seg.target))?.id;
+    } else {
+      const found = locateSourceLink(seg.scheme, targetValue(seg.target), dossier.id);
+      assetId = found?.assetId;
+      page = found?.page;
+    }
+    const path = assetId ? assetPaths.get(assetId) : undefined;
+    if (!path) return null;
+    return wikilink(page && /\.pdf$/i.test(path) ? `${path}#page=${page}` : path, seg.label);
+  };
+  /** One string per source: web links kept, file links to the vault, other links as their label */
+  const sourceItems = (source: string): string[] =>
+    splitSourceItems(parseSourceLinks(source, schemes)).map((item) => item
+      .map((seg) => (seg.kind === 'text' ? seg.text : isWebScheme(seg.scheme) ? seg.raw : vaultLink(seg) ?? seg.label))
+      .join(''));
+  const sourceLine = (source: string): string => sourceItems(source).join(SOURCE_LINE_SEPARATOR);
+
   // --- Relations indexed by element ---
   const relationsByElement = new Map<string, RelationView[]>();
   for (const link of links) {
@@ -300,7 +330,9 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
     if (el.confidence !== null && el.confidence !== undefined) fm.push(['confidence', el.confidence]);
     const evaluation = formatEvaluation(el.evaluation);
     if (evaluation) fm.push(['evaluation', evaluation]);
-    if (el.source) fm.push(['source', sourceToMarkdown(el.source, getSourceSchemeNames())]);
+    // A list: an item that is a single link to a file stays clickable in the properties
+    const sources = el.source ? sourceItems(el.source) : [];
+    if (sources.length) fm.push(['source', sources]);
     const date = formatDate(el.date);
     if (date) fm.push(['date', date]);
     const start = formatDate(el.dateRange?.start);
@@ -355,7 +387,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
           formatDate(l.date) || formatPeriod(l.dateRange?.start, l.dateRange?.end, l.dateRange?.timeZone),
           l.confidence !== null && l.confidence !== undefined ? `${l.confidence} %` : '',
           formatEvaluation(l.evaluation),
-          l.source ? joinSourceLines(sourceToMarkdown(l.source, getSourceSchemeNames())) : '',
+          l.source ? sourceLine(l.source) : '',
         ].filter(Boolean);
         const label = l.label.trim() ? `${l.label.trim()} ` : '';
         const other = elementsMap.get(rel.otherId)!;
@@ -377,7 +409,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
     if (el.events?.length) {
       body.push(`## ${labels.events}`, '');
       const sorted = [...el.events].sort((a, b) => (parseDateValue(a.date)?.getTime() ?? 0) - (parseDateValue(b.date)?.getTime() ?? 0));
-      for (const ev of sorted) body.push(...eventLines(ev));
+      for (const ev of sorted) body.push(...eventLines(ev, sourceLine));
       body.push('');
     }
 
@@ -443,14 +475,14 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
   return { files, assetPaths };
 }
 
-function eventLines(ev: ElementEvent): string[] {
+function eventLines(ev: ElementEvent, sourceLine: (source: string) => string): string[] {
   const head = [formatPeriod(ev.date, ev.dateEnd, ev.timeZone), ev.label].filter(Boolean).join(' — ');
   const extra: string[] = [];
   if (ev.geo) {
     const { lat, lng } = getGeoCenter(ev.geo);
     extra.push(`${lat}, ${lng}`);
   }
-  if (ev.source) extra.push(joinSourceLines(sourceToMarkdown(ev.source, getSourceSchemeNames())));
+  if (ev.source) extra.push(sourceLine(ev.source));
   const lines = [`- **${head}**${extra.length ? ` · ${extra.join(' · ')}` : ''}`];
   for (const line of (ev.description ?? '').trim().split('\n').filter(Boolean)) lines.push(`  ${line}`);
   return lines;

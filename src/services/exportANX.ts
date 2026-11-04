@@ -42,7 +42,7 @@ import type {
 import { getGeoCenter } from '../utils/geo';
 import { EVALUATION_GRIDS, getEvaluationModel, getModelScale } from '../utils/evaluation';
 import { parseDateValue, toLocalDateKey } from '../utils/dates';
-import { sourceToPlainText } from '../utils/sourceLinks';
+import { flattenSourceLines, sourceToPlainText } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 import { hexToRgb } from '../utils/themeColors';
 
@@ -99,6 +99,15 @@ function escapeAttr(value: unknown): string {
     .replace(/\n/g, '&#xA;')
     .replace(/\r/g, '&#xD;')
     .replace(/\t/g, '&#x9;');
+}
+
+/**
+ * i2 rejects newlines in SourceReference ("Source reference must not contain
+ * newlines") and, in Rigorous mode, drops the rest of the chart — links
+ * included. A ZN source often lists several URLs, one per line: join them.
+ */
+function escapeSourceRef(source: string | undefined): string {
+  return escapeAttr(flattenSourceLines(sourceToPlainText(source ?? '', getSourceSchemeNames())));
 }
 
 // ============================================================================
@@ -427,8 +436,24 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     }
   };
 
+  // i2 merges the entities that share an Identity: two namesakes would become
+  // one person, with the links of both. The label is the Identity unless
+  // another entity already took it; then a suffix keeps it apart (" (2)"),
+  // and the label shown stays the ZN one (LabelIsIdentity="false").
+  const takenIdentities = new Set<string>();
+  const identityOf = (label: string): string => {
+    const base = label.trim();
+    let identity = base;
+    for (let i = 2; !identity || takenIdentities.has(identity.toLowerCase()); i++) {
+      identity = base ? `${base} (${i})` : `(${i - 1})`;
+    }
+    takenIdentities.add(identity.toLowerCase());
+    return identity;
+  };
+
   for (const el of emitted) {
     const chartId = idMap.get(el.id)!;
+    const identity = identityOf(el.label ?? '');
     const type = entityTypeOf.get(el.id)!;
     const pos = resolveAbsolutePosition(el, byId);
     const x = Math.round(pos.x * COORD_SCALE);
@@ -463,14 +488,14 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const mainDate = formatI2Date(el.date);
     if (mainDate) {
       cards.push(
-        `        <Card Summary="${escapeAttr(el.label)}" Text="" DateTime="${mainDate}" DateSet="true" TimeSet="true" SourceReference="${escapeAttr(sourceToPlainText(el.source, getSourceSchemeNames()))}" SourceType="ZeroNeurone" />`,
+        `        <Card Summary="${escapeAttr(el.label)}" Text="" DateTime="${mainDate}" DateSet="true" TimeSet="true" SourceReference="${escapeSourceRef(el.source)}" SourceType="ZeroNeurone" />`,
       );
     }
     for (const ev of el.events ?? []) {
       collectDate(ev.date);
       const evDate = formatI2Date(ev.date);
       cards.push(
-        `        <Card Summary="${escapeAttr(ev.label)}" Text="${escapeAttr(ev.description ?? '')}"${evDate ? ` DateTime="${evDate}" DateSet="true" TimeSet="true"` : ''} SourceReference="${escapeAttr(sourceToPlainText(ev.source ?? '', getSourceSchemeNames()))}" SourceType="ZeroNeurone" />`,
+        `        <Card Summary="${escapeAttr(ev.label)}" Text="${escapeAttr(ev.description ?? '')}"${evDate ? ` DateTime="${evDate}" DateSet="true" TimeSet="true"` : ''} SourceReference="${escapeSourceRef(ev.source)}" SourceType="ZeroNeurone" />`,
       );
     }
 
@@ -478,9 +503,9 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const entityAttrs = EMIT_IBASE_DIALECT ? ` EntityId="${escapeAttr(chartId)}"` : '';
 
     items.push(
-      `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" DateSet="${mainDate ? 'true' : 'false'}" TimeSet="${mainDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(el, model).one}" GradeTwoIndex="${itemGrades(el, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(sourceToPlainText(el.source, getSourceSchemeNames()))}" SourceType="ZeroNeurone" XPosition="${x}">`,
+      `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" DateSet="${mainDate ? 'true' : 'false'}" TimeSet="${mainDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(el, model).one}" GradeTwoIndex="${itemGrades(el, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(el.source)}" SourceType="ZeroNeurone" XPosition="${x}">`,
       `      <End X="${x}" Y="${y}" Z="0">`,
-      `        <Entity${entityAttrs} Identity="${escapeAttr(el.label)}" LabelIsIdentity="true">`,
+      `        <Entity${entityAttrs} Identity="${escapeAttr(identity)}" LabelIsIdentity="${identity === el.label ? 'true' : 'false'}">`,
       '          <Icon TextX="0" TextY="16">',
       `            <IconStyle Enlargement="${sizeToEnlargement(el.visual?.size)}" Type="${escapeAttr(type.name)}" EntityTypeReference="${type.id}">`,
       `              <FrameStyle Colour="${frameColour}" />`,
@@ -512,7 +537,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const linkDate = formatI2Date(linkWhen);
     if (linkDate) {
       cards.push(
-        `        <Card Summary="${escapeAttr(link.label)}" Text="" DateTime="${linkDate}" DateSet="true" TimeSet="true" SourceReference="${escapeAttr(sourceToPlainText(link.source, getSourceSchemeNames()))}" SourceType="ZeroNeurone" />`,
+        `        <Card Summary="${escapeAttr(link.label)}" Text="" DateTime="${linkDate}" DateSet="true" TimeSet="true" SourceReference="${escapeSourceRef(link.source)}" SourceType="ZeroNeurone" />`,
       );
     }
 
@@ -522,7 +547,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
       : ` End1Reference="${end1}" End2Reference="${end2}"`;
 
     items.push(
-      `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" DateSet="${linkDate ? 'true' : 'false'}" TimeSet="${linkDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(sourceToPlainText(link.source, getSourceSchemeNames()))}" SourceType="ZeroNeurone" XPosition="0">`,
+      `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" DateSet="${linkDate ? 'true' : 'false'}" TimeSet="${linkDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
       `      <Link LabelPos="50" LabelSegment="0" Offset="0"${ends}>`,
       ...(cards.length ? ['        <CardCollection>', ...cards.map((c) => `  ${c}`), '        </CardCollection>'] : []),
       `        <LinkStyle ArrowStyle="${directionToArrowStyle(link)}" LineWidth="${width}" LineColour="${hexToColorref(link.visual?.color)}" Strength="${escapeAttr(strength.name)}" Type="${escapeAttr(linkType.name)}" LinkTypeReference="${linkType.id}" StrengthReference="${strength.id}" />`,

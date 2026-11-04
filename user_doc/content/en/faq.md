@@ -116,6 +116,10 @@ Permanent redaction means business. The graph structure survives, but no readabl
 
 Yes, since v2.82.0: Detail panel ▸ **Dates** ▸ **Close**. The dossier becomes read-only until you reopen it, and retention can count from the first closure. See [Closure and Retention]({{< relref "features/retention" >}}).
 
+### Can I share a dossier without the names?
+
+Yes, since v2.89.0: in the export window, check **Redact** (at the bottom). Labels, notes, sources, properties, locations and attached files are removed from the export, in every format; the graph structure, dates and tags stay. Your dossier is not changed. See [Redacted Export]({{< relref "import-export/export#redacted-export" >}}).
+
 ### ZeroNeurone is getting fat, is that normal?
 
 A bit. Each dossier remembers everything you moved, tweaked, deleted. And up to v2.60.0, every attached file was stored twice. It adds up.

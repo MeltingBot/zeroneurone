@@ -637,6 +637,7 @@ function FullElementNode({ data }: NodeProps) {
           /* Circle/Hexagon: image fills the entire shape, label is rendered outside (below) */
           (element.visual.shape === 'circle' || element.visual.shape === 'hexagon' || element.visual.shape === 'diamond') ? (
             <div
+              data-export-media
               className={`w-full h-full bg-cover bg-center ${element.visual.shape === 'diamond' ? '-rotate-45 scale-[1.414]' : ''}`}
               style={{
                 backgroundImage: `url(${hideMedia ? thumbnail : (hdImageUrl || thumbnail)})`,
@@ -649,6 +650,7 @@ function FullElementNode({ data }: NodeProps) {
           <div className="flex flex-col w-full h-full">
             {/* Thumbnail preview - using contain to show full image, pixelate+grayscale if hideMedia */}
             <div
+              data-export-media
               className="flex-1 w-full bg-contain bg-center bg-no-repeat"
               style={{
                 backgroundImage: `url(${hideMedia ? thumbnail : (hdImageUrl || thumbnail)})`,

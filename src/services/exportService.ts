@@ -18,6 +18,7 @@ import { downloadBlob } from '../utils/download';
 import { escapeXml } from '../utils/escapeHtml';
 import { escapeCsvField } from '../utils/csv';
 import { hexToRgb } from '../utils/themeColors';
+import { redactExport, REDACTED_FILE_BASE } from '../utils/redactExport';
 
 /** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
 function propertyValueToCSV(prop: Property): string {
@@ -197,7 +198,8 @@ class ExportService {
     views?: View[],
     queries?: SavedQuery[],
     queryHistory?: string[],
-    comments?: Comment[]
+    comments?: Comment[],
+    options: { pluginHooks?: boolean } = {}
   ): Promise<Blob> {
     const zip = new JSZip();
 
@@ -245,8 +247,8 @@ class ExportService {
       zip.file('report.md', reportMarkdown);
     }
 
-    // Plugin export hooks
-    const exportHooks = getPlugins('export:hooks');
+    // Plugin export hooks (left out of a redacted export: they add their data unredacted)
+    const exportHooks = options.pluginHooks === false ? [] : getPlugins('export:hooks');
     for (const hook of exportHooks) {
       try {
         await hook.onExport(zip, dossier.id);
@@ -275,9 +277,10 @@ class ExportService {
     views?: View[],
     queries?: SavedQuery[],
     queryHistory?: string[],
-    comments?: Comment[]
+    comments?: Comment[],
+    options: { pluginHooks?: boolean } = {}
   ): Promise<Blob> {
-    const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments);
+    const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments, options);
     reportExportProgress('encrypt', 0, 1);
     await yieldForPaint();
     const encBuf = await encryptZip(zipBlob, password);
@@ -864,14 +867,19 @@ ${edges}
     obsidianLabels?: ObsidianLabels,
     obsidianFolderByTag?: boolean,
     csvOptions?: CSVExportOptions,
+    redact = false,
   ): Promise<void> {
+    if (redact) {
+      ({ dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments } =
+        redactExport({ dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments }));
+    }
     const now = new Date();
     const timestamp = `${toLocalDateKey(now)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
-    const baseName = `${dossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+    const baseName = `${redact ? REDACTED_FILE_BASE : dossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
 
     switch (format) {
       case 'zip': {
-        const zipBlob = await this.exportToZip(dossier, elements, links, assets || [], report, tabs, views, queries, queryHistory, comments);
+        const zipBlob = await this.exportToZip(dossier, elements, links, assets || [], report, tabs, views, queries, queryHistory, comments, { pluginHooks: !redact });
         downloadBlob(zipBlob, `${baseName}.zip`);
         break;
       }
@@ -923,7 +931,7 @@ ${edges}
         break;
       }
     }
-    emitExport(format, undefined, dossier.id);
+    emitExport(format, redact ? { redacted: true } : undefined, dossier.id);
   }
 }
 

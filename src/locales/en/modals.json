@@ -199,6 +199,12 @@
       "semicolon": "Semicolon",
       "tab": "Tab",
       "excel": "Excel compatible"
+    },
+    "redact": "Redact",
+    "redactConfirm": {
+      "title": "Redacted export",
+      "message": "Text, locations, attached files, comments, report and queries will be removed from the export. The dossier is not changed.",
+      "action": "Export redacted"
     }
   },
   "search": {

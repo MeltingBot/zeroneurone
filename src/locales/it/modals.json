@@ -199,6 +199,12 @@
       "semicolon": "Punto e virgola",
       "tab": "Tabulazione",
       "excel": "Compatibile con Excel"
+    },
+    "redact": "Oscurare",
+    "redactConfirm": {
+      "title": "Esportazione oscurata",
+      "message": "Testi, geolocalizzazioni, file allegati, commenti, rapporto e query verranno rimossi dall'esportazione. Il fascicolo non viene modificato.",
+      "action": "Esporta oscurato"
     }
   },
   "search": {

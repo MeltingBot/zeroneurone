@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import type { Asset, CanvasTab, Dossier, Element, Link, Report } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import {
   buildObsidianVault, convertReportRefs, toFrontmatter, toVaultBasename, type ObsidianLabels,
 } from './exportObsidian';
 import { computeElementDimensions } from '../utils/elementDimensions';
+import { registerPlugin, clearAllPlugins } from '../plugins/pluginRegistry';
 
 const labels: ObsidianLabels = {
   elementsFolder: 'Elements', canvasFolder: 'Canvas', reportFolder: 'Report', relations: 'Relations',
@@ -256,5 +257,54 @@ describe('buildObsidianVault — source time zone', () => {
     } finally {
       process.env.TZ = previous;
     }
+  });
+});
+
+describe('buildObsidianVault — source links to attached files', () => {
+  const pdf = { id: 'a1', filename: 'PV 01452.pdf', hash: 'abcdef0123456789' } as unknown as Asset;
+  const photo = { id: 'a2', filename: 'photo.jpg', hash: '99999999aaaaaaaa' } as unknown as Asset;
+
+  afterEach(() => clearAllPlugins());
+
+  function vault(source: string, assets: Asset[] = [pdf, photo]) {
+    return buildObsidianVault({
+      dossier, labels, assets,
+      elements: [el('a', 'A', { source }), el('b', 'B')],
+      links: [link('l1', 'b', 'a', { label: 'mentionné dans', source })],
+    });
+  }
+
+  it('links an asset: source to its copy in attachments', () => {
+    const b = file(vault('[Le PV](asset:abcdef01)'), 'Elements/B.md');
+    expect(b).toContain('[[attachments/PV 01452.pdf|Le PV]]');
+  });
+
+  it('links a plugin source to the file and PDF page its plugin locates', () => {
+    registerPlugin('source:scheme', {
+      scheme: 'mn',
+      resolve: () => true,
+      open: () => {},
+      locate: (value, ctx) => (value === '1a2b3c4d' && ctx.dossierId === 'd1' ? { assetId: 'a1', page: 3 } : null),
+    });
+    const out = vault('[PV 01452.pdf p.3](mn:1a2b3c4d) ; [autre](mn:ffffffff)');
+    expect(file(out, 'Elements/B.md')).toContain('[[attachments/PV 01452.pdf#page=3|PV 01452.pdf p.3]] · autre');
+    // Properties: one item per source, a lone link stays clickable
+    expect(file(out, 'Elements/A.md')).toContain('source:\n  - "[[attachments/PV 01452.pdf#page=3|PV 01452.pdf p.3]]"\n  - "autre"');
+  });
+
+  it('gives no page anchor to a file that is not a PDF', () => {
+    registerPlugin('source:scheme', {
+      scheme: 'mn', resolve: () => true, open: () => {}, locate: () => ({ assetId: 'a2', page: 2 }),
+    });
+    expect(file(vault('[photo](mn:1a2b3c4d)'), 'Elements/B.md')).toContain('[[attachments/photo.jpg|photo]]');
+  });
+
+  it('keeps the label when the file is not exported or the plugin cannot locate it', () => {
+    registerPlugin('source:scheme', {
+      scheme: 'mn', resolve: () => true, open: () => {}, locate: () => { throw new Error('boom'); },
+    });
+    const b = file(vault('[PV](asset:abcdef01) ; [x](mn:1a2b3c4d) ; https://a.fr', []), 'Elements/B.md');
+    expect(b).toContain('PV · x · https://a.fr');
+    expect(b).not.toContain('[[attachments');
   });
 });

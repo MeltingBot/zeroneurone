@@ -201,6 +201,12 @@
       "semicolon": "Średnik",
       "tab": "Tabulator",
       "excel": "Zgodny z Excelem"
+    },
+    "redact": "Zaczernij",
+    "redactConfirm": {
+      "title": "Eksport zaczerniony",
+      "message": "Teksty, geolokalizacje, załączniki, komentarze, raport i zapytania zostaną usunięte z eksportu. Sprawa nie zostanie zmieniona.",
+      "action": "Eksportuj zaczerniony"
     }
   },
   "search": {

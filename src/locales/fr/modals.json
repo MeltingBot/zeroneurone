@@ -199,6 +199,12 @@
       "semicolon": "Point-virgule",
       "tab": "Tabulation",
       "excel": "Compatible Excel"
+    },
+    "redact": "Caviarder",
+    "redactConfirm": {
+      "title": "Export caviardé",
+      "message": "Textes, géolocalisations, fichiers joints, commentaires, rapport et requêtes seront retirés de l'export. Le dossier n'est pas modifié.",
+      "action": "Exporter caviardé"
     }
   },
   "search": {

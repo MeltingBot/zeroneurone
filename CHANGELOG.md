@@ -1,5 +1,46 @@
 # Changelog
 
+## 2.89.0
+
+### Ajouts
+
+- **Export caviardé** — la case **Caviarder**, en bas de la fenêtre
+  d'export, produit un export sans information identifiante, dans tous les
+  formats (ZIP, JSON, graphes, CSV, GeoJSON, Obsidian, PNG, SVG). Libellés
+  remplacés (`███ 1`, `███ 2`… pour les éléments), notes, sources,
+  propriétés, géolocalisation, fichiers joints, commentaires, rapport et
+  requêtes retirés ; la structure, les positions, les dates, l'apparence,
+  les tags et la cotation restent. Cochée d'office en mode anonyme, une
+  confirmation est demandée avant l'export. Le fichier est nommé
+  `redacted_…`, les données des extensions ne sont pas ajoutées au ZIP, et
+  le dossier n'est pas modifié.
+- **Obsidian : liens vers les fichiers joints** — dans les sources, un lien
+  `asset:` devient un lien vers la copie du fichier dans `attachments/`.
+  Un lien d'extension que son plugin situe (nouvelle méthode `locate` du
+  slot `source:scheme`, `features.sourceSchemeLocate`) ouvre le PDF à la
+  bonne page (`[[attachments/PV.pdf#page=3|PV.pdf p.3]]`). La propriété
+  `source` devient une liste, une entrée par source.
+
+### Modifications
+
+- **Champ Source sur une ligne** — plusieurs sources se séparent par « ; ».
+  **Entrée** n'ajoute plus de ligne et un texte collé sur plusieurs lignes
+  est mis bout à bout. Les sources saisies sur plusieurs lignes sont
+  converties à l'ouverture du dossier (sauf dossier clos ou en lecture
+  seule).
+- **Sélecteur de langue** — drapeaux catalan et basque dessinés (Unicode
+  n'a pas d'emoji pour la Senyera ni l'Ikurriña).
+
+### Corrections
+
+- **Export ANX : liens absents dans Analyst's Notebook** — une source sur
+  plusieurs lignes produisait « Source reference must not contain
+  newlines » et i2, en mode strict, n'importait aucun lien. Les sources
+  sont désormais écrites sur une ligne, séparées par « ; ».
+- **Export ANX : homonymes** — deux éléments au même libellé reçoivent des
+  identités distinctes (`Jean Martin`, `Jean Martin (2)`), pour qu'i2 ne
+  les fusionne pas ; le libellé affiché ne change pas.
+
 ## 2.88.9
 
 ### Ajouts

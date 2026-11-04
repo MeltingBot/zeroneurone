@@ -14,6 +14,25 @@ Menu **⋯** → **Export**
 
 Formats are grouped by use: **Backup** (ZIP, JSON), **Graph** (GraphML, GEXF, GML, DOT, ANX), **Data** (CSV, GeoJSON), **Notes** (Obsidian) and **Image** (PNG, SVG). Pick a format, set its options if it has any, then **Export**. The window reopens on the last format used.
 
+## Redacted Export
+
+The **Redact** box produces an export without identifying information, in every format. It is checked by default while anonymous mode is on. The export asks for confirmation first. The dossier itself is not changed.
+
+| Removed | Kept |
+|---------|------|
+| Labels (replaced by `███ 1`, `███ 2`… for elements, `███` for links) | Graph structure: elements, links, groups, link directions |
+| Notes, sources, properties, event labels and descriptions | Canvas positions, appearance, tags |
+| Locations of elements and events | Dates and events (without their text) |
+| Attached files, comments, report, queries and query history | Confidence and grading |
+| Dossier name, description, author, tags and properties; tab and view names (numbered) | Tabs and views (without their search or query) |
+| Data added by extensions (ZIP) | |
+
+Elements are numbered rather than all named `███`: the graph stays readable, and formats that identify an element by its label (ANX, Obsidian) do not merge them.
+
+In PNG, the canvas is captured in anonymous mode, without element images. The file is named `redacted_{date}_{time}.{extension}` (`redacted_canvas_…` for images), without the dossier name.
+
+Tags are kept: a tag holding a name ("Smith family") therefore appears in the export.
+
 ---
 
 ## Available Formats
@@ -199,6 +218,8 @@ The file opens directly in Analyst's Notebook, with no import specification. Can
 
 Some ZeroNeurone notions have no i2 counterpart and are not carried over. Groups and annotations are not exported; elements inside a group are placed at their actual position and keep the group name in an attribute. A geographic area is reduced to its centre point, a date range to two attributes, and shapes, attached media and custom sizes are lost. A link with an endpoint that is not exported is dropped, so that no reference points at nothing.
 
+i2 merges entities that share an identity. Two elements with the same label (namesakes) therefore get distinct identities, `Jean Martin` and `Jean Martin (2)`, while keeping the same label shown in Analyst's Notebook.
+
 The confidence level is sent as i2 grade 1 (1 to 5). In a dossier using the [Europol or Admiralty model]({{< relref "features/evaluation" >}}), source reliability is sent as grade 1 and information accuracy as grade 2, by position in the grid (A = 1).
 
 The native binary `.anb` format is not offered for export: its structure is not publicly documented. ZeroNeurone can read it, but writing a file i2 accepts would mean reproducing the whole palette and internal styles.
@@ -238,6 +259,8 @@ When exporting, choose how notes are filed:
 - **Flat folder**: all notes in the same folder.
 
 Each note carries as properties (frontmatter) the element's tags, confidence, grading, source, dates, location (`location`, compatible with the Map View plugin), parent group and properties. The element's notes form the body, followed by its events and attached files.
+
+In sources (`source` property, relations, events), a link to a dossier file becomes a link to its copy in `attachments/`. This applies to `asset:` links and to extension links that point to a file, such as highlighted passages: those open the PDF at the right page (`[[attachments/PV.pdf#page=3|PV.pdf p.3]]`). The `source` property is a list, one entry per source.
 
 Obsidian has no typed links, so relations are written three ways:
 

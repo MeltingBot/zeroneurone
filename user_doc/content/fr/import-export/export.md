@@ -14,6 +14,25 @@ Menu **⋯** → **Exporter**
 
 Les formats sont rangés par usage : **Sauvegarde** (ZIP, JSON), **Graphe** (GraphML, GEXF, GML, DOT, ANX), **Données** (CSV, GeoJSON), **Notes** (Obsidian) et **Image** (PNG, SVG). Choisissez un format, réglez ses options s'il en a, puis **Exporter**. La fenêtre se rouvre sur le dernier format utilisé.
 
+## Export caviardé
+
+La case **Caviarder** produit un export sans information identifiante, dans tous les formats. Elle est cochée d'office quand le mode anonyme est actif. Une confirmation est demandée avant l'export. Le dossier lui-même n'est pas modifié.
+
+| Retiré | Gardé |
+|--------|-------|
+| Libellés (remplacés par `███ 1`, `███ 2`… pour les éléments, `███` pour les liens) | Structure du graphe : éléments, liens, groupes, sens des liens |
+| Notes, sources, propriétés, libellés et descriptions des événements | Positions sur le canevas, apparence, tags |
+| Géolocalisation des éléments et des événements | Dates et événements (sans leur texte) |
+| Fichiers joints, commentaires, rapport, requêtes et historique des requêtes | Confiance et cotation |
+| Nom, description, auteur, tags et propriétés du dossier ; noms des onglets et des vues (numérotés) | Onglets et vues (sans leur recherche ni leur requête) |
+| Données ajoutées par les extensions (ZIP) | |
+
+Les éléments sont numérotés plutôt que tous nommés `███` : le graphe reste lisible, et les formats qui identifient un élément par son libellé (ANX, Obsidian) ne les fusionnent pas.
+
+En PNG, le canevas est capturé en mode anonyme, sans les images des éléments. Le fichier est nommé `redacted_{date}_{heure}.{extension}` (`redacted_canvas_…` pour les images), sans le nom du dossier.
+
+Les tags restent : un tag nominatif (« Famille Dupont ») apparaît donc dans l'export.
+
 ---
 
 ## Formats disponibles
@@ -199,6 +218,8 @@ Le fichier s'ouvre directement dans Analyst's Notebook, sans spécification d'im
 
 Certaines notions de ZeroNeurone n'ont pas d'équivalent dans i2 et ne sont pas transmises. Les groupes et les annotations ne sont pas exportés ; les éléments contenus dans un groupe sont placés à leur position réelle et conservent le nom du groupe dans un attribut. Une zone géographique est réduite à son point central, une plage de dates à deux attributs, et les formes, les médias joints et les tailles personnalisées sont perdus. Un lien dont une extrémité n'est pas exportée est omis, pour ne pas produire de référence sans cible.
 
+i2 fusionne les entités de même identité. Deux éléments au même libellé (homonymes) reçoivent donc des identités distinctes, `Jean Martin` et `Jean Martin (2)`, tout en gardant le même libellé affiché dans Analyst's Notebook.
+
 Le niveau de confiance est transmis dans le grade 1 d'i2 (1 à 5). Dans un dossier en [modèle Europol ou Amirauté]({{< relref "features/evaluation" >}}), la fiabilité de la source est transmise dans le grade 1 et l'exactitude de l'information dans le grade 2, par position dans la grille (A = 1).
 
 Le format binaire natif `.anb` n'est pas proposé à l'export : sa structure n'est pas documentée publiquement. ZeroNeurone sait le lire, mais en écrire un fichier qu'i2 accepte demanderait de reproduire toute la palette et les styles internes.
@@ -238,6 +259,8 @@ Au moment de l'export, choisissez le classement des fiches :
 - **Dossier à plat** : toutes les fiches dans le même dossier.
 
 Chaque fiche porte en propriétés (frontmatter) les tags, la confiance, l'évaluation, la source, les dates, la position géographique (`location`, compatible avec le plugin Map View), le groupe parent et les propriétés de l'élément. Les notes de l'élément forment le corps de la fiche, suivies de ses événements et de ses fichiers joints.
+
+Dans les sources (propriété `source`, relations, événements), un lien vers un fichier joint du dossier devient un lien vers sa copie dans `attachments/`. Cela vaut pour les liens `asset:` et pour les liens d'extension qui désignent un fichier, comme les passages surlignés : ces liens ouvrent le PDF à la bonne page (`[[attachments/PV.pdf#page=3|PV.pdf p.3]]`). La propriété `source` est une liste, une entrée par source.
 
 Obsidian ne connaît pas les liens typés. Les relations sont donc écrites de trois façons :
 
