@@ -68,3 +68,39 @@ test('edges survive a round trip through the low-detail overview', async ({ page
   // React Flow error 008: an edge whose handle cannot be found.
   expect(logs, logs.slice(0, 3).join(' | ')).toHaveLength(0);
 });
+
+/**
+ * Between the overview layer and the full nodes (zoomed out on a large board),
+ * a selected node keeps a ring of constant on-screen width, as the overview
+ * draws it: a ring scaled with the canvas was a fraction of a pixel there,
+ * and the selection vanished during the switch.
+ */
+test('the selection stays in sight in low detail', async ({ page }) => {
+  test.setTimeout(180_000);
+  await setupCleanEnvironment(page);
+  await waitForAppLoad(page);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'sel.json');
+  writeFileSync(file, buildLargeDossierJson(1000));
+  await page.click('[data-testid="import-button"]');
+  await page.setInputFiles('input[type="file"]', file);
+  await page.waitForSelector('.react-flow__node', { timeout: 120_000 });
+  await page.evaluate(async () => {
+    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    const { useSelectionStore } = await import('/src/stores/selectionStore.ts');
+    const ids = useDossierStore.getState().elements.slice(0, 3).map((e) => e.id);
+    useSelectionStore.getState().selectElements(ids);
+    // The first one in the middle of the screen, zoomed out to low detail
+    const { x, y } = useDossierStore.getState().elements[0].position;
+    (await import('/src/stores/viewStore.ts')).useViewStore.getState().requestViewportChange({ x: 400 - x * 0.2, y: 300 - y * 0.2, zoom: 0.2 } as never);
+  });
+  await page.waitForTimeout(2500);
+  // Only the nodes on screen are mounted: the selected one(s) there have a ring
+  const ring = page.getByTestId('low-detail-selection').first();
+  await expect(ring).toBeVisible();
+  // About 3 px around the node on screen, whatever the zoom
+  const node = page.locator('.react-flow__node', { has: page.getByTestId('low-detail-selection') }).first();
+  const nodeBox = (await node.boundingBox())!;
+  const box = (await node.getByTestId('low-detail-selection').boundingBox())!;
+  expect(box.width - nodeBox.width).toBeGreaterThan(4);
+  expect(box.width - nodeBox.width).toBeLessThan(9);
+});
