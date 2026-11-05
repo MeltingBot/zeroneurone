@@ -916,8 +916,19 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
           }}
         />
       )}
+      {/* Selected: the shape grown by a ring of constant on-screen width,
+          behind it (a box-shadow would be a fraction of a pixel this far out,
+          and cut by the hexagon's clip-path). Same ring as the overview layer,
+          so the selection stays in sight across the switch. */}
+      {isSelected && (
+        <div
+          className={`absolute pointer-events-none ${SHAPE_CLASSES[element.visual.shape]}`}
+          style={{ inset: 'calc(-3px * var(--zn-inv-zoom, 1))', backgroundColor: 'var(--color-accent)' }}
+          data-testid="low-detail-selection"
+        />
+      )}
       <div
-        className={`w-full h-full ${SHAPE_CLASSES[element.visual.shape]} ${isSelected ? 'selection-ring' : ''}`}
+        className={`relative w-full h-full ${SHAPE_CLASSES[element.visual.shape]}`}
         style={{
           backgroundColor: getThemeAwareColor(element.visual.color, dark),
           borderWidth: element.visual.borderWidth ?? 2,
