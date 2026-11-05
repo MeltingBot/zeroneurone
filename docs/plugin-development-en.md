@@ -646,7 +646,7 @@ Each device emits the actions done on it: a change received from a collaborator 
 | `comment:created` / `resolved` / `unresolved` / `deleted` | commentId | Comment | `targetId` |
 | `tag:renamed` | — | Tag renamed across the dossier | `from`, `to`, `elements`, `links` |
 | `report:updated` | — | Report edited (typing in one section is merged) | `action`, `sectionId` |
-| `query:executed` | — | Query run by the user (not automatic re-runs) | `text` (may contain names), `elements`, `links` |
+| `query:executed` | — | Query run by the user, or written by the filters when the query panel is empty (2.90+); not automatic re-runs | `text` (may contain names), `elements`, `links` |
 | `<pluginId>:<name>` | free | Event of a plugin | free |
 
 ### Event structure

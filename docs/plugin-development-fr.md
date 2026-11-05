@@ -646,7 +646,7 @@ Chaque poste emet les actions faites sur lui : une modification recue d'un colla
 | `comment:created` / `resolved` / `unresolved` / `deleted` | commentId | Commentaire | `targetId` |
 | `tag:renamed` | — | Tag renomme dans tout le dossier | `from`, `to`, `elements`, `links` |
 | `report:updated` | — | Rapport modifie (les saisies d'une section sont regroupees) | `action`, `sectionId` |
-| `query:executed` | — | Requete lancee par l'utilisateur (pas les relances automatiques) | `text` (peut contenir des noms), `elements`, `links` |
+| `query:executed` | — | Requete lancee par l'utilisateur, ou ecrite par les filtres quand le panneau Requete est vide (2.90+) ; pas les relances automatiques | `text` (peut contenir des noms), `elements`, `links` |
 | `<pluginId>:<nom>` | libre | Evenement d'un plugin | libre |
 
 ### Structure de l'evenement

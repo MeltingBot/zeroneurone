@@ -1,5 +1,55 @@
 # Changelog
 
+## 2.90.0
+
+### Nouveautés
+
+- **Les filtres écrivent leur requête ZNQuery** — quand le panneau Requête
+  est vide, les filtres y écrivent leur équivalent exact : cocher le tag
+  « Personne » donne `type = "element" AND tag = "Personne"`. La requête est
+  rappelée sous les filtres actifs ; un clic l'ouvre dans le panneau
+  Requête, en mode texte. On apprend la syntaxe en se servant des filtres,
+  et on part de leur requête pour aller plus loin. La modifier ou l'effacer
+  dans le panneau Requête la reprend : les filtres qu'elle disait sont
+  décochés. Une autre requête (tapée, focus, matrice, vue, requête
+  sauvegardée) n'est jamais modifiée par les filtres. La recherche texte, la
+  période et le filtre par onglets, sans équivalent exact, restent
+  « Hors requête » et filtrent comme avant.
+- **Import de tableurs (XLSX, ODS)** — un classeur Excel ou LibreOffice Calc
+  s'importe comme le CSV d'une de ses feuilles : colonnes natives importées
+  directement, sinon assistant de mapping. Quand plusieurs feuilles
+  contiennent des données, une fenêtre propose de choisir. Les dates sont
+  lues à l'heure affichée ; un code postal `01000`, un numéro
+  `06 12 34 56 78` ou un pourcentage arrivent tels qu'affichés, les autres
+  nombres tels qu'enregistrés. Depuis l'accueil, le dossier ouvert ou
+  l'assistant de mapping, qui devient **Importer du JSON ou un tableur** ;
+  on peut aussi y coller des cellules copiées depuis Excel ou Calc.
+- **Timeline à la minute** — le zoom descend jusqu'à 1 px par seconde, avec
+  des graduations à 1, 5 et 15 minutes et les préréglages **15 min** et
+  **1 min** : des événements à 30 s d'écart se distinguent. Les longues
+  périodes restent dessinées à ce zoom.
+
+### Corrections
+
+- **Sélection au zoom intermédiaire** — sur un grand dossier, entre la vue
+  d'ensemble et le rendu complet, les éléments sélectionnés n'étaient plus
+  visibles pendant le zoom : leur contour faisait une fraction de pixel. Ils
+  gardent désormais un anneau de largeur constante à l'écran, comme dans la
+  vue d'ensemble.
+- **Présence en collaboration** — un utilisateur ouvert dans plusieurs
+  onglets est représenté par son onglet le plus récent.
+
+### Extensions
+
+- **`api.collab`** (`features.presence`) — un plugin lit qui est connecté au
+  dossier partagé (utilisateur local, collaborateurs, sélection, vue) et
+  s'abonne aux changements, en lecture seule. Les plugins `community`
+  déclarent la permission `collab:read`. L'identifiant est propre au
+  navigateur, pas à la personne.
+- **`query:executed`** — émis aussi quand les filtres écrivent leur
+  requête (une fois les réglages arrêtés depuis 2 s, comme pour une
+  requête tapée).
+
 ## 2.89.2
 
 ### Performances (mesurées sur la version de production, 10 000 éléments à 50 propriétés)

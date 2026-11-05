@@ -1,5 +1,5 @@
 ==============================================================================
-ZeroNeurone 2.89.2 — Licences des composants tiers
+ZeroNeurone 2.90.0 — Licences des composants tiers
 ==============================================================================
 
 ZeroNeurone est distribué sous licence MIT (voir le fichier LICENSE).
