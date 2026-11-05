@@ -249,6 +249,8 @@ Mode buttons are at the top of the queries panel, next to the results counter.
 
 When filters of the **Filters** panel are active too, the views show only the elements both keep: the counter says so ("18 elements, 0 links → 12 shown"). To hide the elements outside the filter instead of dimming them, use **Hide** in the Filters panel (see [Filters and Views]({{< relref "filters-views" >}})).
 
+When this panel is empty, the filters write their own query in it (`type = "element" AND tag = "Person"`): edit it to go further, it then takes over the filters it said (see [Filters and Views]({{< relref "filters-views" >}})).
+
 When the query finds links, the canvas filter keeps the elements at both ends of the found links highlighted and dims the rest.
 
 ### Result actions

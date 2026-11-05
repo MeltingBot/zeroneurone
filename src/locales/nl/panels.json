@@ -407,6 +407,11 @@
     },
     "evaluation": {
       "hint": "Alleen elementen die in het actieve model met een geselecteerde code zijn gewaardeerd, blijven zichtbaar."
+    },
+    "query": {
+      "open": "Openen in Query",
+      "outside": "Niet in de query: {{filters}}",
+      "period": "Periode"
     }
   },
   "query": {

@@ -408,6 +408,11 @@
     },
     "evaluation": {
       "hint": "Restano visibili solo gli elementi valutati nel modello attivo con un codice selezionato."
+    },
+    "query": {
+      "open": "Apri in Query",
+      "outside": "Fuori dalla query: {{filters}}",
+      "period": "Periodo"
     }
   },
   "query": {

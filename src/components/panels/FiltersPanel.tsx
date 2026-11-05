@@ -30,6 +30,9 @@ import { datePropertyKeeper, datePropertyRules, elementDateIntervals } from '../
 import { EVALUATION_GRIDS, getModelScale, matchesEvaluationFilters } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter } from '../../utils/geo';
+import { sameQuery, viewFiltersToQuery, type FilterQueryGap } from '../../utils/viewFiltersQuery';
+import { serializeQuery } from '../../services/query/serializer';
+import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 
 // Quick filters: each names a set of elements of the view (labels from the
 // translations); the mode chosen next to them says what a click does with it
@@ -135,6 +138,17 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
   },
 ];
 
+/** Name of a filter the query cannot say, as the panel names it */
+function gapLabel(gap: FilterQueryGap, t: (key: string) => string): string {
+  switch (gap) {
+    case 'textSearch': return t('filters.sections.textSearch');
+    case 'tags': return t('filters.sections.tags');
+    case 'tabs': return t('filters.sections.tabs');
+    case 'property': return t('filters.property.hasProperty');
+    case 'period': return t('filters.query.period');
+  }
+}
+
 function readQuickMode(): QuickMode {
   try {
     const stored = localStorage.getItem(QUICK_MODE_KEY);
@@ -210,6 +224,16 @@ export function FiltersPanel() {
   const matchingIds = outcome.shownIds;
   const queryActive = outcome.queryCount !== null;
   const queryOutputMode = useQueryStore((s) => s.outputMode);
+  // The filters write themselves in the query panel (filterQuerySync): their
+  // part is shown here; a query that is that part alone is not one more filter
+  const filterPart = useQueryStore((s) => s.filterPart);
+  const queryIsFilters = useQueryStore((s) => s.filterPart !== null && sameQuery(s.currentAst, s.filterPart));
+  const typedQueryActive = queryActive && !queryIsFilters;
+  const tabFilterIds = useTabFilterIds();
+  const queryGaps = useMemo(
+    () => viewFiltersToQuery(filters, elements, evaluationModel, tabFilterIds !== null).gaps,
+    [filters, elements, evaluationModel, tabFilterIds]
+  );
 
   const matchingCount = matchingIds.length;
 
@@ -408,7 +432,8 @@ export function FiltersPanel() {
                   showAllElements();
                   // The query applied on the views counts as a filter here: its
                   // filter goes too (the query itself stays in its panel)
-                  if (queryActive) {
+                  // (the filters' own query goes with the filters)
+                  if (typedQueryActive) {
                     useQueryStore.getState().setOutputMode(queryOutputMode === 'both' ? 'table' : 'none');
                   }
                 }}
@@ -421,7 +446,7 @@ export function FiltersPanel() {
           </div>
         </div>
         {/* Filters and query both narrow the views: say what each keeps */}
-        {queryActive && outcome.filterCount < outcome.total && (
+        {typedQueryActive && outcome.filterCount < outcome.total && (
           <div className="mt-1 text-xs text-text-tertiary">
             {t('filters.countBreakdown', { filters: outcome.filterCount, query: outcome.queryCount })}
           </div>
@@ -462,7 +487,7 @@ export function FiltersPanel() {
             </button>
           </div>
           <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-            {queryActive && (
+            {typedQueryActive && (
               <FilterBadge
                 label={t('filters.queryBadge')}
                 onRemove={() => useQueryStore.getState().setOutputMode(queryOutputMode === 'both' ? 'table' : 'none')}
@@ -515,6 +540,25 @@ export function FiltersPanel() {
               />
             )}
           </div>
+          {filterPart && (
+            <button
+              onClick={() => {
+                // In text: the syntax is what the line teaches
+                useQueryStore.getState().setEditorMode('text');
+                useUIStore.getState().setSidePanelTab('query');
+              }}
+              title={t('filters.query.open')}
+              className="mt-1.5 w-full text-left font-mono text-[11px] text-text-secondary hover:text-text-primary break-words"
+              data-testid="filters-query"
+            >
+              {serializeQuery(filterPart)}
+            </button>
+          )}
+          {isActive && queryGaps.length > 0 && (
+            <div className="mt-1 text-[10px] text-text-tertiary" data-testid="filters-query-gaps">
+              {t('filters.query.outside', { filters: queryGaps.map((gap) => gapLabel(gap, t)).join(', ') })}
+            </div>
+          )}
         </div>
       )}
 

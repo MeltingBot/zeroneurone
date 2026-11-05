@@ -64,6 +64,13 @@ Les filtres se cumulent (ET logique) : un élément doit satisfaire **tous** les
 
 ### Filtres et requête
 
+Les filtres s'écrivent en [ZNQuery]({{< relref "queries" >}}) dans le panneau **Requête** quand celui-ci est vide : cocher le tag « Personne » écrit `type = "element" AND tag = "Personne"`. La requête est rappelée sous les filtres actifs ; un clic l'ouvre dans le panneau Requête, en mode texte. On apprend ainsi la syntaxe en se servant des filtres, et on part de leur requête pour aller plus loin (liens, `WITHIN`, opérateurs).
+
+- `type = "element"` vient en tête : les filtres portent sur les éléments, une requête trouve aussi des liens.
+- Tags, propriété, confiance ou cotation et géolocalisation ont leur équivalent exact. La recherche texte (qui lit aussi les noms des propriétés), la période et le filtre par onglets n'en ont pas : ils restent hors de la requête, signalés par « Hors requête », et filtrent les vues comme avant. Un tag (ou un nom de propriété) qui n'en diffère que par la casse, ou une propriété laissée vide sur un élément, met le filtre correspondant hors requête : la requête ne distingue pas la casse et ne compte pas une valeur vide.
+- Modifier ou effacer cette requête dans le panneau Requête la reprend : les filtres qu'elle disait sont décochés, la requête les dit désormais.
+- Une autre requête (tapée, focus, matrice, vue, requête sauvegardée) n'est jamais modifiée par les filtres, qui restreignent les vues à côté d'elle. Une fois cette requête effacée, les filtres écrivent de nouveau la leur.
+
 Une requête appliquée sur le canvas (panneau **Requête**) restreint les vues en plus des filtres : un élément est affiché s'il est gardé par les deux. L'en-tête du panneau Filtres compte ces éléments affichés ; quand les deux sont actifs, une ligne indique la part de chacun (« Filtres 598 · Requête 44 »). La requête apparaît comme un badge **Requête** dans les filtres actifs ; sa croix retire la requête des vues sans l'effacer.
 
 **Tout effacer** retire les filtres et la requête des vues (la requête reste dans son panneau).
