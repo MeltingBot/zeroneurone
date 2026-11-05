@@ -23,7 +23,7 @@ import { buildTimelineItems, type TimelineItem } from './timelineItems';
 import { ItemThumbnail } from './ItemThumbnail';
 import { exportTimelineToCSV, CAUSAL_COLORS, getDensityColor } from './timelineOutput';
 import { useTimelineNavigation } from './useTimelineNavigation';
-import { MIN_ZOOM, MAX_ZOOM, ROW_HEIGHT, ROW_GAP } from './timelineConstants';
+import { ROW_HEIGHT, ROW_GAP, fitZoom, clipSpan, axisStepForZoom, MINUTE_STEP_SIZE } from './timelineConstants';
 import { useShallow } from 'zustand/react/shallow';
 
 // Scatter mode: a bar too short for its content shows it just after the bar
@@ -42,6 +42,8 @@ const ZOOM_PRESETS = [
   { labelKey: 'timeline.zoomPreset1Week', zoom: 30 },       // ~3 weeks visible
   { labelKey: 'timeline.zoomPreset6h', zoom: 200 },         // ~5 days visible, 6h labels
   { labelKey: 'timeline.zoomPreset1h', zoom: 900 },         // ~1 day visible, 1h labels
+  { labelKey: 'timeline.zoomPreset15min', zoom: 4000 },     // ~5 hours visible, 15 min labels
+  { labelKey: 'timeline.zoomPreset1min', zoom: 60000 },     // ~20 minutes visible, 1 min labels
 ] as const;
 
 export function TimelineView() {
@@ -229,7 +231,7 @@ export function TimelineView() {
       const timeRangeDays = timeRangeMs / (24 * 60 * 60 * 1000);
 
       // Calculate zoom to fit, with some padding
-      const targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, (containerWidth - 100) / timeRangeDays));
+      const targetZoom = fitZoom(containerWidth - 100, timeRangeDays);
 
       setZoom(targetZoom);
       setViewStart(timeBounds.min);
@@ -447,53 +449,20 @@ export function TimelineView() {
     const containerWidth = getContainerWidth();
     const viewEnd = xToDate(containerWidth);
 
-    let step: 'hour' | 'hour6' | 'day' | 'week' | 'month' | 'year' | 'decade' | 'century';
-    let format: Intl.DateTimeFormatOptions;
-
-    // Pixel-based step selection for smooth transitions: choose the smallest time unit whose
-    // labels fit between two ticks. Minimum spacing per step, from its label width at 10px
-    // ("12:00", "12 sept.", "sept." / "2025")
-    const SPACING = { hour: 40, day: 48, month: 36, year: 36 };
-
-    const hourSpacing = zoom / 24; // pixels per hour
-    const hour6Spacing = zoom / 4; // pixels per 6 hours
-    const daySpacing = zoom; // pixels per day
-    const weekSpacing = zoom * 7; // pixels per week
-    const monthSpacing = zoom * 30; // pixels per month (approx)
-    const yearSpacing = zoom * 365; // pixels per year
-    const decadeSpacing = zoom * 3652; // pixels per decade
-
-    if (hourSpacing >= SPACING.hour) {
-      step = 'hour';
-      format = { hour: '2-digit', minute: '2-digit' };
-    } else if (hour6Spacing >= SPACING.hour) {
-      step = 'hour6';
-      format = { hour: '2-digit', minute: '2-digit' };
-    } else if (daySpacing >= SPACING.day) {
-      step = 'day';
-      format = { day: 'numeric', month: 'short' };
-    } else if (weekSpacing >= SPACING.day) {
-      step = 'week';
-      format = { day: 'numeric', month: 'short' };
-    } else if (monthSpacing >= SPACING.month) {
-      // Short month only; January (main tick) shows the year instead
-      step = 'month';
-      format = { month: 'short' };
-    } else if (yearSpacing >= SPACING.year) {
-      step = 'year';
-      format = { year: 'numeric' };
-    } else if (decadeSpacing >= SPACING.year) {
-      step = 'decade';
-      format = { year: 'numeric' };
-    } else {
-      step = 'century';
-      format = { year: 'numeric' };
-    }
+    // Pixel-based step selection for smooth transitions: the smallest time
+    // unit whose labels fit between two ticks
+    const step = axisStepForZoom(zoom);
+    const minuteSize = MINUTE_STEP_SIZE[step];
+    const format: Intl.DateTimeFormatOptions = step === 'day' || step === 'week'
+      ? { day: 'numeric', month: 'short' }
+      : step === 'month' ? { month: 'short' } : { year: 'numeric' };
 
     const current = new Date(viewStart);
 
     // Align to step boundary
-    if (step === 'hour') {
+    if (minuteSize) {
+      current.setMinutes(Math.floor(current.getMinutes() / minuteSize) * minuteSize, 0, 0);
+    } else if (step === 'hour') {
       current.setMinutes(0, 0, 0);
     } else if (step === 'hour6') {
       current.setHours(Math.floor(current.getHours() / 6) * 6, 0, 0, 0);
@@ -530,13 +499,19 @@ export function TimelineView() {
                        (step === 'week' && current.getDate() <= 7) ||
                        (step === 'day' && (current.getDate() === 1 || current.getDay() === 1)) ||
                        (step === 'hour6' && current.getHours() === 0) ||
-                       (step === 'hour' && current.getHours() % 6 === 0);
+                       (step === 'hour' && current.getHours() % 6 === 0) ||
+                       (minuteSize !== undefined && current.getMinutes() === 0);
         // For year/decade/century: use getFullYear() directly to show negative years (BC)
         // For hour steps: show date at midnight ticks, time otherwise
         const locale = dateLocale(i18n.language);
         let label: string;
         if (step === 'century' || step === 'decade' || step === 'year' || (step === 'month' && isMain)) {
           label = String(current.getFullYear());
+        } else if (minuteSize) {
+          // Minutes: the date at midnight, the hour on the hour, else hh:mm
+          label = isMain && current.getHours() === 0
+            ? current.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
+            : `${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}`;
         } else if (step === 'hour' || step === 'hour6') {
           label = isMain
             ? current.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
@@ -547,7 +522,9 @@ export function TimelineView() {
         labels.push({ x, label, isMain });
       }
 
-      if (step === 'hour') {
+      if (minuteSize) {
+        current.setMinutes(current.getMinutes() + minuteSize);
+      } else if (step === 'hour') {
         current.setHours(current.getHours() + 1);
       } else if (step === 'hour6') {
         current.setHours(current.getHours() + 6);
@@ -1013,9 +990,12 @@ export function TimelineView() {
 
           {/* Items - virtualized, only renders visible items */}
           {visibleItems.map((item) => {
-            const x = dateToX(item.start);
-            const endX = item.end ? dateToX(item.end) : x + 20;
-            const width = Math.max(20, endX - x);
+            const startX = dateToX(item.start);
+            const endX = item.end ? dateToX(item.end) : startX + 20;
+            // A long period at a fine zoom: drawn around the view only
+            const { x, width } = item.end
+              ? clipSpan(startX, Math.max(20, endX - startX), containerWidth)
+              : { x: startX, width: Math.max(20, endX - startX) };
             const y = ROW_GAP + item.row * (ROW_HEIGHT + ROW_GAP);
             const selected = isSelected(item);
             const isRange = !!item.end;

@@ -121,7 +121,9 @@ export function useSwimlaneLayout(
         rowEnds[row] = cx + cw;
         rowMaxHeights[row] = Math.max(rowMaxHeights[row], h);
 
-        layoutItems.push({ item, row, rowY: 0, x, width, itemHeight: h });
+        // Drawn clipped too: browsers cap layout lengths, a long period
+        // crossing the view at a fine zoom would be drawn off screen
+        layoutItems.push({ item, row, rowY: 0, x: cx, width: cw, itemHeight: h });
       }
 
       const rowCount = Math.max(1, rowEnds.length);

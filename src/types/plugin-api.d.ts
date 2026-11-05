@@ -487,6 +487,47 @@ export interface PluginFeatures {
   filterOutcome?: boolean;
   /** query.parse / evaluate / vocabulary (2.88.2+) */
   queryEngine?: boolean;
+  /** collab.getLocalUser / getRemoteUsers / isShared / getPresence / onPresenceChange (2.90+) */
+  presence?: boolean;
+}
+
+/** The user of this browser, as collaborators see them */
+export interface CollabLocalUser {
+  userId: string;
+  name: string;
+  color: string;
+}
+
+/** Another user connected to the shared dossier */
+export interface CollabUser extends CollabLocalUser {
+  /** Last heartbeat received (ms since epoch), null when unknown */
+  lastSeen: number | null;
+  /** Element ids selected */
+  selection: string[];
+  /** View open */
+  viewMode: 'canvas' | 'map' | 'timeline';
+}
+
+export interface PresenceSnapshot {
+  /** The open dossier is shared (collaboration on) */
+  shared: boolean;
+  localUser: CollabLocalUser;
+  /** One entry per user (several tabs of one user count once); empty when not shared */
+  remoteUsers: CollabUser[];
+}
+
+/** Who is in the shared dossier, read-only: nothing is written to the dossier nor sent to collaborators */
+export interface CollabAPI {
+  getLocalUser(): CollabLocalUser;
+  /** Empty when the dossier is not shared */
+  getRemoteUsers(): CollabUser[];
+  isShared(): boolean;
+  getPresence(): PresenceSnapshot;
+  /**
+   * Called on each change: sharing on or off, a user joining or leaving, a name, color,
+   * selection or view changing (not cursor moves nor heartbeats). Returns the unsubscribe function.
+   */
+  onPresenceChange(cb: (presence: PresenceSnapshot) => void): () => void;
 }
 
 /** Where a ZNQuery text fails to parse */
@@ -595,6 +636,9 @@ export interface PluginAPI {
 
   /** ZNQuery engine (2.88.2+, `features.queryEngine`); community plugins need `stores:dossier:read` */
   query?: QueryEngineAPI;
+
+  /** Presence in the shared dossier (2.90+, `features.presence`); community plugins need `collab:read` */
+  collab?: CollabAPI;
 
   // Services (export, import, navigation)
   services: ServicesAPI;

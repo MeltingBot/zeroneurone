@@ -60,6 +60,7 @@ import { useInsightsStore } from '../stores/insightsStore';
 import { useQueryStore } from '../stores/queryStore';
 import { getFilterOutcome } from '../hooks/useFilterOutcome';
 import { parseQueryText, evaluateQueryText, queryVocabulary } from './queryEngine';
+import { getLocalUser, getRemoteUsers, isShared, getPresence, onPresenceChange } from './presence';
 import { useTagSetStore } from '../stores/tagSetStore';
 import { useTabStore } from '../stores/tabStore';
 import { useUIStore } from '../stores/uiStore';
@@ -161,6 +162,8 @@ export const pluginAPI = {
     filterOutcome: true,
     /** query.parse / evaluate / vocabulary: ZNQuery without touching the query panel or the canvas */
     queryEngine: true,
+    /** collab.*: who is in the shared dossier, read-only */
+    presence: true,
   },
 
   // ─── What the views show (filters + query) ──────────────────
@@ -192,6 +195,16 @@ export const pluginAPI = {
       return evaluateQueryText(text, elements, links, options);
     },
     vocabulary: () => queryVocabulary(),
+  },
+
+  // ─── Presence (read-only) ────────────────────────────────────
+  /** Who is in the shared dossier. Nothing is written nor sent to collaborators. */
+  collab: {
+    getLocalUser,
+    getRemoteUsers,
+    isShared,
+    getPresence,
+    onPresenceChange,
   },
 
   // ─── Services between plugins ───────────────────────────────
