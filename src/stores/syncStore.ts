@@ -283,7 +283,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
             const existing = usersByUserId.get(userId);
 
             // Keep the most recent entry for this userId
-            if (!existing || (existing && lastSeen > (existing.cursor ? Date.now() : 0))) {
+            if (!existing || lastSeen > (existing.lastSeen ?? 0)) {
               usersByUserId.set(userId, {
                 odUserId: userId,
                 name: state.name || 'Anonyme',
@@ -296,6 +296,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
                 editingLink: state.editingLink || null,
                 editingReportSection: state.editingReportSection || null,
                 viewMode: state.viewMode || 'canvas',
+                lastSeen,
               });
             }
           }

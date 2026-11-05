@@ -137,6 +137,8 @@ export interface UserPresence {
   editingReportSection: string | null;
   /** Current view mode */
   viewMode: 'canvas' | 'map' | 'timeline';
+  /** Last heartbeat received (ms since epoch) */
+  lastSeen?: number;
 }
 
 export const USER_COLORS = [

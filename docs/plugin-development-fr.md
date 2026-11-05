@@ -751,6 +751,27 @@ const { fields, operators } = api.query.vocabulary();
 - Le plugin passe du texte, jamais un arbre : la forme interne des requetes peut evoluer.
 - `vocabulary()` liste les champs reserves et les operateurs. Les proprietes libres des elements s'interrogent aussi par leur nom.
 
+## Presence (`api.collab`, ZN 2.90+)
+
+Qui est dans le dossier partage, en lecture seule : rien n'est ecrit dans le dossier ni envoye aux collaborateurs. Testez `api.features?.presence`. Pour un plugin `community`, la permission `collab:read` est necessaire (noms des collaborateurs) ; sans elle, `api.collab` est absent.
+
+```typescript
+api.collab.isShared();        // le dossier ouvert est partage
+api.collab.getLocalUser();    // { userId, name, color } : l'utilisateur de ce navigateur
+api.collab.getRemoteUsers();  // [{ userId, name, color, lastSeen, selection, viewMode }]
+api.collab.getPresence();     // { shared, localUser, remoteUsers }
+
+const off = api.collab.onPresenceChange(({ shared, localUser, remoteUsers }) => {
+  // partage active ou arrete, arrivee ou depart, nom, couleur, selection ou vue changes
+});
+off(); // au demontage
+```
+
+- `getRemoteUsers()` est vide quand le dossier n'est pas partage. Un utilisateur ouvert dans plusieurs onglets compte une fois (l'entree la plus recente).
+- Un utilisateur sans signe de vie depuis 20 s disparait de la liste. `lastSeen` (ms depuis l'epoch) est l'heure du dernier signal recu.
+- `onPresenceChange` n'est pas appele pour un mouvement de curseur ni pour un simple signal de vie. Une exception levee par le rappel est journalisee et n'arrete pas les autres.
+- `userId` est propre au navigateur (genere au premier lancement), pas un compte : le meme collaborateur sur un autre poste, ou apres avoir vide son navigateur, a un autre `userId`. Le nom vient aussi du navigateur, souvent tire au hasard par ZN (« Brave Loup ») tant que l'utilisateur ne l'a pas change. Pour rattacher un collaborateur a une fiche (annuaire, equipe), faites confirmer le rapprochement par l'utilisateur plutot que de vous fier a `userId` ou au nom.
+
 ## Services entre plugins (`api.pluginServices`, ZN 2.64+)
 
 Un plugin peut offrir un service aux autres plugins, et utiliser celui d'un autre plugin lorsqu'il est present. ZN ne fait que tenir le registre : il n'appelle jamais un service lui-meme. Testez `api.features?.pluginServices` avant de vous en servir. Pour un plugin `community`, la permission `pluginServices` est necessaire.
@@ -1326,6 +1347,8 @@ Depuis la v2.39.0, ZN supporte le **manifest v2** avec niveaux de confiance et p
 **Events & notifications :** `events:subscribe`, `toast`, `ui`
 
 **Services :** `services:export`, `services:import`, `services:navigate`, `pluginServices` (services entre plugins)
+
+**Collaboration :** `collab:read` (presence dans le dossier partage, `api.collab`)
 
 **Acces avances :** `fileService`, `encryption`, `network:fetch`, `writeLock`
 

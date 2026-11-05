@@ -239,6 +239,8 @@ export function buildSandboxedAPI(
   if (has(permissions, 'stores:view:read')) api.filterOutcome = scopedAPI.filterOutcome;
   // ZNQuery on the open dossier: reveals no more than the dossier store
   if (has(permissions, 'stores:dossier:read') || has(permissions, 'stores:dossier:write')) api.query = scopedAPI.query;
+  // Who is in the shared dossier: personal data, asked for on its own
+  if (has(permissions, 'collab:read')) api.collab = scopedAPI.collab;
   addStore('useTagSetStore', 'stores:tagSet:read', 'stores:tagSet:write');
   addStore('useTabStore', 'stores:tab:read', 'stores:tab:write');
   addStore('useUIStore', 'stores:ui:read', 'stores:ui:write');

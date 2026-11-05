@@ -751,6 +751,27 @@ const { fields, operators } = api.query.vocabulary();
 - The plugin passes text, never a tree: the internal form of queries may change.
 - `vocabulary()` lists the reserved fields and the operators. Free element properties are queried by their name as well.
 
+## Presence (`api.collab`, ZN 2.90+)
+
+Who is in the shared dossier, read-only: nothing is written to the dossier nor sent to collaborators. Test `api.features?.presence`. A `community` plugin needs the `collab:read` permission (collaborators' names); without it, `api.collab` is absent.
+
+```typescript
+api.collab.isShared();        // the open dossier is shared
+api.collab.getLocalUser();    // { userId, name, color }: the user of this browser
+api.collab.getRemoteUsers();  // [{ userId, name, color, lastSeen, selection, viewMode }]
+api.collab.getPresence();     // { shared, localUser, remoteUsers }
+
+const off = api.collab.onPresenceChange(({ shared, localUser, remoteUsers }) => {
+  // sharing on or off, a user joining or leaving, a name, color, selection or view changing
+});
+off(); // on unmount
+```
+
+- `getRemoteUsers()` is empty when the dossier is not shared. A user open in several tabs counts once (the most recent entry).
+- A user with no sign of life for 20 s leaves the list. `lastSeen` (ms since epoch) is when the last heartbeat arrived.
+- `onPresenceChange` is not called for a cursor move nor a mere heartbeat. An exception thrown by the callback is logged and does not stop the others.
+- `userId` belongs to the browser (generated on first launch), not to an account: the same collaborator on another computer, or after clearing their browser, has another `userId`. The name also comes from the browser, often drawn at random by ZN ("Brave Wolf") until the user changes it. To match a collaborator with a record (directory, team), have the user confirm the match rather than relying on `userId` or the name.
+
 ## Services between plugins (`api.pluginServices`, ZN 2.64+)
 
 A plugin can offer a service to the other plugins, and use another plugin's service when it is there. ZN only keeps the registry: it never calls a service itself. Test `api.features?.pluginServices` before relying on it. A `community` plugin needs the `pluginServices` permission.
@@ -1326,6 +1347,8 @@ Since v2.39.0, ZN supports **manifest v2** with trust levels and permissions. Ma
 **Events & notifications:** `events:subscribe`, `toast`, `ui`
 
 **Services:** `services:export`, `services:import`, `services:navigate`, `pluginServices` (services between plugins)
+
+**Collaboration:** `collab:read` (presence in the shared dossier, `api.collab`)
 
 **Advanced access:** `fileService`, `encryption`, `network:fetch`, `writeLock`
 

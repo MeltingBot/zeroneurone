@@ -28,6 +28,8 @@ export type Permission =
   | 'pluginData:readwrite'
   // Services offered to and used from other plugins
   | 'pluginServices'
+  // Who is in the shared dossier (names, colors, selections), read-only
+  | 'collab:read'
   // Events & notifications
   | 'events:subscribe'
   | 'toast'

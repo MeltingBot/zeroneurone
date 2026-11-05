@@ -230,6 +230,7 @@ const ALL_PERMISSIONS: Permission[] = [
   'repositories:read', 'repositories:write',
   'pluginData:readwrite',
   'pluginServices',
+  'collab:read',
   'events:subscribe',
   'toast',
   'ui',
