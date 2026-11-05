@@ -36,7 +36,7 @@
   },
   "import": {
     "title": "Імпортувати справа",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Генеалогія: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Імпортувати до",
@@ -54,7 +54,7 @@
     "successEvents": "Імпортовано подій: {{count}}",
     "successAssets": "{{count}} файлів імпортовано",
     "error": "Помилка імпорту",
-    "unknownFormat": "Невідомий формат файлу. Підтримувані формати: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
+    "unknownFormat": "Невідомий формат файлу. Підтримувані формати: ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Невідома помилка",
     "csvTemplate": {
       "title": "Шаблон CSV ZeroNeurone",
@@ -104,7 +104,16 @@
     "encryptedPrompt": "Зашифрований файл: введіть пароль, щоб імпортувати його.",
     "decrypting": "Розшифрування…",
     "wrongPassword": "Неправильний пароль",
-    "invalidEncryptedFile": "Недійсний або пошкоджений зашифрований файл"
+    "invalidEncryptedFile": "Недійсний або пошкоджений зашифрований файл",
+    "sheet": {
+      "title": "Аркуш для імпорту",
+      "rows_one": "{{count}} рядок",
+      "rows_few": "{{count}} рядки",
+      "rows_many": "{{count}} рядків",
+      "rows_other": "{{count}} рядків",
+      "empty": "Жоден аркуш не містить даних.",
+      "unreadable": "Неможливо прочитати книгу (очікується XLSX або ODS)."
+    }
   },
   "export": {
     "progress": {
@@ -753,13 +762,13 @@
     "useSecurityKey": "Використати ключ безпеки"
   },
   "importJsonMapping": {
-    "entryTitle": "Зіставити JSON або CSV",
-    "entryDescription": "Вставте JSON або CSV і зіставте його поля з елементами",
-    "title": "Імпорт JSON або CSV (зіставлення)",
-    "pasteLabel": "JSON або CSV для імпорту",
-    "pastePlaceholder": "Вставте сюди JSON (об'єкт, масив або об'єкт із масивом) або CSV (з рядком заголовків)…",
+    "entryTitle": "Зіставити JSON або електронну таблицю",
+    "entryDescription": "Вставте або виберіть JSON або електронну таблицю (CSV, XLSX, ODS) і зіставте їхні поля з елементами",
+    "title": "Імпорт JSON або електронної таблиці (зіставлення)",
+    "pasteLabel": "JSON або електронна таблиця для імпорту",
+    "pastePlaceholder": "Вставте сюди JSON (об'єкт, масив або об'єкт із масивом) або рядки таблиці із заголовком (клітинки, скопійовані з Excel чи Calc, або CSV)…",
     "orFile": "або вибрати файл",
-    "invalidJson": "Ні коректний JSON, ні CSV із заголовком",
+    "invalidJson": "Ні коректний JSON, ні електронна таблиця із заголовком",
     "noArray": "У цьому JSON не знайдено масиву записів",
     "arrayRoot": "Масив-джерело",
     "labelTemplate": "Шаблон підпису",

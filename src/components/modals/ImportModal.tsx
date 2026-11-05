@@ -9,6 +9,7 @@ import { importANX, isANXFormat } from '../../services/importANX';
 import { importANB, isANBFormat } from '../../services/importANB';
 import { importFEC } from '../../services/importFEC';
 import { useImportOptionSteps } from '../../hooks/useImportOptionSteps';
+import { useSpreadsheetToCsv } from '../../hooks/useSpreadsheetToCsv';
 import { FECOptionsPanel } from './FECOptionsPanel';
 import { GeoJSONOptionsPanel } from './GeoJSONOptionsPanel';
 import { ImportProgressLine } from './ImportProgressLine';
@@ -241,9 +242,23 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     }
   }, [processFile, t]);
 
+  const { toCsv, picker: sheetPicker } = useSpreadsheetToCsv();
+
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const chosen = event.target.files?.[0];
+    if (!chosen) return;
+
+    // A workbook (XLSX, ODS) is imported as the CSV of the sheet chosen: the
+    // dossier is named after it, and it may open on the column mapping
+    const converted = await toCsv(chosen);
+    if (!('file' in converted)) {
+      if ('error' in converted) {
+        setImportResult({ success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: [converted.error], warnings: [] });
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    const file = converted.file;
 
     // Detect .znzip before any processing
     if (file.name.endsWith('.znzip') || await isEncryptedZipFile(file)) {
@@ -275,7 +290,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setImportResult(null);
     await withImportProgress(() => processFile(file));
     setIsProcessing(false);
-  }, [processFile, targetDossierId, importIntoExistingDossier, openOptionStep]);
+  }, [processFile, targetDossierId, importIntoExistingDossier, openOptionStep, toCsv]);
 
   // Confirming an options step (FEC, GeoJSON): the dossier is created
   // only here, and deleted if the import fails.
@@ -450,7 +465,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.tsv,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
+            accept=".zip,.znzip,.json,.csv,.tsv,.xlsx,.xlsm,.ods,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"
@@ -662,6 +677,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           )}
         </div>
       </div>
+      {sheetPicker}
     </>
   );
 }

@@ -51,6 +51,7 @@ import { JsonMappingManagerModal } from './JsonMappingManagerModal';
 import { TagCombobox } from './TagCombobox';
 import { JsonTablesDiagram, type DiagramTable } from './JsonTablesDiagram';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { useSpreadsheetToCsv } from '../../hooks/useSpreadsheetToCsv';
 import { csvToRecords } from '../../utils/csv';
 
 const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
@@ -512,10 +513,18 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     parse(content, name);
   }, [parse, i18n.language]);
 
-  const handleFile = useCallback(async (file: File) => {
+  const { toCsv, picker: sheetPicker } = useSpreadsheetToCsv();
+  const handleFile = useCallback(async (chosen: File) => {
+    // A workbook (XLSX, ODS): the CSV of the sheet chosen
+    const converted = await toCsv(chosen);
+    if (!('file' in converted)) {
+      if ('error' in converted) toast.error(converted.error);
+      return;
+    }
+    const file = converted.file;
     const content = await file.text();
     loadContent(content, `${file.name} — ${formatBytes(file.size, i18n.language)}`, file.name);
-  }, [loadContent, i18n.language]);
+  }, [loadContent, i18n.language, toCsv]);
 
   // Pre-fill from a paste when the modal opens
   useEffect(() => {
@@ -1175,7 +1184,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json,application/json,.txt,.csv,text/csv,.tsv"
+                accept=".json,application/json,.txt,.csv,text/csv,.tsv,.xlsx,.xlsm,.ods"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
                 className="hidden"
               />
@@ -1667,6 +1676,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       </div>
     </div>
     <JsonMappingManagerModal isOpen={managerOpen} onClose={() => setManagerOpen(false)} />
+    {sheetPicker}
     </>
   );
 }

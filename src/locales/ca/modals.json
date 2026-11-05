@@ -36,7 +36,7 @@
   },
   "import": {
     "title": "Importar un expedient",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar a",
@@ -54,7 +54,7 @@
     "successEvents": "{{count}} esdeveniment(s) importat(s)",
     "successAssets": "{{count}} fitxer(s) importat(s)",
     "error": "Error d'importació",
-    "unknownFormat": "Format de fitxer no reconegut. Formats suportats: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
+    "unknownFormat": "Format de fitxer no reconegut. Formats suportats: ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Error desconegut",
     "csvTemplate": {
       "title": "Plantilla CSV ZeroNeurone",
@@ -102,7 +102,14 @@
     "encryptedPrompt": "Fitxer xifrat: introduïu-ne la contrasenya per importar-lo.",
     "decrypting": "S'està desxifrant…",
     "wrongPassword": "Contrasenya incorrecta",
-    "invalidEncryptedFile": "Fitxer xifrat no vàlid o malmès"
+    "invalidEncryptedFile": "Fitxer xifrat no vàlid o malmès",
+    "sheet": {
+      "title": "Full a importar",
+      "rows_one": "{{count}} fila",
+      "rows_other": "{{count}} files",
+      "empty": "Cap full no conté dades.",
+      "unreadable": "Llibre il·legible (s'espera XLSX o ODS)."
+    }
   },
   "export": {
     "progress": {
@@ -743,13 +750,13 @@
     "useSecurityKey": "Utilitzar una clau de seguretat"
   },
   "importJsonMapping": {
-    "entryTitle": "Mapeja un JSON o un CSV",
-    "entryDescription": "Enganxeu JSON o CSV i relacioneu-ne els camps amb elements",
-    "title": "Importa JSON o CSV (mapatge)",
-    "pasteLabel": "JSON o CSV a importar",
-    "pastePlaceholder": "Enganxeu aquí el JSON (objecte, matriu o objecte amb una matriu) o el CSV (amb la línia de capçalera)…",
+    "entryTitle": "Mapeja un JSON o un full de càlcul",
+    "entryDescription": "Enganxeu o trieu un JSON o un full de càlcul (CSV, XLSX, ODS) i relacioneu-ne els camps amb elements",
+    "title": "Importa JSON o full de càlcul (mapatge)",
+    "pasteLabel": "JSON o full de càlcul a importar",
+    "pastePlaceholder": "Enganxeu aquí el JSON (objecte, matriu o objecte amb una matriu) o files d'un full de càlcul amb capçalera (cel·les copiades d'Excel o Calc, o CSV)…",
     "orFile": "o tria un fitxer",
-    "invalidJson": "Ni JSON vàlid ni CSV amb capçalera",
+    "invalidJson": "Ni JSON vàlid ni full de càlcul amb capçalera",
     "noArray": "No s'ha trobat cap llista de registres en aquest JSON",
     "arrayRoot": "Llista d'origen",
     "labelTemplate": "Plantilla d'etiqueta",

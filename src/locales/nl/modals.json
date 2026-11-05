@@ -36,7 +36,7 @@
   },
   "import": {
     "title": "Dossier importeren",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importeren naar",
@@ -54,7 +54,7 @@
     "successEvents": "{{count}} gebeurtenis(sen) geïmporteerd",
     "successAssets": "{{count}} bestand(en) geïmporteerd",
     "error": "Importfout",
-    "unknownFormat": "Onbekend bestandsformaat. Ondersteunde formaten: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
+    "unknownFormat": "Onbekend bestandsformaat. Ondersteunde formaten: ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Onbekende fout",
     "csvTemplate": {
       "title": "ZeroNeurone-CSV-sjabloon",
@@ -102,7 +102,14 @@
     "encryptedPrompt": "Versleuteld bestand: voer het wachtwoord in om het te importeren.",
     "decrypting": "Ontsleutelen…",
     "wrongPassword": "Onjuist wachtwoord",
-    "invalidEncryptedFile": "Ongeldig of beschadigd versleuteld bestand"
+    "invalidEncryptedFile": "Ongeldig of beschadigd versleuteld bestand",
+    "sheet": {
+      "title": "Te importeren blad",
+      "rows_one": "{{count}} rij",
+      "rows_other": "{{count}} rijen",
+      "empty": "Geen enkel blad bevat gegevens.",
+      "unreadable": "Werkmap onleesbaar (XLSX of ODS verwacht)."
+    }
   },
   "export": {
     "progress": {
@@ -743,13 +750,13 @@
     "useSecurityKey": "Gebruik een beveiligingssleutel"
   },
   "importJsonMapping": {
-    "entryTitle": "JSON of CSV toewijzen",
-    "entryDescription": "JSON of CSV plakken en velden aan elementen toewijzen",
-    "title": "JSON of CSV importeren (toewijzing)",
-    "pasteLabel": "Te importeren JSON of CSV",
-    "pastePlaceholder": "Plak hier uw JSON (object, array of object met een array) of uw CSV (met kopregel)…",
+    "entryTitle": "JSON of spreadsheet toewijzen",
+    "entryDescription": "JSON of spreadsheet (CSV, XLSX, ODS) plakken of kiezen en velden aan elementen toewijzen",
+    "title": "JSON of spreadsheet importeren (toewijzing)",
+    "pasteLabel": "Te importeren JSON of spreadsheet",
+    "pastePlaceholder": "Plak hier uw JSON (object, array of object met een array) of spreadsheetrijen met kopregel (cellen gekopieerd uit Excel of Calc, of CSV)…",
     "orFile": "of kies een bestand",
-    "invalidJson": "Geen geldige JSON en geen CSV met kopregel",
+    "invalidJson": "Geen geldige JSON en geen spreadsheet met kopregel",
     "noArray": "Geen array met records gevonden in deze JSON",
     "arrayRoot": "Bron-array",
     "labelTemplate": "Labelsjabloon",

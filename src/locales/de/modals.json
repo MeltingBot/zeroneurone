@@ -36,7 +36,7 @@
   },
   "import": {
     "title": "Akte importieren",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importieren in",
@@ -54,7 +54,7 @@
     "successEvents": "{{count}} Ereignis(se) importiert",
     "successAssets": "{{count}} Datei(en) importiert",
     "error": "Importfehler",
-    "unknownFormat": "Unbekanntes Dateiformat. Unterstützte Formate: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
+    "unknownFormat": "Unbekanntes Dateiformat. Unterstützte Formate: ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Unbekannter Fehler",
     "csvTemplate": {
       "title": "ZeroNeurone-CSV-Vorlage",
@@ -102,7 +102,14 @@
     "encryptedPrompt": "Verschlüsselte Datei: Passwort eingeben, um sie zu importieren.",
     "decrypting": "Entschlüsselung…",
     "wrongPassword": "Falsches Passwort",
-    "invalidEncryptedFile": "Ungültige oder beschädigte verschlüsselte Datei"
+    "invalidEncryptedFile": "Ungültige oder beschädigte verschlüsselte Datei",
+    "sheet": {
+      "title": "Zu importierendes Blatt",
+      "rows_one": "{{count}} Zeile",
+      "rows_other": "{{count}} Zeilen",
+      "empty": "Kein Blatt enthält Daten.",
+      "unreadable": "Arbeitsmappe nicht lesbar (XLSX oder ODS erwartet)."
+    }
   },
   "export": {
     "progress": {
@@ -743,13 +750,13 @@
     "useSecurityKey": "Sicherheitsschlüssel verwenden"
   },
   "importJsonMapping": {
-    "entryTitle": "JSON oder CSV zuordnen",
-    "entryDescription": "JSON oder CSV einfügen und Felder Elementen zuordnen",
-    "title": "JSON oder CSV importieren (Zuordnung)",
-    "pasteLabel": "Zu importierendes JSON oder CSV",
-    "pastePlaceholder": "JSON (Objekt, Array oder Objekt mit Array) oder CSV (mit Kopfzeile) hier einfügen…",
+    "entryTitle": "JSON oder Tabelle zuordnen",
+    "entryDescription": "JSON oder Tabelle (CSV, XLSX, ODS) einfügen oder auswählen und Felder Elementen zuordnen",
+    "title": "JSON oder Tabelle importieren (Zuordnung)",
+    "pasteLabel": "Zu importierendes JSON oder Tabelle",
+    "pastePlaceholder": "JSON (Objekt, Array oder Objekt mit Array) oder Tabellenzeilen mit Kopfzeile (aus Excel oder Calc kopierte Zellen oder CSV) hier einfügen…",
     "orFile": "oder Datei wählen",
-    "invalidJson": "Weder gültiges JSON noch CSV mit Kopfzeile",
+    "invalidJson": "Weder gültiges JSON noch Tabelle mit Kopfzeile",
     "noArray": "Kein Datensatz-Array in diesem JSON gefunden",
     "arrayRoot": "Quell-Array",
     "labelTemplate": "Bezeichnungsvorlage",

@@ -36,7 +36,7 @@
   },
   "import": {
     "title": "Importa un'fascicolo",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importa in",
@@ -54,7 +54,7 @@
     "successEvents": "{{count}} evento/i importato/i",
     "successAssets": "{{count}} file importato/i",
     "error": "Errore di importazione",
-    "unknownFormat": "Formato file non riconosciuto. Formati supportati: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
+    "unknownFormat": "Formato file non riconosciuto. Formati supportati: ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Errore sconosciuto",
     "csvTemplate": {
       "title": "Modello CSV ZeroNeurone",
@@ -102,7 +102,14 @@
     "encryptedPrompt": "File cifrato: inserisci la password per importarlo.",
     "decrypting": "Decifratura…",
     "wrongPassword": "Password errata",
-    "invalidEncryptedFile": "File cifrato non valido o danneggiato"
+    "invalidEncryptedFile": "File cifrato non valido o danneggiato",
+    "sheet": {
+      "title": "Foglio da importare",
+      "rows_one": "{{count}} riga",
+      "rows_other": "{{count}} righe",
+      "empty": "Nessun foglio contiene dati.",
+      "unreadable": "Cartella di lavoro illeggibile (atteso XLSX o ODS)."
+    }
   },
   "export": {
     "progress": {
@@ -743,13 +750,13 @@
     "useSecurityKey": "Usa una chiave di sicurezza"
   },
   "importJsonMapping": {
-    "entryTitle": "Mappa un JSON o un CSV",
-    "entryDescription": "Incolla JSON o CSV e collega i suoi campi agli elementi",
-    "title": "Importa JSON o CSV (mappatura)",
-    "pasteLabel": "JSON o CSV da importare",
-    "pastePlaceholder": "Incolla qui il tuo JSON (oggetto, array o oggetto contenente un array) o il tuo CSV (con la riga di intestazione)…",
+    "entryTitle": "Mappa un JSON o un foglio di calcolo",
+    "entryDescription": "Incolla o scegli un JSON o un foglio di calcolo (CSV, XLSX, ODS) e collega i suoi campi agli elementi",
+    "title": "Importa JSON o foglio di calcolo (mappatura)",
+    "pasteLabel": "JSON o foglio di calcolo da importare",
+    "pastePlaceholder": "Incolla qui il tuo JSON (oggetto, array o oggetto contenente un array) o righe di un foglio di calcolo con intestazione (celle copiate da Excel o Calc, o CSV)…",
     "orFile": "o scegli un file",
-    "invalidJson": "Né JSON valido né CSV con intestazione",
+    "invalidJson": "Né JSON valido né foglio di calcolo con intestazione",
     "noArray": "Nessun array di record trovato in questo JSON",
     "arrayRoot": "Array di origine",
     "labelTemplate": "Modello di etichetta",

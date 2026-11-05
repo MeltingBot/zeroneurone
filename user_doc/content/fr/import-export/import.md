@@ -90,11 +90,11 @@ enquete.zip
 
 ---
 
-### JSON ou CSV par mapping
+### JSON ou tableur par mapping
 
 Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) ou un **CSV quelconque** qui ne suit pas le schéma natif, un assistant de **mapping** permet de relier ses champs aux éléments ZeroNeurone.
 
-**Ouvrir :** import → *Mapper un JSON ou un CSV* (coller le texte ou choisir un fichier `.json`, `.csv` ou `.tsv`) — depuis un dossier, ou depuis la page d'accueil, où l'entrée crée un nouveau dossier (ou ouvre celui choisi dans *Importer dans*) et y affiche l'assistant — ou **coller (Ctrl+V) du JSON brut directement sur le canvas**. Un format reconnu (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) est importé normalement ; un JSON générique ouvre le mapping.
+**Ouvrir :** import → *Mapper un JSON ou un tableur* (coller le texte, ou des cellules copiées depuis Excel ou Calc, ou choisir un fichier `.json`, `.csv`, `.tsv`, `.xlsx` ou `.ods` ; d'un classeur on choisit la feuille, voir [Tableur](#tableur-xlsx-ods)) — depuis un dossier, ou depuis la page d'accueil, où l'entrée crée un nouveau dossier (ou ouvre celui choisi dans *Importer dans*) et y affiche l'assistant — ou **coller (Ctrl+V) du JSON brut directement sur le canvas**. Un format reconnu (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) est importé normalement ; un JSON générique ouvre le mapping.
 
 Un CSV importé sans les colonnes du format natif (voir [CSV](#csv)) ouvre aussi le mapping, y compris depuis la page d'accueil : le dossier est créé puis s'ouvre sur l'assistant. Si l'import est abandonné (assistant fermé ou placement annulé) alors que ce nouveau dossier est encore vide, il est supprimé et l'on revient à l'accueil ; un dossier existant n'est jamais touché. Le CSV devient un tableau nommé d'après le fichier : chaque ligne est un enregistrement, chaque colonne un champ. Le séparateur (`,`, `;` ou tabulation) est détecté ; toutes les valeurs sont lues comme du texte.
 
@@ -169,7 +169,7 @@ L'import se fait en un seul lot **annulable** (Ctrl+Z).
 
 **Import tabulaire** d'éléments et liens.
 
-Un CSV est importé directement s'il suit le format natif : une colonne `type` qui ne contient que `element`, `lien`/`link` ou `event`, ou, sans colonne `type`, une colonne `label` (ou `nom`, `name`), ou les deux colonnes d'un lien (`de`/`vers`, `from`/`to`). Tout autre CSV, par exemple l'export d'un autre outil, ouvre l'assistant de [mapping](#json-ou-csv-par-mapping), où l'on choisit le libellé et le rôle de chaque colonne ; le mapping peut être enregistré comme modèle et se repropose pour un CSV aux mêmes colonnes.
+Un CSV est importé directement s'il suit le format natif : une colonne `type` qui ne contient que `element`, `lien`/`link` ou `event`, ou, sans colonne `type`, une colonne `label` (ou `nom`, `name`), ou les deux colonnes d'un lien (`de`/`vers`, `from`/`to`). Tout autre CSV, par exemple l'export d'un autre outil, ouvre l'assistant de [mapping](#json-ou-tableur-par-mapping), où l'on choisit le libellé et le rôle de chaque colonne ; le mapping peut être enregistré comme modèle et se repropose pour un CSV aux mêmes colonnes.
 
 **Nombres :** une colonne dont toutes les valeurs sont des nombres donne des propriétés de type **nombre** (triables et comparables comme des nombres) ; la virgule décimale est acceptée (`12,5`). Restent du texte les valeurs qui ressemblent seulement à des nombres : zéro en tête (téléphones, codes postaux, identifiants), espaces (`06 39 98 33 17`), plus de 12 chiffres (IMEI, IMSI, numéros de compte). Une colonne dont les virgules peuvent séparer des milliers (`1,234`, `25,000`, ou des virgules à côté de points décimaux) reste aussi du texte, plutôt que de donner des nombres faux. Dans le mapping, la cible **Propriété (nombre)** peut être choisie à la main.
 
@@ -246,6 +246,17 @@ Menu **⋯** → **Importer** → **Télécharger le modèle CSV**
 
 
 ---
+
+### Tableur (XLSX, ODS)
+
+Un classeur Excel (`.xlsx`, `.xlsm`) ou LibreOffice / OpenOffice Calc (`.ods`) est importé comme le [CSV](#csv) d'une de ses feuilles : ses colonnes natives l'importent directement, sinon il ouvre l'assistant de [mapping](#json-ou-tableur-par-mapping).
+
+- **Choix de la feuille :** quand plusieurs feuilles contiennent des données (un en-tête et au moins une ligne), une fenêtre les liste avec leur nombre de lignes ; un clic choisit la feuille. Les feuilles vides ne sont pas proposées ; une seule feuille remplie est prise sans question. Pour importer plusieurs feuilles, recommencez l'import pour chacune.
+- **Nom :** le dossier créé, ou la source des éléments, porte le nom du classeur suivi de celui de la feuille (`Enquête - Appels`).
+- **Première ligne :** elle donne les noms de colonnes. Les cellules fusionnées, formules (seul leur résultat est lu), commentaires et mises en forme ne sont pas importés.
+- **Dates et heures :** une cellule au format date est lue comme une date (`2026-11-05 14:32`), à l'heure affichée par le tableur, sans conversion de fuseau.
+- **Nombres affichés autrement :** quand le format d'une cellule change ses chiffres ou son sens, c'est ce qu'affiche le tableur qui est importé : un code postal `01000`, un numéro `06 12 34 56 78`, un pourcentage `15 %`. Sinon le nombre est importé tel qu'il est enregistré, sans séparateur de milliers ni devise (`1 234,56 €` devient `1234.56`), pour rester un nombre.
+- Un ancien classeur `.xls` (Excel 97-2003) n'est pas lu : enregistrez-le d'abord en `.xlsx`.
 
 ### GraphML
 

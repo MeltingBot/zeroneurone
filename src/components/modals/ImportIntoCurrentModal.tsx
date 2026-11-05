@@ -7,6 +7,7 @@ import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
 import { previewFECGraph } from '../../services/importFEC';
 import { useImportOptionSteps } from '../../hooks/useImportOptionSteps';
+import { useSpreadsheetToCsv } from '../../hooks/useSpreadsheetToCsv';
 import { FECOptionsPanel } from './FECOptionsPanel';
 import { GeoJSONOptionsPanel } from './GeoJSONOptionsPanel';
 import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
@@ -140,13 +141,25 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
-  const processFile = useCallback(async (file: File) => {
+  const { toCsv, picker: sheetPicker } = useSpreadsheetToCsv();
+
+  const processFile = useCallback(async (chosen: File) => {
     if (!currentDossier) return;
 
     const dossierId = currentDossier.id;
 
     setIsProcessing(true);
     setError(null);
+
+    // A workbook (XLSX, ODS) is imported as the CSV of the sheet chosen
+    const converted = await toCsv(chosen);
+    if (!('file' in converted)) {
+      if ('error' in converted) setError(converted.error);
+      setIsProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    const file = converted.file;
 
     try {
       // ANB (binary) → import directly without placement mode
@@ -297,7 +310,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         fileInputRef.current.value = '';
       }
     }
-  }, [currentDossier, enterImportPlacementMode, onClose, onOpenJsonMapping, t, requestFitView, loadDossier, openOptionStep]);
+  }, [currentDossier, enterImportPlacementMode, onClose, onOpenJsonMapping, t, requestFitView, loadDossier, openOptionStep, toCsv]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -446,7 +459,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
+            accept=".zip,.json,.csv,.xlsx,.xlsm,.ods,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
             onChange={handleFileSelect}
             className="hidden"
           />
@@ -621,6 +634,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
           )}
         </div>
       </div>
+      {sheetPicker}
     </>
   );
 }
