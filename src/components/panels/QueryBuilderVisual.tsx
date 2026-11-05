@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
+import { editQuery } from '../../stores/filterQuerySync';
 import { useDossierStore } from '../../stores/dossierStore';
 import { RESERVED_FIELDS, OPERATOR_SYMBOLS } from '../../services/query/types';
 import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot, QueryWithin } from '../../services/query/types';
@@ -528,7 +529,8 @@ function VisualGroup({ node, onChange, onRemove, depth, availableFields, availab
 export function QueryBuilderVisual() {
   const { t } = useTranslation('panels');
   const currentAst = useQueryStore((s) => s.currentAst);
-  const setAst = useQueryStore((s) => s.setAst);
+  // Built here: the filters' query, once changed, is taken over (filterQuerySync)
+  const setAst = useCallback((ast: QueryNode | null) => editQuery(() => useQueryStore.getState().setAst(ast)), []);
   const elements = useDossierStore((s) => s.elements);
   const links = useDossierStore((s) => s.links);
 

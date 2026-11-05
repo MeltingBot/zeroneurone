@@ -407,6 +407,11 @@
     },
     "evaluation": {
       "hint": "Widoczne pozostają tylko elementy ocenione w aktywnym modelu wybranym kodem."
+    },
+    "query": {
+      "open": "Otwórz w Zapytaniu",
+      "outside": "Poza zapytaniem: {{filters}}",
+      "period": "Okres"
     }
   },
   "query": {

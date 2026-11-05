@@ -64,6 +64,13 @@ Filters are cumulative (logical AND): an element must satisfy **all** active cri
 
 ### Filters and Query
 
+The filters write themselves in [ZNQuery]({{< relref "queries" >}}) in the **Query** panel when it is empty: checking the tag "Person" writes `type = "element" AND tag = "Person"`. The query is shown under the active filters; a click opens it in the Query panel, in text mode. Using the filters teaches the syntax, and their query is a starting point to go further (links, `WITHIN`, operators).
+
+- `type = "element"` comes first: the filters apply to elements, a query also finds links.
+- Tags, property, confidence or grading and geolocation have an exact equivalent. The text search (which also reads property names), the period and the tabs filter have none: they stay out of the query, flagged by "Not in the query", and filter the views as before. A tag (or property name) differing only by case, or a property left empty on an element, puts the matching filter out of the query: the query ignores case and does not count an empty value.
+- Editing or clearing this query in the Query panel takes it over: the filters it said are unchecked, the query says them now.
+- Another query (typed, focus, matrix, view, saved query) is never changed by the filters, which narrow the views beside it. Once that query is cleared, the filters write theirs again.
+
 A query applied on the canvas (**Query** panel) narrows the views on top of the filters: an element is shown when both keep it. The Filters panel header counts these shown elements; when both are active, a line gives each one's share ("Filters 598 · Query 44"). The query appears as a **Query** badge in the active filters; its cross takes the query off the views without clearing it.
 
 **Clear all** takes the filters and the query off the views (the query stays in its panel).

@@ -249,6 +249,8 @@ Les boutons de mode se trouvent en haut du panneau requêtes, à côté du compt
 
 Quand des filtres du panneau **Filtres** sont aussi actifs, les vues n'affichent que les éléments gardés par les deux : le compteur l'indique (« 18 éléments, 0 liens → 12 affiché(s) »). Pour cacher les éléments hors filtre au lieu de les atténuer, utilisez **Masquer** dans le panneau Filtres (voir [Filtres et vues]({{< relref "filters-views" >}})).
 
+Quand ce panneau est vide, les filtres y écrivent leur propre requête (`type = "element" AND tag = "Personne"`) : modifiez-la pour aller plus loin, elle reprend alors les filtres qu'elle disait (voir [Filtres et requête]({{< relref "filters-views" >}})).
+
 Quand la requête trouve des liens, le filtre canvas garde en évidence les éléments situés aux deux extrémités des liens trouvés et atténue le reste.
 
 ### Actions sur les résultats

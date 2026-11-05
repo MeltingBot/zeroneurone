@@ -407,6 +407,11 @@
     },
     "evaluation": {
       "hint": "Eredu aktiboan hautatutako kode batekin kalifikatutako elementuak soilik geratzen dira ikusgai."
+    },
+    "query": {
+      "open": "Ireki Kontsultan",
+      "outside": "Kontsultatik kanpo: {{filters}}",
+      "period": "Aldia"
     }
   },
   "query": {

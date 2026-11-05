@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
+import { editQuery } from '../../stores/filterQuerySync';
 import { useDossierStore } from '../../stores/dossierStore';
 import { getAutocompleteSuggestions, type AutocompleteSuggestion } from '../../services/query';
 import { AlertCircle } from 'lucide-react';
@@ -9,7 +10,8 @@ export function QueryBuilderText() {
   const { t } = useTranslation('panels');
   const currentText = useQueryStore((s) => s.currentText);
   const parseError = useQueryStore((s) => s.parseError);
-  const setText = useQueryStore((s) => s.setText);
+  // Typed here: the filters' query, once changed, is taken over (filterQuerySync)
+  const setText = useCallback((text: string) => editQuery(() => useQueryStore.getState().setText(text)), []);
   const elements = useDossierStore((s) => s.elements);
   const links = useDossierStore((s) => s.links);
 

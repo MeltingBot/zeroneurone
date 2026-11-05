@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStore, withLinkEnds } from '../../stores/queryStore';
+import { editQuery } from '../../stores/filterQuerySync';
 import { useDossierStore } from '../../stores/dossierStore';
 import { useViewStore } from '../../stores/viewStore';
 import { useSelectionStore } from '../../stores/selectionStore';
@@ -81,8 +82,9 @@ export function QueryPanel() {
 
   const showTable = results && (outputMode === 'table' || outputMode === 'both');
 
+  // Cleared here: the filters said by the filters' query go with it
   const handleClear = useCallback(() => {
-    clear();
+    editQuery(clear);
   }, [clear]);
 
   const handleToggleOutput = useCallback((mode: 'canvas' | 'table') => {

@@ -11,6 +11,7 @@ import { useViewStore } from './viewStore';
 import { useTabStore } from './tabStore';
 import { assertDossierWritable } from '../utils/dossierLock';
 import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
+import { sameQuery } from '../utils/viewFiltersQuery';
 
 interface QueryState {
   // Current query
@@ -38,6 +39,10 @@ interface QueryState {
   // Table columns
   tableColumns: string[];
 
+  /** The query the filters panel wrote (viewFiltersToQuery) while it is the
+   *  query (possibly being edited); null once another query took its place */
+  filterPart: QueryNode | null;
+
   // Recent queries of the open dossier (in-session history, max 5)
   recentQueries: string[];
   /** Recent queries of the other dossiers opened this session, kept apart */
@@ -46,6 +51,8 @@ interface QueryState {
   // Actions
   setText: (text: string) => void;
   setAst: (ast: QueryNode | null) => void;
+  /** Write the filters' query, when the query is empty or already theirs */
+  setFilterPart: (part: QueryNode | null) => void;
   setEditorMode: (mode: 'visual' | 'text') => void;
   setOutputMode: (mode: 'canvas' | 'table' | 'both' | 'none') => void;
   execute: () => void;
@@ -163,12 +170,14 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   matchingLinkIds: new Set(),
   savedQueries: [],
   tableColumns: ['label', 'tags', 'confidence', 'date'],
+  filterPart: null,
   recentQueries: [],
   recentByDossier: {},
 
   setText: (text: string) => {
     const result = text.trim() ? parseQuery(text) : { ast: null, error: null };
     set({
+      filterPart: null,
       currentText: text,
       currentAst: result.ast,
       parseError: result.error,
@@ -187,6 +196,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   setAst: (ast: QueryNode | null) => {
     const text = ast ? serializeQuery(ast) : '';
     set({
+      filterPart: null,
       currentAst: ast,
       currentText: text,
       parseError: null,
@@ -196,6 +206,22 @@ export const useQueryStore = create<QueryState>((set, get) => ({
       if (get().outputMode === 'none') {
         set({ outputMode: 'canvas' });
       }
+      get().execute();
+    } else {
+      set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set(), isFilterActive: false });
+    }
+  },
+
+  setFilterPart: (part) => {
+    const { currentAst, currentText, filterPart } = get();
+    // Another query (typed, focus, saved…) is not replaced: the filters keep
+    // narrowing the views beside it, as they always did
+    if (filterPart === null && currentText.trim() !== '') return;
+    if (sameQuery(part, filterPart) && sameQuery(part, currentAst)) return;
+    // As setAst, the query marked as the filters' before it runs (not a recent query)
+    set({ filterPart: part, currentAst: part, currentText: part ? serializeQuery(part) : '', parseError: null });
+    if (part) {
+      if (get().outputMode === 'none') set({ outputMode: 'canvas' });
       get().execute();
     } else {
       set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set(), isFilterActive: false });
@@ -231,10 +257,11 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     const results = scopeToTab(evaluateQuery(currentAst, elements, links));
     const isActive = outputMode === 'canvas' || outputMode === 'both';
 
-    // Track in recent queries (deduplicate, max 5)
+    // Track in recent queries (deduplicate, max 5); not the filters' query,
+    // which the filters panel gives back
     const trimmed = currentText.trim();
     const recentUpdate: Partial<{ recentQueries: string[] }> = {};
-    if (trimmed) {
+    if (trimmed && get().filterPart === null) {
       const { recentQueries } = get();
       if (recentQueries[0] !== trimmed) {
         recentUpdate.recentQueries = [trimmed, ...recentQueries.filter(q => q !== trimmed)].slice(0, 5);
@@ -308,6 +335,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     set({
       currentText: '',
       currentAst: null,
+      filterPart: null,
       parseError: null,
       results: null,
       isFilterActive: false,
@@ -347,6 +375,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   applySavedQuery: (query: SavedQuery) => {
     const ast = query.ast as QueryNode;
     set({
+      filterPart: null,
       currentAst: ast,
       // Text rebuilt from the saved structure: a query saved before groups
       // were always parenthesized shows them too (same results either way)

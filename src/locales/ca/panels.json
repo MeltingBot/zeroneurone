@@ -407,6 +407,11 @@
     },
     "evaluation": {
       "hint": "Només queden visibles els elements valorats en el model actiu amb un codi seleccionat."
+    },
+    "query": {
+      "open": "Obre a Consulta",
+      "outside": "Fora de la consulta: {{filters}}",
+      "period": "Període"
     }
   },
   "query": {

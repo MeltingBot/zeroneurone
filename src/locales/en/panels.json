@@ -407,6 +407,11 @@
     },
     "evaluation": {
       "hint": "Only elements graded in the active model with a selected code stay visible."
+    },
+    "query": {
+      "open": "Open in Query",
+      "outside": "Not in the query: {{filters}}",
+      "period": "Period"
     }
   },
   "query": {
