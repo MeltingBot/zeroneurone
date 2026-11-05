@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 
 import { useSelectionStore } from '../../stores';
 import type { TimelineItem } from './timelineItems';
-import { MIN_ZOOM, MAX_ZOOM, ROW_HEIGHT, ROW_GAP } from './timelineConstants';
+import { MIN_ZOOM, MAX_ZOOM, ROW_HEIGHT, ROW_GAP, fitZoom } from './timelineConstants';
 
 // Selection held when the timeline was last left (the store replaces the Set
 // on every change, so identity tells whether it changed in another view)
@@ -149,7 +149,7 @@ export function useTimelineNavigation({
     const totalDays = (timeBounds.max.getTime() - timeBounds.min.getTime()) / (24 * 60 * 60 * 1000);
     // Add 10% padding on each side
     const paddedDays = totalDays * 1.2;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, containerWidth / paddedDays));
+    const newZoom = fitZoom(containerWidth, paddedDays);
     // Start 10% before min
     const paddingMs = (timeBounds.max.getTime() - timeBounds.min.getTime()) * 0.1;
     setZoom(newZoom);
@@ -232,7 +232,7 @@ export function useTimelineNavigation({
     const totalDays = (timeBounds.max.getTime() - timeBounds.min.getTime()) / (24 * 60 * 60 * 1000);
     if (totalDays <= 0) return;
     const paddedDays = totalDays * 1.2;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, containerWidth / paddedDays));
+    const newZoom = fitZoom(containerWidth, paddedDays);
     const paddingMs = (timeBounds.max.getTime() - timeBounds.min.getTime()) * 0.1;
     setZoom(newZoom);
     setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
