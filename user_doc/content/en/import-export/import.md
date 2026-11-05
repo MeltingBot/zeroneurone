@@ -90,11 +90,11 @@ dossier.zip
 
 ---
 
-### JSON or CSV via mapping
+### JSON or spreadsheet via mapping
 
 For **arbitrary JSON** (an API export, another tool's output…) or **any CSV** that doesn't follow the native schema, a **mapping** assistant connects its fields to ZeroNeurone elements.
 
-**Open it:** import → *Map a JSON or CSV* (paste the text or pick a `.json`, `.csv` or `.tsv` file) — from a dossier, or from the home page, where the entry creates a new dossier (or opens the one picked in *Import into*) and shows the assistant there — or **paste (Ctrl+V) raw JSON directly onto the canvas**. A recognized format (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) is imported normally; generic JSON opens the mapper.
+**Open it:** import → *Map a JSON or spreadsheet* (paste the text, or cells copied from Excel or Calc, or pick a `.json`, `.csv`, `.tsv`, `.xlsx` or `.ods` file; for a workbook, pick the sheet, see [Spreadsheet](#spreadsheet-xlsx-ods)) — from a dossier, or from the home page, where the entry creates a new dossier (or opens the one picked in *Import into*) and shows the assistant there — or **paste (Ctrl+V) raw JSON directly onto the canvas**. A recognized format (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) is imported normally; generic JSON opens the mapper.
 
 A CSV imported without the native format's columns (see [CSV](#csv)) opens the mapper too, from the home page as well: the dossier is created, then opens on the assistant. If the import is given up (assistant closed or placement cancelled) while this new dossier is still empty, it is deleted and you are back on the home page; an existing dossier is never touched. The CSV becomes a table named after the file: each row is a record, each column a field. The delimiter (`,`, `;` or tab) is detected; every value is read as text.
 
@@ -169,7 +169,7 @@ The import happens as a single **undoable** batch (Ctrl+Z).
 
 **Tabular import** of elements and links.
 
-A CSV is imported directly when it follows the native format: a `type` column holding only `element`, `lien`/`link` or `event`, or, without a `type` column, a `label` column (or `nom`, `name`), or both columns of a link (`de`/`vers`, `from`/`to`). Any other CSV, another tool's export for instance, opens the [mapping](#json-or-csv-via-mapping) assistant, where you pick the label and the role of each column; the mapping can be saved as a template and is offered again for a CSV with the same columns.
+A CSV is imported directly when it follows the native format: a `type` column holding only `element`, `lien`/`link` or `event`, or, without a `type` column, a `label` column (or `nom`, `name`), or both columns of a link (`de`/`vers`, `from`/`to`). Any other CSV, another tool's export for instance, opens the [mapping](#json-or-spreadsheet-via-mapping) assistant, where you pick the label and the role of each column; the mapping can be saved as a template and is offered again for a CSV with the same columns.
 
 **Numbers:** a column whose every value is a number gives **number** properties (sorted and compared as numbers); a decimal comma is accepted (`12,5`). Values that only look like numbers stay text: a leading zero (phone numbers, postcodes, ids), spaces (`06 39 98 33 17`), more than 12 digits (IMEI, IMSI, account numbers). A column whose commas may separate thousands (`1,234`, `25,000`, or commas next to decimal points) also stays text rather than giving wrong numbers. In the mapping, the **Property (number)** target can be picked by hand.
 
@@ -246,6 +246,17 @@ Menu **⋯** → **Import** → **Download CSV template**
 
 
 ---
+
+### Spreadsheet (XLSX, ODS)
+
+An Excel workbook (`.xlsx`, `.xlsm`) or a LibreOffice / OpenOffice Calc one (`.ods`) is imported as the [CSV](#csv) of one of its sheets: native columns import it at once, otherwise it opens the [mapping](#json-or-spreadsheet-via-mapping) assistant.
+
+- **Sheet choice:** when several sheets hold data (a header and at least one row), a window lists them with their row count; a click picks the sheet. Empty sheets are not offered; a single sheet with data is taken without asking. To import several sheets, run the import once per sheet.
+- **Name:** the dossier created, or the source of the elements, is named after the workbook and the sheet (`Investigation - Calls`).
+- **First row:** it gives the column names. Merged cells, formulas (only their result is read), comments and formatting are not imported.
+- **Dates and times:** a cell formatted as a date is read as a date (`2026-11-05 14:32`), at the time the spreadsheet shows, with no time zone conversion.
+- **Numbers shown differently:** when a cell's format changes its digits or its meaning, what the spreadsheet shows is imported: a postcode `01000`, a phone number `06 12 34 56 78`, a percentage `15 %`. Otherwise the number is imported as stored, without thousands separator or currency (`1,234.56 €` becomes `1234.56`), so that it stays a number.
+- An old `.xls` workbook (Excel 97-2003) is not read: save it as `.xlsx` first.
 
 ### GraphML
 

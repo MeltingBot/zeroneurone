@@ -36,7 +36,7 @@
   },
   "import": {
     "title": "Espediente inportatu",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Hona inportatu",
@@ -54,7 +54,7 @@
     "successEvents": "{{count}} gertaera inportatuta",
     "successAssets": "{{count}} fitxategi inportatuta",
     "error": "Inportazio errorea",
-    "unknownFormat": "Fitxategi formatua ez da ezagutzen. Onartutako formatuak: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
+    "unknownFormat": "Fitxategi formatua ez da ezagutzen. Onartutako formatuak: ZIP, JSON, CSV, XLSX/ODS, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Errore ezezaguna",
     "csvTemplate": {
       "title": "ZeroNeurone CSV txantiloia",
@@ -102,7 +102,14 @@
     "encryptedPrompt": "Fitxategi zifratua: idatzi pasahitza inportatzeko.",
     "decrypting": "Deszifratzen…",
     "wrongPassword": "Pasahitz okerra",
-    "invalidEncryptedFile": "Fitxategi zifratu baliogabea edo hondatua"
+    "invalidEncryptedFile": "Fitxategi zifratu baliogabea edo hondatua",
+    "sheet": {
+      "title": "Inportatzeko orria",
+      "rows_one": "{{count}} errenkada",
+      "rows_other": "{{count}} errenkada",
+      "empty": "Ez dago daturik duen orririk.",
+      "unreadable": "Liburu irakurtezina (XLSX edo ODS espero da)."
+    }
   },
   "export": {
     "progress": {
@@ -743,13 +750,13 @@
     "useSecurityKey": "Erabili segurtasun-gako bat"
   },
   "importJsonMapping": {
-    "entryTitle": "Mapeatu JSON edo CSV bat",
-    "entryDescription": "Itsatsi JSON edo CSV eta lotu bere eremuak elementuekin",
-    "title": "Inportatu JSON edo CSV (mapaketa)",
-    "pasteLabel": "Inportatzeko JSON edo CSV",
-    "pastePlaceholder": "Itsatsi hemen zure JSON (objektua, matrizea edo matrizea duen objektua) edo CSV (goiburu-lerroarekin)…",
+    "entryTitle": "Mapeatu JSON edo kalkulu-orri bat",
+    "entryDescription": "Itsatsi edo aukeratu JSON edo kalkulu-orri bat (CSV, XLSX, ODS) eta lotu bere eremuak elementuekin",
+    "title": "Inportatu JSON edo kalkulu-orria (mapaketa)",
+    "pasteLabel": "Inportatzeko JSON edo kalkulu-orria",
+    "pastePlaceholder": "Itsatsi hemen zure JSON (objektua, matrizea edo matrizea duen objektua) edo kalkulu-orri baten errenkadak goiburuarekin (Excel edo Calc-etik kopiatutako gelaxkak, edo CSV)…",
     "orFile": "edo aukeratu fitxategi bat",
-    "invalidJson": "Ez da JSON baliozkoa ez goiburudun CSV",
+    "invalidJson": "Ez da JSON baliozkoa ez goiburudun kalkulu-orria",
     "noArray": "Ez da erregistro-zerrendarik aurkitu JSON honetan",
     "arrayRoot": "Jatorri-zerrenda",
     "labelTemplate": "Etiketa-txantiloia",
