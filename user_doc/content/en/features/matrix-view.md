@@ -5,13 +5,21 @@ weight: 8
 
 # Matrix View
 
-Display all dossier elements in a sortable, filterable spreadsheet.
+Display the dossier's elements, or its links, in a sortable, filterable spreadsheet.
 
 ---
 
 ## Access
 
 Switch to matrix view using the **view selector** in the top toolbar (table icon) or press **4**.
+
+---
+
+## Elements and links
+
+The **Elements / Links** choice, at the start of the toolbar, switches the rows of the table. Each table keeps its sort, filters and columns when you switch back and forth.
+
+The links table shows the links whose two ends are displayed (active tab, hidden elements). Its columns: **Label**, **From**, **To**, **Start date**, **End date**, **Direction**, then Type, Confidence, Source and one column per link property. A link is dimmed when either end is. Label, type, confidence, source and properties are edited as for elements; the ends, dates and direction are edited on the canvas. Querying from a cell and **All views** apply to elements only.
 
 ---
 
@@ -73,13 +81,14 @@ Selected rows are highlighted. Use **Ctrl+C** to copy selected rows as tab-separ
 
 ---
 
-## CSV export
+## Export
 
-Click the **download icon** in the toolbar to export the current view as CSV.
+The **export icon** in the toolbar offers:
 
-- Respects active column visibility, sort order, and filters
-- File name: `dossier-name_matrice_ddMMyyyyHHmmss.csv`
-- UTF-8 encoding with BOM for Excel compatibility
+- **CSV (this table)**: the table shown, elements or links. File name: `dossier-name_matrice_ddMMyyyyHHmmss.csv` (`_matrice-liens_` for links), UTF-8 with BOM for Excel
+- **XLSX workbook** (Excel) or **ODS workbook** (LibreOffice / OpenOffice Calc): one file with two sheets, **Elements** and **Links**. Numbers are numbers and dates are dates (hour as shown, no time zone), to sort and compute in the spreadsheet; the header row is frozen and filterable
+
+Each export follows the column visibility, sort and filters of its table. A links table never opened is exported with all its columns, unfiltered.
 
 ---
 
@@ -87,9 +96,10 @@ Click the **download icon** in the toolbar to export the current view as CSV.
 
 | Control | Function |
 |---------|----------|
-| Element count | Shows filtered / total elements and property count |
+| Elements / Links | Choose the rows of the table |
+| Count | Shows filtered / total rows and property count |
 | Columns | Toggle column visibility (show all / hide all) |
-| Export | Download CSV |
+| Export | CSV of the table, or XLSX / ODS workbook of both tables |
 | All views | Apply the column filters to the other views (see below) |
 | Reset | Restore default sort, columns, and filters |
 | Undo/Redo | Undo/redo last action |
