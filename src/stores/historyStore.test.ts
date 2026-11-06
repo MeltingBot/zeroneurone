@@ -365,6 +365,21 @@ describe('element merge', () => {
     );
   });
 
+  it('waits for the undo to finish before a redo pressed right after it', async () => {
+    push({ type: 'merge-elements', undo: { snapshot }, redo: { snapshot } });
+    const order: string[] = [];
+    dossierStore.updateElement.mockImplementationOnce(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      order.push('undo done');
+    });
+    dossierStore.mergeElements.mockImplementationOnce(async () => { order.push('redo'); });
+
+    // Both pressed at once, neither awaited before the other
+    await Promise.all([history().undo(), history().redo()]);
+
+    expect(order).toEqual(['undo done', 'redo']);
+  });
+
   it('replays the merge on redo', async () => {
     push({ type: 'merge-elements', undo: { snapshot }, redo: { snapshot } });
     await history().undo();

@@ -1958,6 +1958,19 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
 
+    // Update Zustand FIRST (synchronous), as other local operations do: what
+    // comes right after (a redo after an undo) finds these elements. Waiting
+    // for the Y.Doc observer is not enough: a local operation in between makes
+    // _syncFromYDoc skip parsing and re-sync only 500 ms later.
+    // An element or link already there (same id) is replaced, not doubled.
+    localOpPending = true;
+    const pastedElementIds = new Set(newElements.map((el) => el.id));
+    const pastedLinkIds = new Set(newLinks.map((link) => link.id));
+    set((state) => ({
+      elements: [...state.elements.filter((el) => !pastedElementIds.has(el.id)), ...newElements],
+      links: [...state.links.filter((link) => !pastedLinkIds.has(link.id)), ...newLinks],
+    }));
+
     ydoc.transact(() => {
       for (const element of newElements) {
         const ymap = elementToYMap(element);
