@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { Element } from '../types';
-import { mergePreview, mergeChoices, keptValues, tagChoiceId, propertyChoiceId } from './mergePreview';
+import type { Element, Link } from '../types';
+import { mergePreview, mergeChoices, keptValues, tagChoiceId, propertyChoiceId, sameLinkContent } from './mergePreview';
 
 const el = (id: string, notes: string, props: [string, string][]) =>
   ({ id, notes, properties: props.map(([key, value]) => ({ key, value, type: 'text' })) }) as unknown as Element;
@@ -53,5 +53,27 @@ describe('mergeChoices', () => {
     expect(properties.map((p) => [p.key, p.value instanceof Date ? 'date' : p.value])).toEqual([
       ['tel', '0601'], ['naissance', 'date'], ['ville', 'Lyon'], ['email', 'a@b.fr'],
     ]);
+  });
+});
+
+describe('sameLinkContent', () => {
+  const link = (over: Partial<Link> = {}) => ({
+    fromId: 'a', toId: 'c', direction: 'forward', label: 'appel', date: null, dateRange: null, properties: [], ...over,
+  }) as Link;
+
+  it('is the same link only with the same ends, direction, label, dates and properties', () => {
+    expect(sameLinkContent(link(), link())).toBe(true);
+    expect(sameLinkContent(link(), link({ label: 'virement' }))).toBe(false);
+    expect(sameLinkContent(link(), link({ toId: 'd' }))).toBe(false);
+    expect(sameLinkContent(link(), link({ fromId: 'c', toId: 'a' }))).toBe(false);
+    expect(sameLinkContent(link(), link({ dateRange: { start: new Date(2024, 0, 1), end: new Date(2024, 0, 1) } }))).toBe(false);
+    expect(sameLinkContent(link(), link({ properties: [{ key: 'montant', value: 20 }] }))).toBe(false);
+  });
+
+  it('takes the ends either way when neither link is directed, and equal dates as equal', () => {
+    expect(sameLinkContent(link({ direction: 'none' }), link({ direction: 'none', fromId: 'c', toId: 'a' }))).toBe(true);
+    const day = (d: number) => ({ start: new Date(2024, 0, d), end: new Date(2024, 0, d) });
+    expect(sameLinkContent(link({ dateRange: day(1) }), link({ dateRange: day(1) }))).toBe(true);
+    expect(sameLinkContent(link({ dateRange: day(1) }), link({ dateRange: day(2) }))).toBe(false);
   });
 });

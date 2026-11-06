@@ -282,11 +282,11 @@ Before you confirm, the window warns about the notes that will be put end to end
 | **Confidence** | Highest value |
 | **Grading** | The kept element's, otherwise the other element's |
 | **Source** | Combined if different, one per line |
-| **Links** | Transferred to the kept element |
+| **Links** | All transferred to the kept element |
 
 ### Duplicate Link Handling
 
-If both elements shared a link to the same third element, the links are merged: labels combined, properties and tags unified.
+Links to a same third element are all kept: several links in parallel may be as many distinct facts (one transfer, one call each). Only a link brought by the merged element that says exactly the same as one of the kept element (same direction, label, dates and properties) is merged with it: their tags are joined, their notes put end to end when they differ.
 
 Direct links between the two merged elements are removed.
 

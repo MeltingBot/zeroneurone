@@ -282,11 +282,11 @@ Avant de confirmer, la fenêtre signale les notes qui seront mises bout à bout 
 | **Confiance** | Valeur la plus haute |
 | **Cotation** | Celle de l'élément conservé, sinon celle de l'autre élément |
 | **Source** | Combinées si différentes, une par ligne |
-| **Liens** | Transférés vers l'élément conservé |
+| **Liens** | Tous transférés vers l'élément conservé |
 
 ### Gestion des liens en doublon
 
-Si des éléments fusionnés partageaient un lien vers le même tiers, les liens sont fusionnés : labels combinés, propriétés et tags unis.
+Les liens vers un même tiers sont tous gardés : plusieurs liens en parallèle peuvent être autant de faits distincts (un virement, un appel chacun). Seul un lien apporté par l'élément fusionné qui dit exactement la même chose qu'un lien de l'élément conservé (même sens, même libellé, mêmes dates, mêmes propriétés) est fusionné avec lui : leurs tags sont unis, leurs notes mises bout à bout si elles diffèrent.
 
 Les liens directs entre éléments fusionnés sont supprimés.
 

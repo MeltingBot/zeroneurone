@@ -36,6 +36,7 @@ import {
   linkRepository,
 } from '../db/repositories';
 import { fileService } from '../services/fileService';
+import { sameLinkContent } from '../utils/mergePreview';
 import { syncService } from '../services/syncService';
 import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
 import { assertNoPluginLock, refuseWrite, retentionExpiresAt, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
@@ -2316,7 +2317,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // --- Compute link retargeting ---
     const linksToRetarget: { id: string; newFromId: string; newToId: string }[] = [];
     const selfLinkIds: string[] = []; // links between target and source → delete
-    const linkDuplicateMap = new Map<string, string[]>(); // "fromId-toId" → linkIds
 
     for (const link of links) {
       let newFromId = link.fromId;
@@ -2334,24 +2334,44 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (newFromId !== link.fromId || newToId !== link.toId) {
         linksToRetarget.push({ id: link.id, newFromId, newToId });
       }
-
-      // Track for dedup
-      const key = `${newFromId}-${newToId}`;
-      if (!linkDuplicateMap.has(key)) linkDuplicateMap.set(key, []);
-      linkDuplicateMap.get(key)!.push(link.id);
     }
 
-    // Identify duplicate link pairs to merge
+    // Exact duplicates only: a link the source brings that says the same as
+    // one the target already has (same ends and direction, label, dates,
+    // properties) is folded into it, one for one. Every other link is kept:
+    // links in parallel may be distinct facts (one transfer, one call each).
     const linksToDelete: string[] = [...selfLinkIds];
     const linksToMergeInto = new Map<string, string[]>(); // keepId → [deleteIds]
+    const movedIds = new Set(linksToRetarget.map(r => r.id));
+    const targetOwn = links.filter(l => !movedIds.has(l.id) && !selfLinkIds.includes(l.id)
+      && (l.fromId === targetId || l.toId === targetId));
+    const twinTaken = new Set<string>();
+    for (const r of linksToRetarget) {
+      const link = links.find(l => l.id === r.id);
+      if (!link) continue;
+      const moved = { ...link, fromId: r.newFromId, toId: r.newToId };
+      const twin = targetOwn.find(o => !twinTaken.has(o.id) && sameLinkContent(o, moved));
+      if (!twin) continue;
+      twinTaken.add(twin.id);
+      linksToMergeInto.set(twin.id, [r.id]);
+      linksToDelete.push(r.id);
+    }
 
-    for (const [, ids] of linkDuplicateMap) {
-      if (ids.length > 1) {
-        const keepId = ids[0];
-        const dupeIds = ids.slice(1);
-        linksToMergeInto.set(keepId, dupeIds);
-        linksToDelete.push(...dupeIds);
+    // What a kept link ends with: the tags of both, the notes of both when
+    // they differ (label, dates and properties are the same by definition)
+    const mergedLinkFields = new Map<string, Pick<Link, 'notes' | 'tags'>>();
+    for (const [keepId, dupeIds] of linksToMergeInto) {
+      const keep = links.find(l => l.id === keepId);
+      if (!keep) continue;
+      let notes = keep.notes;
+      let tags = keep.tags;
+      for (const dupeId of dupeIds) {
+        const dupe = links.find(l => l.id === dupeId);
+        if (!dupe) continue;
+        if (dupe.notes && dupe.notes !== notes) notes = notes ? `${notes}\n---\n${dupe.notes}` : dupe.notes;
+        tags = [...new Set([...tags, ...dupe.tags])];
       }
+      mergedLinkFields.set(keepId, { notes, tags });
     }
 
     // Snapshot everything the merge is about to change, so the caller can make
@@ -2393,37 +2413,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const retargetMap = new Map(linksToRetarget.map(r => [r.id, r]));
 
     set((state) => {
-      // Merge link metadata for duplicates
+      // Kept links take the tags and notes of their exact duplicates
       const linkMap = new Map(state.links.map(l => [l.id, l]));
-
-      // For each kept link, merge metadata from duplicates
-      for (const [keepId, dupeIds] of linksToMergeInto) {
+      for (const [keepId, fields] of mergedLinkFields) {
         const keepLink = linkMap.get(keepId);
-        if (!keepLink) continue;
-        for (const dupeId of dupeIds) {
-          const dupeLink = linkMap.get(dupeId);
-          if (!dupeLink) continue;
-          const mergedLabel = keepLink.label && dupeLink.label && keepLink.label !== dupeLink.label
-            ? `${keepLink.label} / ${dupeLink.label}`
-            : keepLink.label || dupeLink.label;
-          const mergedLinkNotes = keepLink.notes && dupeLink.notes
-            ? `${keepLink.notes}\n---\n${dupeLink.notes}`
-            : keepLink.notes || dupeLink.notes;
-          const mergedLinkTags = [...new Set([...keepLink.tags, ...dupeLink.tags])];
-          const mergedLinkProps = [...keepLink.properties];
-          for (const p of dupeLink.properties) {
-            if (!mergedLinkProps.some(mp => mp.key === p.key && mp.value === p.value)) {
-              mergedLinkProps.push(p);
-            }
-          }
-          linkMap.set(keepId, {
-            ...keepLink,
-            label: mergedLabel,
-            notes: mergedLinkNotes,
-            tags: mergedLinkTags,
-            properties: mergedLinkProps,
-          });
-        }
+        if (keepLink) linkMap.set(keepId, { ...keepLink, ...fields });
       }
 
       return {
@@ -2484,37 +2478,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
 
       // Merge duplicate link metadata in Y.Doc
-      for (const [keepId, dupeIds] of linksToMergeInto) {
+      for (const [keepId, fields] of mergedLinkFields) {
         const keepYMap = linksMap.get(keepId) as Y.Map<unknown> | undefined;
-        if (!keepYMap) continue;
-        const keepLink = links.find(l => l.id === keepId);
-        if (!keepLink) continue;
-
-        for (const dupeId of dupeIds) {
-          const dupeLink = links.find(l => l.id === dupeId);
-          if (!dupeLink) continue;
-
-          const newLabel = keepLink.label && dupeLink.label && keepLink.label !== dupeLink.label
-            ? `${keepLink.label} / ${dupeLink.label}`
-            : keepLink.label || dupeLink.label;
-          const newNotes = keepLink.notes && dupeLink.notes
-            ? `${keepLink.notes}\n---\n${dupeLink.notes}`
-            : keepLink.notes || dupeLink.notes;
-          const newTags = [...new Set([...keepLink.tags, ...dupeLink.tags])];
-          const newProps = [...keepLink.properties];
-          for (const p of dupeLink.properties) {
-            if (!newProps.some(mp => mp.key === p.key && mp.value === p.value)) {
-              newProps.push(p);
-            }
-          }
-
-          updateLinkYMap(keepYMap, {
-            label: newLabel,
-            notes: newNotes,
-            tags: newTags,
-            properties: newProps,
-          }, ydoc);
-        }
+        if (keepYMap) updateLinkYMap(keepYMap, fields, ydoc);
       }
 
       // Delete duplicate and self links

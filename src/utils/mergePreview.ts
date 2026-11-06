@@ -1,4 +1,4 @@
-import type { Element, Property } from '../types';
+import type { Element, Link, Property } from '../types';
 
 export interface MergePreview {
   /** Elements whose notes will be put end to end */
@@ -106,4 +106,25 @@ export function keptValues(choices: MergeChoices, kept: ReadonlySet<string>): { 
     tags: chosen.filter((c) => c.tag !== undefined).map((c) => c.tag!),
     properties: chosen.filter((c) => c.property).map((c) => c.property!),
   };
+}
+
+/** The ends and content a link compares on when two elements are merged */
+type LinkContent = Pick<Link, 'fromId' | 'toId' | 'direction' | 'label' | 'date' | 'dateRange' | 'properties'>;
+
+const time = (d: Date | string | null | undefined) => (d ? new Date(d).getTime() : null);
+
+/**
+ * Whether two links say the same thing: same ends (either way when neither
+ * is directed), direction, label, dates and properties. Only such a link,
+ * brought by the merged element, is folded into the kept one's: two links
+ * that differ in any of these are two facts (two transfers, two calls).
+ */
+export function sameLinkContent(a: LinkContent, b: LinkContent): boolean {
+  const sameEnds = (a.fromId === b.fromId && a.toId === b.toId)
+    || (a.direction === 'none' && b.direction === 'none' && a.fromId === b.toId && a.toId === b.fromId);
+  if (!sameEnds || a.direction !== b.direction || (a.label ?? '').trim() !== (b.label ?? '').trim()) return false;
+  if (time(a.date) !== time(b.date)) return false;
+  if (time(a.dateRange?.start) !== time(b.dateRange?.start) || time(a.dateRange?.end) !== time(b.dateRange?.end)) return false;
+  const props = (l: LinkContent) => l.properties.map((p) => `${p.key}\u0000${valueKey(p.value)}`).sort().join('\u0001');
+  return props(a) === props(b);
 }
