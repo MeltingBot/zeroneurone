@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ModalType, Toast, SidePanelTab, DisplayMode, GeoData, GeoPolygon, Element, ElementEvent, Link } from '../types';
+import type { ModalType, Toast, SidePanelTab, DisplayMode, GeoData, GeoPolygon, Element, ElementEvent, Link, Property } from '../types';
 import type { ExtractedMetadata } from '../services/metadataService';
 import { useToastStore } from './toastStore';
 
@@ -58,8 +58,8 @@ export interface ImportPlacementData {
     elements: Element[];
     links: Link[];
     assets?: { elementId: string; urls: string[] }[];
-    /** Events for elements already in the dossier (the import named them) */
-    attached?: { elementId: string; events: ElementEvent[] }[];
+    /** Events, properties and notes for elements already in the dossier (the import named them) */
+    attached?: { elementId: string; events: ElementEvent[]; properties?: Property[]; notes?: string }[];
   };
 }
 

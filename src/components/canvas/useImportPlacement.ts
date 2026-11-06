@@ -8,6 +8,7 @@ import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importC
 import { withImportProgress } from '../../services/importProgress';
 import { elementRepository } from '../../db/repositories/elementRepository';
 import { importFormatOf } from '../../plugins/pluginEventBus';
+import { sameValue } from '../../utils/jsonMapping';
 import type { DossierStore, HistoryStore, SelectionStore, TabStore, UIStore, ViewStore, WrapperRef } from './canvasHookTypes';
 
 export interface ImportPlacementParams {
@@ -78,13 +79,29 @@ export function useImportPlacement({
           const before: { id: string; changes: Partial<Element> }[] = [];
           const calls: { kind: 'elements'; ids: string[]; changes: Partial<Element> }[] = [];
           let attachedEvents = 0;
-          for (const { elementId, events } of importPlacementData.prebuilt.attached ?? []) {
+          for (const { elementId, events, properties = [], notes = '' } of importPlacementData.prebuilt.attached ?? []) {
             const current = useDossierStore.getState().elements.find((el) => el.id === elementId);
             if (!current) continue;
-            const merged = [...(current.events ?? []), ...events];
-            before.push({ id: elementId, changes: { events: current.events ?? [] } });
-            calls.push({ kind: 'elements', ids: [elementId], changes: { events: merged } });
-            await updateElement(elementId, { events: merged });
+            const prev: Partial<Element> = {};
+            const changes: Partial<Element> = {};
+            if (events.length > 0) {
+              prev.events = current.events ?? [];
+              changes.events = [...prev.events, ...events];
+            }
+            // Properties and notes it does not hold yet (same key and value: kept once)
+            const added = properties.filter((p) => !current.properties.some((x) => x.key === p.key && sameValue(x.value, p.value)));
+            if (added.length > 0) {
+              prev.properties = current.properties;
+              changes.properties = [...current.properties, ...added];
+            }
+            if (notes && !current.notes.includes(notes)) {
+              prev.notes = current.notes;
+              changes.notes = current.notes ? `${current.notes}\n\n${notes}` : notes;
+            }
+            if (Object.keys(changes).length === 0) continue;
+            before.push({ id: elementId, changes: prev });
+            calls.push({ kind: 'elements', ids: [elementId], changes });
+            await updateElement(elementId, changes);
             attachedEvents += events.length;
           }
           pushAction({

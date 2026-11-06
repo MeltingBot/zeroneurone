@@ -41,14 +41,21 @@ import {
   type FilterCond,
   type FilterOp,
   type EventMapping,
+  type LinkMapping,
   buildEvent,
   recordDate,
   guessEventFields,
+  guessLinkFields,
+  guessTimeField,
+  guessLabelTemplate,
+  linkDates,
+  sameValue,
 } from '../../utils/jsonMapping';
 import { computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { layoutService, CIRCULAR_MAX_ELEMENTS, type LayoutType } from '../../services/layoutService';
 import { JsonMappingManagerModal } from './JsonMappingManagerModal';
 import { TagCombobox } from './TagCombobox';
+import { TimeZoneButton } from '../common/TimeZoneButton';
 import { JsonTablesDiagram, type DiagramTable } from './JsonTablesDiagram';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { useSpreadsheetToCsv } from '../../hooks/useSpreadsheetToCsv';
@@ -78,6 +85,12 @@ function csvAsTable(raw: string, name: string | undefined): Record<string, Recor
   return { [table || 'csv']: records };
 }
 
+/** Targets a link record can put on the link or on one of its ends */
+const HOLDABLE_TARGETS: MappingTarget[] = ['property', 'number', 'date', 'country', 'link', 'notes', 'source'];
+
+/** Targets a link cannot take: it has no id, references, media nor place of its own */
+const LINK_OFF_TARGETS: MappingTarget[] = ['id', 'ref', 'asset', 'polygon', 'latlng', 'lat', 'lng'];
+
 const TARGETS: MappingTarget[] = ['property', 'number', 'date', 'country', 'link', 'asset', 'notes', 'source', 'lat', 'lng', 'latlng', 'id', 'ref', 'pivot', 'polygon'];
 
 // Large-file handling: sample records for the UI (detection/preview), but import them all.
@@ -100,6 +113,8 @@ interface SourceConfig {
   mergeField?: string;
   /** Records are events of an element rather than elements */
   events?: EventMapping;
+  /** Records are links between two elements rather than elements */
+  links?: LinkMapping;
 }
 
 /**
@@ -148,6 +163,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const [parsed, setParsed] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedInfo, setLoadedInfo] = useState<string | null>(null);
+  // The raw content folded into one line once loaded or pasted
+  const [rawHidden, setRawHidden] = useState(false);
   // File the content came from: tells CSV from JSON and names the CSV table
   const [contentFile, setContentFile] = useState<string | undefined>(undefined);
   // The content is a CSV (one table; its templates apart from JSON ones)
@@ -166,6 +183,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const [tagName, setTagName] = useState('');
   const [mergeField, setMergeField] = useState<string | undefined>(undefined);
   const [eventMapping, setEventMapping] = useState<EventMapping | undefined>(undefined);
+  const [linkMapping, setLinkMapping] = useState<LinkMapping | undefined>(undefined);
   const [ignoreEmpty, setIgnoreEmpty] = useState(true);
   const [layout, setLayout] = useState<LayoutType>('force');
   const [creating, setCreating] = useState(false);
@@ -189,8 +207,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   useEffect(() => { if (isOpen) loadTemplates(); }, [isOpen, loadTemplates]);
 
   const reset = useCallback(() => {
-    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setContentFile(undefined); setFromCsv(false); setImportSource(''); setAttachExisting(false); setSrcKey(''); setConfigs({}); setIncluded(new Set());
-    setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setMergeField(undefined); setEventMapping(undefined); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
+    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setRawHidden(false); setContentFile(undefined); setFromCsv(false); setImportSource(''); setAttachExisting(false); setSrcKey(''); setConfigs({}); setIncluded(new Set());
+    setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setMergeField(undefined); setEventMapping(undefined); setLinkMapping(undefined); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
     setFilters([]); setFilterMode('all'); setMaxImport(2000);
   }, []);
@@ -241,7 +259,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const wholeObject = t('importJsonMapping.wholeObject');
 
   /** The config being edited, as a snapshot */
-  const snapshot = (): SourceConfig => ({ fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField, events: eventMapping });
+  const snapshot = (): SourceConfig => ({ fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField, events: eventMapping, links: linkMapping });
 
   /** Id field of a table: the one its config maps to 'id', else a top-level "id" */
   const idFieldOf = useCallback((key: string, scalar: FieldInfo[]) => {
@@ -340,6 +358,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     setMaxImport(cfg.maxImport);
     setMergeField(cfg.mergeField);
     setEventMapping(cfg.events);
+    setLinkMapping(cfg.links);
     setSuggestionDismissed(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldSig, activeKey]);
@@ -391,6 +410,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       if (own.maxImport !== undefined) setMaxImport(own.maxImport);
       setMergeField(own.mergeField);
       setEventMapping(own.events);
+      setLinkMapping(own.links);
     }
     if (cfg.tables) {
       const present = new Set(sources.map((src) => sourceKey(src)));
@@ -410,6 +430,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           maxImport: saved.maxImport ?? base.maxImport,
           mergeField: saved.mergeField,
           events: saved.events,
+          links: saved.links,
         };
       }
       setConfigs((c) => ({ ...c, ...others }));
@@ -434,7 +455,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       tables[key] = {
         labelTemplate: c.labelTemplate, tagName: c.tagName, mapping: c.mapping, childMappings: c.childMappings,
         filters: c.filters, filterMode: c.filterMode, maxImport: c.maxImport, mergeField: c.mergeField,
-        events: c.events,
+        events: c.events, links: c.links,
       };
     }
     // Updating: keep the template's tables this payload does not have
@@ -442,7 +463,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     const kept = Object.entries(selected?.config.tables ?? {}).filter(([key]) => !present.has(key));
     const config: MappingConfig = {
       labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings,
-      filters, filterMode, maxImport, mergeField, events: eventMapping,
+      filters, filterMode, maxImport, mergeField, events: eventMapping, links: linkMapping,
       format: fromCsv ? 'csv' : 'json',
       attachExisting,
       tables: { ...Object.fromEntries(kept), ...tables }, included: [...included],
@@ -465,7 +486,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     // snapshot() reads the edited state listed here
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings, signature, saveTemplate, t,
-    configs, activeKey, included, autoConfigFor, fieldSig, filters, filterMode, maxImport, mergeField, eventMapping, fromCsv,
+    configs, activeKey, included, autoConfigFor, fieldSig, filters, filterMode, maxImport, mergeField, eventMapping, linkMapping, fromCsv,
     attachExisting,
     templates, selectedTemplateId, sources, updateTemplate]);
 
@@ -508,6 +529,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       setText(content);
       setLoadedInfo(null);
     }
+    // Loaded: the raw text folds away, the mapping gets the room
+    setRawHidden(true);
     setContentFile(name);
     setImportSource(name ?? '');
     parse(content, name);
@@ -538,8 +561,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   // Preview of the first record's computed label
   const previewLabel = useMemo(() => {
     if (filteredRaw.length === 0) return '';
-    return applyTemplate(labelTemplate, flattenRecord(filteredRaw[0])) || t('importJsonMapping.noLabel');
-  }, [filteredRaw, labelTemplate, t]);
+    const flat = flattenRecord(filteredRaw[0]);
+    const label = applyTemplate(labelTemplate, flat);
+    // A link: its two ends, then its label (the tag when there is none)
+    if (linkMapping) {
+      const end = (k: string) => valueToString(flat[k]).trim() || '—';
+      const text = label || tagName.trim();
+      return `${end(linkMapping.fromField)} → ${end(linkMapping.toField)}${text ? ` — ${text}` : ''}`;
+    }
+    return label || t('importJsonMapping.noLabel');
+  }, [filteredRaw, labelTemplate, linkMapping, tagName, t]);
 
   const setFieldTarget = (key: string, target: MappingTarget) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], target } }));
@@ -557,6 +588,55 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     });
   const setFieldRefSource = (key: string, refSource: string | undefined) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], refSource } }));
+  const setFieldHolder = (key: string, holder: 'link' | 'from' | 'to') =>
+    setMapping((m) => ({ ...m, [key]: { ...m[key], holder: holder === 'link' ? undefined : holder } }));
+  const setFieldOwner = (key: string, pivotOwner: string | undefined) =>
+    setMapping((m) => ({ ...m, [key]: { ...m[key], pivotOwner } }));
+  /** Fields a pivot can be attached to, besides the record's element: the
+   *  other end of a link, the other pivots */
+  const pivotOwners = (key: string): string[] => {
+    const ends = linkMapping ? [linkMapping.toField] : [];
+    const pivots = scalarFields
+      .filter((f) => f.key !== key && mapping[f.key]?.enabled && mapping[f.key]?.target === 'pivot')
+      .map((f) => f.key);
+    return [...new Set([...ends, ...pivots])].filter((k) => k && k !== key);
+  };
+  // Event and link settings: a label, then its column(s)
+  const modeSelectCls = 'px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary';
+  const modeField = (label: string, control: React.ReactNode) => (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs font-medium text-text-secondary">{label}</span>
+      {control}
+    </div>
+  );
+  /** Column picker of an event or link setting; a time column is narrower and titled */
+  const fieldSelect = <T extends { dateField?: string; timeField?: string; endField?: string; endTimeField?: string }>(
+    cur: T, set: (next: T) => void, key: Extract<keyof T, string>, testId: string, optional: boolean, time = false,
+  ) => (
+    <select
+      value={((cur as Record<string, unknown>)[key] as string | undefined) ?? ''}
+      onChange={(e) => set(withTime(cur, key, e.target.value || undefined))}
+      data-testid={testId}
+      title={time ? t(key.startsWith('end') ? 'importJsonMapping.fieldEndTime' : 'importJsonMapping.fieldTime') : undefined}
+      aria-label={time ? t(key.startsWith('end') ? 'importJsonMapping.fieldEndTime' : 'importJsonMapping.fieldTime') : undefined}
+      className={`${time ? 'max-w-[110px]' : 'max-w-[160px]'} ${modeSelectCls}`}
+    >
+      {optional ? <option value="">{time ? t('importJsonMapping.noTime') : t('importJsonMapping.eventEndNone')}</option>
+        : !(cur as Record<string, unknown>)[key] && <option value="">—</option>}
+      {scalarFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
+    </select>
+  );
+  // Columns an event or link setting uses: shown as such in the table, not as fields to map
+  const roles = new Map<string, string>();
+  const roleNames: [string | undefined, string][] = eventMapping
+    ? [[eventMapping.hostField, 'eventHost'], [eventMapping.dateField, 'eventDate'], [eventMapping.timeField, 'fieldTime'], [eventMapping.endField, 'eventEnd'], [eventMapping.endTimeField, 'fieldEndTime']]
+    : linkMapping
+      ? [[linkMapping.fromField, 'linkFrom'], [linkMapping.toField, 'linkTo'], [linkMapping.dateField, 'eventDate'], [linkMapping.timeField, 'fieldTime'], [linkMapping.endField, 'eventEnd'], [linkMapping.endTimeField, 'fieldEndTime']]
+      : [];
+  for (const [k, role] of roleNames) if (k && !roles.has(k)) roles.set(k, role);
+  // A column "Attached to" when a field can go elsewhere than on the record's element
+  const showAttach = !!linkMapping || scalarFields.some((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'pivot' && pivotOwners(f.key).length > 0);
+  const gridCols = showAttach ? 'grid-cols-[24px_1fr_1fr_130px_96px_100px]' : 'grid-cols-[24px_1fr_1fr_130px_100px]';
   const setFieldOrder = (key: string, coordOrder: CoordOrder) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], coordOrder } }));
   const setChild = (key: string, patch: Partial<ChildMapping>) =>
@@ -606,13 +686,29 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
 
   // Switching to events: the date is the first date field, the element the
   // first other field (both changed in the selects)
-  const setRecordAs = (as: 'element' | 'event') => {
-    if (as === 'element') { setEventMapping(undefined); return; }
+  const setRecordAs = (as: 'element' | 'event' | 'link') => {
     const isDate = (k: string) => mapping[k]?.target === 'date' || guessTarget(k) === 'date';
-    const guess = guessEventFields(records, scalarFields, isDate);
-    setEventMapping({ hostField: guess.hostField, dateField: guess.dateField });
-    // The element's name labelled every record: an event wants its kind instead
-    setLabelTemplate(guess.labelTemplate);
+    setEventMapping(undefined);
+    setLinkMapping(undefined);
+    if (as === 'event') {
+      const guess = guessEventFields(records, scalarFields, isDate);
+      setEventMapping({ hostField: guess.hostField, dateField: guess.dateField, timeField: guessTimeField(records, fields, guess.dateField) });
+      // The element's name labelled every record: an event wants its kind instead
+      setLabelTemplate(guess.labelTemplate);
+    } else if (as === 'link') {
+      setLinkMapping(guessLinkFields(records, fields, isDate));
+      // The label of each link is written by the analyst; empty, it takes the tag
+      setLabelTemplate('');
+    } else {
+      setLabelTemplate(guessLabelTemplate(scalarFields));
+    }
+  };
+  /** Choosing a date column also picks its time column, when the file splits them */
+  const withTime = <T extends { dateField?: string; timeField?: string; endField?: string; endTimeField?: string }>(cur: T, key: string, value: string | undefined): T => {
+    const next = { ...cur, [key]: value };
+    if (key === 'dateField') next.timeField = guessTimeField(records, fields, value);
+    if (key === 'endField') next.endTimeField = guessTimeField(records, fields, value);
+    return next;
   };
   const mergeCandidates = useMemo(() => scalarFields
     .filter((f) => {
@@ -683,10 +779,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     // Tables folded into another one come after it: their records look up
     // the elements it created
     const mergeTargets = new Map(plans.map((p) => [p.key, mergeTargetOf(p.key, p.cfg, included)]));
-    // Event tables last too: their element may be one of another table
-    const rank = (p: (typeof plans)[number]) => (mergeTargets.get(p.key) || p.cfg.events ? 1 : 0);
+    // Event and link tables last too: their elements may be those of another table
+    const rank = (p: (typeof plans)[number]) => (mergeTargets.get(p.key) || p.cfg.events || p.cfg.links ? 1 : 0);
     plans.sort((a, b) => rank(a) - rank(b));
     let skippedEvents = 0;
+    // Rows missing one end: no link
+    let skippedLinks = 0;
+    // Rows naming the same element at both ends: events of it
+    let selfEvents = 0;
+    // Values of a date column that are no date: kept as text, counted
+    let unreadDates = 0;
     setCreating(true);
     try {
       const tagStore = useTagSetStore.getState();
@@ -731,12 +833,33 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         for (const l of useDossierStore.getState().links) pivotLinked.add([l.fromId, l.toId].sort().join('|'));
       }
       const attached = new Map<string, Element>();
+      // What the import adds to elements of the dossier besides events
+      const addedTo = new Map<string, { properties: Property[]; notes: string }>();
+      /** Fields of a link record put on one of its ends: each property once
+       *  (same key and value), notes and sources not repeated */
+      const putOn = (el: Element, p: { properties: Property[]; notes: string; source: string }) => {
+        const standIn = attached.get(el.id) === el;
+        let extra = standIn ? addedTo.get(el.id) : undefined;
+        if (standIn && !extra) { extra = { properties: [], notes: '' }; addedTo.set(el.id, extra); }
+        for (const pr of p.properties) {
+          if (el.properties.some((x) => x.key === pr.key && sameValue(x.value, pr.value))) continue;
+          el.properties.push(pr);
+          extra?.properties.push(pr);
+        }
+        if (p.notes && !el.notes.includes(p.notes)) {
+          el.notes = el.notes ? `${el.notes}\n\n${p.notes}` : p.notes;
+          if (extra) extra.notes = extra.notes ? `${extra.notes}\n\n${p.notes}` : p.notes;
+        }
+        if (p.source && !standIn && !el.source.split(' | ').includes(p.source)) {
+          el.source = el.source ? `${el.source} | ${p.source}` : p.source;
+        }
+      };
       const existingFor = (key: string): Element | undefined => {
         const el = existingByKey.get(key);
         if (!el) return undefined;
         let standIn = attached.get(el.id);
         if (!standIn) {
-          standIn = { ...el, tags: [...el.tags], events: [] };
+          standIn = { ...el, tags: [...el.tags], properties: [...el.properties], events: [] };
           attached.set(el.id, standIn);
         }
         return standIn;
@@ -752,9 +875,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           if (!m || !m.enabled) continue;
           const raw = flat[f.key];
           if (ignoreEmpty && isBlank(raw)) continue;
-          const coerced = coerceForTarget(raw, m.target);
-          if (coerced === null) continue;
           const propKey = m.propKey.trim() || lastSegment(f.key);
+          const coerced = coerceForTarget(raw, m.target);
+          if (coerced === null) {
+            // A date that cannot be read stays as written rather than lost
+            if (m.target === 'date' && !isBlank(raw)) {
+              properties.push({ key: propKey, value: valueToString(raw), type: 'text' });
+              unreadDates++;
+            }
+            continue;
+          }
           switch (m.target) {
             case 'id': case 'ref': case 'polygon': case 'latlng': case 'asset': case 'pivot': break; // handled separately
             case 'source': source = source ? `${source} | ${coerced}` : String(coerced); break;
@@ -808,14 +938,28 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         const hostRefIds = hostRef?.enabled && hostRef.target === 'ref' && hostRef.refSource && hostRef.refSource !== plan.key
           ? idMaps.get(hostRef.refSource) : undefined;
         if (ev) {
+          const own = [ev.hostField, ev.dateField, ev.timeField, ev.endField, ev.endTimeField];
           for (const [k, m] of Object.entries(mapping)) {
-            if (k === ev.hostField || k === ev.dateField || k === ev.endField || ['id', 'ref', 'asset'].includes(m.target)) {
+            if (own.includes(k) || ['id', 'ref', 'asset'].includes(m.target)) {
               mapping[k] = { ...m, enabled: false };
             }
           }
         }
-        // Event tables: one element per distinct value, whether the value is
-        // the event's element or a pivot (a phone number calls and is called)
+        // Records as links: the ends and dates are read apart; a link has no
+        // id, references, media nor place of its own
+        const lk = !ev && cfg.links?.fromField && cfg.links.toField ? cfg.links : undefined;
+        if (lk) {
+          const own = [lk.fromField, lk.toField, lk.dateField, lk.timeField, lk.endField, lk.endTimeField];
+          for (const [k, m] of Object.entries(mapping)) {
+            if (own.includes(k) || LINK_OFF_TARGETS.includes(m.target)) {
+              mapping[k] = { ...m, enabled: false };
+            }
+          }
+        }
+        // Event and link tables: one element per distinct value, whether the
+        // value is the record's element, a link end or a pivot (a phone number
+        // calls and is called)
+        const byRow = !!(ev || lk);
         const byValue = new Map<string, Element>();
         const withTag = (el: Element, tag: string) => { if (tag && !el.tags.includes(tag)) el.tags.push(tag); return el; };
         const flats = plan.raw.map((r) => flattenRecord(r));
@@ -846,9 +990,13 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         const mergeKey = mergeTargets.get(plan.key);
         const hostIds = mergeKey ? idMaps.get(mergeKey) : undefined;
 
-        // Pivot nodes: link a record's element to a dedup'd node per shared value
-        const addPivots = (flat: Record<string, unknown>, parent: Element): Element[] => {
-          const touched: Element[] = [];
+        // Pivot nodes: a dedup'd node per shared value, linked to the record's
+        // element, or to the element of the field it is attached to (a link
+        // end, the event's element, another pivot). Returns the pivot nodes.
+        const addPivots = (flat: Record<string, unknown>, parent: Element, anchors = new Map<string, Element>()): Element[] => {
+          const nodes: { field: string; el: Element }[] = [];
+          // Field → its element in this record (the first value of a list)
+          const elementOf = new Map(anchors);
           for (const pf of pivotFields) {
             const tag = pivotTagOf(pf.key);
             const raw = flat[pf.key];
@@ -858,11 +1006,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
               if (!val) continue;
               const valKey = keyOf(val);
               const key = `${tag}\u0000${valKey}`;
-              let pivot = (ev ? byValue.get(valKey) : pivotByKey.get(key)) ?? existingFor(valKey);
+              let pivot = (byRow ? byValue.get(valKey) : pivotByKey.get(key)) ?? existingFor(valKey);
               if (pivot) {
                 withTag(pivot, tag);
                 pivotByKey.set(key, pivot);
-                if (ev) byValue.set(valKey, pivot);
+                if (byRow) byValue.set(valKey, pivot);
               }
               if (!pivot) {
                 pivot = mkElement({
@@ -873,25 +1021,32 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 });
                 elements.push(pivot);
                 pivotByKey.set(key, pivot);
-                if (ev) byValue.set(valKey, pivot);
+                if (byRow) byValue.set(valKey, pivot);
               }
-              if (pivot.id === parent.id) continue;
-              touched.push(pivot);
-              // One link per pair, in either direction, however many records
-              // share it (A calls B, then B calls A: one link)
-              const pair = [parent.id, pivot.id].sort().join('|');
-              if (pivotLinked.has(pair)) continue;
-              pivotLinked.add(pair);
-              links.push({
-                id: crypto.randomUUID(), dossierId: dossier.id, fromId: parent.id, toId: pivot.id,
-                sourceHandle: null, targetHandle: null,
-                label: '', notes: '', tags: [], properties: [],
-                directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
-                visual: { color: '#9ca3af', style: 'dashed', thickness: 2 },
-                curveOffset: { x: 0, y: 0 },
-                createdAt: now, updatedAt: now,
-              });
+              nodes.push({ field: pf.key, el: pivot });
+              if (!elementOf.has(pf.key)) elementOf.set(pf.key, pivot);
             }
+          }
+          const touched: Element[] = [];
+          for (const { field, el } of nodes) {
+            if (el.id !== parent.id && !touched.includes(el)) touched.push(el);
+            const owner = mapping[field]?.pivotOwner;
+            const to = (owner && owner !== field ? elementOf.get(owner) : undefined) ?? parent;
+            if (el.id === to.id) continue;
+            // One link per pair, in either direction, however many records
+            // share it (A calls B, then B calls A: one link)
+            const pair = [to.id, el.id].sort().join('|');
+            if (pivotLinked.has(pair)) continue;
+            pivotLinked.add(pair);
+            links.push({
+              id: crypto.randomUUID(), dossierId: dossier.id, fromId: to.id, toId: el.id,
+              sourceHandle: null, targetHandle: null,
+              label: '', notes: '', tags: [], properties: [],
+              directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
+              visual: { color: '#9ca3af', style: 'dashed', thickness: 2 },
+              curveOffset: { x: 0, y: 0 },
+              createdAt: now, updatedAt: now,
+            });
           }
           return touched;
         };
@@ -942,8 +1097,26 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           }
         };
 
+        // End of a link: one element per distinct value (or the dossier's own)
+        const endOf = (val: string): Element => {
+          const k = keyOf(val);
+          let el = byValue.get(k) ?? existingFor(k);
+          if (el) { withTag(el, tn); byValue.set(k, el); return el; }
+          const n = byValue.size;
+          el = mkElement({
+            label: val, tags: tn ? [tn] : [], visual: { ...parentVisual },
+            position: { x: (n % cols) * 380, y: originY + Math.floor(n / cols) * 320 },
+          });
+          elements.push(el);
+          elementById.set(el.id, el);
+          byValue.set(k, el);
+          return el;
+        };
+
         flats.forEach((flat, i) => {
-          const { properties, source, notes, lat, lng } = buildProps(flat, scalar, (k) => mapping[k]);
+          // A link record keeps on the link the fields its ends do not take
+          const holderOf = (k: string) => mapping[k]?.holder ?? 'link';
+          const { properties, source, notes, lat, lng } = buildProps(flat, scalar, (k) => (lk && holderOf(k) !== 'link' ? undefined : mapping[k]));
           let geo: GeoData | null = null;
           if (polyFieldKey) {
             const coords = toLngLatCoords(flat[polyFieldKey], polyOrder);
@@ -979,10 +1152,53 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
             }
             eventHost.events.push(event);
             // The event also goes on the pivots (a call shows on both numbers)
-            for (const pivot of addPivots(flat, eventHost)) {
+            for (const pivot of addPivots(flat, eventHost, new Map([[ev.hostField, eventHost]]))) {
               if (ev.alsoOnPivots !== false) pivot.events.push({ ...event, id: crypto.randomUUID() });
             }
             addChildren(flat, eventHost);
+            return;
+          }
+          // Link record: from one end to the other, dated, carrying the fields
+          if (lk) {
+            const fromVal = valueToString(flat[lk.fromField]).trim();
+            const toVal = valueToString(flat[lk.toField]).trim();
+            if (!fromVal || !toVal) { skippedLinks++; return; }
+            // The same element at both ends (a transfer to oneself): no link
+            // can be drawn, the row becomes an event of that element
+            if (keyOf(fromVal) === keyOf(toVal)) {
+              const self = endOf(fromVal);
+              const label = applyTemplate(cfg.labelTemplate, flat) || tn || fromVal;
+              const event = lk.dateField
+                ? buildEvent(flat, label, { dateField: lk.dateField, timeField: lk.timeField, endField: lk.endField, endTimeField: lk.endTimeField, timeZone: lk.timeZone }, { properties, source, notes, geo: null })
+                : null;
+              if (!event) { skippedEvents++; return; }
+              self.events.push(event);
+              selfEvents++;
+              putOn(self, buildProps(flat, scalar, (k) => (holderOf(k) === 'from' || holderOf(k) === 'to' ? mapping[k] : undefined)));
+              addPivots(flat, self, new Map([[lk.fromField, self], [lk.toField, self]]));
+              addChildren(flat, self);
+              return;
+            }
+            const fromEl = endOf(fromVal);
+            const toEl = endOf(toVal);
+            const { range, unread } = linkDates(flat, lk);
+            if (unread && lk.dateField) {
+              properties.push({ key: lastSegment(lk.dateField), value: valueToString(flat[lk.dateField]), type: 'text' });
+              unreadDates++;
+            }
+            links.push({
+              id: crypto.randomUUID(), dossierId: dossier.id, fromId: fromEl.id, toId: toEl.id,
+              sourceHandle: null, targetHandle: null,
+              label: applyTemplate(cfg.labelTemplate, flat) || tn, notes, tags: [], properties,
+              directed: true, direction: 'forward', confidence: null, source, date: null, dateRange: range,
+              visual: { color: '#6b7280', style: 'solid', thickness: 2 },
+              curveOffset: { x: 0, y: 0 },
+              createdAt: now, updatedAt: now,
+            });
+            putOn(fromEl, buildProps(flat, scalar, (k) => (holderOf(k) === 'from' ? mapping[k] : undefined)));
+            putOn(toEl, buildProps(flat, scalar, (k) => (holderOf(k) === 'to' ? mapping[k] : undefined)));
+            addPivots(flat, fromEl, new Map([[lk.fromField, fromEl], [lk.toField, toEl]]));
+            addChildren(flat, fromEl);
             return;
           }
           // Folded record: its fields go to the element it refers to, which
@@ -1117,11 +1333,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         boundingBox: { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, elementCount: elements.length },
         prebuilt: {
           elements, links, assets: assetDownloads,
-          attached: [...attached.values()].filter((el) => el.events.length > 0).map((el) => ({ elementId: el.id, events: el.events })),
+          attached: [...attached.values()]
+            .filter((el) => el.events.length > 0 || addedTo.has(el.id))
+            .map((el) => ({ elementId: el.id, events: el.events, properties: addedTo.get(el.id)?.properties, notes: addedTo.get(el.id)?.notes })),
         },
         dossierId: dossier.id,
       });
       if (skippedEvents > 0) toast.warning(t('importJsonMapping.eventsSkipped', { count: skippedEvents }));
+      if (skippedLinks > 0) toast.warning(t('importJsonMapping.linksSkipped', { count: skippedLinks }));
+      if (selfEvents > 0) toast.info(t('importJsonMapping.selfLinksAsEvents', { count: selfEvents }));
+      if (unreadDates > 0) toast.warning(t('importJsonMapping.datesKeptAsText', { count: unreadDates }));
       handleClose();
     } catch (e) {
       console.error('JSON mapping import failed', e);
@@ -1131,7 +1352,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     // snapshot() reads the edited state listed here
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalImportCount, activeKey, configs, sources, included, autoConfigFor, planFor, parsed, ignoreEmpty, layout, t, handleClose,
-    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField, eventMapping, importSource,
+    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField, eventMapping, linkMapping, importSource,
     attachExisting]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -1142,9 +1363,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
 
   // Every checked table needs a label template (the open one as edited)
   const labelsOk = [...included].every((key) => {
-    const cfg = key === activeKey ? { labelTemplate, events: eventMapping } : configs[key];
+    const cfg = key === activeKey ? { labelTemplate, events: eventMapping, links: linkMapping } : configs[key];
     // An event takes the tag or the element's name when its template is empty
     if (cfg?.events) return !!cfg.events.hostField && !!cfg.events.dateField;
+    // A link takes the tag, or no label
+    if (cfg?.links) return !!cfg.links.fromField && !!cfg.links.toField && cfg.links.fromField !== cfg.links.toField;
     return (cfg?.labelTemplate ?? '{}').trim().length > 0;
   });
   const canImport = totalImportCount > 0 && labelsOk && !creating;
@@ -1158,7 +1381,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         aria-modal="true"
         aria-labelledby={titleId}
         data-testid="json-mapping-modal"
-        className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[92vw] max-w-4xl max-h-[88vh] flex flex-col"
+        className={`bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[92vw] ${showAttach ? 'max-w-5xl' : 'max-w-4xl'} max-h-[88vh] flex flex-col`}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <div className="flex items-center gap-2">
@@ -1189,18 +1412,26 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 className="hidden"
               />
             </div>
-            {loadedInfo ? (
-              <div className="flex items-center justify-between gap-2 px-2 py-2 text-xs bg-bg-secondary border border-border-default rounded">
-                <span className="text-text-secondary truncate"><FileJson size={12} className="inline mr-1 text-text-tertiary" />{loadedInfo}</span>
-                <button onClick={() => { setText(''); setParsed(null); setLoadedInfo(null); setContentFile(undefined); }} className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.clear')}</button>
+            {(loadedInfo || (rawHidden && parsed != null)) && (
+              <div className="flex items-center gap-3 px-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded" data-testid="json-mapping-raw-folded">
+                <span className="flex-1 text-text-secondary truncate">
+                  <FileJson size={12} className="inline mr-1 text-text-tertiary" />
+                  {loadedInfo ?? `${contentFile ?? t('importJsonMapping.pastedText')} — ${formatBytes(text.length, i18n.language)}`}
+                </span>
+                {!loadedInfo && (
+                  <button onClick={() => setRawHidden(false)} data-testid="json-mapping-raw-show" className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.showRaw')}</button>
+                )}
+                <button onClick={() => { setText(''); setParsed(null); setLoadedInfo(null); setRawHidden(false); setContentFile(undefined); }} className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.clear')}</button>
               </div>
-            ) : (
+            )}
+            {!loadedInfo && (
               <textarea
                 value={text}
                 onChange={(e) => { setText(e.target.value); parse(e.target.value, contentFile); }}
+                onPaste={() => setRawHidden(true)}
                 placeholder={t('importJsonMapping.pastePlaceholder')}
                 spellCheck={false}
-                className="w-full h-28 px-2 py-1.5 text-xs font-mono bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary resize-y"
+                className={`${rawHidden && parsed != null ? 'hidden' : ''} w-full h-28 px-2 py-1.5 text-xs font-mono bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary resize-y`}
               />
             )}
           </div>
@@ -1312,39 +1543,51 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 </div>
               )}
 
-              {/* Each record: an element, or an event of an element */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <label htmlFor={recordAsId} className="text-xs font-medium text-text-secondary">{t('importJsonMapping.recordAs')}</label>
+              {/* Each record: an element, an event of an element, or a link between two */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <label className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-secondary">{t('importJsonMapping.recordAs')}</span>
                   <select
                     id={recordAsId}
-                    value={eventMapping ? 'event' : 'element'}
-                    onChange={(e) => setRecordAs(e.target.value as 'element' | 'event')}
+                    value={eventMapping ? 'event' : linkMapping ? 'link' : 'element'}
+                    onChange={(e) => setRecordAs(e.target.value as 'element' | 'event' | 'link')}
                     data-testid="json-mapping-record-as"
-                    className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                    className={modeSelectCls}
                   >
                     <option value="element">{t('importJsonMapping.recordAsElement')}</option>
                     <option value="event">{t('importJsonMapping.recordAsEvent')}</option>
+                    <option value="link">{t('importJsonMapping.recordAsLink')}</option>
                   </select>
-                </div>
-                {eventMapping && ([
-                  ['hostField', 'eventHost', false],
-                  ['dateField', 'eventDate', false],
-                  ['endField', 'eventEnd', true],
-                ] as const).map(([key, labelKey, optional]) => (
-                  <label key={key} className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-text-secondary">{t(`importJsonMapping.${labelKey}`)}</span>
-                    <select
-                      value={eventMapping[key] ?? ''}
-                      onChange={(e) => setEventMapping({ ...eventMapping, [key]: e.target.value || undefined })}
-                      data-testid={`json-mapping-${key}`}
-                      className="max-w-[160px] px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
-                    >
-                      {optional && <option value="">{t('importJsonMapping.eventEndNone')}</option>}
-                      {scalarFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
-                    </select>
-                  </label>
-                ))}
+                </label>
+                {eventMapping && (
+                  <>
+                    {modeField(t('importJsonMapping.eventHost'), fieldSelect(eventMapping, setEventMapping, 'hostField', 'json-mapping-hostField', false))}
+                    {modeField(t('importJsonMapping.eventDate'), <>
+                      {fieldSelect(eventMapping, setEventMapping, 'dateField', 'json-mapping-dateField', false)}
+                      {fieldSelect(eventMapping, setEventMapping, 'timeField', 'json-mapping-timeField', true, true)}
+                      <TimeZoneButton value={eventMapping.timeZone} onChange={(timeZone) => setEventMapping({ ...eventMapping, timeZone })} />
+                    </>)}
+                    {modeField(t('importJsonMapping.eventEnd'), <>
+                      {fieldSelect(eventMapping, setEventMapping, 'endField', 'json-mapping-endField', true)}
+                      {eventMapping.endField && fieldSelect(eventMapping, setEventMapping, 'endTimeField', 'json-mapping-endTimeField', true, true)}
+                    </>)}
+                  </>
+                )}
+                {linkMapping && (
+                  <>
+                    {modeField(t('importJsonMapping.linkFrom'), fieldSelect(linkMapping, setLinkMapping, 'fromField', 'json-mapping-link-fromField', false))}
+                    {modeField(t('importJsonMapping.linkTo'), fieldSelect(linkMapping, setLinkMapping, 'toField', 'json-mapping-link-toField', false))}
+                    {modeField(t('importJsonMapping.eventDate'), <>
+                      {fieldSelect(linkMapping, setLinkMapping, 'dateField', 'json-mapping-link-dateField', true)}
+                      {linkMapping.dateField && fieldSelect(linkMapping, setLinkMapping, 'timeField', 'json-mapping-link-timeField', true, true)}
+                      {linkMapping.dateField && <TimeZoneButton value={linkMapping.timeZone} onChange={(timeZone) => setLinkMapping({ ...linkMapping, timeZone })} />}
+                    </>)}
+                    {linkMapping.dateField && modeField(t('importJsonMapping.eventEnd'), <>
+                      {fieldSelect(linkMapping, setLinkMapping, 'endField', 'json-mapping-link-endField', true)}
+                      {linkMapping.endField && fieldSelect(linkMapping, setLinkMapping, 'endTimeField', 'json-mapping-link-endTimeField', true, true)}
+                    </>)}
+                  </>
+                )}
               </div>
               {eventMapping && (
                 <>
@@ -1373,7 +1616,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
 
               {/* Label template */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-text-secondary">{t(eventMapping ? 'importJsonMapping.eventLabelTemplate' : 'importJsonMapping.labelTemplate')}</label>
+                <label className="text-xs font-medium text-text-secondary">{t(eventMapping ? 'importJsonMapping.eventLabelTemplate' : linkMapping ? 'importJsonMapping.linkLabelTemplate' : 'importJsonMapping.labelTemplate')}</label>
                 <input
                   type="text"
                   value={labelTemplate}
@@ -1408,7 +1651,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                     className="w-48 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
                   />
                 </div>
-                {mergeCandidates.length > 0 && !eventMapping && (
+                {mergeCandidates.length > 0 && !eventMapping && !linkMapping && (
                   <div className="flex items-center gap-2">
                     <label htmlFor={mergeSelectId} className="text-xs font-medium text-text-secondary">{t('importJsonMapping.mergeInto')}</label>
                     <select
@@ -1506,7 +1749,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
 
               {/* Mapping table */}
               <div className="border border-border-default rounded overflow-hidden">
-                <div className="grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1.5 bg-bg-secondary text-[10px] font-medium text-text-secondary uppercase tracking-wider items-center">
+                <div className={`grid ${gridCols} gap-2 px-2 py-1.5 bg-bg-secondary text-[10px] font-medium text-text-secondary uppercase tracking-wider items-center`}>
                   <input
                     type="checkbox"
                     checked={allEnabled}
@@ -1517,6 +1760,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                   <span>{t('importJsonMapping.field')}</span>
                   <span>{t('importJsonMapping.sample')}</span>
                   <span>{t('importJsonMapping.target')}</span>
+                  {showAttach && <span>{t('importJsonMapping.pivotOwner')}</span>}
                   <span>{t('importJsonMapping.propKey')}</span>
                 </div>
                 <div className="max-h-64 overflow-y-auto divide-y divide-border-default">
@@ -1524,8 +1768,23 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                     const m = mapping[f.key];
                     if (!m) return null;
                     const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref' || m.target === 'link' || m.target === 'pivot' || m.target === 'notes';
+                    // Records as links: the field goes on the link or on one of its ends
+                    const holdable = !!linkMapping && HOLDABLE_TARGETS.includes(m.target);
+                    const owners = m.target === 'pivot' ? pivotOwners(f.key) : [];
+                    const role = roles.get(f.key);
+                    if (role) {
+                      return (
+                        <div key={f.key} className={`grid ${gridCols} gap-2 px-2 py-1 items-center`}>
+                          <span />
+                          <span className="text-xs font-mono text-text-primary truncate" title={f.key}>{f.key}</span>
+                          <span className="text-xs text-text-tertiary truncate" title={f.sample}>{f.sample}</span>
+                          <span className={`text-xs text-text-secondary ${showAttach ? 'col-span-3' : 'col-span-2'}`} data-testid={`json-mapping-role-${f.key}`}>{t(`importJsonMapping.${role}`)}</span>
+                        </div>
+                      );
+                    }
+                    const selectCls = 'w-full px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary';
                     return (
-                      <div key={f.key} className={`grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1 items-center ${m.enabled ? '' : 'opacity-45'}`}>
+                      <div key={f.key} className={`grid ${gridCols} gap-2 px-2 py-1 items-center ${m.enabled ? '' : 'opacity-45'}`}>
                         <input
                           type="checkbox"
                           checked={m.enabled}
@@ -1542,9 +1801,37 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                           className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary disabled:opacity-60"
                         >
                           {TARGETS.map((tg) => (
-                            <option key={tg} value={tg} disabled={!!eventMapping && ['id', 'ref', 'asset'].includes(tg)}>{t(`importJsonMapping.targets.${tg}`)}</option>
+                            <option key={tg} value={tg} disabled={(!!eventMapping && ['id', 'ref', 'asset'].includes(tg)) || (!!linkMapping && LINK_OFF_TARGETS.includes(tg))}>{t(`importJsonMapping.targets.${tg}`)}</option>
                           ))}
                         </select>
+                        {showAttach && (
+                          !m.enabled ? <span /> : holdable && linkMapping ? (
+                            <select
+                              value={m.holder ?? 'link'}
+                              onChange={(e) => setFieldHolder(f.key, e.target.value as 'link' | 'from' | 'to')}
+                              aria-label={t('importJsonMapping.pivotOwner')}
+                              data-testid={`json-mapping-holder-${f.key}`}
+                              className={selectCls}
+                            >
+                              <option value="link">{t('importJsonMapping.holderLink')}</option>
+                              <option value="from">{t('importJsonMapping.linkFrom')}</option>
+                              <option value="to">{t('importJsonMapping.linkTo')}</option>
+                            </select>
+                          ) : owners.length > 0 ? (
+                            <select
+                              value={m.pivotOwner && owners.includes(m.pivotOwner) ? m.pivotOwner : ''}
+                              onChange={(e) => setFieldOwner(f.key, e.target.value || undefined)}
+                              aria-label={t('importJsonMapping.pivotOwner')}
+                              data-testid={`json-mapping-owner-${f.key}`}
+                              className={selectCls}
+                            >
+                              <option value="">{linkMapping ? t('importJsonMapping.linkFrom') : t('importJsonMapping.eventHost')}</option>
+                              {owners.map((k) => (
+                                <option key={k} value={k}>{k === linkMapping?.toField ? t('importJsonMapping.linkTo') : k}</option>
+                              ))}
+                            </select>
+                          ) : <span />
+                        )}
                         <div className="flex flex-col gap-1 min-w-0">
                         {m.enabled && m.target === 'polygon' ? (
                           <select
@@ -1589,7 +1876,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                   })}
                 </div>
               </div>
-              <p className="text-[10px] text-text-tertiary">{t('importJsonMapping.enabledCount', { enabled: scalarFields.filter((f) => mapping[f.key]?.enabled).length, total: scalarFields.length })}</p>
+              <p className="text-[10px] text-text-tertiary">{t('importJsonMapping.enabledCount', { enabled: scalarFields.filter((f) => !roles.has(f.key) && mapping[f.key]?.enabled).length, total: scalarFields.filter((f) => !roles.has(f.key)).length })}</p>
 
               {/* Linked sub-elements (array-of-objects fields) */}
               {childArrayFields.length > 0 && (
@@ -1657,7 +1944,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
               <div className="text-xs text-text-secondary">
                 {eventMapping && included.size <= 1
                   ? t('importJsonMapping.willCreateEvents', { count: importCount })
-                  : t('importJsonMapping.willCreate', { count: included.size > 1 ? totalImportCount : importCount })}
+                  : linkMapping && included.size <= 1
+                    ? t('importJsonMapping.willCreateLinks', { count: importCount })
+                    : t('importJsonMapping.willCreate', { count: included.size > 1 ? totalImportCount : importCount })}
                 {included.size > 1 && <span className="text-text-tertiary"> ({t('importJsonMapping.fromTables', { count: included.size })})</span>}
                 {matchedCount !== recordCount && <span className="text-text-tertiary"> ({t('importJsonMapping.matchedOf', { matched: matchedCount, total: recordCount })})</span>}
                 {importCount < matchedCount && <span className="text-warning"> — {t('importJsonMapping.capped', { max: maxImport })}</span>}
