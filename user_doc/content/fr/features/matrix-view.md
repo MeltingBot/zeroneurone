@@ -5,13 +5,21 @@ weight: 8
 
 # Vue matrice
 
-Affichez tous les elements du dossier dans un tableau triable et filtrable.
+Affichez les elements du dossier, ou ses liens, dans un tableau triable et filtrable.
 
 ---
 
 ## Acces
 
 Basculez en vue matrice via le **selecteur de vue** dans la barre d'outils (icone tableau) ou appuyez sur **4**.
+
+---
+
+## Elements et liens
+
+Le choix **Éléments / Liens**, en tête de la barre d'outils, change les lignes du tableau. Chaque tableau garde son tri, ses filtres et ses colonnes quand on passe de l'un à l'autre.
+
+Le tableau des liens montre les liens dont les deux extrémités sont affichées (onglet actif, éléments masqués). Ses colonnes : **Libellé**, **De**, **Vers**, **Date début**, **Date fin**, **Sens**, puis Type, Confiance, Source et une colonne par propriété des liens. Un lien est grisé quand l'une de ses extrémités l'est. Le libellé, le type, la confiance, la source et les propriétés se modifient comme pour les éléments ; les extrémités, les dates et le sens se modifient sur le canevas. La requête depuis une cellule et **Toutes les vues** ne portent que sur les éléments.
 
 ---
 
@@ -73,13 +81,14 @@ Les lignes selectionnees sont surlignees. Utilisez **Ctrl+C** pour copier les li
 
 ---
 
-## Export CSV
+## Export
 
-Cliquez sur l'**icone de telechargement** dans la barre d'outils pour exporter la vue courante en CSV.
+L'**icône d'export** de la barre d'outils propose :
 
-- Respecte la visibilite des colonnes, le tri et les filtres actifs
-- Nom du fichier : `nom-dossier_matrice_jjMMaaaHHmmss.csv`
-- Encodage UTF-8 avec BOM pour compatibilite Excel
+- **CSV (ce tableau)** : le tableau affiché, éléments ou liens. Nom du fichier : `nom-dossier_matrice_jjMMaaaaHHmmss.csv` (`_matrice-liens_` pour les liens), UTF-8 avec BOM pour Excel
+- **Classeur XLSX** (Excel) ou **Classeur ODS** (LibreOffice / OpenOffice Calc) : un fichier de deux feuilles, **Éléments** et **Liens**. Les nombres y sont des nombres et les dates des dates (heure affichée, sans fuseau), pour trier et calculer dans le tableur ; la ligne d'en-tête est figée et filtrable
+
+Chaque export respecte la visibilité des colonnes, le tri et les filtres de son tableau. Un tableau des liens jamais ouvert est exporté avec toutes ses colonnes, sans filtre.
 
 ---
 
@@ -87,9 +96,10 @@ Cliquez sur l'**icone de telechargement** dans la barre d'outils pour exporter l
 
 | Controle | Fonction |
 |----------|----------|
-| Compteur d'elements | Affiche elements filtres / total et nombre de proprietes |
+| Éléments / Liens | Choisir les lignes du tableau |
+| Compteur | Affiche lignes filtrees / total et nombre de proprietes |
 | Colonnes | Basculer la visibilite des colonnes (tout / rien) |
-| Export | Telecharger le CSV |
+| Export | CSV du tableau, ou classeur XLSX / ODS des deux tableaux |
 | Toutes les vues | Appliquer les filtres de colonnes aux autres vues (voir ci-dessous) |
 | Reset | Restaurer tri, colonnes et filtres par defaut |
 | Annuler/Retablir | Annuler/retablir la derniere action |

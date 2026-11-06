@@ -12,7 +12,8 @@ import { DropdownPortal } from '../common/DropdownPortal';
 import { SourceInline } from '../common/SourceInline';
 
 import i18next from 'i18next';
-import type { Element, Confidence, EvaluationModel, Property } from '../../types';
+import type { Element, Link, Confidence, EvaluationModel, Property } from '../../types';
+import type { SheetCell, SheetData } from '../../utils/spreadsheetWriter';
 import { dateFromInputKeys, dateInputKeys, formatPropertyValue, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../../utils/dates';
 import { parseFlexibleDate } from '../../utils';
 import { evaluationStrength, formatEvaluation, getModelScale, isInModel, sanitizeEvaluation } from '../../utils/evaluation';
@@ -50,13 +51,50 @@ const COL_TAGS = 128;
 const COL_CONFIDENCE = 80;
 const COL_SOURCE = 128;
 const COL_PROPERTY = 144;
+const COL_DATE = 184;
 
 const isDateProperty = (prop: Property) => prop.type === 'date' || prop.type === 'datetime';
 
-/** Extract a display value for a property key from an element */
-function getPropertyValue(element: Element, key: string): string {
+/** What a row shows: an element, or a link (same label, tags, grading, source, properties) */
+type MatrixRow = Pick<Element, 'id' | 'label' | 'tags' | 'properties' | 'confidence' | 'source'> & { evaluation?: Element['evaluation'] };
+export type MatrixKind = 'elements' | 'links';
+
+/** Columns of the links table that come from the link itself, not editable here */
+const LINK_COLUMNS = ['link:from', 'link:to', 'link:start', 'link:end', 'link:direction'] as const;
+const isLinkColumn = (key: string) => (LINK_COLUMNS as readonly string[]).includes(key);
+const BASE_COLUMNS: Record<MatrixKind, string[]> = {
+  elements: ['tags', 'confidence', 'source'],
+  links: [...LINK_COLUMNS, 'tags', 'confidence', 'source'],
+};
+
+/** What the link columns need besides the row: the elements' names */
+interface RowContext {
+  model: EvaluationModel;
+  labelOf: (id: string) => string;
+}
+
+const linkStart = (link: Link): Date | null => link.dateRange?.start ?? link.date ?? null;
+const linkEnd = (link: Link): Date | null => link.dateRange?.end ?? null;
+const DIRECTION_KEYS: Record<string, string> = {
+  none: 'directionNone', forward: 'directionForward', backward: 'directionBackward', both: 'directionBoth',
+};
+function directionText(link: Link): string {
+  const direction = link.direction || (link.directed ? 'forward' : 'none');
+  return i18next.t(`panels:detail.labels.${DIRECTION_KEYS[direction] ?? 'directionNone'}`);
+}
+/** A link date as shown: the day, with its time when it has one */
+function linkDateText(date: Date | null, timeZone?: string): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  const day = d.getHours() === 0 && d.getMinutes() === 0;
+  return formatPropertyValue(d, day ? 'date' : 'datetime', i18next.language, timeZone);
+}
+
+/** Extract a display value for a property key from a row */
+function getPropertyValue(row: MatrixRow, key: string): string {
   // Every value of the key (a merge may leave several)
-  return propertiesOf(element.properties, key).map(displayPropertyValue).join(VALUES_SEPARATOR);
+  return propertiesOf(row.properties, key).map(displayPropertyValue).join(VALUES_SEPARATOR);
 }
 
 function displayPropertyValue(prop: Property): string {
@@ -112,20 +150,31 @@ function parsePropertyEdit(text: string, prop: Property | undefined): Property['
 }
 
 /** Get a sortable raw value (number-aware) */
-function getSortValue(element: Element, column: string, model: EvaluationModel): string | number {
+function getSortValue(row: MatrixRow, column: string, ctx: RowContext): string | number {
+  const link = row as Link;
   switch (column) {
     case 'label':
-      return element.label.toLowerCase();
+      return row.label.toLowerCase();
     case 'tags':
-      return (element.tags[0] || '').toLowerCase();
+      return (row.tags[0] || '').toLowerCase();
     case 'confidence':
       // Grading models: same order as confidence (weakest first, ungraded lowest)
-      if (model !== 'zeroneurone') return evaluationStrength(element.evaluation, model);
-      return element.confidence ?? -1;
+      if (ctx.model !== 'zeroneurone') return evaluationStrength(row.evaluation, ctx.model);
+      return row.confidence ?? -1;
     case 'source':
-      return joinSourceLines(sourceToPlainText(element.source, getSourceSchemeNames())).toLowerCase();
+      return joinSourceLines(sourceToPlainText(row.source, getSourceSchemeNames())).toLowerCase();
+    case 'link:from':
+      return ctx.labelOf(link.fromId).toLowerCase();
+    case 'link:to':
+      return ctx.labelOf(link.toId).toLowerCase();
+    case 'link:start':
+      return linkStart(link) ? new Date(linkStart(link)!).getTime() : '';
+    case 'link:end':
+      return linkEnd(link) ? new Date(linkEnd(link)!).getTime() : '';
+    case 'link:direction':
+      return directionText(link).toLowerCase();
     default: {
-      const prop = element.properties.find((p) => p.key === column);
+      const prop = row.properties.find((p) => p.key === column);
       if (!prop || prop.value == null) return '';
       if (typeof prop.value === 'number') return prop.value;
       if (prop.value instanceof Date || isDateProperty(prop)) return parsePropertyDate(prop.value)?.getTime() ?? '';
@@ -135,26 +184,83 @@ function getSortValue(element: Element, column: string, model: EvaluationModel):
 }
 
 /** Render cell value for fixed columns */
-function getCellValue(el: Element, colKey: string, model: EvaluationModel): string {
+function getCellValue(row: MatrixRow, colKey: string, ctx: RowContext): string {
+  const link = row as Link;
   switch (colKey) {
     case 'label':
-      return el.label || '—';
+      return row.label || '—';
     case 'tags':
-      return el.tags[0] || '—';
+      return row.tags[0] || '—';
     case 'confidence':
-      if (model !== 'zeroneurone') {
-        return isInModel(el.evaluation, model) ? formatEvaluation(el.evaluation) : '—';
+      if (ctx.model !== 'zeroneurone') {
+        return isInModel(row.evaluation, ctx.model) ? formatEvaluation(row.evaluation) : '—';
       }
-      return el.confidence != null ? `${el.confidence}%` : '—';
+      return row.confidence != null ? `${row.confidence}%` : '—';
     case 'source':
-      return el.source || '—';
+      return row.source || '—';
+    case 'link:from':
+      return ctx.labelOf(link.fromId) || '—';
+    case 'link:to':
+      return ctx.labelOf(link.toId) || '—';
+    case 'link:start':
+      return linkDateText(linkStart(link), link.dateRange?.timeZone) || '—';
+    case 'link:end':
+      return linkDateText(linkEnd(link), link.dateRange?.timeZone) || '—';
+    case 'link:direction':
+      return directionText(link);
     default:
-      return getPropertyValue(el, colKey) || '—';
+      return getPropertyValue(row, colKey) || '—';
   }
 }
 
-export function MatrixView() {
+/**
+ * Value of a cell for a workbook: numbers as numbers and dates as dates, so
+ * the spreadsheet sorts and computes them; the rest as the table shows it.
+ */
+function getExportValue(row: MatrixRow, colKey: string, ctx: RowContext): SheetCell {
+  const link = row as Link;
+  switch (colKey) {
+    case 'confidence':
+      if (ctx.model === 'zeroneurone') return row.confidence ?? null;
+      break;
+    case 'source':
+      return row.source ? joinSourceLines(sourceToPlainText(row.source, getSourceSchemeNames())) : null;
+    case 'link:start':
+      return linkStart(link) ? new Date(linkStart(link)!) : null;
+    case 'link:end':
+      return linkEnd(link) ? new Date(linkEnd(link)!) : null;
+    case 'label': case 'tags': case 'link:from': case 'link:to': case 'link:direction':
+      break;
+    default: {
+      // One value: typed; several: as the table joins them
+      const props = propertiesOf(row.properties, colKey);
+      if (props.length === 1) {
+        const [prop] = props;
+        if (typeof prop.value === 'number') return prop.value;
+        if (prop.value instanceof Date || isDateProperty(prop)) return parsePropertyDate(prop.value) ?? null;
+      }
+    }
+  }
+  const text = getCellValue(row, colKey, ctx);
+  return text === '—' ? null : text;
+}
+
+interface MatrixTableProps {
+  kind: MatrixKind;
+  /** The table on screen: the other one keeps its state, hidden, and listens to no key */
+  active: boolean;
+  onKindChange: (kind: MatrixKind) => void;
+  /** Hands the parent a reader of this table as a workbook sheet */
+  registerSheet: (kind: MatrixKind, read: (() => SheetData) | null) => void;
+  /** Both tables as a workbook of two sheets */
+  onWorkbook: (format: 'xlsx' | 'ods') => void;
+}
+
+function MatrixTable({ kind, active, onKindChange, registerSheet, onWorkbook }: MatrixTableProps) {
   const { t } = useTranslation('pages');
+  // Export: this table as CSV, or both as a workbook
+  const exportBtnRef = useRef<HTMLButtonElement>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const columnsBtnRef = useRef<HTMLButtonElement>(null);
   const columnsDropdownRef = useRef<HTMLDivElement>(null);
@@ -165,7 +271,17 @@ export function MatrixView() {
   const updateElement = useDossierStore((s) => s.updateElement);
   const evaluationModel = useEvaluationModel();
   const dossierName = useDossierStore((s) => s.currentDossier?.name ?? 'export');
-  const { selectElement, selectElements, toggleElement, selectedElementIds } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectElements: s.selectElements, toggleElement: s.toggleElement, selectedElementIds: s.selectedElementIds })));
+  const updateLink = useDossierStore((s) => s.updateLink);
+  const selection = useSelectionStore(useShallow((s) => ({
+    selectElement: s.selectElement, selectElements: s.selectElements, toggleElement: s.toggleElement, selectedElementIds: s.selectedElementIds,
+    selectLink: s.selectLink, selectLinks: s.selectLinks, toggleLink: s.toggleLink, selectedLinkIds: s.selectedLinkIds,
+  })));
+  // Rows are elements or links: selection follows
+  const isLinks = kind === 'links';
+  const selectedIds: Set<string> = isLinks ? selection.selectedLinkIds : selection.selectedElementIds;
+  const selectRow = isLinks ? (id: string) => selection.selectLink(id) : (id: string) => selection.selectElement(id);
+  const selectRows = isLinks ? (ids: string[]) => selection.selectLinks(ids) : (ids: string[]) => selection.selectElements(ids);
+  const toggleRow = isLinks ? (id: string) => selection.toggleLink(id) : (id: string) => selection.toggleElement(id);
   const pushAction = useHistoryStore((s) => s.pushAction);
   const historyUndo = useHistoryStore((s) => s.undo);
   const historyRedo = useHistoryStore((s) => s.redo);
@@ -226,29 +342,46 @@ export function MatrixView() {
     });
   }, [elements, viewHiddenIds, activeTabId, tabMemberSet]);
 
-  // Collect all unique property keys across visible elements
+  // Links whose two ends show: not hidden, and in the active tab
+  const visibleLinks = useMemo(() => {
+    if (!isLinks) return [];
+    const shown = new Set(elements
+      .filter((el) => !viewHiddenIds.has(el.id) && (!activeTabId || tabMemberSet.has(el.id)))
+      .map((el) => el.id));
+    return links.filter((l) => shown.has(l.fromId) && shown.has(l.toId));
+  }, [isLinks, links, elements, viewHiddenIds, activeTabId, tabMemberSet]);
+  const tableRows: MatrixRow[] = isLinks ? visibleLinks : visibleElements;
+
+  // Element names, for the ends of links
+  const ctx = useMemo((): RowContext => {
+    const names = new Map(elements.map((el) => [el.id, el.label]));
+    return { model: evaluationModel, labelOf: (id) => names.get(id) ?? '' };
+  }, [elements, evaluationModel]);
+
+  // Collect all unique property keys across visible rows
   const propertyKeys = useMemo(() => {
     const keyCount = new Map<string, number>();
-    visibleElements.forEach((el) => {
-      el.properties.forEach((p) => {
+    tableRows.forEach((row) => {
+      row.properties.forEach((p) => {
         keyCount.set(p.key, (keyCount.get(p.key) || 0) + 1);
       });
     });
     return Array.from(keyCount.entries())
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .map(([key]) => key);
-  }, [visibleElements]);
+  }, [tableRows]);
+  const baseColumns = BASE_COLUMNS[kind];
 
   // Sync column order when property keys change
   useEffect(() => {
     setColumnOrder((prev) => {
-      const allKeys = ['tags', 'confidence', 'source', ...propertyKeys];
+      const allKeys = [...baseColumns, ...propertyKeys];
       if (prev.length === 0) return allKeys;
       const existing = prev.filter((k) => allKeys.includes(k));
       const newKeys = allKeys.filter((k) => !prev.includes(k));
       return [...existing, ...newKeys];
     });
-  }, [propertyKeys]);
+  }, [propertyKeys, baseColumns]);
 
   // Build all column definitions (respecting user order)
   const allColumns: ColumnDef[] = useMemo(() => {
@@ -261,16 +394,21 @@ export function MatrixView() {
         alignRight: true,
       },
       source: { key: 'source', label: t('matrix.source'), width: COL_SOURCE },
+      'link:from': { key: 'link:from', label: t('matrix.from'), width: COL_LABEL },
+      'link:to': { key: 'link:to', label: t('matrix.to'), width: COL_LABEL },
+      'link:start': { key: 'link:start', label: t('matrix.start'), width: COL_DATE },
+      'link:end': { key: 'link:end', label: t('matrix.end'), width: COL_DATE },
+      'link:direction': { key: 'link:direction', label: t('matrix.direction'), width: COL_TAGS },
     };
     propertyKeys.forEach((key) => {
       colMap[key] = { key, label: key, width: COL_PROPERTY };
     });
     const ordered = columnOrder.filter((k) => k in colMap).map((k) => colMap[k]);
     return [
-      { key: 'label', label: t('matrix.label'), width: COL_LABEL, fixed: true },
+      { key: 'label', label: isLinks ? t('matrix.linkLabel') : t('matrix.label'), width: COL_LABEL, fixed: true },
       ...ordered,
     ];
-  }, [t, propertyKeys, columnOrder, evaluationModel]);
+  }, [t, propertyKeys, columnOrder, evaluationModel, isLinks]);
 
   // Helper: effective column width (custom or default)
   const getColWidth = useCallback((col: ColumnDef) =>
@@ -307,18 +445,22 @@ export function MatrixView() {
   const resetView = useCallback(() => {
     setSort({ column: 'label', direction: 'asc' });
     setHiddenColumns(new Set());
-    setColumnOrder(['tags', 'confidence', 'source', ...propertyKeys]);
+    setColumnOrder([...baseColumns, ...propertyKeys]);
     setColumnWidths({});
     setColumnFilters({});
     setFirstColumnPinned(true);
-  }, [propertyKeys]);
+  }, [propertyKeys, baseColumns]);
 
   const hasActiveFilters = Object.values(columnFilters).some((v) => v.length > 0);
 
   // Column filters handed to the other views as a ZNQuery filter (added to
   // the query already applied, if any). The column filters stay: the matrix
   // only dims what a query leaves out, it would show every row again
-  const filterQuery = useMemo(() => matrixFiltersToQuery(columnFilters, elements), [columnFilters, elements]);
+  // (elements only: a query selects elements)
+  const filterQuery = useMemo(
+    () => (isLinks ? { ast: null, unsupported: [] } : matrixFiltersToQuery(columnFilters, elements)),
+    [columnFilters, elements, isLinks],
+  );
   const queryText = useQueryStore((s) => s.currentText);
   const filtersApplied = !!filterQuery.ast && queryFilterActive && queryText.includes(serializeQuery(filterQuery.ast));
   const applyFiltersToViews = useCallback(() => {
@@ -336,7 +478,7 @@ export function MatrixView() {
     || sort.column !== 'label' || sort.direction !== 'asc'
     || hasActiveFilters
     || !firstColumnPinned
-    || (columnOrder.length > 0 && columnOrder.join(',') !== ['tags', 'confidence', 'source', ...propertyKeys].join(','));
+    || (columnOrder.length > 0 && columnOrder.join(',') !== [...baseColumns, ...propertyKeys].join(','));
 
   // Mouse-based column reorder on table headers with ghost
   const draggingColRef = useRef<string | null>(null);
@@ -439,22 +581,22 @@ export function MatrixView() {
   }, [columnsOpen]);
 
   // Filter by column values
-  const filteredElements = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const activeFilters = Object.entries(columnFilters).filter(([, v]) => v.length > 0);
-    if (activeFilters.length === 0) return visibleElements;
-    return visibleElements.filter((el) =>
+    if (activeFilters.length === 0) return tableRows;
+    return tableRows.filter((row) =>
       activeFilters.every(([colKey, filterText]) => {
-        const value = getCellValue(el, colKey, evaluationModel).toLowerCase();
+        const value = getCellValue(row, colKey, ctx).toLowerCase();
         return value.includes(filterText.toLowerCase());
       })
     );
-  }, [visibleElements, columnFilters, evaluationModel]);
+  }, [tableRows, columnFilters, ctx]);
 
-  const sortedElements = useMemo(() => {
-    const sorted = [...filteredElements];
+  const sortedRows = useMemo(() => {
+    const sorted = [...filteredRows];
     sorted.sort((a, b) => {
-      const aVal = getSortValue(a, sort.column, evaluationModel);
-      const bVal = getSortValue(b, sort.column, evaluationModel);
+      const aVal = getSortValue(a, sort.column, ctx);
+      const bVal = getSortValue(b, sort.column, ctx);
       let cmp: number;
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         cmp = aVal - bVal;
@@ -464,7 +606,7 @@ export function MatrixView() {
       return sort.direction === 'asc' ? cmp : -cmp;
     });
     return sorted;
-  }, [filteredElements, sort, evaluationModel]);
+  }, [filteredRows, sort, ctx]);
 
   const handleSort = useCallback((column: string) => {
     setSort((prev) => ({
@@ -477,20 +619,21 @@ export function MatrixView() {
   const handleRowClick = useCallback((e: React.MouseEvent, id: string, rowIndex: number) => {
     if (e.ctrlKey || e.metaKey) {
       // Ctrl+click: toggle individual selection
-      toggleElement(id);
+      toggleRow(id);
       lastClickedRowRef.current = rowIndex;
     } else if (e.shiftKey && lastClickedRowRef.current >= 0) {
       // Shift+click: range select from last clicked to current
       const from = Math.min(lastClickedRowRef.current, rowIndex);
       const to = Math.max(lastClickedRowRef.current, rowIndex);
-      const rangeIds = sortedElements.slice(from, to + 1).map((el) => el.id);
-      selectElements(rangeIds);
+      const rangeIds = sortedRows.slice(from, to + 1).map((row) => row.id);
+      selectRows(rangeIds);
     } else {
       // Normal click: single select
-      selectElement(id);
+      selectRow(id);
       lastClickedRowRef.current = rowIndex;
     }
-  }, [selectElement, selectElements, toggleElement, sortedElements]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection, isLinks, sortedRows]);
 
   // Inline cell editing
   const [editingCell, setEditingCell] = useState<{ rowId: string; colKey: string } | null>(null);
@@ -510,7 +653,7 @@ export function MatrixView() {
   }, [editingCell]);
 
   /** Get raw editable value (without formatting like % or —) */
-  const getRawEditValue = useCallback((el: Element, colKey: string): string => {
+  const getRawEditValue = useCallback((el: MatrixRow, colKey: string): string => {
     switch (colKey) {
       case 'label': return el.label;
       case 'tags': return el.tags.join(', ');
@@ -525,15 +668,27 @@ export function MatrixView() {
   }, [evaluationModel]);
 
 
-  const handleCellDoubleClick = useCallback((el: Element, colKey: string) => {
-    if (anonymousMode) return;
+  const handleCellDoubleClick = useCallback((el: MatrixRow, colKey: string) => {
+    // The ends, dates and direction of a link are edited on the canvas
+    if (anonymousMode || isLinkColumn(colKey)) return;
     setEditingCell({ rowId: el.id, colKey });
     setEditValue(getRawEditValue(el, colKey));
   }, [anonymousMode, getRawEditValue]);
 
+  /** Write a change of the row, element or link, undoable */
+  const saveRow = useCallback((id: string, changes: Partial<Element> & Partial<Link>, old: Partial<Element> & Partial<Link>) => {
+    if (isLinks) {
+      updateLink(id, changes as Partial<Link>);
+      pushAction({ type: 'update-link', undo: { linkId: id, linkChanges: old }, redo: { linkId: id, linkChanges: changes } });
+    } else {
+      updateElement(id, changes as Partial<Element>);
+      pushAction({ type: 'update-element', undo: { elementId: id, changes: old }, redo: { elementId: id, changes } });
+    }
+  }, [isLinks, updateLink, updateElement, pushAction]);
+
   const handleCellSave = useCallback(() => {
     if (!editingCell) return;
-    const el = elements.find((e) => e.id === editingCell.rowId);
+    const el = tableRows.find((e) => e.id === editingCell.rowId);
     if (!el) { setEditingCell(null); return; }
 
     const { colKey } = editingCell;
@@ -541,20 +696,13 @@ export function MatrixView() {
 
     switch (colKey) {
       case 'label': {
-        if (trimmed && trimmed !== el.label) {
-          const old = el.label;
-          updateElement(el.id, { label: trimmed });
-          pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { label: old } }, redo: { elementId: el.id, changes: { label: trimmed } } });
-        }
+        // A link may have no label; an element needs one
+        if ((trimmed || isLinks) && trimmed !== el.label) saveRow(el.id, { label: trimmed }, { label: el.label });
         break;
       }
       case 'tags': {
         const newTags = trimmed ? trimmed.split(',').map((t) => t.trim()).filter(Boolean) : [];
-        if (newTags.join(',') !== el.tags.join(',')) {
-          const old = el.tags;
-          updateElement(el.id, { tags: newTags });
-          pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { tags: old } }, redo: { elementId: el.id, changes: { tags: newTags } } });
-        }
+        if (newTags.join(',') !== el.tags.join(',')) saveRow(el.id, { tags: newTags }, { tags: el.tags });
         break;
       }
       case 'confidence': {
@@ -571,26 +719,16 @@ export function MatrixView() {
               });
           if (compact !== '' && !next) break;
           if (formatEvaluation(next) !== formatEvaluation(isInModel(el.evaluation, evaluationModel) ? el.evaluation : null)) {
-            const old = el.evaluation ?? null;
-            updateElement(el.id, { evaluation: next });
-            pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { evaluation: old } }, redo: { elementId: el.id, changes: { evaluation: next } } });
+            saveRow(el.id, { evaluation: next }, { evaluation: el.evaluation ?? null });
           }
           break;
         }
         const num = trimmed === '' ? null : Math.round(Math.max(0, Math.min(100, parseInt(trimmed, 10) || 0)) / 10) * 10 as Confidence;
-        if (num !== el.confidence) {
-          const old = el.confidence;
-          updateElement(el.id, { confidence: num });
-          pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { confidence: old } }, redo: { elementId: el.id, changes: { confidence: num } } });
-        }
+        if (num !== el.confidence) saveRow(el.id, { confidence: num }, { confidence: el.confidence });
         break;
       }
       case 'source': {
-        if (trimmed !== el.source) {
-          const old = el.source;
-          updateElement(el.id, { source: trimmed });
-          pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { source: old } }, redo: { elementId: el.id, changes: { source: trimmed } } });
-        }
+        if (trimmed !== el.source) saveRow(el.id, { source: trimmed }, { source: el.source });
         break;
       }
       default: {
@@ -604,13 +742,12 @@ export function MatrixView() {
         const newProps = existing
           ? oldProps.map((p) => p.key === colKey ? { ...p, value } : p)
           : [...oldProps, { key: colKey, value }];
-        updateElement(el.id, { properties: newProps });
-        pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { properties: oldProps } }, redo: { elementId: el.id, changes: { properties: newProps } } });
+        saveRow(el.id, { properties: newProps }, { properties: oldProps });
         break;
       }
     }
     setEditingCell(null);
-  }, [editingCell, editValue, elements, updateElement, pushAction, evaluationModel]);
+  }, [editingCell, editValue, tableRows, saveRow, evaluationModel, isLinks]);
 
   const handleCellCancel = useCallback(() => {
     setEditingCell(null);
@@ -619,13 +756,15 @@ export function MatrixView() {
   /** Navigate to an adjacent cell: save current, then open the target */
   const navigateToCell = useCallback((rowDelta: number, colDelta: number) => {
     if (!editingCell) return;
-    const rowIdx = sortedElements.findIndex((el) => el.id === editingCell.rowId);
-    const colIdx = visibleCols.findIndex((c) => c.key === editingCell.colKey);
+    const rowIdx = sortedRows.findIndex((el) => el.id === editingCell.rowId);
+    // The columns that can be edited: a link's ends, dates and direction are skipped
+    const editable = visibleCols.filter((c) => !isLinkColumn(c.key));
+    const colIdx = editable.findIndex((c) => c.key === editingCell.colKey);
     if (rowIdx === -1 || colIdx === -1) return;
-    const newRowIdx = Math.max(0, Math.min(sortedElements.length - 1, rowIdx + rowDelta));
-    const newColIdx = Math.max(0, Math.min(visibleCols.length - 1, colIdx + colDelta));
-    const newEl = sortedElements[newRowIdx];
-    const newCol = visibleCols[newColIdx];
+    const newRowIdx = Math.max(0, Math.min(sortedRows.length - 1, rowIdx + rowDelta));
+    const newColIdx = Math.max(0, Math.min(editable.length - 1, colIdx + colDelta));
+    const newEl = sortedRows[newRowIdx];
+    const newCol = editable[newColIdx];
     if (newEl && newCol) {
       // Save current first (handleCellSave clears editingCell), then open new
       handleCellSave();
@@ -635,7 +774,7 @@ export function MatrixView() {
         setEditValue(getRawEditValue(newEl, newCol.key));
       }, 0);
     }
-  }, [editingCell, sortedElements, visibleCols, handleCellSave, getRawEditValue]);
+  }, [editingCell, sortedRows, visibleCols, handleCellSave, getRawEditValue]);
 
   const handleCellKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') { e.preventDefault(); handleCellSave(); }
@@ -660,29 +799,28 @@ export function MatrixView() {
 
   // Build TSV text from selected rows for clipboard
   const buildSelectedTSV = useCallback(() => {
-    const selectedRows = sortedElements.filter((el) => selectedElementIds.has(el.id));
+    const selectedRows = sortedRows.filter((el) => selectedIds.has(el.id));
     if (selectedRows.length === 0) return '';
     const headers = visibleCols.map((c) => c.label).join('\t');
     const rows = selectedRows.map((el) =>
       visibleCols.map((col) => {
-        const v = getCellValue(el, col.key, evaluationModel);
+        const v = getCellValue(el, col.key, ctx);
         return v === '—' ? '' : v;
       }).join('\t')
     );
     return [headers, ...rows].join('\n');
-  }, [sortedElements, selectedElementIds, visibleCols, evaluationModel]);
+  }, [sortedRows, selectedIds, visibleCols, ctx]);
 
   // Context menu handlers
   const handleContextMenu = useCallback((e: React.MouseEvent, elementId: string, colKey: string) => {
     e.preventDefault();
     e.stopPropagation();
-    // Auto-select element if not already selected
-    if (!selectedElementIds.has(elementId)) {
-      selectElement(elementId);
-    }
+    // Auto-select the row if not already selected
+    if (!selectedIds.has(elementId)) selectRow(elementId);
     setContextMenu({ x: e.clientX, y: e.clientY, elementId, colKey });
     setContextMenuPos({ x: e.clientX, y: e.clientY });
-  }, [selectedElementIds, selectElement]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds, selection, isLinks]);
 
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
@@ -690,39 +828,40 @@ export function MatrixView() {
 
   const handleCopyCell = useCallback(() => {
     if (!contextMenu) return;
-    const el = elements.find((e) => e.id === contextMenu.elementId);
+    const el = tableRows.find((e) => e.id === contextMenu.elementId);
     if (!el) return;
-    const value = getCellValue(el, contextMenu.colKey, evaluationModel);
+    const value = getCellValue(el, contextMenu.colKey, ctx);
     navigator.clipboard.writeText(value === '—' ? '' : value);
     closeContextMenu();
-  }, [contextMenu, elements, closeContextMenu, evaluationModel]);
+  }, [contextMenu, tableRows, closeContextMenu, ctx]);
 
   const handleCopyRow = useCallback(() => {
     if (!contextMenu) return;
-    const el = elements.find((e) => e.id === contextMenu.elementId);
+    const el = tableRows.find((e) => e.id === contextMenu.elementId);
     if (!el) return;
     const headers = visibleCols.map((c) => c.label).join('\t');
     const row = visibleCols.map((col) => {
-      const v = getCellValue(el, col.key, evaluationModel);
+      const v = getCellValue(el, col.key, ctx);
       return v === '—' ? '' : v;
     }).join('\t');
     navigator.clipboard.writeText(`${headers}\n${row}`);
     closeContextMenu();
-  }, [contextMenu, elements, visibleCols, closeContextMenu, evaluationModel]);
+  }, [contextMenu, tableRows, visibleCols, closeContextMenu, ctx]);
 
   // Right-clicked cell value as a ZNQuery (exact value, case aside), when the
   // column has an equivalent query
   const contextCell = useMemo(() => {
-    if (!contextMenu) return null;
+    // A query selects elements: none on a link's value
+    if (!contextMenu || isLinks) return null;
     const el = elements.find((e) => e.id === contextMenu.elementId);
     if (!el) return null;
-    const value = getCellValue(el, contextMenu.colKey, evaluationModel);
+    const value = getCellValue(el, contextMenu.colKey, ctx);
     const { ast } = value === '—'
       ? { ast: null }
       : matrixFiltersToQuery({ [contextMenu.colKey]: value }, elements);
     const query = ast?.type === 'condition' ? { ...ast, operator: 'eq' as const } : null;
     return { query };
-  }, [contextMenu, elements, evaluationModel]);
+  }, [contextMenu, elements, ctx, isLinks]);
 
   const handleQueryOnValue = useCallback(() => {
     if (!contextCell?.query) return;
@@ -771,9 +910,9 @@ export function MatrixView() {
   const handleExportCSV = useCallback(() => {
     const escape = (v: string) => escapeCsvField(v);
     const headers = visibleCols.map((c) => escape(c.label)).join(',');
-    const rows = sortedElements.map((el) =>
+    const rows = sortedRows.map((el) =>
       visibleCols.map((col) => {
-        const v = getCellValue(el, col.key, evaluationModel);
+        const v = getCellValue(el, col.key, ctx);
         return escape(v === '—' ? '' : v);
       }).join(',')
     );
@@ -783,12 +922,24 @@ export function MatrixView() {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const ts = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-    downloadBlob(blob, `${slug}_matrice_${ts}.csv`);
-    emitExport('matrix-csv');
-  }, [sortedElements, visibleCols, evaluationModel]);
+    downloadBlob(blob, `${slug}_${isLinks ? 'matrice-liens' : 'matrice'}_${ts}.csv`);
+    emitExport('matrix-csv', { rows: kind });
+  }, [sortedRows, visibleCols, ctx, dossierName, isLinks, kind]);
+
+  // This table as a workbook sheet: its columns, sort and filters, typed values
+  useEffect(() => {
+    registerSheet(kind, () => ({
+      name: isLinks ? t('matrix.sheetLinks') : t('matrix.sheetElements'),
+      columns: visibleCols.map((c) => c.label),
+      rows: sortedRows.map((row) => visibleCols.map((col) => getExportValue(row, col.key, ctx))),
+    }));
+    return () => registerSheet(kind, null);
+  }, [registerSheet, kind, isLinks, t, visibleCols, sortedRows, ctx]);
 
   // Keyboard shortcuts (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Ctrl+C)
   useEffect(() => {
+    // The hidden table listens to no key: two would undo twice
+    if (!active) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       // Skip when typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -802,7 +953,7 @@ export function MatrixView() {
         historyRedo();
       }
       // Ctrl+C: copy selected rows as TSV
-      if (e.key === 'c' && isCtrlOrMeta && selectedElementIds.size > 0) {
+      if (e.key === 'c' && isCtrlOrMeta && selectedIds.size > 0) {
         e.preventDefault();
         const tsv = buildSelectedTSV();
         if (tsv) navigator.clipboard.writeText(tsv);
@@ -810,7 +961,7 @@ export function MatrixView() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [historyUndo, historyRedo, selectedElementIds, buildSelectedTSV]);
+  }, [active, historyUndo, historyRedo, selectedIds, buildSelectedTSV]);
 
   // Virtualisation - resize observer
   useEffect(() => {
@@ -826,13 +977,13 @@ export function MatrixView() {
     setScrollTop(e.currentTarget.scrollTop);
   }, []);
 
-  const totalContentHeight = sortedElements.length * ROW_HEIGHT;
+  const totalContentHeight = sortedRows.length * ROW_HEIGHT;
   const firstVisibleRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_ROWS);
   const lastVisibleRow = Math.min(
-    sortedElements.length - 1,
+    sortedRows.length - 1,
     Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + BUFFER_ROWS
   );
-  const visibleRows = sortedElements.slice(firstVisibleRow, lastVisibleRow + 1);
+  const windowRows = sortedRows.slice(firstVisibleRow, lastVisibleRow + 1);
 
   const SortIcon = useCallback(({ column }: { column: string }) => {
     if (sort.column !== column) return <ArrowUpDown size={12} className="text-text-tertiary" />;
@@ -841,19 +992,34 @@ export function MatrixView() {
       : <ArrowDown size={12} className="text-text-primary" />;
   }, [sort]);
 
-  const elementCount = visibleElements.length;
+  const rowCount = tableRows.length;
   const hiddenCount = hiddenColumns.size;
   const nonFixedColumns = allColumns.filter((c) => !c.fixed);
 
   return (
-    <div className="absolute inset-0 flex flex-col overflow-hidden">
+    <div className={`absolute inset-0 flex flex-col overflow-hidden ${active ? '' : 'hidden'}`} data-testid={`matrix-${kind}`}>
       <ViewToolbar
         showMediaToggle={false}
         showCommentBadgesToggle={false}
         leftContent={
           <div className="flex items-center gap-3">
+            {/* Rows: elements or links */}
+            <div className="flex items-center rounded border border-border-default overflow-hidden shrink-0" role="tablist">
+              {(['elements', 'links'] as const).map((k) => (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={k === kind}
+                  onClick={() => onKindChange(k)}
+                  data-testid={`matrix-kind-${k}`}
+                  className={`px-2 py-0.5 text-xs transition-colors ${k === kind ? 'bg-accent-light text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                >
+                  {t(k === 'elements' ? 'matrix.kindElements' : 'matrix.kindLinks')}
+                </button>
+              ))}
+            </div>
             <span className="text-xs text-text-secondary shrink-0">
-              {t('matrix.count', { count: sortedElements.length, total: elementCount })}
+              {t(isLinks ? 'matrix.countLinks' : 'matrix.count', { count: sortedRows.length, total: rowCount })}
               {' · '}
               {t('matrix.properties', { count: propertyKeys.length })}
             </span>
@@ -878,15 +1044,33 @@ export function MatrixView() {
             </div>
 
             <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors hover:bg-bg-tertiary text-text-secondary"
-              title={t('matrix.exportCsv')}
+              ref={exportBtnRef}
+              onClick={() => setExportOpen((v) => !v)}
+              data-testid="matrix-export"
+              className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${exportOpen ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
+              title={t('matrix.export')}
             >
               <Upload size={14} />
             </button>
+            <DropdownPortal anchorRef={exportBtnRef} isOpen={exportOpen && active} onClose={() => setExportOpen(false)} className="py-1 min-w-44">
+              {([
+                ['csv', t('matrix.exportCsvShort'), handleExportCSV],
+                ['xlsx', t('matrix.exportXlsx'), () => onWorkbook('xlsx')],
+                ['ods', t('matrix.exportOds'), () => onWorkbook('ods')],
+              ] as const).map(([id, label, run]) => (
+                <button
+                  key={id}
+                  onClick={() => { setExportOpen(false); run(); }}
+                  data-testid={`matrix-export-${id}`}
+                  className="w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
+            </DropdownPortal>
 
             {/* Column filters → filter of every view */}
-            {hasActiveFilters && (
+            {hasActiveFilters && !isLinks && (
               <button
                 onClick={applyFiltersToViews}
                 disabled={!filterQuery.ast || filtersApplied}
@@ -924,16 +1108,16 @@ export function MatrixView() {
         ref={containerRef}
         role="grid"
         aria-label={t('dossier.views.matrix')}
-        aria-rowcount={sortedElements.length + 1}
+        aria-rowcount={sortedRows.length + 1}
         aria-colcount={visibleCols.length}
         className="flex-1 overflow-auto"
         onScroll={handleScroll}
       >
         {/* Empty only with nothing to show at all: a column filter that keeps
             no row leaves the headers and the filter row up, to correct it */}
-        {visibleElements.length === 0 ? (
+        {tableRows.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-text-tertiary">
-            {t('matrix.empty')}
+            {t(isLinks ? 'matrix.emptyLinks' : 'matrix.empty')}
           </div>
         ) : (
           <div style={{ minWidth: totalRowWidth }}>
@@ -1029,16 +1213,19 @@ export function MatrixView() {
               </div>
             </div>
 
-            {sortedElements.length === 0 && (
+            {sortedRows.length === 0 && (
               <div className="sticky left-0 px-3 py-2 text-sm text-text-tertiary">{t('matrix.noResults')}</div>
             )}
 
             {/* Virtual rows container */}
             <div style={{ height: totalContentHeight, position: 'relative', width: totalRowWidth }}>
-              {visibleRows.map((el, i) => {
+              {windowRows.map((el, i) => {
                 const rowIndex = firstVisibleRow + i;
-                const isDimmed = dimmedElementIds.has(el.id);
-                const isSelected = selectedElementIds.has(el.id);
+                // A link is dimmed with either of its ends
+                const isDimmed = isLinks
+                  ? dimmedElementIds.has((el as Link).fromId) || dimmedElementIds.has((el as Link).toId)
+                  : dimmedElementIds.has(el.id);
+                const isSelected = selectedIds.has(el.id);
 
                 return (
                   <div
@@ -1058,7 +1245,7 @@ export function MatrixView() {
                     }}
                   >
                     {visibleCols.map((col) => {
-                      const rawValue = getCellValue(el, col.key, evaluationModel);
+                      const rawValue = getCellValue(el, col.key, ctx);
                       // Source: show link labels, not the Markdown syntax (editing stays raw)
                       const value = col.key === 'source' && el.source ? joinSourceLines(sourceToPlainText(rawValue, getSourceSchemeNames())) : rawValue;
                       const isEmpty = value === '—';
@@ -1132,7 +1319,7 @@ export function MatrixView() {
       </div>
 
       {/* Columns dropdown (fixed positioning to escape overflow clipping) */}
-      {columnsOpen && (
+      {columnsOpen && active && (
         <>
           <div
             className="fixed inset-0 z-40"
@@ -1183,7 +1370,7 @@ export function MatrixView() {
       )}
 
       {/* Context menu */}
-      {contextMenu && (
+      {contextMenu && active && (
         <>
           <div
             className="fixed inset-0 z-40"
@@ -1221,13 +1408,13 @@ export function MatrixView() {
               <Rows3 size={14} className="text-text-secondary" />
               {t('matrix.copyRow')}
             </button>
-            {selectedElementIds.size > 1 && (
+            {selectedIds.size > 1 && (
               <button
                 onClick={handleCopySelection}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Copy size={14} className="text-text-secondary" />
-                {t('matrix.copySelection', { count: selectedElementIds.size })}
+                {t('matrix.copySelection', { count: selectedIds.size })}
               </button>
             )}
           </div>
@@ -1254,5 +1441,59 @@ export function MatrixView() {
         );
       })()}
     </div>
+  );
+}
+
+/**
+ * The matrix: a table of the elements, or of the links. The links table is
+ * mounted the first time it is shown, then kept (hidden) with its sort,
+ * filters and columns; a workbook export takes both tables as they stand.
+ */
+export function MatrixView() {
+  const [kind, setKind] = useState<MatrixKind>('elements');
+  const [linksMounted, setLinksMounted] = useState(false);
+  const dossierName = useDossierStore((s) => s.currentDossier?.name ?? 'export');
+  const sheets = useRef(new Map<MatrixKind, () => SheetData>());
+  const [sheetsReady, setSheetsReady] = useState(0);
+  const registerSheet = useCallback((k: MatrixKind, read: (() => SheetData) | null) => {
+    if (read) sheets.current.set(k, read); else sheets.current.delete(k);
+    setSheetsReady((n) => n + 1);
+  }, []);
+  const showKind = useCallback((k: MatrixKind) => {
+    if (k === 'links') setLinksMounted(true);
+    setKind(k);
+  }, []);
+
+  // A workbook asked before the links table was ever shown: mount it, then write
+  const [pendingWorkbook, setPendingWorkbook] = useState<'xlsx' | 'ods' | null>(null);
+  const writeWorkbook = useCallback(async (format: 'xlsx' | 'ods') => {
+    const read = (['elements', 'links'] as const).map((k) => sheets.current.get(k)).filter((r): r is () => SheetData => !!r);
+    const data = read.map((r) => r());
+    const { buildXlsx, buildOds } = await import('../../utils/spreadsheetWriter');
+    const blob = format === 'xlsx' ? await buildXlsx(data) : await buildOds(data);
+    const slug = dossierName.replace(/[^a-zA-Z0-9À-ÿ_-]/g, '_').replace(/_+/g, '_');
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const ts = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    downloadBlob(blob, `${slug}_matrice_${ts}.${format}`);
+    emitExport(`matrix-${format}`);
+  }, [dossierName]);
+  const exportWorkbook = useCallback((format: 'xlsx' | 'ods') => {
+    if (!sheets.current.has('links')) { setLinksMounted(true); setPendingWorkbook(format); return; }
+    void writeWorkbook(format);
+  }, [writeWorkbook]);
+  useEffect(() => {
+    if (!pendingWorkbook || !sheets.current.has('links')) return;
+    setPendingWorkbook(null);
+    void writeWorkbook(pendingWorkbook);
+  }, [pendingWorkbook, sheetsReady, writeWorkbook]);
+
+  return (
+    <>
+      <MatrixTable kind="elements" active={kind === 'elements'} onKindChange={showKind} registerSheet={registerSheet} onWorkbook={exportWorkbook} />
+      {linksMounted && (
+        <MatrixTable kind="links" active={kind === 'links'} onKindChange={showKind} registerSheet={registerSheet} onWorkbook={exportWorkbook} />
+      )}
+    </>
   );
 }
