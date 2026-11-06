@@ -20,6 +20,7 @@ import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { LinkContextMenu } from './LinkContextMenu';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
+import { anyNodeInView } from '../../utils/nodesInView';
 import { usePlugins } from '../../plugins/usePlugins';
 import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
@@ -1275,6 +1276,21 @@ export function Canvas() {
     prevNodesRef.current = result;
     return result;
   }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, focusedElementId, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, elementMap, linkedNodeIds]);
+
+  // A dossier opens on the view left last time. When that view shows none of
+  // its elements (added elsewhere since, or zoomed into an empty corner), it
+  // is framed on them instead. Checked once per dossier, its nodes loaded.
+  const viewCheckedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const dossierId = currentDossier?.id;
+    if (!dossierId || viewCheckedRef.current === dossierId || nodes.length === 0) return;
+    viewCheckedRef.current = dossierId;
+    const view = useViewStore.getState();
+    if (view.pendingFitView || view.pendingViewport) return;
+    const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+    if (!bounds?.width || !bounds.height) return;
+    if (!anyNodeInView(nodes, view.viewport, bounds.width, bounds.height)) requestFitView();
+  }, [currentDossier?.id, nodes, requestFitView]);
 
   // Collaboration presence: what this user selects and edits
   useEffect(() => {

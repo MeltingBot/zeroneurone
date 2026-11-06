@@ -68,6 +68,8 @@ Click a tab name in the bar to switch. Click **All** to see every element.
 
 Each tab keeps its **zoom and framing**: back on a tab, the view is the one you left (stored on this computer). A tab opened for the first time frames its elements. **All** keeps its view too, for the session. This holds however you switch (bar, Alt+arrows, search, Ctrl+Z, saved views).
 
+A dossier opens on the view left last time. When that view shows none of its elements (added elsewhere since, or zoomed into an empty corner), it frames them.
+
 ---
 
 ## Ghost Elements
