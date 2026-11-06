@@ -641,7 +641,7 @@
   },
   "merge": {
     "title": "Połącz elementy",
-    "description": "Wybierz element do zachowania. Właściwości, wydarzenia, tagi i linki zostaną połączone.",
+    "description": "Wybierz element do zachowania, a następnie tagi i właściwości do zachowania. Zdarzenia i powiązania zostaną scalone.",
     "confirm": "Połącz",
     "merging": "Łączenie...",
     "kept": "Zachowany",
@@ -650,10 +650,6 @@
     "hint": "Drugi element zostanie usunięty. Jego linki zostaną przeniesione.",
     "titleMany": "Scal elementy ({{count}})",
     "warnNotes": "Notatki elementów ({{count}}) zostaną połączone jedna po drugiej",
-    "warnProperties_one": "{{count}} właściwość po scaleniu",
-    "warnProperties_few": "{{count}} właściwości po scaleniu",
-    "warnProperties_many": "{{count}} właściwości po scaleniu",
-    "warnProperties_other": "{{count}} właściwości po scaleniu",
     "warnPropertiesMulti_one": "{{count}} właściwość po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
     "warnPropertiesMulti_few": "{{count}} właściwości po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
     "warnPropertiesMulti_many": "{{count}} właściwości po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
@@ -665,7 +661,11 @@
     "hintMany_one": "Drugi element zostanie usunięty. Jego powiązania zostaną przeniesione.",
     "hintMany_few": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione.",
     "hintMany_many": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione.",
-    "hintMany_other": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione."
+    "hintMany_other": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione.",
+    "keepTitle": "Zachować",
+    "tags": "Tagi",
+    "conflict": "Różne wartości",
+    "keepAllOf": "Zachowaj wszystko z {{name}}"
   },
   "encryption": {
     "title": "Szyfrowanie",

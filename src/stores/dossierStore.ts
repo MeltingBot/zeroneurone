@@ -106,6 +106,14 @@ export interface MergeSnapshot {
   sourceTabIds?: string[];
   /** Tabs the kept element joined, taking the source's place (left on undo) */
   targetAddedTabIds?: string[];
+  /** Tags and properties chosen for the kept element (absent: all of both) */
+  keep?: MergeKeep;
+}
+
+/** Tags and properties the kept element ends with, as chosen before the merge */
+export interface MergeKeep {
+  tags: string[];
+  properties: Property[];
 }
 
 interface DossierState {
@@ -176,7 +184,7 @@ interface DossierState {
   dissolveGroup: (groupId: ElementId) => Promise<void>;
 
   // Actions - Merge
-  mergeElements: (targetId: ElementId, sourceId: ElementId) => Promise<MergeSnapshot>;
+  mergeElements: (targetId: ElementId, sourceId: ElementId, keep?: MergeKeep) => Promise<MergeSnapshot>;
 
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
@@ -2234,7 +2242,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // MERGE ELEMENTS
   // ============================================================================
 
-  mergeElements: async (targetId: ElementId, sourceId: ElementId) => {
+  mergeElements: async (targetId: ElementId, sourceId: ElementId, keep?: MergeKeep) => {
     const { elements, links } = get();
     assertWritable(get);
     const ydoc = syncService.getYDoc();
@@ -2251,13 +2259,14 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       ? `${target.notes}\n---\n${source.notes}`
       : target.notes || source.notes;
 
-    const mergedTags = [...new Set([...target.tags, ...source.tags])];
-
-    // Union properties (keep both if same key)
-    const mergedProperties = [...target.properties];
-    for (const prop of source.properties) {
-      const exists = mergedProperties.some(p => p.key === prop.key && p.value === prop.value);
-      if (!exists) mergedProperties.push(prop);
+    // Tags and properties: those chosen, else the union (both kept for the same key)
+    const mergedTags = keep ? [...keep.tags] : [...new Set([...target.tags, ...source.tags])];
+    const mergedProperties = keep ? [...keep.properties] : [...target.properties];
+    if (!keep) {
+      for (const prop of source.properties) {
+        const exists = mergedProperties.some(p => p.key === prop.key && p.value === prop.value);
+        if (!exists) mergedProperties.push(prop);
+      }
     }
 
     // Union events (deduplicate by id)
@@ -2373,6 +2382,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       },
       linksBefore: links.filter(l => touchedLinkIds.has(l.id)),
       deletedLinkIds: [...linksToDelete],
+      ...(keep ? { keep } : {}),
     };
 
     // --- Apply everything in one Y.Doc transaction ---

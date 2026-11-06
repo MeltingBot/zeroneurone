@@ -1,4 +1,4 @@
-import type { Element } from '../types';
+import type { Element, Property } from '../types';
 
 export interface MergePreview {
   /** Elements whose notes will be put end to end */
@@ -31,5 +31,79 @@ export function mergePreview(target: Element, sources: readonly Element[]): Merg
     notesCount,
     propertyCount: merged.length,
     multiValueKeys: [...perKey.values()].filter((n) => n > 1).length,
+  };
+}
+
+/** A tag or a property value one of the merged elements holds */
+export interface MergeChoice {
+  /** The same for an identical tag or value held by several elements */
+  id: string;
+  /** Tags: the tag; properties: the property (as held by its first element) */
+  tag?: string;
+  property?: Property;
+}
+
+/** Tags and property values of the merged elements, to keep or drop one by one */
+export interface MergeChoices {
+  /** Columns: the kept element first, then the others */
+  columns: { element: Element; tags: MergeChoice[]; properties: Map<string, MergeChoice[]> }[];
+  /** Property keys, in order of first appearance (kept element first) */
+  keys: string[];
+  /** Keys holding several different values across the elements */
+  conflicts: Set<string>;
+  /** Every choice, once each, in order (kept element first) */
+  all: MergeChoice[];
+}
+
+/** Identity of a value: equal dates are the same instant, whatever their object */
+function valueKey(value: unknown): string {
+  if (value instanceof Date) return `d:${value.getTime()}`;
+  return `${typeof value}:${String(value)}`;
+}
+
+export const tagChoiceId = (tag: string) => `t\u0000${tag}`;
+export const propertyChoiceId = (p: Property) => `p\u0000${p.key}\u0000${valueKey(p.value)}`;
+
+/**
+ * Everything a merge of `sources` into `target` can keep: each element's tags
+ * and property values, an identical one shared by several elements counted
+ * once (one choice), and the keys whose values differ.
+ */
+export function mergeChoices(target: Element, sources: readonly Element[]): MergeChoices {
+  const byId = new Map<string, MergeChoice>();
+  const all: MergeChoice[] = [];
+  const keys: string[] = [];
+  const valuesPerKey = new Map<string, Set<string>>();
+  const choice = (id: string, make: () => MergeChoice) => {
+    let c = byId.get(id);
+    if (!c) { c = make(); byId.set(id, c); all.push(c); }
+    return c;
+  };
+  const columns = [target, ...sources].map((element) => {
+    const tags = [...new Set(element.tags)].map((tag) => choice(tagChoiceId(tag), () => ({ id: tagChoiceId(tag), tag })));
+    const properties = new Map<string, MergeChoice[]>();
+    for (const p of element.properties) {
+      const id = propertyChoiceId(p);
+      const c = choice(id, () => ({ id, property: p }));
+      if (!keys.includes(p.key)) keys.push(p.key);
+      const list = properties.get(p.key) ?? [];
+      if (!list.includes(c)) list.push(c);
+      properties.set(p.key, list);
+      const values = valuesPerKey.get(p.key) ?? new Set<string>();
+      values.add(id);
+      valuesPerKey.set(p.key, values);
+    }
+    return { element, tags, properties };
+  });
+  const conflicts = new Set([...valuesPerKey].filter(([, v]) => v.size > 1).map(([k]) => k));
+  return { columns, keys, conflicts, all };
+}
+
+/** Tags and properties the kept element ends with, from the choices kept */
+export function keptValues(choices: MergeChoices, kept: ReadonlySet<string>): { tags: string[]; properties: Property[] } {
+  const chosen = choices.all.filter((c) => kept.has(c.id));
+  return {
+    tags: chosen.filter((c) => c.tag !== undefined).map((c) => c.tag!),
+    properties: chosen.filter((c) => c.property).map((c) => c.property!),
   };
 }

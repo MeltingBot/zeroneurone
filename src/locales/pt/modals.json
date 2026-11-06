@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Fundir elementos",
-    "description": "Selecione o elemento a manter. Propriedades, eventos, tags e links serão fundidos.",
+    "description": "Selecione o elemento a manter e depois as etiquetas e propriedades a guardar. Eventos e ligações são fundidos.",
     "confirm": "Fundir",
     "merging": "Fundindo...",
     "kept": "Mantido",
@@ -646,14 +646,16 @@
     "hint": "O outro elemento será eliminado. Os seus links serão transferidos.",
     "titleMany": "Fundir {{count}} elementos",
     "warnNotes": "As notas de {{count}} elementos serão colocadas umas a seguir às outras",
-    "warnProperties_one": "{{count}} propriedade após a fusão",
-    "warnProperties_other": "{{count}} propriedades após a fusão",
     "warnPropertiesMulti_one": "{{count}} propriedade após a fusão, {{keys}} chave(s) com vários valores",
     "warnPropertiesMulti_other": "{{count}} propriedades após a fusão, {{keys}} chave(s) com vários valores",
     "linkCount_one": "{{count}} ligação",
     "linkCount_other": "{{count}} ligações",
     "hintMany_one": "O outro elemento será eliminado. As suas ligações serão transferidas.",
-    "hintMany_other": "Os outros {{count}} elementos serão eliminados. As suas ligações serão transferidas."
+    "hintMany_other": "Os outros {{count}} elementos serão eliminados. As suas ligações serão transferidas.",
+    "keepTitle": "Manter",
+    "tags": "Etiquetas",
+    "conflict": "Valores diferentes",
+    "keepAllOf": "Manter tudo de {{name}}"
   },
   "encryption": {
     "title": "Encriptação",

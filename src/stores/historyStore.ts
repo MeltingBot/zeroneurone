@@ -636,10 +636,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         break;
 
       case 'merge-elements':
-        // The merge is deterministic given the same two elements, so replaying
-        // it is enough — and keeps the snapshot in sync with what it produces.
+        // The merge is deterministic given the same two elements and the same
+        // choice of tags and properties, so replaying it is enough — and keeps
+        // the snapshot in sync with what it produces.
         for (const snap of Array.isArray(action.redo.snapshot) ? action.redo.snapshot : [action.redo.snapshot]) {
-          if (snap) await store.mergeElements(snap.targetId, snap.sourceId);
+          if (snap) await store.mergeElements(snap.targetId, snap.sourceId, snap.keep);
         }
         break;
 

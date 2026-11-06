@@ -1023,8 +1023,8 @@ export function SuggestionsPanel() {
           isOpen={true}
           onClose={() => setMerging(null)}
           elements={merging.elementIds.map((id) => elementById.get(id)!)}
-          onMerge={async (targetId, [sourceId]) => {
-            await merge(merging.id, targetId, sourceId);
+          onMerge={async (targetId, [sourceId], keep) => {
+            await merge(merging.id, targetId, sourceId, keep);
             clearHighlight();
           }}
         />
