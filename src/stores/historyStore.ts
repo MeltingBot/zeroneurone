@@ -95,6 +95,15 @@ interface HistoryState {
   clear: () => void;
 }
 
+// Undo and redo replay asynchronously: each waits for the one before it to
+// finish, so a redo pressed right after an undo does not run in its middle.
+let replaying: Promise<void> = Promise.resolve();
+function inTurn(work: () => Promise<void>): Promise<void> {
+  const run = replaying.then(work);
+  replaying = run.catch(() => undefined);
+  return run;
+}
+
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   past: [],
   future: [],
@@ -108,7 +117,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   // Execute undo operation
-  undo: async () => {
+  undo: () => inTurn(async () => {
     const { past } = get();
     if (past.length === 0) return;
 
@@ -121,7 +130,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     const { whenDeletionsSettled } = await import('./dossierStore');
     await whenDeletionsSettled();
     await asUndo(() => get().applyUndo(action));
-  },
+  }),
 
   applyUndo: async (action) => {
     // Import dynamically to avoid circular dependencies
@@ -398,7 +407,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   // Execute redo operation
-  redo: async () => {
+  redo: () => inTurn(async () => {
     const { future } = get();
     if (future.length === 0) return;
 
@@ -411,7 +420,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     const { whenDeletionsSettled } = await import('./dossierStore');
     await whenDeletionsSettled();
     await asUndo(() => get().applyRedo(action));
-  },
+  }),
 
   applyRedo: async (action) => {
     // Import dynamically to avoid circular dependencies
