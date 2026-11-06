@@ -99,7 +99,7 @@ For **arbitrary JSON** (an API export, another tool's output…) or **any CSV** 
 A CSV imported without the native format's columns (see [CSV](#csv)) opens the mapper too, from the home page as well: the dossier is created, then opens on the assistant. If the import is given up (assistant closed or placement cancelled) while this new dossier is still empty, it is deleted and you are back on the home page; an existing dossier is never touched. The CSV becomes a table named after the file: each row is a record, each column a field. The delimiter (`,`, `;` or tab) is detected; every value is read as text.
 
 **Auto-detection:**
-- the **record source** (an array of objects like `records`, or the whole object = 1 element);
+- the **record source** (an array of objects like `records`, or the whole object = 1 element); an object keyed by id (`{"P1": {...}, "P2": {...}}`, like the `facts` of an xBRL report) also counts as an array, its key in the `_key` field. It is picked by default only when the file holds no values of its own beside it; otherwise it stays offered in the list of sources;
 - a **label template** (e.g. `{first_name} {last_name}`);
 - **date**, **country**, **latitude/longitude** (geo point, compound names such as `borne_lat`, `cellLng` included) and **identifier** fields;
 - **numeric** columns → **number** property (see below);
@@ -145,13 +145,16 @@ As soon as two arrays are ticked, a **diagram** shows the arrays and their links
 
 **Rows as events:** the **Each row creates** setting switches from *an element* to *an event*. Each row then becomes a dated event (shown on the timeline and, when it has a place, on the map):
 - **Element**: the column naming the element that holds the event. One element is created per distinct value; when the column refers to another imported table, the event goes on that table's element;
-- **Date** and **End** (optional): the start and end columns. Partial dates (`2020`, `2020-03`) keep their precision; rows without a valid date are skipped and counted in a message;
+- **Date** and **End** (optional): the start and end columns. Partial dates (`2020`, `2020-03`) keep their precision; rows without a valid date are skipped and counted in a message. With no end column, an ISO period written in one field (`2025-01-01/2025-12-31`) gives both start and end; an end written at midnight sharp (`…/2026-01-01T00:00:00`) is exclusive: the period stops the day before;
+- **Midnight sharp = end of the day before**: a date written at midnight sharp (`2026-01-01T00:00:00`) is dated the day before. This is the xBRL convention: a balance sheet at `2026-01-01T00:00:00` is that of 31/12/2025;
 - the **label template** gives the event's label. On switching to events, it offers a category column (few distinct values, like a type: "Incoming call"); left empty, the event takes the tag, else the element's value; **notes**, **source**, **latitude/longitude** and **properties** fields go on the event;
 - **pivot** fields create and link other elements, one link per pair however many rows share it. Within a table, a value makes one element, whether it holds the event or is a pivot. With **Event on the pivot elements too** (ticked by default), the event also goes on each pivot;
 - ids, references and media do not apply to event rows;
 - the import cap does not apply: every (filtered) row becomes an event, since events add no element to the canvas.
 
 Example, a phone bill (`caller;called;date;duration;lat;lng`): *Element* = `caller`, *Date* = `date`, `called` as **pivot**, `lat`/`lng` as coordinates. Each number becomes an element, each pair of numbers a link, and each call an event on both numbers' timelines, placed on the map at the cell tower.
+
+Example, an xBRL-JSON financial report (ESEF filings from filings.xbrl.org): table `facts`, *Element* = `dimensions.concept`, *Date* = `dimensions.period`, `dimensions.entity` as **pivot**, `value` as **Property (number)**, filter *`dimensions.unit` non-empty* (drops the text blocks), **Midnight sharp = end of the day before** ticked. Each indicator (revenue, equity…) becomes an element linked to the company, with its amounts per financial year on the timeline, closing on 31/12.
 
 Events go on elements the import creates. To add events to an element already in the dossier, use the [native CSV](#csv) with `type` = `event` (the `de` column gives the element's label), or import, then **merge** the created element with the existing one.
 

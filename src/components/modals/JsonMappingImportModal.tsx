@@ -1358,7 +1358,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                     />
                     {t('importJsonMapping.eventOnPivots')}
                   </label>
-                  <p className="text-[10px] text-text-tertiary -mt-2">{t('importJsonMapping.recordAsEventHint')}</p>
+                  <label className="flex items-center gap-1.5 text-xs text-text-secondary -mt-1">
+                    <input
+                      type="checkbox"
+                      checked={eventMapping.midnightIsDayBefore === true}
+                      onChange={(e) => setEventMapping({ ...eventMapping, midnightIsDayBefore: e.target.checked || undefined })}
+                      data-testid="json-mapping-midnight-day-before"
+                      className="rounded border-border-default"
+                    />
+                    {t('importJsonMapping.midnightIsDayBefore')}
+                  </label>
                 </>
               )}
 

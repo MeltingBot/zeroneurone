@@ -72,6 +72,9 @@ export interface EventMapping {
   endField?: string;
   /** The event also goes on the record's pivot elements (absent = yes) */
   alsoOnPivots?: boolean;
+  /** A date written at midnight sharp marks the end of the day before (xBRL
+   *  instants: a balance sheet at `2026-01-01T00:00:00` is that of 31/12/2025) */
+  midnightIsDayBefore?: boolean;
 }
 
 export type FilterOp = 'contains' | 'equals' | 'nonempty';
@@ -217,10 +220,15 @@ export function toLngLatCoords(v: unknown, order: CoordOrder): [number, number][
 export interface RecordSource {
   /** Dot-path to the source ('' = the JSON root). */
   path: string;
-  /** 'array' → one record per item; 'single' → the whole object is one record. */
+  /** 'array' → one record per item (of an array, or of an object keyed by id);
+   *  'single' → the whole object is one record. */
   kind: 'array' | 'single';
   length: number;
   depth: number;
+  /** 'array' taken from an object keyed by id rather than an array */
+  keyed?: boolean;
+  /** 'single': the object holds plain values of its own (a record, not a mere wrapper) */
+  hasScalars?: boolean;
 }
 
 /** Get a value at a dot-path inside a nested object (returns undefined if absent). */
@@ -250,9 +258,30 @@ export function isMappableJson(data: unknown): boolean {
   return false;
 }
 
+/** Field holding the key of a record taken from an object keyed by id. */
+export const RECORD_KEY_FIELD = '_key';
+
+/**
+ * An object keyed by id whose values are the records of one table
+ * (`{"P1": {...}, "P2": {...}}`, the `facts` of an xBRL-JSON report): at
+ * least two values, all objects, sharing a field. The sections of a single
+ * record (`{"address": {...}, "contact": {...}}`) share none.
+ */
+export function isKeyedRecordMap(v: unknown): v is Record<string, Record<string, unknown>> {
+  if (!isPlainObject(v)) return false;
+  const values = Object.values(v);
+  if (values.length < 2 || !values.every(isPlainObject)) return false;
+  const counts = new Map<string, number>();
+  for (const it of values) for (const k of Object.keys(it)) counts.set(k, (counts.get(k) ?? 0) + 1);
+  const quorum = values.length * 0.8;
+  for (const n of counts.values()) if (n >= quorum) return true;
+  return false;
+}
+
 /**
  * Enumerate the possible "record sources" in a payload:
  *  - every array of objects (depth-limited), one record per item;
+ *  - every object keyed by id ({@link isKeyedRecordMap}), one record per value;
  *  - the whole root object as a single record (when the root is an object).
  * The user picks which one holds the records; {@link pickDefaultSource} guesses.
  */
@@ -264,13 +293,20 @@ export function findRecordSources(data: unknown, maxDepth = 4): RecordSource[] {
       if (node.some((it) => isPlainObject(it))) out.push({ path, kind: 'array', length: node.length, depth });
       return;
     }
+    if (isKeyedRecordMap(node)) {
+      out.push({ path, kind: 'array', length: Object.keys(node).length, depth, keyed: true });
+      return;
+    }
     for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
       walk(v, path ? `${path}.${k}` : k, depth + 1);
     }
   };
   walk(data, '', 0);
   out.sort((a, b) => a.depth - b.depth || b.length - a.length);
-  if (isPlainObject(data)) out.push({ path: '', kind: 'single', length: 1, depth: 0 });
+  if (isPlainObject(data)) {
+    const hasScalars = Object.values(data).some((v) => v === null || typeof v !== 'object');
+    out.push({ path: '', kind: 'single', length: 1, depth: 0, hasScalars });
+  }
   return out;
 }
 
@@ -278,13 +314,21 @@ export function findRecordSources(data: unknown, maxDepth = 4): RecordSource[] {
  * Guess the most likely record source: a direct-child array of objects wins
  * (e.g. `records`), then a root array, otherwise the whole object as a single
  * record (so a nested `content.media` array doesn't wrongly split one object).
+ * An object keyed by id comes before the whole object only when the root is a
+ * mere wrapper (xBRL: `documentInfo` + `facts`): in a record holding values
+ * of its own (`{nom, adresses: {domicile: {...}, travail: {...}}}`), it is
+ * part of that record.
  */
 export function pickDefaultSource(sources: RecordSource[]): RecordSource | undefined {
-  const directArray = sources.filter((s) => s.kind === 'array' && s.depth === 1).sort((a, b) => b.length - a.length)[0];
+  const directArray = sources.filter((s) => s.kind === 'array' && !s.keyed && s.depth === 1).sort((a, b) => b.length - a.length)[0];
   if (directArray) return directArray;
-  const rootArray = sources.find((s) => s.kind === 'array' && s.path === '');
+  const rootArray = sources.find((s) => s.kind === 'array' && !s.keyed && s.path === '');
   if (rootArray) return rootArray;
   const single = sources.find((s) => s.kind === 'single');
+  if (!single?.hasScalars) {
+    const keyed = sources.filter((s) => s.keyed && s.depth <= 1).sort((a, b) => a.depth - b.depth || b.length - a.length)[0];
+    if (keyed) return keyed;
+  }
   if (single) return single;
   return sources.find((s) => s.kind === 'array');
 }
@@ -297,6 +341,10 @@ export function rawRecordsForSource(data: unknown, source: RecordSource | undefi
     return isPlainObject(obj) ? [obj] : [];
   }
   const arr = getAtPath(data, source.path);
+  // Keyed by id: the key becomes a field of the record (unless it has one so named)
+  if (isKeyedRecordMap(arr)) {
+    return Object.entries(arr).map(([k, rec]) => (RECORD_KEY_FIELD in rec ? rec : { [RECORD_KEY_FIELD]: k, ...rec }));
+  }
   if (!Array.isArray(arr)) return [];
   return arr.filter((it): it is Record<string, unknown> => it != null && typeof it === 'object');
 }
@@ -350,6 +398,8 @@ export function isObjectArray(v: unknown): boolean {
   return Array.isArray(v) && v.some((it) => isPlainObject(it));
 }
 
+const SAMPLE_MAX = 300;
+
 /**
  * Collect the union of field paths across all records, with a representative
  * (first non-blank) sample value and a kind (scalar vs array-of-objects).
@@ -362,7 +412,8 @@ export function collectFields(records: Record<string, unknown>[]): FieldInfo[] {
     for (const [k, v] of Object.entries(rec)) {
       if (!samples.has(k)) { order.push(k); samples.set(k, ''); objArr.set(k, false); }
       if (isObjectArray(v)) objArr.set(k, true);
-      if (samples.get(k) === '' && !isBlank(v)) samples.set(k, valueToString(v));
+      // A sample is a glimpse: a value can be megabytes of text (xBRL text blocks)
+      if (samples.get(k) === '' && !isBlank(v)) samples.set(k, valueToString(v).slice(0, SAMPLE_MAX));
     }
   }
   return order.map((k) => ({ key: k, sample: samples.get(k) ?? '', kind: objArr.get(k) ? 'objectArray' as const : 'scalar' as const }));
@@ -736,6 +787,32 @@ export function recordDate(v: unknown): { date: Date; precision?: DatePrecision;
   return flexible ? { date: flexible, approximate: false } : null;
 }
 
+const ISO_BOUND_RE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
+const MIDNIGHT_RE = /[T ]00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
+
+type RecordDate = NonNullable<ReturnType<typeof recordDate>>;
+
+/**
+ * ISO 8601 interval in one value, "start/end" (`2025-01-01/2025-12-31`,
+ * `2025-01-01T00:00:00/2026-01-01T00:00:00`). An end written at midnight is
+ * exclusive: the period stops the day before (xBRL periods are written so),
+ * and so the interval reads as whole days. Null when the value is no interval.
+ */
+export function isoInterval(v: unknown): { start: RecordDate; end: RecordDate } | null {
+  if (typeof v !== 'string') return null;
+  const parts = v.trim().split('/');
+  if (parts.length !== 2 || !parts.every((p) => ISO_BOUND_RE.test(p))) return null;
+  const start = recordDate(parts[0]);
+  const end = recordDate(parts[1]);
+  if (!start || !end) return null;
+  if (MIDNIGHT_RE.test(parts[1]) && end.date.getTime() > start.date.getTime()) {
+    const last = new Date(end.date);
+    last.setDate(last.getDate() - 1);
+    if (last.getTime() >= start.date.getTime()) return { start, end: { ...end, date: last } };
+  }
+  return { start, end };
+}
+
 /**
  * Event of a record: dated by `dateField` (and `endField`), with the other
  * mapped fields as its description, source, place and properties. Null when
@@ -744,12 +821,21 @@ export function recordDate(v: unknown): { date: Date; precision?: DatePrecision;
 export function buildEvent(
   flat: Record<string, unknown>,
   label: string,
-  fields: { dateField: string; endField?: string },
+  fields: { dateField: string; endField?: string; midnightIsDayBefore?: boolean },
   extra: { properties: Property[]; source: string; notes: string; geo: GeoData | null },
 ): ElementEvent | null {
-  const start = recordDate(flat[fields.dateField]);
+  // A date at midnight sharp read as the end of the day before, when asked
+  const read = (key: string) => {
+    const d = recordDate(flat[key]);
+    if (!d || !fields.midnightIsDayBefore || !MIDNIGHT_RE.test(valueToString(flat[key]).trim())) return d;
+    const prev = new Date(d.date);
+    prev.setDate(prev.getDate() - 1);
+    return { ...d, date: prev };
+  };
+  const interval = fields.endField ? null : isoInterval(flat[fields.dateField]);
+  const start = interval ? interval.start : read(fields.dateField);
   if (!start) return null;
-  const end = fields.endField ? recordDate(flat[fields.endField]) : null;
+  const end = interval ? interval.end : fields.endField ? read(fields.endField) : null;
   const event: ElementEvent = { id: crypto.randomUUID(), date: start.date, label };
   if (end && end.date.getTime() >= start.date.getTime()) event.dateEnd = end.date;
   if (start.precision) event.precision = start.precision;
