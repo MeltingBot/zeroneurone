@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.90.1
+
+### Nouveautés
+
+- **Mapping JSON : objets indexés** — un objet dont les valeurs sont des
+  fiches (`{"P1": {...}, "P2": {...}}`, comme les `facts` d'un rapport
+  xBRL-JSON) s'importe comme un tableau, sa clé dans le champ `_key`. Il
+  n'est choisi par défaut que si le fichier n'a pas de valeurs propres à
+  côté ; sinon il reste proposé dans la liste des sources.
+- **Lignes en événements : périodes ISO** — une période `début/fin` écrite
+  dans un seul champ (`2025-01-01/2025-12-31`) donne le début et la fin de
+  l'événement ; une fin écrite à minuit pile est exclusive (la période
+  s'arrête la veille).
+- **Case « Minuit pile = fin de la veille »** — une date écrite à minuit
+  pile est datée du jour précédent (convention xBRL : un bilan au
+  `2026-01-01T00:00:00` est celui du 31/12/2025).
+
+### Améliorations
+
+- Les échantillons de champs du mapping sont tronqués (certains faits xBRL
+  font plusieurs mégaoctets de HTML).
+- Le paragraphe d'aide sous « Chaque ligne crée : un événement » est retiré ;
+  le fonctionnement est décrit dans la documentation.
+
+### Documentation
+
+- Import par mapping : objets indexés, périodes ISO, nouvelle case, exemple
+  d'un rapport financier xBRL-JSON (FR/EN).
+
 ## 2.90.0
 
 ### Nouveautés
