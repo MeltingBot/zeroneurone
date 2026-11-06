@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Merge elements",
-    "description": "Select which element to keep. Properties, events, tags and links will be merged.",
+    "description": "Select which element to keep, then the tags and properties to keep. Events and links are merged.",
     "confirm": "Merge",
     "merging": "Merging...",
     "kept": "Kept",
@@ -646,14 +646,16 @@
     "hint": "The other element will be deleted. Its links will be transferred.",
     "titleMany": "Merge {{count}} elements",
     "warnNotes": "The notes of {{count}} elements will be put end to end",
-    "warnProperties_one": "{{count}} property after the merge",
-    "warnProperties_other": "{{count}} properties after the merge",
     "warnPropertiesMulti_one": "{{count}} property after the merge, {{keys}} key(s) with several values",
     "warnPropertiesMulti_other": "{{count}} properties after the merge, {{keys}} key(s) with several values",
     "linkCount_one": "{{count}} link",
     "linkCount_other": "{{count}} links",
     "hintMany_one": "The other element will be deleted. Its links will be moved.",
-    "hintMany_other": "The {{count}} other elements will be deleted. Their links will be moved."
+    "hintMany_other": "The {{count}} other elements will be deleted. Their links will be moved.",
+    "keepTitle": "Keep",
+    "tags": "Tags",
+    "conflict": "Different values",
+    "keepAllOf": "Keep all of {{name}}"
   },
   "encryption": {
     "title": "Encryption",

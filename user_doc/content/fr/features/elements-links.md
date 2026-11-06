@@ -263,27 +263,30 @@ Combinez plusieurs éléments en un seul lorsqu'ils représentent le même conce
 1. Sélectionnez **2 éléments ou plus** (Ctrl+clic, sélection au lasso, ou **Chercher les similaires**)
 2. Clic-droit → **Fusionner**
 3. Choisissez quel élément conserver (son label et son apparence seront gardés). Au-delà de 2, la liste indique le nombre de liens de chacun ; le plus relié est proposé par défaut
-4. Confirmez la fusion
+4. Dans **À garder**, décochez les tags et les valeurs de propriétés à écarter
+5. Confirmez la fusion
 
-Avant de confirmer, la fenêtre signale les notes qui seront mises bout à bout et le nombre de propriétés après fusion, avec les clés qui porteront plusieurs valeurs. Un seul **Ctrl+Z** annule toute la fusion.
+**À garder** présente les éléments côte à côte, l'élément conservé en premier : une ligne pour les tags, puis une par propriété, avec une case par valeur. Tout est coché au départ. Un tag ou une valeur que plusieurs éléments partagent se coche ou se décoche partout à la fois. Les propriétés dont les valeurs diffèrent d'un élément à l'autre sont signalées par une icône. La case en tête d'une colonne garde ou écarte tout ce qu'apporte cet élément.
+
+Avant de confirmer, la fenêtre signale les notes qui seront mises bout à bout et, si des clés gardent plusieurs valeurs, le nombre de propriétés après fusion. Un seul **Ctrl+Z** annule toute la fusion ; **Ctrl+Maj+Z** la refait avec les mêmes choix.
 
 ### Ce qui est fusionné
 
 | Donnée | Comportement |
 |--------|-------------|
-| **Tags** | Union (tous les tags des deux éléments) |
-| **Propriétés** | Union (doublons évités) |
+| **Tags** | Ceux restés cochés dans **À garder** (tous par défaut) |
+| **Propriétés** | Les valeurs restées cochées dans **À garder** (toutes par défaut, doublons évités) |
 | **Événements** | Union (dédupliqués par identifiant) |
 | **Notes** | Concaténées (séparées par ---) |
 | **Fichiers joints** | Union |
 | **Confiance** | Valeur la plus haute |
 | **Cotation** | Celle de l'élément conservé, sinon celle de l'autre élément |
 | **Source** | Combinées si différentes, une par ligne |
-| **Liens** | Transférés vers l'élément conservé |
+| **Liens** | Tous transférés vers l'élément conservé |
 
 ### Gestion des liens en doublon
 
-Si des éléments fusionnés partageaient un lien vers le même tiers, les liens sont fusionnés : labels combinés, propriétés et tags unis.
+Les liens vers un même tiers sont tous gardés : plusieurs liens en parallèle peuvent être autant de faits distincts (un virement, un appel chacun). Seul un lien apporté par l'élément fusionné qui dit exactement la même chose qu'un lien de l'élément conservé (même sens, même libellé, mêmes dates, mêmes propriétés) est fusionné avec lui : leurs tags sont unis, leurs notes mises bout à bout si elles diffèrent.
 
 Les liens directs entre éléments fusionnés sont supprimés.
 

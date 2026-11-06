@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Elementuak batu",
-    "description": "Hautatu gordetzeko elementua. Propietateak, gertaerak, etiketak eta estekak batuko dira.",
+    "description": "Hautatu gordeko den elementua, gero gorde beharreko etiketak eta propietateak. Gertaerak eta loturak bateratzen dira.",
     "confirm": "Batu",
     "merging": "Batzen...",
     "kept": "Gordeta",
@@ -646,14 +646,16 @@
     "hint": "Beste elementua ezabatuko da. Bere estekak transferituko dira.",
     "titleMany": "{{count}} elementu bateratu",
     "warnNotes": "{{count}} elementuren oharrak bata bestearen atzean jarriko dira",
-    "warnProperties_one": "{{count}} propietate bateratu ondoren",
-    "warnProperties_other": "{{count}} propietate bateratu ondoren",
     "warnPropertiesMulti_one": "{{count}} propietate bateratu ondoren, horietatik {{keys}} gako balio anitzekin",
     "warnPropertiesMulti_other": "{{count}} propietate bateratu ondoren, horietatik {{keys}} gako balio anitzekin",
     "linkCount_one": "{{count}} lotura",
     "linkCount_other": "{{count}} lotura",
     "hintMany_one": "Beste elementua ezabatuko da. Bere loturak transferituko dira.",
-    "hintMany_other": "Beste {{count}} elementuak ezabatuko dira. Beren loturak transferituko dira."
+    "hintMany_other": "Beste {{count}} elementuak ezabatuko dira. Beren loturak transferituko dira.",
+    "keepTitle": "Gorde",
+    "tags": "Etiketak",
+    "conflict": "Balio desberdinak",
+    "keepAllOf": "Gorde {{name}}-(r)en guztia"
   },
   "encryption": {
     "title": "Enkriptatzea",

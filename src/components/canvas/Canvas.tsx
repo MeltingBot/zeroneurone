@@ -3391,10 +3391,10 @@ export function Canvas() {
             isOpen={true}
             onClose={() => setMergeElements(null)}
             elements={mergeElements}
-            onMerge={async (targetId, sourceIds) => {
+            onMerge={async (targetId, sourceIds, keep) => {
               // One after the other into the kept element; one Ctrl+Z undoes them all
               const snapshots = [];
-              for (const sourceId of sourceIds) snapshots.push(await mergeElementsAction(targetId, sourceId));
+              for (const sourceId of sourceIds) snapshots.push(await mergeElementsAction(targetId, sourceId, keep));
               pushAction({
                 type: 'merge-elements',
                 undo: { snapshot: snapshots },

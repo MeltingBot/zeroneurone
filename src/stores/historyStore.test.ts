@@ -386,7 +386,17 @@ describe('element merge', () => {
 
     await history().redo();
 
-    expect(dossierStore.mergeElements).toHaveBeenCalledWith('target', 'source');
+    expect(dossierStore.mergeElements).toHaveBeenCalledWith('target', 'source', undefined);
+  });
+
+  it('replays the tags and properties chosen for the kept element', async () => {
+    const keep = { tags: ['a'], properties: [{ key: 'ville', value: 'Lyon' }] };
+    push({ type: 'merge-elements', undo: { snapshot: { ...snapshot, keep } }, redo: { snapshot: { ...snapshot, keep } } });
+    await history().undo();
+
+    await history().redo();
+
+    expect(dossierStore.mergeElements).toHaveBeenCalledWith('target', 'source', keep);
   });
 });
 

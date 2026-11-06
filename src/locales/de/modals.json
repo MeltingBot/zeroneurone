@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Elemente zusammenführen",
-    "description": "Wählen Sie das Element, das beibehalten werden soll. Eigenschaften, Ereignisse, Tags und Links werden zusammengeführt.",
+    "description": "Wählen Sie das zu behaltende Element, dann die zu behaltenden Tags und Eigenschaften. Ereignisse und Verbindungen werden zusammengeführt.",
     "confirm": "Zusammenführen",
     "merging": "Zusammenführen...",
     "kept": "Beibehalten",
@@ -646,14 +646,16 @@
     "hint": "Das andere Element wird gelöscht. Seine Links werden übertragen.",
     "titleMany": "{{count}} Elemente zusammenführen",
     "warnNotes": "Die Notizen von {{count}} Elementen werden aneinandergehängt",
-    "warnProperties_one": "{{count}} Eigenschaft nach dem Zusammenführen",
-    "warnProperties_other": "{{count}} Eigenschaften nach dem Zusammenführen",
     "warnPropertiesMulti_one": "{{count}} Eigenschaft nach dem Zusammenführen, davon {{keys}} Schlüssel mit mehreren Werten",
     "warnPropertiesMulti_other": "{{count}} Eigenschaften nach dem Zusammenführen, davon {{keys}} Schlüssel mit mehreren Werten",
     "linkCount_one": "{{count}} Verknüpfung",
     "linkCount_other": "{{count}} Verknüpfungen",
     "hintMany_one": "Das andere Element wird gelöscht. Seine Verknüpfungen werden übertragen.",
-    "hintMany_other": "Die {{count}} anderen Elemente werden gelöscht. Ihre Verknüpfungen werden übertragen."
+    "hintMany_other": "Die {{count}} anderen Elemente werden gelöscht. Ihre Verknüpfungen werden übertragen.",
+    "keepTitle": "Behalten",
+    "tags": "Tags",
+    "conflict": "Unterschiedliche Werte",
+    "keepAllOf": "Alles von {{name}} behalten"
   },
   "encryption": {
     "title": "Verschlüsselung",

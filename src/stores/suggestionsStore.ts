@@ -3,7 +3,7 @@ import type { Element, Link } from '../types';
 import { analyzeLinkSuggestions, dismissalIds, evidenceOf, DEFAULT_MAX_PRESENCE_MS, type Suggestion, type SuggestionReason } from '../services/linkSuggestions';
 import { DEFAULT_MERGE_RANK, MERGE_LEVELS } from '../services/dedup/candidates';
 import { getPhoneParser } from '../services/dedup/phoneLib';
-import { useDossierStore } from './dossierStore';
+import { useDossierStore, type MergeKeep } from './dossierStore';
 import { useHistoryStore } from './historyStore';
 import { useViewStore } from './viewStore';
 import { useQueryStore } from './queryStore';
@@ -167,7 +167,7 @@ interface SuggestionsState {
   setRuleEnabled: (rule: 'values' | 'sources' | 'zones' | 'duplicates', on: boolean) => void;
   setDuplicateThreshold: (rank: number) => void;
   /** Merge a possible duplicate (one undo step); the suggestion leaves the list */
-  merge: (suggestionId: string, targetId: string, sourceId: string) => Promise<void>;
+  merge: (suggestionId: string, targetId: string, sourceId: string, keep?: MergeKeep) => Promise<void>;
   setPlacesEnabled: (on: boolean) => void;
   setMeetingsEnabled: (on: boolean) => void;
   setMeetingWindow: (window: number) => void;
@@ -319,8 +319,8 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     saveChoice(DUPLICATE_THRESHOLD_KEY, rank);
   },
 
-  merge: async (suggestionId, targetId, sourceId) => {
-    const snapshot = await useDossierStore.getState().mergeElements(targetId, sourceId);
+  merge: async (suggestionId, targetId, sourceId, keep) => {
+    const snapshot = await useDossierStore.getState().mergeElements(targetId, sourceId, keep);
     useHistoryStore.getState().pushAction({
       type: 'merge-elements',
       undo: { snapshot },

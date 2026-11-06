@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Fusionar elements",
-    "description": "Seleccioneu l'element a conservar. Les propietats, esdeveniments, etiquetes i enllaços es fusionaran.",
+    "description": "Seleccioneu l'element que es conserva i després les etiquetes i propietats que es guarden. Esdeveniments i vincles es fusionen.",
     "confirm": "Fusionar",
     "merging": "Fusionant...",
     "kept": "Conservat",
@@ -646,14 +646,16 @@
     "hint": "L'altre element serà eliminat. Els seus enllaços seran transferits.",
     "titleMany": "Fusionar {{count}} elements",
     "warnNotes": "Les notes de {{count}} elements s'uniran una darrere l'altra",
-    "warnProperties_one": "{{count}} propietat després de la fusió",
-    "warnProperties_other": "{{count}} propietats després de la fusió",
     "warnPropertiesMulti_one": "{{count}} propietat després de la fusió, {{keys}} clau(s) amb diversos valors",
     "warnPropertiesMulti_other": "{{count}} propietats després de la fusió, {{keys}} clau(s) amb diversos valors",
     "linkCount_one": "{{count}} enllaç",
     "linkCount_other": "{{count}} enllaços",
     "hintMany_one": "L'altre element s'eliminarà. Els seus enllaços es transferiran.",
-    "hintMany_other": "Els altres {{count}} elements s'eliminaran. Els seus enllaços es transferiran."
+    "hintMany_other": "Els altres {{count}} elements s'eliminaran. Els seus enllaços es transferiran.",
+    "keepTitle": "Conservar",
+    "tags": "Etiquetes",
+    "conflict": "Valors diferents",
+    "keepAllOf": "Conserva-ho tot de {{name}}"
   },
   "encryption": {
     "title": "Xifrat",

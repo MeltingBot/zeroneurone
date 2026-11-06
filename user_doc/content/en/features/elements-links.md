@@ -263,27 +263,30 @@ Combine several elements into one when they represent the same concept.
 1. Select **2 elements or more** (Ctrl+click, lasso, or **Find similar**)
 2. Right-click → **Merge**
 3. Choose which element to keep (its label and appearance will be preserved). Beyond 2, the list shows each one's link count; the most linked is offered by default
-4. Confirm the merge
+4. In **Keep**, untick the tags and property values to leave out
+5. Confirm the merge
 
-Before you confirm, the window warns about the notes that will be put end to end and the number of properties after the merge, with the keys that will carry several values. A single **Ctrl+Z** undoes the whole merge.
+**Keep** shows the elements side by side, the kept one first: a row for the tags, then one per property, with a checkbox per value. Everything is ticked at first. A tag or value several elements share is ticked or unticked everywhere at once. Properties whose values differ from one element to another are flagged with an icon. The checkbox heading a column keeps or leaves out all that element brings.
+
+Before you confirm, the window warns about the notes that will be put end to end and, when keys keep several values, the number of properties after the merge. A single **Ctrl+Z** undoes the whole merge; **Ctrl+Shift+Z** redoes it with the same choices.
 
 ### What Gets Merged
 
 | Data | Behavior |
 |------|----------|
-| **Tags** | Union (all tags from both elements) |
-| **Properties** | Union (duplicates avoided) |
+| **Tags** | Those left ticked in **Keep** (all by default) |
+| **Properties** | The values left ticked in **Keep** (all by default, duplicates avoided) |
 | **Events** | Union (deduplicated by identifier) |
 | **Notes** | Concatenated (separated by ---) |
 | **Attachments** | Union |
 | **Confidence** | Highest value |
 | **Grading** | The kept element's, otherwise the other element's |
 | **Source** | Combined if different, one per line |
-| **Links** | Transferred to the kept element |
+| **Links** | All transferred to the kept element |
 
 ### Duplicate Link Handling
 
-If both elements shared a link to the same third element, the links are merged: labels combined, properties and tags unified.
+Links to a same third element are all kept: several links in parallel may be as many distinct facts (one transfer, one call each). Only a link brought by the merged element that says exactly the same as one of the kept element (same direction, label, dates and properties) is merged with it: their tags are joined, their notes put end to end when they differ.
 
 Direct links between the two merged elements are removed.
 

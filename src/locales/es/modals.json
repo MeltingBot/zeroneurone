@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Fusionar elementos",
-    "description": "Seleccione el elemento a conservar. Las propiedades, eventos, etiquetas y enlaces se fusionarán.",
+    "description": "Seleccione el elemento que se conserva y luego las etiquetas y propiedades que se guardan. Eventos y vínculos se fusionan.",
     "confirm": "Fusionar",
     "merging": "Fusionando...",
     "kept": "Conservado",
@@ -646,14 +646,16 @@
     "hint": "El otro elemento será eliminado. Sus enlaces serán transferidos.",
     "titleMany": "Fusionar {{count}} elementos",
     "warnNotes": "Las notas de {{count}} elementos se unirán una tras otra",
-    "warnProperties_one": "{{count}} propiedad tras la fusión",
-    "warnProperties_other": "{{count}} propiedades tras la fusión",
     "warnPropertiesMulti_one": "{{count}} propiedad tras la fusión, {{keys}} clave(s) con varios valores",
     "warnPropertiesMulti_other": "{{count}} propiedades tras la fusión, {{keys}} clave(s) con varios valores",
     "linkCount_one": "{{count}} vínculo",
     "linkCount_other": "{{count}} vínculos",
     "hintMany_one": "El otro elemento se eliminará. Sus vínculos se transferirán.",
-    "hintMany_other": "Los otros {{count}} elementos se eliminarán. Sus vínculos se transferirán."
+    "hintMany_other": "Los otros {{count}} elementos se eliminarán. Sus vínculos se transferirán.",
+    "keepTitle": "Conservar",
+    "tags": "Etiquetas",
+    "conflict": "Valores distintos",
+    "keepAllOf": "Conservar todo de {{name}}"
   },
   "encryption": {
     "title": "Cifrado",

@@ -637,7 +637,7 @@
   },
   "merge": {
     "title": "Fusionner les éléments",
-    "description": "Sélectionnez l'élément à conserver. Les propriétés, événements, tags et liens seront fusionnés.",
+    "description": "Sélectionnez l'élément à conserver, puis les tags et propriétés à garder. Événements et liens sont fusionnés.",
     "confirm": "Fusionner",
     "merging": "Fusion...",
     "kept": "Conservé",
@@ -646,14 +646,16 @@
     "hint": "L'autre élément sera supprimé. Ses liens seront transférés.",
     "titleMany": "Fusionner {{count}} éléments",
     "warnNotes": "Les notes de {{count}} éléments seront mises bout à bout",
-    "warnProperties_one": "{{count}} propriété après fusion",
-    "warnProperties_other": "{{count}} propriétés après fusion",
     "warnPropertiesMulti_one": "{{count}} propriété après fusion, dont {{keys}} clé(s) à plusieurs valeurs",
     "warnPropertiesMulti_other": "{{count}} propriétés après fusion, dont {{keys}} clé(s) à plusieurs valeurs",
     "linkCount_one": "{{count}} lien",
     "linkCount_other": "{{count}} liens",
     "hintMany_one": "L'autre élément sera supprimé. Ses liens seront transférés.",
-    "hintMany_other": "Les {{count}} autres éléments seront supprimés. Leurs liens seront transférés."
+    "hintMany_other": "Les {{count}} autres éléments seront supprimés. Leurs liens seront transférés.",
+    "keepTitle": "À garder",
+    "tags": "Tags",
+    "conflict": "Valeurs différentes",
+    "keepAllOf": "Tout garder de {{name}}"
   },
   "encryption": {
     "title": "Chiffrement",
