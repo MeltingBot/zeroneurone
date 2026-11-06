@@ -609,23 +609,24 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       {control}
     </div>
   );
-  /** Column picker of an event or link setting; a time column is narrower and titled */
+  /** A labelled column picker of an event or link setting; a time column is narrower */
   const fieldSelect = <T extends { dateField?: string; timeField?: string; endField?: string; endTimeField?: string }>(
-    cur: T, set: (next: T) => void, key: Extract<keyof T, string>, testId: string, optional: boolean, time = false,
-  ) => (
+    cur: T, set: (next: T) => void, key: Extract<keyof T, string>, testId: string, labelKey: string, optional: boolean, time = false,
+  ) => modeField(t(`importJsonMapping.${labelKey}`), (
     <select
       value={((cur as Record<string, unknown>)[key] as string | undefined) ?? ''}
       onChange={(e) => set(withTime(cur, key, e.target.value || undefined))}
       data-testid={testId}
-      title={time ? t(key.startsWith('end') ? 'importJsonMapping.fieldEndTime' : 'importJsonMapping.fieldTime') : undefined}
-      aria-label={time ? t(key.startsWith('end') ? 'importJsonMapping.fieldEndTime' : 'importJsonMapping.fieldTime') : undefined}
-      className={`${time ? 'max-w-[110px]' : 'max-w-[160px]'} ${modeSelectCls}`}
+      aria-label={t(`importJsonMapping.${labelKey}`)}
+      className={`${time ? 'max-w-[120px]' : 'max-w-[160px]'} ${modeSelectCls}`}
     >
-      {optional ? <option value="">{time ? t('importJsonMapping.noTime') : t('importJsonMapping.eventEndNone')}</option>
+      {optional ? <option value="">{t('importJsonMapping.eventEndNone')}</option>
         : !(cur as Record<string, unknown>)[key] && <option value="">—</option>}
       {scalarFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
     </select>
-  );
+  ));
+  /** Start or end: its date and time side by side, wrapping together */
+  const datePair = (children: React.ReactNode) => <div className="flex flex-wrap items-center gap-x-3 gap-y-2">{children}</div>;
   // Columns an event or link setting uses: shown as such in the table, not as fields to map
   const roles = new Map<string, string>();
   const roleNames: [string | undefined, string][] = eventMapping
@@ -1561,30 +1562,30 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 </label>
                 {eventMapping && (
                   <>
-                    {modeField(t('importJsonMapping.eventHost'), fieldSelect(eventMapping, setEventMapping, 'hostField', 'json-mapping-hostField', false))}
-                    {modeField(t('importJsonMapping.eventDate'), <>
-                      {fieldSelect(eventMapping, setEventMapping, 'dateField', 'json-mapping-dateField', false)}
-                      {fieldSelect(eventMapping, setEventMapping, 'timeField', 'json-mapping-timeField', true, true)}
+                    {fieldSelect(eventMapping, setEventMapping, 'hostField', 'json-mapping-hostField', 'eventHost', false)}
+                    {datePair(<>
+                      {fieldSelect(eventMapping, setEventMapping, 'dateField', 'json-mapping-dateField', 'eventDate', false)}
+                      {fieldSelect(eventMapping, setEventMapping, 'timeField', 'json-mapping-timeField', 'fieldTime', true, true)}
                       <TimeZoneButton value={eventMapping.timeZone} onChange={(timeZone) => setEventMapping({ ...eventMapping, timeZone })} />
                     </>)}
-                    {modeField(t('importJsonMapping.eventEnd'), <>
-                      {fieldSelect(eventMapping, setEventMapping, 'endField', 'json-mapping-endField', true)}
-                      {eventMapping.endField && fieldSelect(eventMapping, setEventMapping, 'endTimeField', 'json-mapping-endTimeField', true, true)}
+                    {datePair(<>
+                      {fieldSelect(eventMapping, setEventMapping, 'endField', 'json-mapping-endField', 'eventEnd', true)}
+                      {eventMapping.endField && fieldSelect(eventMapping, setEventMapping, 'endTimeField', 'json-mapping-endTimeField', 'fieldEndTime', true, true)}
                     </>)}
                   </>
                 )}
                 {linkMapping && (
                   <>
-                    {modeField(t('importJsonMapping.linkFrom'), fieldSelect(linkMapping, setLinkMapping, 'fromField', 'json-mapping-link-fromField', false))}
-                    {modeField(t('importJsonMapping.linkTo'), fieldSelect(linkMapping, setLinkMapping, 'toField', 'json-mapping-link-toField', false))}
-                    {modeField(t('importJsonMapping.eventDate'), <>
-                      {fieldSelect(linkMapping, setLinkMapping, 'dateField', 'json-mapping-link-dateField', true)}
-                      {linkMapping.dateField && fieldSelect(linkMapping, setLinkMapping, 'timeField', 'json-mapping-link-timeField', true, true)}
+                    {fieldSelect(linkMapping, setLinkMapping, 'fromField', 'json-mapping-link-fromField', 'linkFrom', false)}
+                    {fieldSelect(linkMapping, setLinkMapping, 'toField', 'json-mapping-link-toField', 'linkTo', false)}
+                    {datePair(<>
+                      {fieldSelect(linkMapping, setLinkMapping, 'dateField', 'json-mapping-link-dateField', 'eventDate', true)}
+                      {linkMapping.dateField && fieldSelect(linkMapping, setLinkMapping, 'timeField', 'json-mapping-link-timeField', 'fieldTime', true, true)}
                       {linkMapping.dateField && <TimeZoneButton value={linkMapping.timeZone} onChange={(timeZone) => setLinkMapping({ ...linkMapping, timeZone })} />}
                     </>)}
-                    {linkMapping.dateField && modeField(t('importJsonMapping.eventEnd'), <>
-                      {fieldSelect(linkMapping, setLinkMapping, 'endField', 'json-mapping-link-endField', true)}
-                      {linkMapping.endField && fieldSelect(linkMapping, setLinkMapping, 'endTimeField', 'json-mapping-link-endTimeField', true, true)}
+                    {linkMapping.dateField && datePair(<>
+                      {fieldSelect(linkMapping, setLinkMapping, 'endField', 'json-mapping-link-endField', 'eventEnd', true)}
+                      {linkMapping.endField && fieldSelect(linkMapping, setLinkMapping, 'endTimeField', 'json-mapping-link-endTimeField', 'fieldEndTime', true, true)}
                     </>)}
                   </>
                 )}
