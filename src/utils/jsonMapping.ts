@@ -1,7 +1,7 @@
 import { parseFlexibleDate } from './index';
 import { parseLatLngPair } from './geo';
-import { parseDateWithPrecision } from './dates';
-import type { DatePrecision, ElementEvent, GeoData, Property } from '../types';
+import { fromZonedWallClock, parseDateWithPrecision, toLocalDateKey, toLocalTimeKey } from './dates';
+import type { DatePrecision, DateRange, ElementEvent, GeoData, Property } from '../types';
 import { isNumericColumn, parseNumericText } from './numericText';
 
 /**
@@ -49,6 +49,11 @@ export interface FieldMapping {
   coordOrder?: CoordOrder;
   /** 'ref' targets: key of the record source (table) the ids point into; absent = the same table. */
   refSource?: string;
+  /** 'pivot' targets: field whose element the pivot links to (the link ends,
+   *  the event's element or another pivot); absent = the record's element. */
+  pivotOwner?: string;
+  /** Records as links: what takes the field, the link (absent) or one of its ends */
+  holder?: 'link' | 'from' | 'to';
 }
 
 /** Config for turning an array-of-objects field into linked child elements. */
@@ -69,12 +74,33 @@ export interface ChildMapping {
 export interface EventMapping {
   hostField: string;
   dateField: string;
+  /** Time of the date, when the file writes it in a column of its own */
+  timeField?: string;
   endField?: string;
+  endTimeField?: string;
+  /** Time zone (IANA) the file writes its hours in; absent = the system one */
+  timeZone?: string;
   /** The event also goes on the record's pivot elements (absent = yes) */
   alsoOnPivots?: boolean;
   /** A date written at midnight sharp marks the end of the day before (xBRL
    *  instants: a balance sheet at `2026-01-01T00:00:00` is that of 31/12/2025) */
   midnightIsDayBefore?: boolean;
+}
+
+/**
+ * A table whose records are links: each record links the element named by
+ * `fromField` to the one named by `toField` (one element per distinct value),
+ * dated by `dateField` (and `endField`), with the other fields on the link.
+ */
+export interface LinkMapping {
+  fromField: string;
+  toField: string;
+  dateField?: string;
+  timeField?: string;
+  endField?: string;
+  endTimeField?: string;
+  /** Time zone (IANA) the file writes its hours in; absent = the system one */
+  timeZone?: string;
 }
 
 export type FilterOp = 'contains' | 'equals' | 'nonempty';
@@ -94,6 +120,8 @@ export interface TableConfig {
   mergeField?: string;
   /** Records are events of an element rather than elements; absent = elements */
   events?: EventMapping;
+  /** Records are links between two elements; absent = elements */
+  links?: LinkMapping;
 }
 
 /** Reusable mapping config (everything except the JSON data itself). The
@@ -528,15 +556,95 @@ export function guessEventFields(
   const isCategory = (k: string) => { const st = stats.get(k)!; return !st.numeric && st.distinct >= 2 && st.distinct <= 20; };
   const perRow = (k: string) => { const st = stats.get(k)!; return st.filled > 1 && st.distinct === st.filled; };
 
-  const categories = scalar.filter((f) => !isDate(f.key) && isCategory(f.key));
+  // A name is no kind of event: it names the element
+  const categories = scalar.filter((f) => !isDate(f.key) && isCategory(f.key) && !isNameColumn(f.key));
   const named = categories.find((f) => /(^|[._\s-])(type|nature|cat[eé]gor|kind|event|[eé]v[eé]nement|action|statut|status)/i.test(lastSegment(f.key)));
   const fewest = [...categories].sort((a, b) => stats.get(a.key)!.distinct - stats.get(b.key)!.distinct)[0];
   const label = named ?? fewest;
 
   const plain = (f: FieldInfo) => f.key !== dateField && !isDate(f.key) && f.key !== label?.key;
-  const hostField = scalar.find((f) => plain(f) && !stats.get(f.key)!.numeric && !isCategory(f.key) && !perRow(f.key))?.key
+  const constant = (k: string) => stats.get(k)!.distinct <= 1;
+  // A name column first ("nom", "last_name"), then a column
+  // that is no number, no category and no per-row id, one with several values
+  // before a constant one
+  const nameColumn = (f: FieldInfo) => plain(f) && isNameColumn(f.key) && !stats.get(f.key)!.numeric && !constant(f.key);
+  const ordinary = (f: FieldInfo) => plain(f) && !stats.get(f.key)!.numeric && !isCategory(f.key) && !perRow(f.key);
+  const varied = (f: FieldInfo) => plain(f) && !stats.get(f.key)!.numeric && !perRow(f.key) && !constant(f.key);
+  const hostField = scalar.find(nameColumn)?.key
+    ?? scalar.find((f) => ordinary(f) && !constant(f.key))?.key
+    ?? scalar.find(varied)?.key
+    ?? scalar.find(ordinary)?.key
     ?? scalar.find(plain)?.key ?? '';
   return { hostField, dateField, labelTemplate: label ? `{${label.key}}` : '' };
+}
+
+/** A column naming someone or something: "name", "nom_client", "last_name", "ownerName" */
+function isNameColumn(key: string): boolean {
+  return /name$/i.test(lastSegment(key)) || nameWords(key).some((w) => w === 'name' || w === 'nom');
+}
+/** A time of day alone: "08:30", "08:30:15" */
+const TIME_RE = /^\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
+
+/** Whether every filled value of a column is a time of day */
+function isTimeColumn(records: Record<string, unknown>[], key: string): boolean {
+  let seen = false;
+  for (const r of records) {
+    const v = r[key];
+    if (isBlank(v)) continue;
+    if (!TIME_RE.test(valueToString(v).trim())) return false;
+    seen = true;
+  }
+  return seen;
+}
+
+/**
+ * Column holding the time of a date column, when the file splits them: the
+ * one named like it ("date_appel" → "heure_appel"),
+ * else the column right after it. Only columns of times qualify.
+ */
+export function guessTimeField(records: Record<string, unknown>[], fields: FieldInfo[], dateKey: string | undefined): string | undefined {
+  if (!dateKey) return undefined;
+  const times = fields.filter((f) => f.kind === 'scalar' && f.key !== dateKey && isTimeColumn(records, f.key));
+  if (times.length === 0) return undefined;
+  const stem = (k: string) => k.toLowerCase().replace(/date|time|heure|hour/g, '');
+  const sameName = times.find((f) => stem(f.key) === stem(dateKey));
+  if (sameName) return sameName.key;
+  const at = fields.findIndex((f) => f.key === dateKey);
+  const next = fields[at + 1];
+  return next && times.some((f) => f.key === next.key) ? next.key : undefined;
+}
+
+/**
+ * Default columns of a link table: the two ends are the first two name
+ * columns, else the first two text columns that are no
+ * date, number or category; the date and its time as for events.
+ */
+export function guessLinkFields(
+  records: Record<string, unknown>[],
+  fields: FieldInfo[],
+  isDate: (key: string) => boolean,
+): LinkMapping {
+  const scalar = fields.filter((f) => f.kind === 'scalar');
+  const stats = new Map(scalar.map((f) => {
+    const values = records.map((r) => r[f.key]).filter((v) => !isBlank(v)).map((v) => valueToString(v));
+    return [f.key, { filled: values.length, distinct: new Set(values).size, numeric: isNumericColumn(values) }];
+  }));
+  const text = (f: FieldInfo) => !isDate(f.key) && !stats.get(f.key)!.numeric && !isTimeColumn(records, f.key);
+  const named = scalar.filter((f) => text(f) && isNameColumn(f.key));
+  // Not a per-row id (a reference number names no end)
+  const others = scalar.filter((f) => {
+    const st = stats.get(f.key)!;
+    return text(f) && st.distinct > 1 && !(st.filled > 1 && st.distinct === st.filled);
+  });
+  // Then any text column: few records can make every column look constant or per-row
+  const ends = [...new Set([...named, ...others, ...scalar.filter(text)].map((f) => f.key))];
+  const dateField = scalar.find((f) => isDate(f.key) && records.some((r) => recordDate(r[f.key])))?.key;
+  return {
+    fromField: ends[0] ?? '',
+    toField: ends[1] ?? '',
+    dateField,
+    timeField: guessTimeField(records, fields, dateField),
+  };
 }
 
 /** Last segment of a dot-path, used as the default property key. */
@@ -586,8 +694,8 @@ export function coerceForTarget(
   if (isBlank(value)) return null;
   switch (target) {
     case 'date': {
-      const d = parseFlexibleDate(valueToString(value));
-      return d ?? null;
+      const s = valueToString(value);
+      return parseFlexibleDate(s) ?? compactDate(s)?.date ?? null;
     }
     case 'country': {
       const s = valueToString(value).trim();
@@ -726,8 +834,10 @@ export function autoFieldMappings(
       // Every value a number (phone numbers, postcodes and long ids excluded)
       mapping[f.key] = { enabled: true, target: 'number', propKey: lastSegment(f.key) };
     } else {
-      // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
-      mapping[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
+      // Noise fields (id, hash, score…) and columns empty in every record
+      // start disabled but keep a sane target if re-enabled.
+      const empty = records.length > 0 && records.every((r) => isBlank(r[f.key]));
+      mapping[f.key] = { enabled: g !== 'ignore' && !empty, target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
     }
   }
   // Child (linked sub-element) config per array-of-objects field — disabled by default.
@@ -787,7 +897,101 @@ export function recordDate(v: unknown): { date: Date; precision?: DatePrecision;
   return flexible ? { date: flexible, approximate: false } : null;
 }
 
-const ISO_BOUND_RE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
+/** Two property values alike: the same instant for dates, the same text otherwise */
+export function sameValue(a: unknown, b: unknown): boolean {
+  const time = (v: unknown) => (v instanceof Date ? v.getTime() : typeof v === 'string' && !Number.isNaN(Date.parse(v)) && /^\d{4}-\d{2}-\d{2}T/.test(v) ? Date.parse(v) : null);
+  const ta = time(a), tb = time(b);
+  if (ta !== null && tb !== null) return ta === tb;
+  return String(a) === String(b);
+}
+
+/**
+ * A date written as 8 digits, without separators: `19790329` (year first) or
+ * `29031979` (day first). Years 1900-2100 only, so the two readings never
+ * both hold. Read only in a column chosen as a date: elsewhere 8 digits are
+ * more often an id.
+ */
+export function compactDate(v: unknown): { date: Date; precision: DatePrecision; approximate: boolean } | null {
+  const m = /^(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(valueToString(v).trim());
+  if (!m) return null;
+  const valid = (y: number, mo: number, d: number) => {
+    if (y < 1900 || y > 2100 || mo < 1 || mo > 12 || d < 1) return null;
+    const date = new Date(y, mo - 1, d);
+    return date.getMonth() === mo - 1 ? date : null;
+  };
+  const [a, b, c, d] = m.slice(1).map(Number);
+  const date = valid(a * 100 + b, c, d) ?? valid(c * 100 + d, b, a);
+  return date ? { date, precision: 'day', approximate: false } : null;
+}
+
+/** Date of a column chosen as a date: as {@link recordDate}, compact dates too */
+export function mappedDate(v: unknown): RecordDate | null {
+  return recordDate(v) ?? compactDate(v);
+}
+
+/** A record date; `zoned` when its hour was read in the file's time zone */
+export type RowDate = RecordDate & { zoned?: boolean };
+
+/**
+ * Date of a record from its date column and, when the file writes it apart,
+ * its time column ("2020-03-14" + "08:30"). A time that cannot be read
+ * leaves the day. With `timeZone`, the hour written is that zone's (see
+ * {@link inTimeZone}). Null when the record has no valid date.
+ */
+export function rowDate(flat: Record<string, unknown>, dateField: string, timeField?: string, timeZone?: string): RowDate | null {
+  const text = valueToString(flat[dateField]);
+  const d = mappedDate(flat[dateField]);
+  if (!d) return null;
+  const time = timeField ? TIME_PARTS_RE.exec(valueToString(flat[timeField]).trim()) : null;
+  if (!time) return inTimeZone(d, text, timeZone);
+  const [h, mi, s] = [Number(time[1]), Number(time[2]), Number(time[3] ?? 0)];
+  if (h > 23 || mi > 59 || s > 59) return inTimeZone(d, text, timeZone);
+  const date = new Date(d.date);
+  date.setHours(h, mi, s, 0);
+  return inTimeZone({ date, approximate: d.approximate }, text, timeZone, true);
+}
+
+const HAS_TIME_RE = /\d{1,2}:\d{2}/;
+const ZONED_TEXT_RE = /(?:Z|[+-]\d{2}:?\d{2})$/i;
+
+/**
+ * A date whose hour was written in `timeZone`: the same wall clock, as that
+ * zone's instant. Left as read: a date without an hour (a calendar day stays
+ * that day), and a date written with its own offset (an exact instant).
+ */
+export function inTimeZone(d: RecordDate, text: string, timeZone: string | undefined, timeApart = false): RowDate {
+  const t = text.trim();
+  if (!timeZone || ZONED_TEXT_RE.test(t) || (!timeApart && !HAS_TIME_RE.test(t))) return d;
+  const local = d.date;
+  const instant = fromZonedWallClock(toLocalDateKey(local), toLocalTimeKey(local), timeZone);
+  return { ...d, date: new Date(instant.getTime() + local.getSeconds() * 1000 + local.getMilliseconds()), zoned: true };
+}
+
+const TIME_PARTS_RE = /^(\d{1,2}):(\d{2})(?::(\d{2}))?/;
+
+/**
+ * Dates of a record that is a link: start (and end) from the mapped columns,
+ * or an ISO interval in the date column. Without an end the link is dated
+ * at its start (an open end would last until today on the timeline).
+ * `unread`: the date column holds something that is no date.
+ */
+export function linkDates(flat: Record<string, unknown>, lk: LinkMapping): { range: DateRange | null; unread: boolean } {
+  if (!lk.dateField || isBlank(flat[lk.dateField])) return { range: null, unread: false };
+  const interval = lk.endField ? null : zonedInterval(flat[lk.dateField], lk.timeZone);
+  const start = interval ? interval.start : rowDate(flat, lk.dateField, lk.timeField, lk.timeZone);
+  if (!start) return { range: null, unread: true };
+  const end = interval ? interval.end : lk.endField ? rowDate(flat, lk.endField, lk.endTimeField, lk.timeZone) : null;
+  const range: DateRange = {
+    start: start.date,
+    end: end && end.date.getTime() >= start.date.getTime() ? end.date : start.date,
+  };
+  if (start.precision && start.precision !== 'day') range.precision = start.precision;
+  if (start.approximate) range.approximate = true;
+  if (start.zoned && lk.timeZone) range.timeZone = lk.timeZone;
+  return { range, unread: false };
+}
+
+const ISO_BOUND_RE =/^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
 const MIDNIGHT_RE = /[T ]00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
 
 type RecordDate = NonNullable<ReturnType<typeof recordDate>>;
@@ -813,6 +1017,15 @@ export function isoInterval(v: unknown): { start: RecordDate; end: RecordDate } 
   return { start, end };
 }
 
+/** {@link isoInterval} with its hours read in the file's time zone */
+function zonedInterval(v: unknown, timeZone: string | undefined): { start: RowDate; end: RowDate } | null {
+  const interval = isoInterval(v);
+  if (!interval || !timeZone) return interval;
+  const [a, b] = valueToString(v).trim().split('/');
+  // An end at midnight sharp is a day boundary (exclusive end), not an hour
+  return { start: inTimeZone(interval.start, a, timeZone), end: MIDNIGHT_RE.test(b) ? interval.end : inTimeZone(interval.end, b, timeZone) };
+}
+
 /**
  * Event of a record: dated by `dateField` (and `endField`), with the other
  * mapped fields as its description, source, place and properties. Null when
@@ -821,25 +1034,28 @@ export function isoInterval(v: unknown): { start: RecordDate; end: RecordDate } 
 export function buildEvent(
   flat: Record<string, unknown>,
   label: string,
-  fields: { dateField: string; endField?: string; midnightIsDayBefore?: boolean },
+  fields: { dateField: string; timeField?: string; endField?: string; endTimeField?: string; midnightIsDayBefore?: boolean; timeZone?: string },
   extra: { properties: Property[]; source: string; notes: string; geo: GeoData | null },
 ): ElementEvent | null {
   // A date at midnight sharp read as the end of the day before, when asked
-  const read = (key: string) => {
-    const d = recordDate(flat[key]);
-    if (!d || !fields.midnightIsDayBefore || !MIDNIGHT_RE.test(valueToString(flat[key]).trim())) return d;
+  const read = (key: string, timeKey?: string): RowDate | null => {
+    // Midnight sharp as the end of the day before: a day boundary, read without the zone
+    const dayBefore = !timeKey && !!fields.midnightIsDayBefore && MIDNIGHT_RE.test(valueToString(flat[key]).trim());
+    const d = rowDate(flat, key, timeKey, dayBefore ? undefined : fields.timeZone);
+    if (!d || !dayBefore) return d;
     const prev = new Date(d.date);
     prev.setDate(prev.getDate() - 1);
     return { ...d, date: prev };
   };
-  const interval = fields.endField ? null : isoInterval(flat[fields.dateField]);
-  const start = interval ? interval.start : read(fields.dateField);
+  const interval = fields.endField ? null : zonedInterval(flat[fields.dateField], fields.timeZone);
+  const start = interval ? interval.start : read(fields.dateField, fields.timeField);
   if (!start) return null;
-  const end = interval ? interval.end : fields.endField ? read(fields.endField) : null;
+  const end = interval ? interval.end : fields.endField ? read(fields.endField, fields.endTimeField) : null;
   const event: ElementEvent = { id: crypto.randomUUID(), date: start.date, label };
   if (end && end.date.getTime() >= start.date.getTime()) event.dateEnd = end.date;
   if (start.precision) event.precision = start.precision;
   if (start.approximate) event.approximate = true;
+  if (start.zoned && fields.timeZone) event.timeZone = fields.timeZone;
   if (extra.notes) event.description = extra.notes;
   if (extra.source) event.source = extra.source;
   if (extra.geo) event.geo = extra.geo;
