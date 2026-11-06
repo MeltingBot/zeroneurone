@@ -1,5 +1,73 @@
 # Changelog
 
+## 2.91.0
+
+### Nouveautés
+
+- **Mapping : une ligne = un lien** — avec **Chaque ligne crée : un lien**,
+  chaque ligne d'un JSON ou d'un tableur devient un lien orienté entre deux
+  éléments (virement, transfert, appel) : **De** et **Vers** donnent les
+  extrémités, **Date début**, **Heure début**, **Date fin** et **Heure fin**
+  sa période sur la timeline. La colonne **Rattaché à** met une colonne sur
+  le lien, sur **De** ou sur **Vers** (une date de naissance, une adresse),
+  et rattache un pivot à l'extrémité qui le porte (le téléphone du
+  bénéficiaire sur le bénéficiaire). Une ligne dont De et Vers sont
+  identiques devient un événement de l'élément.
+- **Matrice des liens** — le choix **Éléments / Liens** affiche les liens
+  dans la matrice : De, Vers, Date début, Date fin, Sens et une colonne par
+  propriété, avec tri, filtres, copie et modification en ligne. Chaque
+  tableau garde son tri et ses filtres.
+- **Export de la matrice en classeur** — **Classeur XLSX** ou **Classeur
+  ODS** : un fichier de deux feuilles, Éléments et Liens, nombres et dates
+  typés, en-tête figé et filtrable.
+- **Fusion : choisir ce qu'on garde** — la fenêtre de fusion présente les
+  éléments côte à côte, comme un conflit dans un éditeur de code : une case
+  par tag et par valeur de propriété, tout coché au départ, les clés aux
+  valeurs différentes signalées.
+- **ANX : propriétés affichées et images** — les propriétés affichées sur le
+  canvas arrivent dans i2 avec « Afficher sur graphe », la valeur et le nom
+  de classe ; la première image d'un élément devient l'icône de son entité.
+  Deux options de l'export, **Images des éléments** et **Propriétés
+  affichées**, les désactivent. À l'import, les attributs affichés dans i2
+  deviennent des propriétés affichées et les images reviennent en médias.
+
+### Améliorations
+
+- **Mapping** — l'heure écrite dans une colonne à part est trouvée seule ;
+  un fuseau dit dans quel fuseau le fichier écrit ses heures ; les dates sur
+  8 chiffres (`19790329`, `29031979`) sont lues ; les colonnes vides sont
+  décochées ; une colonne de nom est proposée comme élément porteur. Les
+  colonnes utilisées par le mode s'affichent avec leur rôle, et le texte
+  brut se replie une fois chargé.
+- **Ajouter aux éléments existants** — les propriétés et notes destinées à
+  un élément déjà présent lui sont ajoutées, et le même Ctrl+Z les retire.
+
+### Corrections
+
+- **Fusion et liens** — la fusion réduisait à un seul lien tous les liens
+  vers un même tiers, ceux déjà parallèles compris, et écrasait des
+  libellés : des transactions disparaissaient. Tous les liens sont gardés ;
+  seul un doublon exact apporté par l'élément fusionné est regroupé.
+- **Rétablir une fusion** — Ctrl+Maj+Z juste après Ctrl+Z ne refaisait pas
+  la fusion. Annulation et rétablissement s'enchaînent désormais.
+- **Propriétés affichées sur les liens** — cocher une propriété dans le
+  panneau Vues ne l'affichait pas sur les liens.
+- **Vue à l'ouverture** — un dossier rouvert sur une vue qui ne montre aucun
+  de ses éléments se cadre sur eux.
+- **Mapping : dates illisibles** — une valeur qui n'est pas une date est
+  gardée en texte et comptée, au lieu d'être perdue.
+- **Import ANX** — les attributs des liens sont importés.
+
+### Divers
+
+- Mention de non-affiliation à IBM, i2 Group et N. Harris Computer
+  Corporation dans le code et la documentation i2 (ANX, ANB).
+
+### Extensions
+
+- **`dossier:exported`** — nouveaux formats `matrix-xlsx` et `matrix-ods` ;
+  `matrix-csv` porte `rows` (`elements` ou `links`).
+
 ## 2.90.1
 
 ### Nouveautés
