@@ -1,3 +1,12 @@
+/*
+ * This project is not affiliated with IBM, i2 Group, N. Harris Computer
+ * Corporation, or any other vendor. "i2", "i2 Analyst's Notebook", and "ANB"
+ * are trademarks of their respective owners (nominative use).
+ *
+ * Ce projet n'est affilié ni à IBM, ni à i2 Group, ni à N. Harris Computer
+ * Corporation, ni à aucun autre éditeur. « i2 », « i2 Analyst's Notebook » et
+ * « ANB » sont des marques de leurs propriétaires respectifs (usage nominatif).
+ */
 /**
  * Export to i2 Analyst's Notebook Exchange format (.anx).
  *
@@ -12,8 +21,10 @@
  * that i2 is known to accept. Do not add plausible-looking attributes: the
  * schema is only partially public, and an invented attribute is how a chart
  * gets refused. When extending this file, grep a real .anx first.
- * One exception, ChartItem/@DateTime, comes from anxwritter (MIT, ANB 9+):
- * without it, i2 shows no date on the item.
+ * Exceptions come from anxwritter (MIT, ANB 9+): ChartItem/@DateTime (without
+ * it, i2 shows no date on the item), and the embedded images of elements,
+ * CustomImageCollection > CustomImage and IconStyle/@OverrideTypeIcon,
+ * @TypeIconName (see anxImages.ts).
  *
  * The template followed is a third-party-generated chart that i2 opens, so it
  * documents the *minimal sufficient* subset: no lcx:LibraryCatalogue, no
@@ -22,6 +33,7 @@
  * ## Shape
  *
  *   Chart
+ *     CustomImageCollection > CustomImage Id="ZN_<hash>,Screen,Icon"  (only when needed)
  *     StrengthCollection   > Strength   Id="IDSET*"
  *     LinkTypeCollection   > LinkType   Id="IDSET*"
  *     EntityTypeCollection > EntityType Id="IDENT*"
@@ -47,6 +59,7 @@ import { effectivePrecision, parseDateValue, toLocalDateKey } from '../utils/dat
 import { flattenSourceLines, sourceToPlainText } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 import { hexToRgb } from '../utils/themeColors';
+import type { AnxImage } from './anxImages';
 
 // ============================================================================
 // TUNING — every unknown that only a real i2 can settle lives here, so that a
@@ -301,7 +314,46 @@ function serialiseValue(value: Property['value']): string {
 
 interface EntityTypeDef { id: string; name: string; iconFile: string; colour: number; representation: string }
 interface SimpleDef { id: string; name: string }
-interface AttributeClassDef { id: string; name: string; attType: string }
+interface AttributeClassDef {
+  id: string; name: string; attType: string;
+  /** Shown on the canvas in ZN (Views panel): shown on the chart in i2 */
+  shown: boolean;
+  /** Most decimals among the numbers, so that i2 does not round them */
+  decimals: number;
+  /** A date among the values has a time of day */
+  hasTime: boolean;
+}
+
+/**
+ * An AttributeClass with its display settings. Every attribute and value here
+ * appears verbatim in an i2/iBase export (sample.anx): "Show on chart" is
+ * Visible, then the value and the class name, as i2 shows "Brand Audi A6".
+ * Merged texts are joined with a space, as i2 proposes by default.
+ */
+function attributeClassXml(a: AttributeClassDef): string {
+  const shown = String(a.shown);
+  const isTime = a.attType === 'AttTime';
+  return `    <AttributeClass Id="${a.id}" Name="${escapeAttr(a.name)}" Type="${a.attType}"`
+    + ' IsUser="true" UserCanAdd="true" UserCanRemove="true" IconFile="" Prefix="" Suffix=""'
+    + ` ShowClassName="${shown}" ShowSymbol="false" ShowPrefix="false" ShowSuffix="false" ShowValue="${shown}"`
+    + ` ShowDate="${a.shown && isTime}" ShowTime="${a.shown && isTime && a.hasTime}" ShowSeconds="false"`
+    + ` DecimalPlaces="${a.decimals}" Visible="${shown}" ShowIfSet="false"`
+    + ` MergeBehaviour="${a.attType === 'AttText' ? 'AttMergeAddWithSpace' : 'AttMergeAssign'}" PasteBehaviour="AttMergeAssign" />`;
+}
+
+/** Decimals of a number as written: 70.941 → 3 (at most 6) */
+function decimalsOf(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  const text = String(value);
+  if (text.includes('e')) return 6;
+  return Math.min(6, text.split('.')[1]?.length ?? 0);
+}
+
+/** Whether a date value has a time of day (not midnight) */
+function hasTimeOfDay(value: unknown): boolean {
+  const d = value instanceof Date ? value : typeof value === 'string' ? new Date(value) : null;
+  return !!d && !Number.isNaN(d.getTime()) && (d.getHours() !== 0 || d.getMinutes() !== 0);
+}
 
 /** Synthetic attribute keys used to carry ZN concepts i2 has no slot for. */
 const ATTR_TAG = 'Tag';
@@ -315,7 +367,22 @@ const ATTR_DATE_END = 'Date end';
 // EMITTER
 // ============================================================================
 
-export function buildANXExport(dossier: Dossier, elements: Element[], links: Link[]): string {
+/** Choices of the ANX export (Export window) */
+export interface ANXExportOptions {
+  /** Embed the image of each element as the icon of its entity (default: yes) */
+  images?: boolean;
+  /** Tick "Show on chart" for the properties shown on the canvas (default: yes) */
+  shownProperties?: boolean;
+}
+
+/**
+ * @param images image of an element, ready to embed (see anxImages.ts):
+ *   shown as the icon of its entity
+ */
+export function buildANXExport(
+  dossier: Dossier, elements: Element[], links: Link[],
+  images?: ReadonlyMap<string, AnxImage>, options: Pick<ANXExportOptions, 'shownProperties'> = {},
+): string {
   const byId = new Map(elements.map((el) => [el.id, el]));
   const model = getEvaluationModel(dossier);
 
@@ -405,15 +472,19 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
   }
 
   // Attribute classes: first declared type wins, later values degrade to text.
+  // Those of the properties shown on the canvas are shown on the chart.
+  const displayed = new Set(options.shownProperties === false ? [] : (dossier.settings?.displayedProperties ?? []).map((k) => k.trim()));
   const attributeClasses = new Map<string, AttributeClassDef>();
-  const declareAttr = (rawName: string, type: PropertyType | undefined): AttributeClassDef => {
+  const declareAttr = (rawName: string, type: PropertyType | undefined, value?: unknown): AttributeClassDef => {
     // Keys imported from CRLF files can keep a trailing "\r" ("telephone\r").
     const name = rawName.trim();
     let def = attributeClasses.get(name);
     if (!def) {
-      def = { id: nextDefId(), name, attType: propertyTypeToAttType(type) };
+      def = { id: nextDefId(), name, attType: propertyTypeToAttType(type), shown: displayed.has(name), decimals: 0, hasTime: false };
       attributeClasses.set(name, def);
     }
+    if (def.attType === 'AttNumber') def.decimals = Math.max(def.decimals, decimalsOf(value));
+    if (def.attType === 'AttTime' && !def.hasTime && hasTimeOfDay(value)) def.hasTime = true;
     return def;
   };
 
@@ -426,7 +497,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     for (const prop of item.properties ?? []) {
       const value = serialiseValue(prop.value);
       if (!value) continue; // importANX ignores empty values anyway
-      const def = declareAttr(prop.key, prop.type);
+      const def = declareAttr(prop.key, prop.type, prop.value);
       out.push(
         `        <Attribute AttributeClass="${escapeAttr(def.name)}" Value="${escapeAttr(value)}" AttributeClassReference="${def.id}" />`,
       );
@@ -439,6 +510,14 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
       );
     }
     return out;
+  };
+
+  // Embedded images: one per distinct image, under the name its content
+  // gives it (never an i2 icon name, never another image's)
+  const embedded = new Map<string, AnxImage>();
+  const embedImage = (image: AnxImage): string => {
+    if (!embedded.has(image.name)) embedded.set(image.name, image);
+    return image.name;
   };
 
   // ── Chart items ───────────────────────────────────────────────────────────
@@ -516,6 +595,9 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     }
 
     const frameColour = hexToColorref(el.visual?.borderColor);
+    // Its image, embedded: shown instead of the entity type's icon
+    const image = images?.get(el.id);
+    const iconOverride = image ? ` OverrideTypeIcon="true" TypeIconName="${embedImage(image)}"` : '';
     const entityAttrs = EMIT_IBASE_DIALECT ? ` EntityId="${escapeAttr(chartId)}"` : '';
 
     items.push(
@@ -523,7 +605,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
       `      <End X="${x}" Y="${y}" Z="0">`,
       `        <Entity${entityAttrs} Identity="${escapeAttr(identity)}" LabelIsIdentity="${identity === el.label ? 'true' : 'false'}">`,
       '          <Icon TextX="0" TextY="16">',
-      `            <IconStyle Enlargement="${sizeToEnlargement(el.visual?.size)}" Type="${escapeAttr(type.name)}" EntityTypeReference="${type.id}">`,
+      `            <IconStyle Enlargement="${sizeToEnlargement(el.visual?.size)}" Type="${escapeAttr(type.name)}" EntityTypeReference="${type.id}"${iconOverride}>`,
       `              <FrameStyle Colour="${frameColour}" />`,
       '            </IconStyle>',
       '          </Icon>',
@@ -615,6 +697,12 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
   const out: string[] = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     `<Chart ${chartAttrs}>`,
+    // Before StrengthCollection, as anxwritter writes it
+    ...(embedded.size > 0 ? [
+      '  <CustomImageCollection>',
+      ...[...embedded.values()].map((image) => `    <CustomImage Id="${image.name},Screen,Icon" DataLength="${image.length}" Data="${image.data}" />`),
+      '  </CustomImageCollection>',
+    ] : []),
     '  <StrengthCollection>',
     ...[...strengths.values()].map(
       (s) => `    <Strength Id="${s.id}" Name="${escapeAttr(s.name)}" DotStyle="${styleToDotStyle(s.name.toLowerCase())}" />`,
@@ -637,9 +725,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
   if (attributeClasses.size > 0) {
     out.push(
       '  <AttributeClassCollection>',
-      ...[...attributeClasses.values()].map(
-        (a) => `    <AttributeClass Id="${a.id}" Name="${escapeAttr(a.name)}" Type="${a.attType}" />`,
-      ),
+      ...[...attributeClasses.values()].map(attributeClassXml),
       '  </AttributeClassCollection>',
     );
   }

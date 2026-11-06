@@ -205,6 +205,8 @@ To copy only part of the graph: select at least two elements, then **right-click
 
 ### ANX (i2 Analyst's Notebook)
 
+*This project is not affiliated with IBM, i2 Group, N. Harris Computer Corporation, or any other vendor. "i2", "i2 Analyst's Notebook", and "ANB" are trademarks of their respective owners (nominative use).*
+
 **i2 exchange format**, to hand a chart over to an analyst working in Analyst's Notebook.
 
 | Property | Value |
@@ -216,7 +218,13 @@ To copy only part of the graph: select at least two elements, then **right-click
 
 The file opens directly in Analyst's Notebook, with no import specification. Canvas positions, colours, link direction and line width are preserved. Each element's first tag becomes its i2 entity type, further tags become attributes, and properties carry their type wherever i2 has an equivalent: numbers, dates and booleans survive, other types are sent as text.
 
-Some ZeroNeurone notions have no i2 counterpart and are not carried over. Groups and annotations are not exported; elements inside a group are placed at their actual position and keep the group name in an attribute. A geographic area is reduced to its centre point, a date range to two attributes, and shapes, attached media and custom sizes are lost. A link with an endpoint that is not exported is dropped, so that no reference points at nothing.
+The properties shown on the canvas (**Views** panel) reach i2 with **Show on chart**, **Value** and **Class name** ticked: they show under the entity or link ("Brand Audi A6 estate") with no setting in Analyst's Notebook. The other properties are sent without being shown. Numbers keep their decimals, texts merged in i2 are combined with a space.
+
+**Images**: the first image attached to an element shows in Analyst's Notebook instead of its type's icon. It is reduced to 128 pixels at most and made square (transparent edges), then embedded in the file as a custom icon: nothing to install. Analyst's Notebook copies these icons into its icon library, **on the computer that opens the file**, where they remain after the chart is deleted: keep this in mind for photos of people. Each image is named after its content, so that another chart never shows another's image. A redacted export carries no image.
+
+**Options**: **Element images** and **Shown properties**, ticked by default, decide whether the images and the display of properties on the chart are part of the export. Unticked, the images are not sent, and every property reaches i2 without being shown.
+
+Some ZeroNeurone notions have no i2 counterpart and are not carried over. Groups and annotations are not exported; elements inside a group are placed at their actual position and keep the group name in an attribute. A geographic area is reduced to its centre point, a date range to two attributes, and shapes, custom sizes and attached media other than the first image are lost. A link with an endpoint that is not exported is dropped, so that no reference points at nothing.
 
 i2 merges entities that share an identity. Two elements with the same label (namesakes) therefore get distinct identities, `Jean Martin` and `Jean Martin (2)`, while keeping the same label shown in Analyst's Notebook.
 

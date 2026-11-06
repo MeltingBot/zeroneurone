@@ -404,6 +404,8 @@ Not imported: ports (`a:north`, the link starts from the element), invisible edg
 
 ### ANX (i2 Analyst's Notebook)
 
+*This project is not affiliated with IBM, i2 Group, N. Harris Computer Corporation, or any other vendor. "i2", "i2 Analyst's Notebook", and "ANB" are trademarks of their respective owners (nominative use).*
+
 **XML format** exported from i2 Analyst's Notebook (.anx).
 
 #### Imported Data (Entities)
@@ -417,6 +419,7 @@ Not imported: ports (`a:north`, the link starts from the element), invisible edg
 | EntityType.Colour (COLORREF) | Color |
 | IconStyle.Enlargement | Size (small/medium/large) |
 | EntityType.IconFile | Lucide icon |
+| Own embedded icon (CustomImage) | Attached media (PNG) |
 | DatabaseProperty[] | Typed properties |
 | Attribute[] | Typed properties |
 | GradeOneIndex (1-5) | Confidence (20-100) |
@@ -437,7 +440,12 @@ Not imported: ports (`a:north`, the link starts from the element), invisible edg
 | LinkType.Name | Tag |
 | Strength.Name | Tag |
 | DatabaseProperty[] | Properties |
+| Attribute[] | Typed properties |
 | Card.DateTime | Date |
+
+#### Attributes shown on the chart
+
+An attribute whose class is ticked **Show on chart** in i2 becomes a property shown on the canvas (**Views** panel), after those the dossier already shows, up to 3.
 
 #### Type Hierarchy
 
@@ -450,6 +458,8 @@ The `lcx:LibraryCatalogue` hierarchy is parsed: non-abstract ancestor types are 
 ---
 
 ### ANB (i2 Analyst's Notebook - binary)
+
+*This project is not affiliated with IBM, i2 Group, N. Harris Computer Corporation, or any other vendor. "i2", "i2 Analyst's Notebook", and "ANB" are trademarks of their respective owners (nominative use).*
 
 **Proprietary binary format** from i2 Analyst's Notebook (.anb), read directly: no need to export to ANX from i2.
 

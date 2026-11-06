@@ -205,6 +205,8 @@ Pour copier seulement une partie du graphe : sélectionnez au moins deux éléme
 
 ### ANX (i2 Analyst's Notebook)
 
+*Ce projet n'est affilié ni à IBM, ni à i2 Group, ni à N. Harris Computer Corporation, ni à aucun autre éditeur. « i2 », « i2 Analyst's Notebook » et « ANB » sont des marques de leurs propriétaires respectifs (usage nominatif).*
+
 **Format d'échange i2** pour transmettre un graphe à un analyste travaillant sous Analyst's Notebook.
 
 | Propriété | Valeur |
@@ -216,7 +218,13 @@ Pour copier seulement une partie du graphe : sélectionnez au moins deux éléme
 
 Le fichier s'ouvre directement dans Analyst's Notebook, sans spécification d'import. Les positions du canvas, les couleurs, la direction et l'épaisseur des liens sont conservées. Le premier tag de chaque élément devient son type d'entité i2, les tags suivants deviennent des attributs, et les propriétés sont transmises avec leur type lorsque i2 possède un équivalent : les nombres, les dates et les booléens sont préservés, les autres types sont transmis en texte.
 
-Certaines notions de ZeroNeurone n'ont pas d'équivalent dans i2 et ne sont pas transmises. Les groupes et les annotations ne sont pas exportés ; les éléments contenus dans un groupe sont placés à leur position réelle et conservent le nom du groupe dans un attribut. Une zone géographique est réduite à son point central, une plage de dates à deux attributs, et les formes, les médias joints et les tailles personnalisées sont perdus. Un lien dont une extrémité n'est pas exportée est omis, pour ne pas produire de référence sans cible.
+Les propriétés affichées sur le canvas (panneau **Vues**) arrivent dans i2 avec **Afficher sur graphe**, **Valeur** et **Nom de classe** cochés : elles s'affichent sous l'entité ou le lien (« Marque Audi A6 break ») sans réglage dans Analyst's Notebook. Les autres propriétés sont transmises sans être affichées. Les nombres gardent leurs décimales, les textes fusionnés dans i2 sont combinés avec un espace.
+
+**Images** : la première image jointe à un élément s'affiche dans Analyst's Notebook à la place de l'icône de son type. Elle est réduite à 128 pixels au plus et rendue carrée (bords transparents), puis intégrée au fichier sous la forme d'une icône personnalisée : rien à installer. Analyst's Notebook copie ces icônes dans sa bibliothèque d'icônes, **sur le poste qui ouvre le fichier**, où elles restent après la suppression du graphe : pensez-y pour des photos de personnes. Chaque image porte un nom tiré de son contenu, de sorte qu'un autre graphe n'affiche jamais l'image d'un autre. Un export caviardé ne contient aucune image.
+
+**Options** : **Images des éléments** et **Propriétés affichées**, cochées par défaut, décident si les images et l'affichage des propriétés sur le graphe font partie de l'export. Décochées, les images ne sont pas transmises, et toutes les propriétés arrivent dans i2 sans être affichées.
+
+Certaines notions de ZeroNeurone n'ont pas d'équivalent dans i2 et ne sont pas transmises. Les groupes et les annotations ne sont pas exportés ; les éléments contenus dans un groupe sont placés à leur position réelle et conservent le nom du groupe dans un attribut. Une zone géographique est réduite à son point central, une plage de dates à deux attributs, et les formes, les tailles personnalisées et les médias joints autres que la première image sont perdus. Un lien dont une extrémité n'est pas exportée est omis, pour ne pas produire de référence sans cible.
 
 i2 fusionne les entités de même identité. Deux éléments au même libellé (homonymes) reçoivent donc des identités distinctes, `Jean Martin` et `Jean Martin (2)`, tout en gardant le même libellé affiché dans Analyst's Notebook.
 

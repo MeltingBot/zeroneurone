@@ -212,6 +212,10 @@
       "title": "Zwartgemaakte export",
       "message": "Teksten, locaties, bijlagen, opmerkingen, rapport en zoekopdrachten worden uit de export verwijderd. Het dossier wordt niet gewijzigd.",
       "action": "Zwartgemaakt exporteren"
+    },
+    "anx": {
+      "images": "Afbeeldingen van elementen",
+      "shownProperties": "Getoonde eigenschappen"
     }
   },
   "search": {

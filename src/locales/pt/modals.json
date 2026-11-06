@@ -212,6 +212,10 @@
       "title": "Exportação com dados ocultos",
       "message": "Textos, geolocalizações, ficheiros anexos, comentários, relatório e consultas serão removidos da exportação. O dossiê não é alterado.",
       "action": "Exportar com dados ocultos"
+    },
+    "anx": {
+      "images": "Imagens dos elementos",
+      "shownProperties": "Propriedades mostradas"
     }
   },
   "search": {

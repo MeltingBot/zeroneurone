@@ -212,6 +212,10 @@
       "title": "Datuak ezkutatuta esportatu",
       "message": "Testuak, geokokapenak, erantsitako fitxategiak, iruzkinak, txostena eta kontsultak esportaziotik kenduko dira. Espedientea ez da aldatzen.",
       "action": "Ezkutatuta esportatu"
+    },
+    "anx": {
+      "images": "Elementuen irudiak",
+      "shownProperties": "Erakutsitako propietateak"
     }
   },
   "search": {

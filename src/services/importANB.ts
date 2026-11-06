@@ -1,3 +1,12 @@
+/*
+ * This project is not affiliated with IBM, i2 Group, N. Harris Computer
+ * Corporation, or any other vendor. "i2", "i2 Analyst's Notebook", and "ANB"
+ * are trademarks of their respective owners (nominative use).
+ *
+ * Ce projet n'est affilié ni à IBM, ni à i2 Group, ni à N. Harris Computer
+ * Corporation, ni à aucun autre éditeur. « i2 », « i2 Analyst's Notebook » et
+ * « ANB » sont des marques de leurs propriétaires respectifs (usage nominatif).
+ */
 import i18next from 'i18next';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
