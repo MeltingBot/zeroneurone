@@ -212,6 +212,10 @@
       "title": "Redacted export",
       "message": "Text, locations, attached files, comments, report and queries will be removed from the export. The dossier is not changed.",
       "action": "Export redacted"
+    },
+    "anx": {
+      "images": "Element images",
+      "shownProperties": "Shown properties"
     }
   },
   "search": {

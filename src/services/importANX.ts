@@ -1,3 +1,12 @@
+/*
+ * This project is not affiliated with IBM, i2 Group, N. Harris Computer
+ * Corporation, or any other vendor. "i2", "i2 Analyst's Notebook", and "ANB"
+ * are trademarks of their respective owners (nominative use).
+ *
+ * Ce projet n'est affilié ni à IBM, ni à i2 Group, ni à N. Harris Computer
+ * Corporation, ni à aucun autre éditeur. « i2 », « i2 Analyst's Notebook » et
+ * « ANB » sont des marques de leurs propriétaires respectifs (usage nominatif).
+ */
 import i18next from 'i18next';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
@@ -183,16 +192,20 @@ function buildDbPropertyTypeLookup(doc: Document): Map<string, { name: string; d
   return map;
 }
 
-function buildAttributeClassLookup(doc: Document): Map<string, { name: string; type: string }> {
-  const map = new Map<string, { name: string; type: string }>();
+/** Attribute classes by id; `shown`: ticked "Show on chart" in i2 (Visible) */
+function buildAttributeClassLookup(doc: Document): Map<string, { name: string; type: string; shown: boolean }> {
+  const map = new Map<string, { name: string; type: string; shown: boolean }>();
   for (const el of Array.from(doc.querySelectorAll('AttributeClassCollection > AttributeClass'))) {
     const id = el.getAttribute('Id') || '';
     const name = el.getAttribute('Name') || '';
     const type = el.getAttribute('Type') || 'AttText';
-    if (id) map.set(id, { name, type });
+    if (id) map.set(id, { name, type, shown: el.getAttribute('Visible') === 'true' });
   }
   return map;
 }
+
+/** Most properties shown on the canvas (Views panel) */
+const MAX_DISPLAYED_PROPERTIES = 3;
 
 /** Parse lcx:LibraryCatalogue type hierarchy → Map<TypeName, non-abstract ancestor names[]> */
 function parseTypeHierarchy(doc: Document): Map<string, string[]> {
@@ -282,6 +295,34 @@ export async function importANX(
     const dbPropTypeLookup = buildDbPropertyTypeLookup(doc);
     const attrClassLookup = buildAttributeClassLookup(doc);
     const typeHierarchy = parseTypeHierarchy(doc);
+    // Attributes shown on the chart in i2, in order of first use: shown on the canvas too
+    const shownKeys: string[] = [];
+    // Images embedded in the chart (custom icons), by "<name>,Screen,Icon"
+    const customImages = new Map<string, string>();
+    for (const ci of Array.from(doc.querySelectorAll('CustomImageCollection > CustomImage'))) {
+      const id = ci.getAttribute('Id');
+      const data = ci.getAttribute('Data');
+      if (id && data) customImages.set(id, data);
+    }
+    // Entities showing an embedded image of their own: it becomes their media
+    const entityImages: { element: Element; data: string }[] = [];
+
+    /** Properties of the attributes of a chart item, entity or link */
+    const attributeProperties = (ci: globalThis.Element): Property[] => {
+      const props: Property[] = [];
+      for (const attr of Array.from(ci.querySelectorAll('AttributeCollection > Attribute'))) {
+        const refId = attr.getAttribute('AttributeClassReference') || '';
+        const className = attr.getAttribute('AttributeClass') || '';
+        const value = attr.getAttribute('Value') || '';
+        if (!value) continue;
+
+        const acDef = attrClassLookup.get(refId);
+        const key = className || acDef?.name || refId;
+        props.push({ key, value, type: mapDataType(acDef?.type || 'AttText') });
+        if (acDef?.shown && !shownKeys.includes(key)) shownKeys.push(key);
+      }
+      return props;
+    };
 
     // EntityId → ElementId mapping
     const entityIdMap = new Map<string, ElementId>();
@@ -326,6 +367,8 @@ export async function importANX(
       const iconStyle = entityEl.querySelector('IconStyle');
       const enlargement = iconStyle?.getAttribute('Enlargement') || null;
       const typeName = iconStyle?.getAttribute('Type') || '';
+      const ownIcon = iconStyle?.getAttribute('OverrideTypeIcon') === 'true' ? iconStyle.getAttribute('TypeIconName') : null;
+      const imageData = ownIcon ? customImages.get(`${ownIcon},Screen,Icon`) : undefined;
 
       // ── EntityType lookup ──
       const entityType = entityTypeLookup.get(typeName);
@@ -386,17 +429,7 @@ export async function importANX(
       }
 
       // AttributeCollection
-      for (const attr of Array.from(ci.querySelectorAll('AttributeCollection > Attribute'))) {
-        const refId = attr.getAttribute('AttributeClassReference') || '';
-        const className = attr.getAttribute('AttributeClass') || '';
-        const value = attr.getAttribute('Value') || '';
-        if (!value) continue;
-
-        const acDef = attrClassLookup.get(refId);
-        const key = className || acDef?.name || refId;
-        const propType = mapDataType(acDef?.type || 'AttText');
-        properties.push({ key, value, type: propType });
-      }
+      properties.push(...attributeProperties(ci));
 
       // i2 entity ID for traceability
       properties.push({ key: 'i2_entity_id', value: entityId, type: 'text' });
@@ -485,6 +518,7 @@ export async function importANX(
       };
 
       rows.addElement(element);
+      if (imageData) entityImages.push({ element, data: imageData });
       result.elementsImported++;
     }
 
@@ -563,6 +597,8 @@ export async function importANX(
 
         linkProperties.push({ key, value, type: mapDataType(dbDef?.dataType || 'AttText') });
       }
+      // Attributes of the link (i2, and ZN's own export, write them as for entities)
+      linkProperties.push(...attributeProperties(ci));
 
       // ── Source & Date from Card[0] ──
       let linkSource = 'i2 ANB';
@@ -625,6 +661,30 @@ export async function importANX(
       result.linksImported++;
     }
 
+    // Embedded images → media of their elements (PNG, magenta transparent);
+    // one file per image, however many entities show it
+    if (entityImages.length > 0) {
+      const { anxImageToPng } = await import('./anxImages');
+      const { fileService } = await import('./fileService');
+      const saved = new Map<string, Promise<string | null>>();
+      for (const { element, data } of entityImages) {
+        let assetId = saved.get(data);
+        if (!assetId) {
+          const name = `${(element.label || 'image').replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 60)}.png`;
+          assetId = anxImageToPng(data)
+            .then((png) => (png ? fileService.saveAsset(targetDossierId, new File([png], name, { type: 'image/png' })) : null))
+            .then((asset) => asset?.id ?? null)
+            .catch(() => null);
+          saved.set(data, assetId);
+        }
+        const id = await assetId;
+        if (id && !element.assetIds.includes(id)) {
+          element.assetIds.push(id);
+          result.assetsImported++;
+        }
+      }
+    }
+
     await rows.write();
 
     // ── Dossier metadata ──
@@ -638,6 +698,19 @@ export async function importANX(
           description: existing ? `${existing}\n${metaText}` : metaText,
           updatedAt: new Date(),
         });
+      }
+    }
+
+    // Attributes shown on the chart in i2: shown on the canvas, after those the
+    // dossier already shows, up to the limit
+    if (shownKeys.length > 0) {
+      const dossier = await db.dossiers.get(targetDossierId);
+      if (dossier) {
+        const displayed = dossier.settings.displayedProperties ?? [];
+        const next = [...displayed, ...shownKeys.filter((k) => !displayed.includes(k))].slice(0, Math.max(MAX_DISPLAYED_PROPERTIES, displayed.length));
+        if (next.length !== displayed.length) {
+          await db.dossiers.update(targetDossierId, { settings: { ...dossier.settings, displayedProperties: next } });
+        }
       }
     }
 

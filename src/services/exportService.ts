@@ -9,7 +9,8 @@ import { generateUUID, getExtension, stripLocalOnlyDossierFields } from '../util
 import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { formatEvaluation } from '../utils/evaluation';
 import { encryptZip } from './encryption/zipEncryption';
-import { buildANXExport } from './exportANX';
+import { buildANXExport, type ANXExportOptions } from './exportANX';
+import type { AnxImage } from './anxImages';
 import { formatDateForExport, formatPreciseDateKey, parsePropertyDate, toLocalDateKey } from '../utils/dates';
 import { buildObsidianVault, toVaultBasename, type ObsidianLabels } from './exportObsidian';
 import { emitExport } from '../plugins/pluginEventBus';
@@ -841,6 +842,34 @@ ${edges}
   /**
    * Download string data as a file
    */
+
+  /**
+   * Image of each element — that of its appearance, else its first attached
+   * image — embedded as the icon of its entity in an .anx; an image the
+   * browser cannot read is left out. Converted once per
+   * file, however many elements share it.
+   */
+  private async anxImages(elements: Element[], assets: Asset[]): Promise<Map<string, AnxImage>> {
+    const { imageToAnxImage } = await import('./anxImages');
+    const byId = new Map(assets.map((a) => [a.id, a]));
+    const converted = new Map<string, Promise<AnxImage | null>>();
+    const images = new Map<string, AnxImage>();
+    for (const el of elements) {
+      // The element's own image (its appearance) first, then its first attached image
+      const asset = [el.visual?.image, ...(el.assetIds ?? [])]
+        .map((id) => (id ? byId.get(id) : undefined))
+        .find((a) => a?.mimeType?.startsWith('image/'));
+      if (!asset) continue;
+      let pending = converted.get(asset.id);
+      if (!pending) {
+        pending = fileService.getAssetFile(asset).then(imageToAnxImage).catch(() => null);
+        converted.set(asset.id, pending);
+      }
+      const image = await pending;
+      if (image) images.set(el.id, image);
+    }
+    return images;
+  }
   download(content: string, filename: string, mimeType: string): void {
     const blob = new Blob([content], { type: mimeType });
     downloadBlob(blob, filename);
@@ -867,6 +896,7 @@ ${edges}
     obsidianLabels?: ObsidianLabels,
     obsidianFolderByTag?: boolean,
     csvOptions?: CSVExportOptions,
+    anxOptions?: ANXExportOptions,
     redact = false,
   ): Promise<void> {
     if (redact) {
@@ -920,7 +950,8 @@ ${edges}
         break;
       }
       case 'anx': {
-        const anx = buildANXExport(dossier, elements, links);
+        const images = anxOptions?.images === false ? undefined : await this.anxImages(elements, assets ?? []);
+        const anx = buildANXExport(dossier, elements, links, images, { shownProperties: anxOptions?.shownProperties !== false });
         this.download(anx, `${baseName}.anx`, 'application/xml');
         break;
       }

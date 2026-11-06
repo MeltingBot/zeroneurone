@@ -212,6 +212,10 @@
       "title": "Geschwärzter Export",
       "message": "Texte, Geodaten, Anhänge, Kommentare, Bericht und Abfragen werden aus dem Export entfernt. Das Dossier bleibt unverändert.",
       "action": "Geschwärzt exportieren"
+    },
+    "anx": {
+      "images": "Bilder der Elemente",
+      "shownProperties": "Angezeigte Eigenschaften"
     }
   },
   "search": {

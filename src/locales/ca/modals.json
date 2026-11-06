@@ -212,6 +212,10 @@
       "title": "Exportació censurada",
       "message": "Textos, geolocalitzacions, fitxers adjunts, comentaris, informe i consultes se suprimiran de l'exportació. L'expedient no es modifica.",
       "action": "Exporta censurat"
+    },
+    "anx": {
+      "images": "Imatges dels elements",
+      "shownProperties": "Propietats mostrades"
     }
   },
   "search": {

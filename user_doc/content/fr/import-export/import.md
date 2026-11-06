@@ -416,6 +416,8 @@ Ne sont pas importés : les ports (`a:nord`, le lien part de l'élément), les l
 
 ### ANX (i2 Analyst's Notebook)
 
+*Ce projet n'est affilié ni à IBM, ni à i2 Group, ni à N. Harris Computer Corporation, ni à aucun autre éditeur. « i2 », « i2 Analyst's Notebook » et « ANB » sont des marques de leurs propriétaires respectifs (usage nominatif).*
+
 **Format XML** exporté depuis i2 Analyst's Notebook (.anx).
 
 #### Données importées (Entités)
@@ -429,6 +431,7 @@ Ne sont pas importés : les ports (`a:nord`, le lien part de l'élément), les l
 | EntityType.Colour (COLORREF) | Couleur |
 | IconStyle.Enlargement | Taille (small/medium/large) |
 | EntityType.IconFile | Icone Lucide |
+| Icône propre intégrée (CustomImage) | Média joint (PNG) |
 | DatabaseProperty[] | Propriétés typées |
 | Attribute[] | Propriétés typées |
 | GradeOneIndex (1-5) | Confiance (20-100) |
@@ -449,7 +452,12 @@ Ne sont pas importés : les ports (`a:nord`, le lien part de l'élément), les l
 | LinkType.Name | Tag |
 | Strength.Name | Tag |
 | DatabaseProperty[] | Propriétés |
+| Attribute[] | Propriétés typées |
 | Card.DateTime | Date |
+
+#### Attributs affichés sur le graphe
+
+Un attribut dont la classe est cochée **Afficher sur graphe** dans i2 devient une propriété affichée sur le canvas (panneau **Vues**), à la suite de celles que le dossier affiche déjà, dans la limite de 3.
 
 #### Hiérarchie de types
 
@@ -462,6 +470,8 @@ Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
 ---
 
 ### ANB (i2 Analyst's Notebook - binaire)
+
+*Ce projet n'est affilié ni à IBM, ni à i2 Group, ni à N. Harris Computer Corporation, ni à aucun autre éditeur. « i2 », « i2 Analyst's Notebook » et « ANB » sont des marques de leurs propriétaires respectifs (usage nominatif).*
 
 **Format binaire propriétaire** i2 Analyst's Notebook (.anb), lu directement : inutile d'exporter en ANX depuis i2.
 

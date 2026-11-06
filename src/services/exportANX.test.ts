@@ -522,3 +522,97 @@ describe('importANX — ChartItem dates written by i2', () => {
     expect(link.dateRange?.precision).toBe('minute');
   });
 });
+
+describe('buildANXExport — attributes shown on the chart', () => {
+  const shownDossier = { ...DOSSIER, settings: { displayedProperties: ['Marque', 'montant'] } } as unknown as Dossier;
+  const classOf = (doc: Document, name: string) => doc.querySelector(`AttributeClass[Name="${name}"]`)!;
+
+  it('shows on the chart the properties shown on the canvas, value and class name', () => {
+    const doc = expectWellFormed(buildANXExport(shownDossier, [
+      makeElement({ properties: [{ key: 'Marque', value: 'Audi A6 break', type: 'text' }, { key: 'Couleur', value: 'noire', type: 'text' }] as never }),
+    ], []));
+    const marque = classOf(doc, 'Marque');
+    expect(['Visible', 'ShowValue', 'ShowClassName'].map((a) => marque.getAttribute(a))).toEqual(['true', 'true', 'true']);
+    expect(marque.getAttribute('MergeBehaviour')).toBe('AttMergeAddWithSpace');
+    expect(classOf(doc, 'Couleur').getAttribute('Visible')).toBe('false');
+  });
+
+  it('keeps the decimals of numbers, and the time of dates that have one', () => {
+    const doc = expectWellFormed(buildANXExport(shownDossier, [
+      makeElement({ id: 'e1', properties: [{ key: 'montant', value: 70.941, type: 'number' }, { key: 'vu le', value: new Date(2024, 1, 10, 9, 15), type: 'datetime' }] as never }),
+      makeElement({ id: 'e2', properties: [{ key: 'montant', value: 12, type: 'number' }] as never }),
+    ], []));
+    expect(classOf(doc, 'montant').getAttribute('DecimalPlaces')).toBe('3');
+    // Not shown on the canvas: date and time not shown either
+    expect(classOf(doc, 'vu le').getAttribute('ShowTime')).toBe('false');
+  });
+});
+
+describe('importANX — attributes shown on the chart, and those of links', () => {
+  beforeEach(async () => {
+    await db.open();
+    await db.elements.clear();
+    await db.links.clear();
+    await db.dossiers.clear();
+  });
+
+  const target = async (displayedProperties: string[] = []) => {
+    await db.dossiers.put({ id: 'd-target', name: 'Cible', description: '', settings: { displayedProperties }, createdAt: new Date(), updatedAt: new Date() } as never);
+  };
+
+  it('brings back the properties of links, and shows those shown on the chart', async () => {
+    await target();
+    const shownDossier = { ...DOSSIER, settings: { displayedProperties: ['montant'] } } as unknown as Dossier;
+    const source = [makeElement({ id: 'e1', label: 'A' }), makeElement({ id: 'e2', label: 'B', position: { x: 200, y: 0 } })];
+    const sourceLinks = [makeLink({ properties: [{ key: 'montant', value: 120, type: 'number' }, { key: 'MTCN', value: '9669322940', type: 'text' }] as never })];
+
+    await importANX(buildANXExport(shownDossier, source, sourceLinks), 'd-target' as never);
+
+    const [link] = await db.links.where({ dossierId: 'd-target' }).toArray();
+    expect(link.properties.map((p) => [p.key, p.value])).toEqual(expect.arrayContaining([['montant', '120'], ['MTCN', '9669322940']]));
+    expect((await db.dossiers.get('d-target'))!.settings.displayedProperties).toEqual(['montant']);
+  });
+
+  it('adds them after those the dossier shows, up to three', async () => {
+    await target(['ville', 'âge']);
+    const shownDossier = { ...DOSSIER, settings: { displayedProperties: ['Marque', 'Modèle'] } } as unknown as Dossier;
+    const source = [makeElement({ properties: [{ key: 'Marque', value: 'Audi', type: 'text' }, { key: 'Modèle', value: 'A6', type: 'text' }] as never })];
+
+    await importANX(buildANXExport(shownDossier, source, []), 'd-target' as never);
+
+    expect((await db.dossiers.get('d-target'))!.settings.displayedProperties).toEqual(['ville', 'âge', 'Marque']);
+  });
+});
+
+describe('buildANXExport — embedded images', () => {
+  const image = { data: 'eJwLcg==', length: 58, name: 'ZN_0123456789abcdef01234567' };
+
+  it('embeds an element image before the strengths, and shows it as the entity icon', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({ id: 'e1' })], [], new Map([['e1', image]]));
+    const doc = expectWellFormed(xml);
+    expect(doc.documentElement.firstElementChild?.tagName).toBe('CustomImageCollection');
+    const custom = doc.querySelector('CustomImage')!;
+    expect(custom.getAttribute('Id')).toBe(`${image.name},Screen,Icon`);
+    expect(custom.getAttribute('DataLength')).toBe('58');
+    const style = doc.querySelector('IconStyle')!;
+    expect(style.getAttribute('OverrideTypeIcon')).toBe('true');
+    expect(style.getAttribute('TypeIconName')).toBe(image.name);
+  });
+
+  it('writes an image shared by several elements once, and nothing without images', () => {
+    const els = [makeElement({ id: 'e1' }), makeElement({ id: 'e2', label: 'Autre', position: { x: 300, y: 0 } })];
+    const doc = expectWellFormed(buildANXExport(DOSSIER, els, [], new Map([['e1', image], ['e2', image]])));
+    expect(doc.querySelectorAll('CustomImage')).toHaveLength(1);
+    expect(doc.querySelectorAll('IconStyle[TypeIconName]')).toHaveLength(2);
+    expect(buildANXExport(DOSSIER, els, [])).not.toContain('CustomImage');
+  });
+});
+
+describe('buildANXExport — options', () => {
+  it('shows no attribute on the chart when the shown properties are left out', () => {
+    const shownDossier = { ...DOSSIER, settings: { displayedProperties: ['Marque'] } } as unknown as Dossier;
+    const els = [makeElement({ properties: [{ key: 'Marque', value: 'Audi', type: 'text' }] as never })];
+    expect(buildANXExport(shownDossier, els, [])).toContain('Visible="true"');
+    expect(buildANXExport(shownDossier, els, [], undefined, { shownProperties: false })).not.toContain('Visible="true"');
+  });
+});

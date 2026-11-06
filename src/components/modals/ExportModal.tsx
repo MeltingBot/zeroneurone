@@ -3,6 +3,7 @@ import { withExportProgress } from '../../services/exportProgress';
 import { useTranslation } from 'react-i18next';
 import { X, FileSpreadsheet, FileArchive, Image, Eye, EyeOff, Network, NotebookText } from 'lucide-react';
 import { exportService, type CSVExportOptions, type ExportFormat } from '../../services/exportService';
+import type { ANXExportOptions } from '../../services/exportANX';
 import { buildSVGExport } from '../../services/svgExportService';
 import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { fileService } from '../../services/fileService';
@@ -78,6 +79,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [csvContent, setCsvContent] = useState<NonNullable<CSVExportOptions['content']>>('all');
   const [csvDelimiter, setCsvDelimiter] = useState<NonNullable<CSVExportOptions['delimiter']>>(',');
   const [csvExcel, setCsvExcel] = useState(false);
+  // ANX: the images of the elements, and "Show on chart" for the properties shown
+  const [anxImages, setAnxImages] = useState(true);
+  const [anxShownProperties, setAnxShownProperties] = useState(true);
   const [zipPassword, setZipPassword] = useState('');
   const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
   const [showZipPassword, setShowZipPassword] = useState(false);
@@ -87,7 +91,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
   const { currentDossier, elements, links, comments } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, comments: s.comments })));
 
-  const handleExport = useCallback(async (format: ExportFormat, obsidianFolderByTag?: boolean, csvOptions?: CSVExportOptions) => {
+  const handleExport = useCallback(async (format: ExportFormat, obsidianFolderByTag?: boolean, csvOptions?: CSVExportOptions, anxOptions?: ANXExportOptions) => {
     if (!currentDossier) return;
 
     setIsProcessing(true);
@@ -100,6 +104,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         assets = await fileService.getAssetsByDossier(currentDossier.id);
         // Use getByDossierWithYDoc to check both Dexie and Y.Doc storage
         report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
+      } else if (format === 'anx' && anxOptions?.images !== false) {
+        // ANX carries the image of each element as the icon of its entity
+        assets = await fileService.getAssetsByDossier(currentDossier.id);
       }
       const includeStructure = format === 'zip' || format === 'json';
       const tabs = includeStructure || format === 'obsidian'
@@ -133,7 +140,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           }
         : undefined;
 
-      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions, redact);
+      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions, anxOptions, redact);
       await (format === 'zip' || format === 'obsidian' ? withExportProgress(build) : build());
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
@@ -328,6 +335,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       case 'zip': return zipEncrypted ? handleExportEncryptedZip() : handleExport('zip');
       case 'obsidian': return handleExport('obsidian', obsidianByTag);
       case 'csv': return handleExport('csv', undefined, { content: csvContent, delimiter: csvDelimiter, excel: csvExcel });
+      case 'anx': return handleExport('anx', undefined, undefined, { images: anxImages, shownProperties: anxShownProperties });
       default: return handleExport(format);
     }
   };
@@ -540,6 +548,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                   ], setCsvDelimiter)}
                 </div>
                 {checkbox(csvExcel, toggleCsvExcel, t('export.csv.excel'))}
+              </div>
+            )}
+
+            {format === 'anx' && (
+              <div className="space-y-2">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                {checkbox(anxImages, setAnxImages, t('export.anx.images'))}
+                {checkbox(anxShownProperties, setAnxShownProperties, t('export.anx.shownProperties'))}
               </div>
             )}
 

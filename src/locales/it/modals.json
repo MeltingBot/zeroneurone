@@ -212,6 +212,10 @@
       "title": "Esportazione oscurata",
       "message": "Testi, geolocalizzazioni, file allegati, commenti, rapporto e query verranno rimossi dall'esportazione. Il fascicolo non viene modificato.",
       "action": "Esporta oscurato"
+    },
+    "anx": {
+      "images": "Immagini degli elementi",
+      "shownProperties": "Proprietà visualizzate"
     }
   },
   "search": {

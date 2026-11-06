@@ -212,6 +212,10 @@
       "title": "Export caviardé",
       "message": "Textes, géolocalisations, fichiers joints, commentaires, rapport et requêtes seront retirés de l'export. Le dossier n'est pas modifié.",
       "action": "Exporter caviardé"
+    },
+    "anx": {
+      "images": "Images des éléments",
+      "shownProperties": "Propriétés affichées"
     }
   },
   "search": {
