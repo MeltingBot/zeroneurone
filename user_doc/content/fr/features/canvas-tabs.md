@@ -76,6 +76,8 @@ Ces actions s'annulent avec **Ctrl+Z**.
 | **Aller a l'onglet d'un element fantome** | Clic-droit sur l'element → **Aller a l'onglet [nom]** |
 
 Chaque onglet retient son **zoom et son cadrage** : en revenant sur un onglet, la vue est celle que vous aviez laissee (enregistree sur le poste). Un onglet ouvert pour la premiere fois se cadre sur ses elements. **Tous** retient aussi sa vue, le temps de la session. C'est vrai quelle que soit la facon de changer d'onglet (barre, Alt+fleches, recherche, Ctrl+Z, vues enregistrees).
+
+Un dossier s'ouvre sur la vue laissee la derniere fois. Si cette vue ne montre aucun de ses elements (ajoutes ailleurs depuis, ou zoom sur un coin vide), elle se cadre sur eux.
 ---
 
 ## Elements fantomes
