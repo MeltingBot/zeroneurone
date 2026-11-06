@@ -231,7 +231,9 @@ export function useCanvasEdges({
         const globalsUnchanged = cd?._curveMode === linkCurveMode
           && cd?._anchorMode === linkAnchorMode
           && cd?._showConfidence === confidenceDisplay
-          && cd?._dateLocale === propertyDateLocale;
+          && cd?._dateLocale === propertyDateLocale
+          // The properties shown under labels (Views panel): ticking one redraws the links
+          && cd?._displayedProperties === displayedProperties;
         if (linkUnchanged && globalsUnchanged) {
           const sameVisuals = cached.selected === isSelected
             && cd?.isDimmed === isLinkDimmed
@@ -312,6 +314,7 @@ export function useCanvasEdges({
       edgeData._anchorMode = linkAnchorMode;
       edgeData._showConfidence = confidenceDisplay;
       edgeData._dateLocale = propertyDateLocale;
+      edgeData._displayedProperties = displayedProperties;
       edgeData.isHighlighted = isLinkHighlighted;
       edgeData.flow = flow;
       if (!simplified) {
