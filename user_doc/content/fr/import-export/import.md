@@ -99,7 +99,7 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) ou un **C
 Un CSV importé sans les colonnes du format natif (voir [CSV](#csv)) ouvre aussi le mapping, y compris depuis la page d'accueil : le dossier est créé puis s'ouvre sur l'assistant. Si l'import est abandonné (assistant fermé ou placement annulé) alors que ce nouveau dossier est encore vide, il est supprimé et l'on revient à l'accueil ; un dossier existant n'est jamais touché. Le CSV devient un tableau nommé d'après le fichier : chaque ligne est un enregistrement, chaque colonne un champ. Le séparateur (`,`, `;` ou tabulation) est détecté ; toutes les valeurs sont lues comme du texte.
 
 **Détection automatique :**
-- la **source d'enregistrements** (un tableau d'objets comme `records`, ou l'objet entier = 1 élément) ;
+- la **source d'enregistrements** (un tableau d'objets comme `records`, ou l'objet entier = 1 élément) ; un objet indexé par identifiant (`{"P1": {...}, "P2": {...}}`, comme les `facts` d'un rapport xBRL) compte aussi comme un tableau, sa clé dans le champ `_key`. Il n'est choisi par défaut que si le fichier n'a pas de valeurs propres à côté ; sinon il reste proposé dans la liste des sources ;
 - un **modèle de libellé** (ex. `{first_name} {last_name}`) ;
 - les champs **date**, **pays**, **latitude/longitude** (point géo, y compris des noms composés comme `borne_lat`, `cellLng`), et les **identifiants** ;
 - les colonnes **numériques** → propriété de type **nombre** (voir ci-dessous) ;
@@ -145,13 +145,16 @@ Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la 
 
 **Lignes en événements :** le réglage **Chaque ligne crée** passe d'*un élément* à *un événement*. Chaque ligne devient alors un événement daté (visible sur la timeline et, s'il a un lieu, sur la carte) :
 - **Élément** : la colonne qui désigne l'élément porteur. Un élément est créé par valeur distincte ; si la colonne fait référence à une autre table importée, l'événement va sur l'élément de cette table ;
-- **Date** et **Fin** (facultative) : les colonnes de début et de fin. Les dates partielles (`2020`, `2020-03`) gardent leur précision ; les lignes sans date valide sont ignorées et comptées dans un message ;
+- **Date** et **Fin** (facultative) : les colonnes de début et de fin. Les dates partielles (`2020`, `2020-03`) gardent leur précision ; les lignes sans date valide sont ignorées et comptées dans un message. Sans colonne de fin, une période ISO écrite dans un seul champ (`2025-01-01/2025-12-31`) donne le début et la fin ; une fin écrite à minuit pile (`…/2026-01-01T00:00:00`) est exclusive : la période s'arrête la veille ;
+- **Minuit pile = fin de la veille** : une date écrite à minuit pile (`2026-01-01T00:00:00`) est datée du jour précédent. C'est la convention xBRL : un bilan au `2026-01-01T00:00:00` est celui du 31/12/2025 ;
 - le **modèle de libellé** donne le libellé de l'événement. Au passage en mode événement, il propose une colonne de catégorie (peu de valeurs différentes, comme un type : « Appel entrant ») ; vide, l'événement prend le tag, sinon la valeur de l'élément ; les champs **notes**, **source**, **latitude/longitude** et les **propriétés** vont sur l'événement ;
 - les champs **pivot** créent et relient d'autres éléments, un seul lien par paire quel que soit le nombre de lignes. Dans une même table, une valeur donne un seul élément, qu'elle soit porteuse ou pivot. Avec **Événement aussi sur les éléments pivots** (coché par défaut), l'événement est aussi posé sur chaque pivot ;
 - les identifiants, références et médias ne s'appliquent pas aux lignes-événements ;
 - le plafond d'import ne s'applique pas : toutes les lignes (filtrées) deviennent des événements, puisqu'elles n'ajoutent pas d'élément au canvas.
 
 Exemple, une fadette (`appelant;appele;date;duree;lat;lng`) : *Élément* = `appelant`, *Date* = `date`, `appele` en **pivot**, `lat`/`lng` en coordonnées. Chaque numéro devient un élément, chaque paire de numéros un lien, et chaque appel un événement sur la frise des deux numéros, placé sur la carte à la borne.
+
+Exemple, un rapport financier xBRL-JSON (dépôts ESEF de filings.xbrl.org) : table `facts`, *Élément* = `dimensions.concept`, *Date* = `dimensions.period`, `dimensions.entity` en **pivot**, `value` en **Propriété (nombre)**, filtre *`dimensions.unit` non vide* (écarte les blocs de texte), **Minuit pile = fin de la veille** coché. Chaque indicateur (chiffre d'affaires, capitaux propres…) devient un élément relié à la société, avec ses montants par exercice sur la frise, clôtures au 31/12.
 
 Les événements vont sur des éléments créés par l'import. Pour ajouter des événements à un élément déjà présent dans le dossier, utilisez le [CSV natif](#csv) avec `type` = `event` (la colonne `de` donne le libellé de l'élément), ou importez puis **fusionnez** l'élément créé avec l'existant.
 
