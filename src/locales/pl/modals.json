@@ -147,6 +147,8 @@
       "pngDesc": "Zrzut wizualny z wyborem rozdzielczości",
       "svg": "SVG (wektorowy)",
       "svgDesc": "Edytowalny obraz wektorowy (Inkscape, Illustrator)",
+      "pdf": "PDF (druk)",
+      "pdfDesc": "Graf wektorowy na jednym arkuszu, od A0 do A4",
       "anx": "ANX (i2 Analyst's Notebook)",
       "anxDesc": "Wykres dla i2 (pozycje, kolory, atrybuty)",
       "obsidian": "Obsidian (sejf ZIP)",
@@ -197,8 +199,18 @@
       "mismatch": "Hasła nie są zgodne",
       "success": "Pobrano zaszyfrowany eksport (.znzip)"
     },
+    "json": {
+      "compact": "Kompaktowy (bez formatowania)"
+    },
     "png": {
       "transparent": "Przezroczyste tło"
+    },
+    "pdf": {
+      "paper": "Papier",
+      "orientation": "Orientacja",
+      "auto": "Auto",
+      "portrait": "Pionowa",
+      "landscape": "Pozioma"
     },
     "csv": {
       "content": "Zawartość",
@@ -219,7 +231,8 @@
     },
     "anx": {
       "images": "Obrazy elementów",
-      "shownProperties": "Wyświetlane właściwości"
+      "shownProperties": "Wyświetlane właściwości",
+      "routes": "Przebieg powiązań"
     }
   },
   "search": {

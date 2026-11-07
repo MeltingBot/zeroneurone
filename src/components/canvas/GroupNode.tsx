@@ -6,7 +6,7 @@ import { Gauge, Lock } from 'lucide-react';
 import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element, EvaluationModel } from '../../types';
 import { getEvaluationBadge } from '../../utils/evaluation';
-import { FONT_SIZE_PX } from '../../types';
+import { FONT_SIZE_PX, GROUP_TINT } from '../../types';
 import { useUIStore, useTagSetStore, useCustomIconStore } from '../../stores';
 
 // Redacted text component for anonymous mode
@@ -92,8 +92,10 @@ function GroupNodeComponent({ data }: NodeProps) {
     const borderColor = isSelected ? 'var(--color-accent)' : defaultBorderColor;
     const borderStyle = element.visual.borderStyle || 'dashed';
     const borderWidth = element.visual.borderWidth ?? 1;
+    // A light tint of the colour. color-mix takes the palette's theme variables as well as hex
+    // codes (appending a hex alpha only worked on hex: "var(--color-node-blue)12" is no colour)
     const bgColor = element.visual.color && element.visual.color !== '#ffffff'
-      ? element.visual.color + '12'
+      ? `color-mix(in srgb, ${element.visual.color} ${GROUP_TINT * 100}%, transparent)`
       : 'rgba(243,244,246,0.2)';
 
     return {

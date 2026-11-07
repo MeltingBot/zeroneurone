@@ -5,6 +5,7 @@ import { useViewStore, useHistoryStore } from '../../stores';
 import type { Element, Link } from '../../types';
 import { generateUUID } from '../../utils';
 import type { DeleteElementsWithHistory, DossierStore, HistoryStore, MousePosRef, SelectionStore, TabStore, WrapperRef, WriteClipboard } from './canvasHookTypes';
+import { routeOfCopiedLink } from '../../utils/routeFollow';
 
 export interface CanvasKeyboardParams {
   reactFlowWrapper: WrapperRef;
@@ -205,8 +206,12 @@ export function useCanvasKeyboard({
           const relevantLinks = links.filter(l =>
             selectedSet.has(l.fromId) && selectedSet.has(l.toId)
           );
+          const originals = new Map(elements.map((el) => [el.id, el]));
+          const copies = new Map(newElements.map((el) => [el.id, el]));
           const newLinks: Link[] = relevantLinks.map(link => ({
             ...link,
+            // A route drawn by hand moves with the copies
+            ...routeOfCopiedLink(link, originals, copies, oldToNewIdMap),
             id: generateUUID(),
             dossierId: currentDossier!.id,
             fromId: oldToNewIdMap.get(link.fromId)!,

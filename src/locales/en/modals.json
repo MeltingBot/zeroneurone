@@ -143,6 +143,8 @@
       "pngDesc": "Visual capture with resolution choice",
       "svg": "SVG (vector)",
       "svgDesc": "Editable vector image (Inkscape, Illustrator)",
+      "pdf": "PDF (print)",
+      "pdfDesc": "Vector graph on one sheet, A0 to A4",
       "anx": "ANX (i2 Analyst's Notebook)",
       "anxDesc": "Chart for i2 (positions, colours, attributes)",
       "obsidian": "Obsidian (vault ZIP)",
@@ -193,8 +195,18 @@
       "mismatch": "Passwords do not match",
       "success": "Encrypted export downloaded (.znzip)"
     },
+    "json": {
+      "compact": "Compact (no formatting)"
+    },
     "png": {
       "transparent": "Transparent background"
+    },
+    "pdf": {
+      "paper": "Paper",
+      "orientation": "Orientation",
+      "auto": "Auto",
+      "portrait": "Portrait",
+      "landscape": "Landscape"
     },
     "csv": {
       "content": "Content",
@@ -215,7 +227,8 @@
     },
     "anx": {
       "images": "Element images",
-      "shownProperties": "Shown properties"
+      "shownProperties": "Shown properties",
+      "routes": "Link routes"
     }
   },
   "search": {

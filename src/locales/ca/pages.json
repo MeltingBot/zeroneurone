@@ -175,6 +175,7 @@
       "queryFromSelection": "Consulta des de selecció",
       "editLinkLabel": "Editar etiqueta",
       "resetLinkRoute": "Restableix el traçat",
+      "resetLinkRoutes": "Restablir traçats",
       "reverseLink": "Invertir direcció",
       "deleteLink": "Eliminar enllaç",
       "noLabel": "Sense etiqueta",
@@ -195,6 +196,9 @@
       "suggestLinks": "Suggerir enllaços",
       "openDetail": "Obre el detall"
     },
+    "linkSegmentHandle": "Arrossegar: moure · Doble clic: dividir",
+    "linkBendPoint": "Arrossegar: moure · Doble clic: treure",
+    "linkBendAdd": "Arrossegar: afegir un punt",
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
       "redo": "Refer (Ctrl+Maj+Z)",

@@ -67,13 +67,14 @@ test('an .anb imported into the open dossier is placed, then filed in the open t
   await page.locator('.react-flow__pane').click({ position: { x: 300, y: 250 } });
   await expect(page.locator('[data-testid="import-placement-cancel"]')).toBeHidden({ timeout: 30000 });
 
-  const state = await page.evaluate(async (id) => {
+  // Filed in the open tab: the membership is written once the import is in
+  const readState = () => page.evaluate(async (id) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const els = (await window.__znImport('/src/stores/dossierStore.ts') as any).useDossierStore.getState().elements;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tab = (await window.__znImport('/src/stores/tabStore.ts') as any).useTabStore.getState().tabs.find((t: any) => t.id === id);
     return { total: els.length as number, inTab: (tab?.memberElementIds.length ?? 0) as number };
   }, tabId);
-  expect(state.total).toBeGreaterThan(before);
-  expect(state.inTab).toBe(state.total - before);
+  await expect.poll(async () => { const s = await readState(); return s.inTab > 0 && s.inTab === s.total - before; }, { timeout: 10_000 }).toBe(true);
+  expect((await readState()).total).toBeGreaterThan(before);
 });

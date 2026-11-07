@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { Dossier, Element, Link } from '../types';
 import { ANX_COORD_SCALE, buildANXExport } from './exportANX';
 import { importANX } from './importANX';
+import { computeNodeLayout } from './svgExportService';
 import { db } from '../db/database';
 
 const DOSSIER = { id: 'd1', name: 'Enquête', description: '' } as unknown as Dossier;
@@ -214,13 +215,14 @@ describe('buildANXExport — groups', () => {
   const group = makeElement({ id: 'g1', label: 'Cellule', isGroup: true, position: { x: 100, y: 100 } });
   const child = makeElement({ id: 'c1', label: 'Membre', parentGroupId: 'g1', position: { x: 10, y: 10 } });
 
-  it('emits children at absolute positions and drops the group itself', () => {
+  it('emits children at absolute positions (their centre, as i2 places an entity) and drops the group itself', () => {
     const doc = expectWellFormed(buildANXExport(DOSSIER, [group, child], []));
     const items = [...doc.querySelectorAll('ChartItem')];
     expect(items).toHaveLength(1);
     const end = doc.querySelector('End');
-    expect(end?.getAttribute('X')).toBe(String(110 * ANX_COORD_SCALE));
-    expect(end?.getAttribute('Y')).toBe(String(110 * ANX_COORD_SCALE));
+    const dims = computeNodeLayout([group, child]).dimensions.get('c1')!;
+    expect(end?.getAttribute('X')).toBe(String(Math.round((110 + dims.width / 2) * ANX_COORD_SCALE)));
+    expect(end?.getAttribute('Y')).toBe(String(Math.round((110 + dims.height / 2) * ANX_COORD_SCALE)));
   });
 
   it('records the group membership as an attribute rather than losing it', () => {
@@ -407,12 +409,18 @@ describe('buildANXExport — round trip through importANX', () => {
     const elements = await db.elements.where({ dossierId: 'd-target' }).toArray();
     const camille = elements.find((e) => e.label === 'Camille Laurent');
     expect(camille).toBeDefined();
-    // Positions come back rescaled (median neighbour distance 180 px), proportions kept
+    // Centres come back rescaled (median neighbour distance 180 px), proportions kept
     const vortex = elements.find((e) => e.label === 'Société Vortex')!;
-    const dx = vortex.position.x - camille!.position.x;
-    const dy = vortex.position.y - camille!.position.y;
-    expect(dx / dy).toBeCloseTo(180 / 120, 1);
-    expect(Math.hypot(dx, dy)).toBeCloseTo(180, 0);
+    const centre = (els: Element[], id: string) => {
+      const { positions, dimensions } = computeNodeLayout(els);
+      const p = positions.get(id)!;
+      const d = dimensions.get(id)!;
+      return { x: p.x + d.width / 2, y: p.y + d.height / 2 };
+    };
+    const [c0, v0] = [centre(source, 'e1'), centre(source, 'e2')];
+    const [c1, v1] = [centre(elements, camille!.id), centre(elements, vortex.id)];
+    expect((v1.x - c1.x) / (v1.y - c1.y)).toBeCloseTo((v0.x - c0.x) / (v0.y - c0.y), 1);
+    expect(Math.hypot(v1.x - c1.x, v1.y - c1.y)).toBeCloseTo(180, 0);
     expect(camille!.tags).toContain('Personne');
     expect(camille!.notes).toContain('note');
     expect(camille!.confidence).toBe(80);
@@ -635,5 +643,98 @@ describe('buildANXExport — options', () => {
     const els = [makeElement({ properties: [{ key: 'Marque', value: 'Audi', type: 'text' }] as never })];
     expect(buildANXExport(shownDossier, els, [])).toContain('Visible="true"');
     expect(buildANXExport(shownDossier, els, [], undefined, { shownProperties: false })).not.toContain('Visible="true"');
+  });
+});
+
+describe('buildANXExport — corners of links', () => {
+  const a = makeElement({ id: 'e1', label: 'A', position: { x: 0, y: 0 } });
+  const b = makeElement({ id: 'e2', label: 'B', position: { x: 400, y: 0 } });
+  const bent = makeLink({ bendPoints: [{ x: 250, y: 300 }] });
+  const withMode = (linkCurveMode: 'straight' | 'curved' | 'orthogonal') =>
+    ({ ...DOSSIER, settings: { linkCurveMode, linkAnchorMode: 'auto' } }) as unknown as Dossier;
+  const cornersIn = (xml: string) => [...expectWellFormed(xml).querySelectorAll('Link > CornerCollection > Corner')]
+    .map((c) => ({ x: Number(c.getAttribute('X')), y: Number(c.getAttribute('Y')) }));
+
+  it('writes the bend points of a straight line as corners, the label on the middle segment', () => {
+    const xml = buildANXExport(withMode('straight'), [a, b], [bent]);
+    expect(cornersIn(xml)).toEqual([{ x: 250 * ANX_COORD_SCALE, y: 300 * ANX_COORD_SCALE }]);
+    expect(expectWellFormed(xml).querySelector('Link')?.getAttribute('LabelSegment')).toBe('1');
+    // Before the style, as the schema orders them
+    expect(xml.indexOf('<CornerCollection>')).toBeLessThan(xml.indexOf('<LinkStyle'));
+  });
+
+  it('writes the corners of a right-angle route drawn by hand, none for an automatic one, a curve or a plain line', () => {
+    const low = makeElement({ id: 'e2', label: 'B', position: { x: 400, y: 240 } });
+    // Drawn by hand: down at x 250, then across
+    const drawn = makeLink({ orthogonalRoute: { first: 'x', positions: [250] } });
+    const orthogonal = cornersIn(buildANXExport(withMode('orthogonal'), [a, low], [drawn]));
+    expect(orthogonal.length).toBe(2);
+    // Each step between corners is horizontal or vertical
+    expect(orthogonal.every((c, i) => i === 0 || c.x === orthogonal[i - 1].x || c.y === orthogonal[i - 1].y)).toBe(true);
+    // An automatic route would pin corners i2 keeps in place: the link goes straight
+    expect(cornersIn(buildANXExport(withMode('orthogonal'), [a, low], [makeLink()]))).toEqual([]);
+    expect(cornersIn(buildANXExport(withMode('curved'), [a, b], [bent]))).toEqual([]);
+    expect(cornersIn(buildANXExport(withMode('straight'), [a, b], [makeLink()]))).toEqual([]);
+  });
+
+  it('leaves the corners out when the option is unticked', () => {
+    expect(cornersIn(buildANXExport(withMode('straight'), [a, b], [bent], undefined, { routes: false }))).toEqual([]);
+  });
+
+  it('brings the bend points back from an export, at the same place relative to the elements', async () => {
+    await db.elements.where({ dossierId: 'd-bends' }).delete();
+    await db.links.where({ dossierId: 'd-bends' }).delete();
+    const result = await importANX(buildANXExport(withMode('straight'), [a, b], [bent]), 'd-bends' as never);
+    expect(result.errors).toEqual([]);
+    const elements = await db.elements.where({ dossierId: 'd-bends' }).toArray();
+    const [link] = await db.links.where({ dossierId: 'd-bends' }).toArray();
+    expect(link.bendPoints).toHaveLength(1);
+    const centreOf = (els: Element[], label: string) => {
+      const el = els.find((e) => e.label === label)!;
+      const { positions, dimensions } = computeNodeLayout(els);
+      const p = positions.get(el.id)!;
+      const d = dimensions.get(el.id)!;
+      return { x: p.x + d.width / 2, y: p.y + d.height / 2 };
+    };
+    // Where the bend sits between the two centres, before and after
+    const where = (bend: { x: number; y: number }, ca: { x: number; y: number }, cb: { x: number; y: number }) => {
+      const span = Math.hypot(cb.x - ca.x, cb.y - ca.y);
+      return { along: (bend.x - ca.x) / span, across: (bend.y - ca.y) / span };
+    };
+    const before = where(bent.bendPoints![0], centreOf([a, b], 'A'), centreOf([a, b], 'B'));
+    const after = where(link.bendPoints![0], centreOf(elements, 'A'), centreOf(elements, 'B'));
+    expect(after.along).toBeCloseTo(before.along, 1);
+    expect(after.across).toBeCloseTo(before.across, 1);
+  });
+});
+
+describe('buildANXExport — merged links', () => {
+  const a = makeElement({ id: 'e1', label: 'A', position: { x: 0, y: 0 } });
+  const b = makeElement({ id: 'e2', label: 'B', position: { x: 400, y: 0 } });
+  const c = makeElement({ id: 'e3', label: 'C', position: { x: 0, y: 300 } });
+  const links = [
+    makeLink({ id: 'l1', fromId: 'e1', toId: 'e2' }),
+    makeLink({ id: 'l2', fromId: 'e2', toId: 'e1' }),
+    makeLink({ id: 'l3', fromId: 'e1', toId: 'e3' }),
+  ];
+  const withMultiplicity = (linkMultiplicity: 'multiple' | 'single' | 'directed') =>
+    ({ ...DOSSIER, settings: { linkMultiplicity } }) as unknown as Dossier;
+
+  it('writes one i2 connection per pair with several links, with the multiplicity, the links kept apart', () => {
+    const doc = expectWellFormed(buildANXExport(withMultiplicity('single'), [a, b, c], links));
+    const connections = [...doc.querySelectorAll('ConnectionCollection > Connection')];
+    expect(connections).toHaveLength(1);
+    expect(connections[0].querySelector('ConnectionStyle')?.getAttribute('Multiplicity')).toBe('MultiplicitySingle');
+    const id = connections[0].getAttribute('Id');
+    const refs = [...doc.querySelectorAll('Link')].map((l) => l.getAttribute('ConnectionReference'));
+    // The two links between A and B in the connection, the A–C link alone
+    expect(refs).toEqual([id, id, null]);
+    expect(doc.querySelectorAll('Link')).toHaveLength(3);
+  });
+
+  it('writes the directed multiplicity, and nothing when links are drawn apart', () => {
+    const directed = expectWellFormed(buildANXExport(withMultiplicity('directed'), [a, b, c], links));
+    expect(directed.querySelector('ConnectionStyle')?.getAttribute('Multiplicity')).toBe('MultiplicityDirected');
+    expect(buildANXExport(withMultiplicity('multiple'), [a, b, c], links)).not.toContain('ConnectionCollection');
   });
 });

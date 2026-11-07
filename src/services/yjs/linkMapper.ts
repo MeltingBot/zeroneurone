@@ -7,10 +7,11 @@
  */
 
 import * as Y from 'yjs';
-import type { Link, LinkVisual, Position, Property } from '../../types';
+import type { Link, LinkVisual, OrthogonalRoute, Position, Property } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs, yFields, type YMeta, type YStored } from '../../types/yjs';
 import { sanitizeEvaluation } from '../../utils/evaluation';
+import { plainBendPoints } from '../../utils/freeBends';
 
 // ============================================================================
 // LINK -> Y.MAP (FOR MIGRATION - uses primitive values)
@@ -20,6 +21,15 @@ import { sanitizeEvaluation } from '../../utils/evaluation';
  * Convert a Link to a Y.Map for initial insertion into Y.Doc.
  * Uses primitive values that can be set before the map is added to a document.
  */
+/** A stored right-angle route as a plain value, or null when absent or malformed. */
+function plainOrthogonalRoute(route: unknown): OrthogonalRoute | null {
+  if (!route || typeof route !== 'object') return null;
+  const { first, positions } = route as Partial<OrthogonalRoute>;
+  if ((first !== 'x' && first !== 'y') || !Array.isArray(positions)) return null;
+  if (!positions.every((v) => typeof v === 'number' && Number.isFinite(v))) return null;
+  return { first, positions: [...positions] };
+}
+
 export function linkToYMap(link: Link): Y.Map<unknown> {
   const map = new Y.Map();
 
@@ -73,6 +83,8 @@ export function linkToYMap(link: Link): Y.Map<unknown> {
   map.set('orthogonalOffset', link.orthogonalOffset
     ? { x: link.orthogonalOffset.x, y: link.orthogonalOffset.y }
     : null);
+  map.set('orthogonalRoute', plainOrthogonalRoute(link.orthogonalRoute));
+  map.set('bendPoints', plainBendPoints(link.bendPoints));
 
   // Metadata
   map.set('_meta', {
@@ -99,6 +111,8 @@ export function yMapToLink(ymap: Y.Map<unknown>): Link {
   const visualRaw = ymap.get('visual');
   const curveRaw = ymap.get('curveOffset');
   const orthogonalRaw = ymap.get('orthogonalOffset');
+  const orthogonalRoute = plainOrthogonalRoute(ymap.get('orthogonalRoute')) ?? undefined;
+  const bendPoints = plainBendPoints(ymap.get('bendPoints')) ?? undefined;
   const metaRaw = ymap.get('_meta');
 
   // Handle notes - can be Y.Text, plain string, or undefined
@@ -198,6 +212,8 @@ export function yMapToLink(ymap: Y.Map<unknown>): Link {
     visual,
     curveOffset,
     orthogonalOffset,
+    orthogonalRoute,
+    bendPoints,
     createdAt,
     updatedAt,
   };
@@ -307,6 +323,14 @@ export function updateLinkYMap(
       ymap.set('orthogonalOffset', changes.orthogonalOffset
         ? { x: changes.orthogonalOffset.x, y: changes.orthogonalOffset.y }
         : null);
+    }
+
+    if (changes.orthogonalRoute !== undefined) {
+      ymap.set('orthogonalRoute', plainOrthogonalRoute(changes.orthogonalRoute));
+    }
+
+    if (changes.bendPoints !== undefined) {
+      ymap.set('bendPoints', plainBendPoints(changes.bendPoints));
     }
 
     // Always update updatedAt

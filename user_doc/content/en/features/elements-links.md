@@ -143,8 +143,37 @@ To make long labels wrap, check **Wrap link labels** in the same **Options**, th
 |--------|--------|
 | **Color** | Color palette |
 | **Style** | Solid, dotted, dashed |
-| **Thickness** | Thin, normal, thick |
+| **Thickness** | 1, 2, 3, 4 or 8 px |
 | **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
+
+### Right-angle route
+
+With the **orthogonal** curve (View panel, Link style), a selected link carries a handle on each of its segments.
+
+| Gesture | Effect |
+|---------|--------|
+| Drag a handle | Moves the segment, corners stay square |
+| Drag the handle of a segment attached to an element | Adds a step: the end against the element stays put |
+| Double-click a handle | Cuts the segment in two, each half moves on its own |
+| Line two segments up again | They join (snapping near the alignment) |
+
+The corners stay in place on the canvas when an element moves: only the segments touching it follow. When both elements of the link move together by the same amount (selection dragged, arrow keys, group moved), the whole route follows; during a drag, it joins the link on release. The first hand-drawn route pins the sides the link leaves and reaches, which auto anchoring no longer changes. **Reset route** (right-click on the link) goes back to the automatic route. Every change undoes with Ctrl+Z.
+
+An automatic layout (**Arrange**) moves the two ends of a link apart by different amounts: it clears the drawn routes it breaks, and Ctrl+Z brings them back with the positions. To clear the routes of several links at once, select them (or their elements), right-click, **Reset routes**.
+
+The drawn route shows in the SVG, PDF and interactive report exports. On a large graph drawn in simplified view, links stay straight.
+
+### Bend points (free angles)
+
+With the **straight** curve, a selected link can be bent at any angle, as in i2 Analyst's Notebook. A small round handle marks the middle of each segment, a square handle each bend point.
+
+| Gesture | Effect |
+|---------|--------|
+| Drag the round handle | Adds a bend point there |
+| Drag a bend point | Moves it; it snaps level or plumb with a neighbouring point |
+| Double-click a bend point | Removes it |
+
+As with right angles: the points stay in place when one element moves and follow when both move together, the first point pins the sides the link leaves and reaches, **Reset route** goes back to a straight line, Ctrl+Z undoes. The points show in the SVG, PDF and interactive report exports. They are kept apart from the right-angle route: switching the curve does not lose them.
 
 
 ---

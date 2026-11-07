@@ -175,6 +175,7 @@
       "queryFromSelection": "Abfrage aus Auswahl",
       "editLinkLabel": "Label bearbeiten",
       "resetLinkRoute": "Verlauf zurücksetzen",
+      "resetLinkRoutes": "Linienführungen zurücksetzen",
       "reverseLink": "Richtung umkehren",
       "deleteLink": "Verbindung löschen",
       "noLabel": "Ohne Label",
@@ -195,6 +196,9 @@
       "suggestLinks": "Verbindungen vorschlagen",
       "openDetail": "Details öffnen"
     },
+    "linkSegmentHandle": "Ziehen: verschieben · Doppelklick: teilen",
+    "linkBendPoint": "Ziehen: verschieben · Doppelklick: entfernen",
+    "linkBendAdd": "Ziehen: Punkt hinzufügen",
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",
       "redo": "Wiederholen (Strg+Umschalt+Z)",

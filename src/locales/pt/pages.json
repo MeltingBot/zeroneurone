@@ -175,6 +175,7 @@
       "queryFromSelection": "Consulta da seleção",
       "editLinkLabel": "Editar rótulo",
       "resetLinkRoute": "Repor o traçado",
+      "resetLinkRoutes": "Repor traçados",
       "reverseLink": "Inverter direção",
       "deleteLink": "Eliminar ligação",
       "noLabel": "Sem rótulo",
@@ -195,6 +196,9 @@
       "suggestLinks": "Sugerir ligações",
       "openDetail": "Abrir o detalhe"
     },
+    "linkSegmentHandle": "Arrastar: mover · Duplo clique: dividir",
+    "linkBendPoint": "Arrastar: mover · Duplo clique: remover",
+    "linkBendAdd": "Arrastar: adicionar um ponto",
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",
       "redo": "Refazer (Ctrl+Shift+Z)",

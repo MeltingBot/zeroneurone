@@ -26,7 +26,7 @@ import type {
   Property,
   FontSize,
 } from '../../types';
-import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
+import { DEFAULT_COLORS, FONT_SIZE_PX, LINE_WIDTHS } from '../../types';
 import { AccordionSection } from '../common';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -52,7 +52,6 @@ const LINK_DIRECTION_DEFS: { value: LinkDirection; icon: typeof Minus; labelKey:
 
 const LINK_STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
 
-const LINK_THICKNESSES = [1, 2, 3, 4, 5];
 
 const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xs', label: 'XS' },
@@ -838,7 +837,7 @@ export function MultiSelectionDetail() {
             <div className="space-y-1.5">
               <label className="text-xs text-text-tertiary">{t('detail.appearance.thickness')}</label>
               <div className="flex gap-1">
-                {LINK_THICKNESSES.map((thickness) => (
+                {LINE_WIDTHS.map((thickness) => (
                   <button
                     key={thickness}
                     onClick={() => handleThicknessChange(thickness)}

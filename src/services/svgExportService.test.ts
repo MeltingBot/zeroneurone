@@ -78,6 +78,45 @@ describe('svgExportService links', () => {
     expect(curved).toBe(plain);
     expect(moved).not.toBe(plain);
   });
+
+  it('starts the links leaving one node side from one point when merged (one line out, then branching)', () => {
+    const fan = [makeNode('a', 0), makeNode('b', 400), { ...makeNode('c', 400), position: { x: 400, y: 200 } } as Element];
+    const out = [makeLink('ab', { fromId: 'a', toId: 'b', sourceHandle: 'source-right' }), makeLink('ac', { fromId: 'a', toId: 'c', sourceHandle: 'source-right' })];
+    const starts = (svg: string) => [...svg.matchAll(/<g id="edge-[^"]+">\s*<path d="M ([-\d.]+) ([-\d.]+)/g)].map((m) => `${m[1]},${m[2]}`);
+    const settings = { linkAnchorMode: 'manual', linkCurveMode: 'orthogonal' } as const;
+    expect(new Set(starts(buildSVGExport(fan, out, { ...settings, linkMultiplicity: 'single' }))).size).toBe(1);
+    expect(new Set(starts(buildSVGExport(fan, out, settings))).size).toBe(2);
+  });
+
+  it('draws the links between two elements as one line without label when merged', () => {
+    const merged = buildSVGExport(nodes, parallel, { linkAnchorMode: 'auto', linkCurveMode: 'straight', linkMultiplicity: 'single' });
+    const paths = [...merged.matchAll(/<g id="edge-[^"]+">/g)];
+    expect(paths).toHaveLength(1);
+    for (const l of parallel) expect(merged).not.toContain(`>${l.label}<`);
+    // Separate (default): one line each
+    expect([...buildSVGExport(nodes, parallel, { linkAnchorMode: 'auto', linkCurveMode: 'straight' }).matchAll(/<g id="edge-[^"]+">/g)]).toHaveLength(3);
+  });
+
+  it('draws a straight link through its bend points, in straight mode only', () => {
+    const link = makeLink('l1', { bendPoints: [{ x: 0, y: 150 }] });
+    const straight = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'straight' });
+    const path = straight.match(/<g id="edge-[^"]+">\s*<path d="([^"]+)"/)![1];
+    expect(path.split(' L ')).toHaveLength(3);
+    const curved = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'curved' });
+    expect(curved).toBe(buildSVGExport(nodes, [makeLink('l1')], { linkAnchorMode: 'auto', linkCurveMode: 'curved' }));
+  });
+
+  it('draws a right-angle route drawn by hand through its segments, in orthogonal mode only', () => {
+    // Down at x 250, along y 120, back up at x 350: two corners at y 120
+    const bends = { first: 'x' as const, positions: [250, 120, 350] };
+    const link = makeLink('l1', { orthogonalRoute: bends });
+    const orthogonal = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'orthogonal' });
+    const path = orthogonal.match(/<g id="edge-[^"]+">\s*<path d="([^"]+)"/)![1];
+    const ys = [...path.matchAll(/L (-?[\d.]+) (-?[\d.]+)/g)].map((m) => Number(m[2]));
+    expect(ys.filter((y) => y > 100)).toHaveLength(2);
+    const curved = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'curved' });
+    expect(curved).toBe(buildSVGExport(nodes, [makeLink('l1')], { linkAnchorMode: 'auto', linkCurveMode: 'curved' }));
+  });
 });
 
 describe('resolveExportColor', () => {

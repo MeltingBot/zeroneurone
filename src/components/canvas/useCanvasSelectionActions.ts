@@ -20,6 +20,7 @@ import { withDossierLinkDefaults } from '../../utils/dossierOptions';
 import { linksTouching } from './overview/overviewHitTest';
 import type { OverviewScene } from './overview/overviewTypes';
 import type { CanvasMenuPosition, ContextMenuState, DeleteElementsWithHistory, DossierStore, HistoryStore, SelectionStore, TabStore, UIStore, ViewStore, WriteClipboard } from './canvasHookTypes';
+import { routeOfCopiedLink } from '../../utils/routeFollow';
 
 type InsightsStore = ReturnType<typeof useInsightsStore.getState>;
 
@@ -249,8 +250,12 @@ export function useCanvasSelectionActions({
 
     const elIdSet = new Set(selectedEls);
     const relevantLinks = links.filter(l => elIdSet.has(l.fromId) && elIdSet.has(l.toId));
+    const originals = new Map(elements.map((el) => [el.id, el]));
+    const copies = new Map(newElements.map((el) => [el.id, el]));
     const newLinks: Link[] = relevantLinks.map(link => ({
       ...link,
+      // A route drawn by hand moves with the copies
+      ...routeOfCopiedLink(link, originals, copies, oldToNewIdMap),
       id: generateUUID(),
       dossierId: currentDossier.id,
       fromId: oldToNewIdMap.get(link.fromId)!,
@@ -678,8 +683,11 @@ export function useCanvasSelectionActions({
     const relevantLinks = links.filter(l =>
       elIdSet.has(l.fromId) && elIdSet.has(l.toId)
     );
+    const originals = new Map(elements.map((el) => [el.id, el]));
+    const copies = new Map(newElements.map((el) => [el.id, el]));
     const newLinks: Link[] = relevantLinks.map(link => ({
       ...link,
+      ...routeOfCopiedLink(link, originals, copies, oldToNewIdMap),
       id: generateUUID(),
       dossierId: currentDossier!.id,
       fromId: oldToNewIdMap.get(link.fromId)!,
@@ -711,7 +719,9 @@ export function useCanvasSelectionActions({
     const ids: string[] = [];
     for (const id of selectedElementIds) {
       const el = elementMap.get(id);
-      if (el && !el.isGroup && !el.parentGroupId) ids.push(id);
+      // A parent group that no longer exists (left over) does not hold the element
+      const inGroup = !!el?.parentGroupId && !!elementMap.get(el.parentGroupId)?.isGroup;
+      if (el && !el.isGroup && !inGroup) ids.push(id);
     }
     return ids;
   }, [selectedElementIds, elementMap]);

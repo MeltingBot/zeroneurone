@@ -1,9 +1,29 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setupCleanEnvironment, waitForAppLoad } from './fixtures/test-utils';
 import { buildLargeDossierJson } from './fixtures/large-dossier';
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __znImport(path: string): Promise<any>;
+  }
+}
+
+/** Import an app module as the app loaded it (a reused dev server adds `?t=`) */
+const exposeImporter = (page: Page) =>
+  page.addInitScript(() => {
+    window.__znImport = (path: string) => {
+      const loaded = performance
+        .getEntriesByType('resource')
+        .map((e) => e.name)
+        .filter((name) => new URL(name).pathname === path);
+      return import(/* @vite-ignore */ loaded.length > 0 ? loaded[loaded.length - 1] : path);
+    };
+  });
+
 
 /**
  * A canvas tab renders its members and their direct neighbours (ghosts) only.
@@ -17,6 +37,7 @@ const TAB_SIZE = 100;
 
 test('a tab draws every link between its displayed nodes', async ({ page }) => {
   test.setTimeout(10 * 60 * 1000);
+  await exposeImporter(page);
   await setupCleanEnvironment(page);
   await waitForAppLoad(page);
   const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'tab.json');
@@ -28,8 +49,8 @@ test('a tab draws every link between its displayed nodes', async ({ page }) => {
 
   // A tab holding the first TAB_SIZE elements, made active.
   const expected = await page.evaluate(async (size) => {
-    const dossier = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
-    const tabs = (await import('/src/stores/tabStore.ts')).useTabStore;
+    const dossier = (await window.__znImport('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    const tabs = (await window.__znImport('/src/stores/tabStore.ts')).useTabStore;
     const members = dossier.elements.slice(0, size).map((e) => e.id);
     const tab = await tabs.getState().createTab(dossier.currentDossier!.id, 'Bench');
     await tabs.getState().addMembers(tab.id, members);

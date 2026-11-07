@@ -59,4 +59,31 @@ describe('linkMapper — route offsets', () => {
     expect(cleared.orthogonalOffset).toBeUndefined();
     expect(cleared.curveOffset).toEqual({ x: 5, y: 6 });
   });
+
+  it('keeps a hand-drawn right-angle route, updates and clears it', () => {
+    const route = { first: 'x' as const, positions: [-100, 80, 100] };
+    const { ydoc, ymap } = attach(makeLink({ orthogonalRoute: route }));
+    expect(yMapToLink(ymap).orthogonalRoute).toEqual(route);
+    updateLinkYMap(ymap, { orthogonalRoute: { first: 'y', positions: [40] } }, ydoc);
+    expect(yMapToLink(ymap).orthogonalRoute).toEqual({ first: 'y', positions: [40] });
+    updateLinkYMap(ymap, { orthogonalRoute: null }, ydoc);
+    expect(yMapToLink(ymap).orthogonalRoute).toBeUndefined();
+  });
+
+  it('keeps the bend points of a straight link, updates and clears them', () => {
+    const { ydoc, ymap } = attach(makeLink({ bendPoints: [{ x: -50, y: 120 }] }));
+    expect(yMapToLink(ymap).bendPoints).toEqual([{ x: -50, y: 120 }]);
+    updateLinkYMap(ymap, { bendPoints: [{ x: 1, y: 2 }, { x: 3, y: 4 }] }, ydoc);
+    expect(yMapToLink(ymap).bendPoints).toEqual([{ x: 1, y: 2 }, { x: 3, y: 4 }]);
+    updateLinkYMap(ymap, { bendPoints: null }, ydoc);
+    expect(yMapToLink(ymap).bendPoints).toBeUndefined();
+  });
+
+  it('ignores a malformed right-angle route from a peer', () => {
+    const { ymap } = attach(makeLink());
+    ymap.set('orthogonalRoute', { first: 'z', positions: [1] });
+    expect(yMapToLink(ymap).orthogonalRoute).toBeUndefined();
+    ymap.set('orthogonalRoute', { first: 'x', positions: [1, 'a'] });
+    expect(yMapToLink(ymap).orthogonalRoute).toBeUndefined();
+  });
 });

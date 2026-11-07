@@ -30,7 +30,8 @@ import { ImportedRows } from './importedRows';
 import { parseDateValue } from '../utils/dates';
 import { darkenColor } from './importGephi';
 import { stripBom } from '../utils/csv';
-import { normalizeChartPositions } from '../utils/chartScale';
+import { chartTransform, normalizeChartPositions } from '../utils/chartScale';
+import { computeNodeLayout } from './svgExportService';
 
 // ============================================================================
 // i18n
@@ -530,6 +531,15 @@ export async function importANX(
     // any export scale (ANX_COORD_SCALE has changed once already).
     const positions = normalizeChartPositions(placements);
     placements.forEach((p, i) => { p.element.position = positions[i]; });
+    // i2 places an entity by its centre: the node is drawn around that point
+    const { dimensions } = computeNodeLayout(placements.map((p) => p.element));
+    for (const p of placements) {
+      const dims = dimensions.get(p.element.id);
+      if (!dims || p.x === null || p.y === null) continue;
+      p.element.position = { x: p.element.position.x - dims.width / 2, y: p.element.position.y - dims.height / 2 };
+    }
+    // Corners of links go through the same conversion as the entities
+    const toCanvas = chartTransform(placements);
 
     // ================================================================
     // PASS 2: LINKS
@@ -555,6 +565,12 @@ export async function importANX(
 
       const linkLabel = ci.getAttribute('Label') || '';
       const linkNotes = ci.getAttribute('Description') || '';
+
+      // ── Corners: bend points of a straight line ──
+      const bendPoints = Array.from(linkEl.querySelectorAll(':scope > CornerCollection > Corner'))
+        .map((c) => ({ x: parseFloat(c.getAttribute('X') || ''), y: parseFloat(c.getAttribute('Y') || '') }))
+        .filter((c) => Number.isFinite(c.x) && Number.isFinite(c.y))
+        .map(toCanvas);
 
       // ── LinkStyle ──
       const linkStyleEl = linkEl.querySelector('LinkStyle');
@@ -662,6 +678,7 @@ export async function importANX(
           thickness: Math.max(1, Math.min(10, lineWidth)),
         },
         curveOffset: { x: 0, y: 0 },
+        ...(bendPoints.length > 0 ? { bendPoints } : {}),
         createdAt: new Date(),
         updatedAt: new Date(),
       };

@@ -4,11 +4,14 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import type { Edge, Node } from '@xyflow/react';
 
-import type { EvaluationModel, Link, Position } from '../../types';
+import type { EvaluationModel, Link, OrthogonalRoute, Position } from '../../types';
+import type { RouteHandles } from './CustomEdge';
+import type { Point } from '../../utils/freeBends';
 import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { formatPropertyValue } from '../../utils/dates';
 import { computeHandleSlots as computeLinkHandleSlots, type HandleSlots } from '../../utils/edgeRouting';
 import { linkVisualState, type LinkVisualContext } from '../../utils/linkVisualState';
+import { bundleLine, bundleLinks, type LinkMultiplicity } from '../../utils/linkBundles';
 import { computeAbsoluteNodePositions } from './overview/overviewScene';
 import { resolveLinkHandles, linkToEdge, calculateBestHandles } from './canvasConversion';
 import type { SelectionStore, ViewStore } from './canvasHookTypes';
@@ -18,6 +21,8 @@ const EMPTY_EDGES: Edge[] = [];
 interface EdgeCallbacks {
   onLabelChange: (newLabel: string) => void;
   onCurveOffsetChange: (offset: { x: number; y: number }) => void;
+  onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) => void;
+  onBendPointsChange: (points: Point[] | null, handles: RouteHandles) => void;
 }
 
 /** Handle slots of every link, from the handles it is drawn between (see utils/edgeRouting). */
@@ -68,6 +73,7 @@ export interface CanvasEdgesParams {
   showUndated: boolean;
   linkAnchorMode: 'auto' | 'manual';
   linkCurveMode: 'straight' | 'curved' | 'orthogonal';
+  linkMultiplicity: LinkMultiplicity;
   confidenceDisplay: EvaluationModel | null;
   propertyDateLocale: string;
   language: string;
@@ -110,6 +116,7 @@ export function useCanvasEdges({
   showUndated,
   linkAnchorMode,
   linkCurveMode,
+  linkMultiplicity,
   confidenceDisplay,
   propertyDateLocale,
   language,
@@ -182,18 +189,24 @@ export function useCanvasEdges({
       return fromVisible || toVisible;
     });
 
+    // Several links between two elements merged into one line (dossier option):
+    // the line is drawn by the first link of its bundle
+    const { shown, bundles } = bundleLinks(visibleLinks, linkMultiplicity);
+    const lineSelected = (link: Link) => bundles.get(link.id)?.links.some((l) => selectedLinkIds.has(l.id))
+      ?? selectedLinkIds.has(link.id);
+
     // Cap edges: the selected links and those touching a selected element are
     // always kept, the rest fill the budget. The original order is kept, so a
     // click only swaps the few links it has to instead of reordering them all.
-    let cappedLinks = visibleLinks;
-    if (visibleLinks.length > MAX_RENDERED_EDGES) {
-      const isPriority = (link: Link) => selectedLinkIds.has(link.id) || cycleLinkFlow.has(link.id) || pathGlowLinks.has(link.id)
+    let cappedLinks = shown;
+    if (shown.length > MAX_RENDERED_EDGES) {
+      const isPriority = (link: Link) => lineSelected(link) || cycleLinkFlow.has(link.id) || pathGlowLinks.has(link.id)
         || selectedElementIds.has(link.fromId) || selectedElementIds.has(link.toId);
       let priorityCount = 0;
-      for (const link of visibleLinks) if (isPriority(link)) priorityCount++;
+      for (const link of shown) if (isPriority(link)) priorityCount++;
       const budget = MAX_RENDERED_EDGES - priorityCount;
       let restKept = 0;
-      cappedLinks = visibleLinks.filter(link => isPriority(link) || restKept++ < budget);
+      cappedLinks = shown.filter(link => isPriority(link) || restKept++ < budget);
     }
 
     const pairGroupMap = new Map<string, string[]>();
@@ -212,13 +225,22 @@ export function useCanvasEdges({
       }
     }
     // Links sharing a node side, whatever their other end, get their own point along it
-    const handleSlots = computeHandleSlots(cappedLinks, nodePositions, linkAnchorMode, parallelLookup);
+    // Links merged as in i2 also leave a node side from one point: a single line goes out, then
+    // branches off to each end. Separate links each get their own point along the side.
+    const handleSlots = linkMultiplicity === 'multiple' || linkMultiplicity === undefined
+      ? computeHandleSlots(cappedLinks, nodePositions, linkAnchorMode, parallelLookup)
+      : new Map<string, HandleSlots>();
 
     const useSimpleEdges = cappedLinks.length > SIMPLE_EDGE_THRESHOLD;
 
     const newCache = new Map<string, Edge>();
-    const result = cappedLinks.map(link => {
-      const { isSelected, isDimmed: isLinkDimmed, isHighlighted: isLinkHighlighted, flow } = linkVisualState(link, linkVisualContext);
+    const result = cappedLinks.map(lead => {
+      // A merged line: its lead without label, with the arrows of the bundle
+      const bundle = bundles.get(lead.id);
+      const link = bundle ? bundleLine(bundle) : lead;
+      const visual = linkVisualState(link, linkVisualContext);
+      const { isDimmed: isLinkDimmed, isHighlighted: isLinkHighlighted, flow } = visual;
+      const isSelected = bundle ? lineSelected(lead) : visual.isSelected;
       const simplified = useSimpleEdges && !isSelected;
 
       // Reuse cached edge if visual state is unchanged (same reference → memo skip)
@@ -306,6 +328,9 @@ export function useCanvasEdges({
           false,
           handleSlots.get(link.id)
         );
+        const routeCallbacks = edge.data as Partial<Pick<EdgeCallbacks, 'onOrthogonalRouteChange' | 'onBendPointsChange'>>;
+        routeCallbacks.onOrthogonalRouteChange = edgeCbs.onOrthogonalRouteChange;
+        routeCallbacks.onBendPointsChange = edgeCbs.onBendPointsChange;
       }
 
       const edgeData = edge.data as any;
@@ -317,6 +342,10 @@ export function useCanvasEdges({
       edgeData._displayedProperties = displayedProperties;
       edgeData.isHighlighted = isLinkHighlighted;
       edgeData.flow = flow;
+      // The links of a merged line: selected together, their labels shown on hover
+      edgeData.bundle = bundle
+        ? { ids: bundle.links.map((l) => l.id), items: bundle.links.map((l) => ({ id: l.id, label: l.label, color: l.visual.color })) }
+        : undefined;
       if (!simplified) {
         const parallel = parallelLookup.get(link.id);
         edgeData._parallelIndex = parallel?.index;
@@ -337,7 +366,7 @@ export function useCanvasEdges({
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overviewActive, linkVisualContext, links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, showUndated, propertyDateLocale, viewHiddenIds]);
+  }, [overviewActive, linkVisualContext, links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, linkMultiplicity, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, showUndated, propertyDateLocale, viewHiddenIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Only the edges not already on screen are added in batches; those already

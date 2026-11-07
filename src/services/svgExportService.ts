@@ -1,4 +1,6 @@
 import type { Element, Link, Position, ElementSize } from '../types';
+import { GROUP_TINT } from '../types';
+import { bundleLine, bundleLinks, type LinkMultiplicity } from '../utils/linkBundles';
 import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
@@ -15,6 +17,10 @@ interface SVGExportSettings {
   assetDataUrls?: Map<string, string>;
   /** Dossier option: link labels wrap past this many characters. */
   linkLabelWrap?: number;
+  /** Fill behind the graph; null leaves it out (print on white paper). Default: canvas colour. */
+  background?: string | null;
+  /** Dossier option: several links between two elements drawn as one line */
+  linkMultiplicity?: LinkMultiplicity;
 }
 
 interface NodeDimensions {
@@ -230,6 +236,15 @@ function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions, ima
   return `  <g id="node-${element.id}">\n    ${shapeSvg}\n    ${textSvg}\n  </g>`;
 }
 
+/** Height of the label bar under the image of a media node. */
+export const MEDIA_LABEL_BAR_HEIGHT = 18;
+
+/** Height of the image of a media node: the node minus its label bar. */
+export function mediaImageHeight(nodeHeight: number): number {
+  const height = nodeHeight - MEDIA_LABEL_BAR_HEIGHT;
+  return height > 0 ? height : nodeHeight;
+}
+
 function buildMediaNodeSVG(
   element: Element, pos: Position, dims: NodeDimensions,
   cx: number, cy: number,
@@ -238,8 +253,7 @@ function buildMediaNodeSVG(
 ): string {
   const label = element.label || 'Sans nom';
   const clipId = `clip-${element.id}`;
-  const labelBarHeight = 18;
-  const imageHeight = dims.height - labelBarHeight;
+  const labelBarHeight = MEDIA_LABEL_BAR_HEIGHT;
   const parts: string[] = [];
 
   // clipPath matching the shape (for clipping the image)
@@ -277,7 +291,7 @@ function buildMediaNodeSVG(
   parts.push(`    ${borderShape}`);
 
   // Embedded image — clipped to shape, preserveAspectRatio for contain
-  parts.push(`    <image href="${imageDataUrl}" x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${imageHeight > 0 ? imageHeight : dims.height}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`);
+  parts.push(`    <image href="${imageDataUrl}" x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${mediaImageHeight(dims.height)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`);
 
   // Label bar at bottom (only for rect/square shapes where it looks natural)
   const shape = element.visual.shape;
@@ -309,7 +323,7 @@ function buildGroupSVG(element: Element, pos: Position, dims: NodeDimensions): s
     : '#f3f4f6';
 
   // Low opacity fill for groups
-  const bgOpacity = 0.12;
+  const bgOpacity = GROUP_TINT;
 
   let dashArray = '';
   if (borderStyle === 'dashed') dashArray = ` stroke-dasharray="4 2"`;
@@ -434,7 +448,7 @@ export interface RoutedLink {
 export function computeLinkRoutes(
   links: Link[],
   layout: NodeLayout,
-  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode'>
+  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode' | 'linkMultiplicity'>
 ): RoutedLink[] {
   const { positions, dimensions } = layout;
   const placed: { link: Link; sourceHandle: string; targetHandle: string; parallelIndex: number; parallelCount: number }[] = [];
@@ -466,7 +480,9 @@ export function computeLinkRoutes(
       placed.push({ link, sourceHandle, targetHandle, parallelIndex: index, parallelCount: group.length });
     });
   }
-  const handleSlots = computeHandleSlots(
+  // Links merged as in i2 leave a node side from one point (one line out, then branching off)
+  const merged = settings.linkMultiplicity === 'single' || settings.linkMultiplicity === 'directed';
+  const handleSlots = merged ? new Map<string, { source: number; target: number }>() : computeHandleSlots(
     placed.map(r => ({
       id: r.link.id, fromId: r.link.fromId, toId: r.link.toId,
       sourceHandle: r.sourceHandle, targetHandle: r.targetHandle, tie: r.parallelIndex,
@@ -495,6 +511,8 @@ export function computeLinkRoutes(
       targetSlot: slots?.target ?? 0,
       // Each route style keeps its own manual offset
       offset: (settings.linkCurveMode === 'orthogonal' ? link.orthogonalOffset : link.curveOffset) ?? { x: 0, y: 0 },
+      bends: settings.linkCurveMode === 'orthogonal' ? link.orthogonalRoute : null,
+      bendPoints: settings.linkCurveMode === 'straight' ? link.bendPoints : null,
       hasStartArrow,
       hasEndArrow,
     });
@@ -526,7 +544,10 @@ export function buildSVGExport(
   const positionsMap = layout.positions;
   const dimensionsMap = layout.dimensions;
 
-  const edgeSvgs = computeLinkRoutes(links, layout, settings)
+  // Merged lines as the canvas draws them (no label, arrows of the bundle)
+  const { shown, bundles } = bundleLinks(links, settings.linkMultiplicity);
+  const drawnLinks = shown.map((l) => { const b = bundles.get(l.id); return b ? bundleLine(b) : l; });
+  const edgeSvgs = computeLinkRoutes(drawnLinks, layout, settings)
     .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap));
 
   const assetDataUrls = settings.assetDataUrls;
@@ -563,8 +584,11 @@ export function buildSVGExport(
   const svgParts: string[] = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}">`,
-    `  <rect x="${minX}" y="${minY}" width="${svgWidth}" height="${svgHeight}" fill="#faf8f5"/>`,
   ];
+  const background = settings.background === undefined ? '#faf8f5' : settings.background;
+  if (background) {
+    svgParts.push(`  <rect x="${minX}" y="${minY}" width="${svgWidth}" height="${svgHeight}" fill="${safeColor(background, '#faf8f5')}"/>`);
+  }
 
   if (groupSvgs.length > 0) {
     svgParts.push(`  <g id="groups">`);

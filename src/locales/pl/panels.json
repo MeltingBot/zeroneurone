@@ -605,6 +605,15 @@
     "sizeByDegree": "Rozmiar elementów według liczby powiązań",
     "links": "Połączenia",
     "linkShape": "Kształt",
+    "linkMultiplicity": "Wiele powiązań",
+    "multiplicity": {
+      "multiple": "Osobno",
+      "single": "Jedno",
+      "directed": "Jedno na kierunek",
+      "multipleHint": "Każde powiązanie ma swoją linię",
+      "singleHint": "Jedna linia dla wszystkich powiązań między dwoma elementami",
+      "directedHint": "Jedna linia na kierunek"
+    },
     "linkCurves": "Krzywe",
     "linkStraight": "Proste",
     "linkOrthogonal": "Kąty proste",

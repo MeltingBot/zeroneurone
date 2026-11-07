@@ -604,6 +604,15 @@
     "sizeByDegree": "Dimensione degli elementi in base al numero di collegamenti",
     "links": "Collegamenti",
     "linkShape": "Forma",
+    "linkMultiplicity": "Collegamenti multipli",
+    "multiplicity": {
+      "multiple": "Separati",
+      "single": "Uno solo",
+      "directed": "Uno per verso",
+      "multipleHint": "Ogni collegamento ha la sua linea",
+      "singleHint": "Una linea per tutti i collegamenti tra due elementi",
+      "directedHint": "Una linea per verso"
+    },
     "linkCurves": "Curve",
     "linkStraight": "Diritte",
     "linkOrthogonal": "Angoli retti",

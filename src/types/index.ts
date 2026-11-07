@@ -364,6 +364,11 @@ export interface DossierSettings {
   linkCurveMode?: 'straight' | 'curved' | 'orthogonal';
   /** Elements drawn larger the more links they have (display only, this device). */
   sizeByDegree?: boolean;
+  /**
+   * Several links between two elements: each drawn (multiple, default), one line for all (single)
+   * or one line per direction (directed), as i2's connection multiplicity. Display only.
+   */
+  linkMultiplicity?: 'multiple' | 'single' | 'directed';
 }
 
 // ============================================================================
@@ -438,8 +443,28 @@ export interface Link {
    * Kept apart from curveOffset so a curve drawn by hand does not distort right-angle routes.
    */
   orthogonalOffset?: { x: number; y: number } | null;
+  /**
+   * Right-angle route drawn by hand (segment handles). When set, it replaces the automatic
+   * right-angle route and orthogonalOffset. Null or absent: automatic route.
+   */
+  orthogonalRoute?: OrthogonalRoute | null;
+  /**
+   * Straight mode: bend points placed by hand, from the source side, on the canvas
+   * (utils/freeBends). Null or absent: a straight line.
+   */
+  bendPoints?: { x: number; y: number }[] | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * Inner segments of a right-angle route drawn by hand, from the source side: the x of each vertical
+ * segment and the y of each horizontal one, in turn, starting with `first`, on the canvas. They
+ * stay in place when one end moves and move with both ends (utils/routeFollow).
+ */
+export interface OrthogonalRoute {
+  first: 'x' | 'y';
+  positions: number[];
 }
 
 // ============================================================================
@@ -712,6 +737,12 @@ export const DEFAULT_FILTERS: ViewFilters = {
   dateRangeProperties: [],
   includeTabs: [],
 };
+
+/** Line widths offered (px), for links and element borders: the last step is wide apart so it stands out */
+export const LINE_WIDTHS = [1, 2, 3, 4, 8];
+
+/** Share of its colour a group's background takes: canvas, overview and SVG/PDF export alike. */
+export const GROUP_TINT = 0.2;
 
 // Saturated colors for nodes - work well on both light and dark backgrounds
 // These use CSS variables to automatically adapt to the current theme

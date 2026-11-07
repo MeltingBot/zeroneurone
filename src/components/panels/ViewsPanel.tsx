@@ -38,6 +38,7 @@ export function ViewsPanel() {
     setTagDisplaySize,
     setLinkAnchorMode,
     setLinkCurveMode,
+    setLinkMultiplicity,
     setSizeByDegree,
   } = useDossierStore(
     useShallow((s) => ({
@@ -52,6 +53,7 @@ export function ViewsPanel() {
       setTagDisplaySize: s.setTagDisplaySize,
       setLinkAnchorMode: s.setLinkAnchorMode,
       setLinkCurveMode: s.setLinkCurveMode,
+      setLinkMultiplicity: s.setLinkMultiplicity,
       setSizeByDegree: s.setSizeByDegree,
     })),
   );
@@ -69,6 +71,7 @@ export function ViewsPanel() {
   const displayedProperties = settings?.displayedProperties ?? [];
   const linkAnchorMode = settings?.linkAnchorMode ?? 'auto';
   const linkCurveMode = settings?.linkCurveMode ?? 'curved';
+  const linkMultiplicity = settings?.linkMultiplicity ?? 'multiple';
   const sizeByDegree = currentDossier?.settings?.sizeByDegree === true;
 
   // Get all unique property keys from elements and links
@@ -334,6 +337,28 @@ export function ViewsPanel() {
                   <Sparkles size={14} />
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Several links between two elements: each drawn, or merged into one line */}
+          <div className="space-y-1.5 pl-4">
+            <span className="text-[10px] text-text-tertiary">{t('views.linkMultiplicity')}</span>
+            <div className="flex gap-1">
+              {(['multiple', 'single', 'directed'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setLinkMultiplicity(mode)}
+                  title={t(`views.multiplicity.${mode}Hint`)}
+                  aria-pressed={linkMultiplicity === mode}
+                  className={`h-7 px-2 text-xs rounded transition-colors ${
+                    linkMultiplicity === mode
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  {t(`views.multiplicity.${mode}`)}
+                </button>
+              ))}
             </div>
           </div>
         </div>

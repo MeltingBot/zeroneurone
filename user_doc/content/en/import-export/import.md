@@ -454,6 +454,7 @@ Not imported: ports (`a:north`, the link starts from the element), invisible edg
 | DatabaseProperty[] | Properties |
 | Attribute[] | Typed properties |
 | Card.DateTime | Date |
+| CornerCollection (corners) | Bend points (shown with the **straight** curve) |
 
 #### Attributes shown on the chart
 

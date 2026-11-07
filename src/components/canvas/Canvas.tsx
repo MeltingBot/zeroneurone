@@ -14,7 +14,9 @@ import { DraggableMinimap } from './DraggableMinimap';
 import { CanvasGrid } from './CanvasGrid';
 import { SuggestionPreviewLines } from './SuggestionPreviewLines';
 import { AlignmentGuides, computeGuides } from './AlignmentGuides';
-import { CustomEdge } from './CustomEdge';
+import { CustomEdge, type RouteHandles } from './CustomEdge';
+import { LinkBundlePicker } from './LinkBundlePicker';
+import type { BundleItem } from './LinkBundleTooltip';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
@@ -35,7 +37,9 @@ import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore } from '../../stores';
-import type { Element, Position, Asset } from '../../types';
+import type { Element, Link, OrthogonalRoute, Position, Asset } from '../../types';
+import type { Point } from '../../utils/freeBends';
+import { CLEARED_ROUTE, routeFields } from '../../utils/routeFollow';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
@@ -364,9 +368,12 @@ export function Canvas() {
   const [isViewportMoving, setIsViewportMoving] = useState(false);
   // Clicked link with an end outside the view: its ends, where it was clicked
   const [linkTip, setLinkTip] = useState<{ linkId: string; x: number; y: number; toLeft: boolean } | null>(null);
+  // Clicked merged line: its links, where it was clicked, to pick one alone
+  const [bundleTip, setBundleTip] = useState<{ ids: string[]; items: BundleItem[]; x: number; y: number; toLeft: boolean } | null>(null);
 
   const handleMoveStart = useCallback(() => {
     setLinkTip(null);
+    setBundleTip(null);
     isViewportMovingRef.current = true;
     setIsViewportMoving(true);
   }, []);
@@ -822,6 +829,9 @@ export function Canvas() {
   );
   const linkCurveMode = useDossierStore(
     (state) => state.currentDossier?.settings?.linkCurveMode ?? 'curved'
+  );
+  const linkMultiplicity = useDossierStore(
+    (state) => state.currentDossier?.settings?.linkMultiplicity ?? 'multiple'
   );
   const displayedProperties = useMemo(
     () => currentDossier?.settings?.displayedProperties ?? [],
@@ -1319,18 +1329,101 @@ export function Canvas() {
     [updateLink, linkCurveMode]
   );
 
+  // Right-angle route drawn by hand: saved with undo. Its ends stay on the sides it was drawn
+  // from (auto anchors would turn them as nodes move and undo the drawing).
+  // Links of the selection (selected, or between two selected elements) with a route drawn by hand
+  const selectionRoutedLinks = useMemo(() => {
+    const drawn = (l: Link) => {
+      const fields = routeFields(l);
+      return !!fields.orthogonalRoute || !!fields.bendPoints?.length
+        || (!!fields.orthogonalOffset && (fields.orthogonalOffset.x !== 0 || fields.orthogonalOffset.y !== 0))
+        || fields.curveOffset.x !== 0 || fields.curveOffset.y !== 0;
+    };
+    return links.filter((l) => drawn(l)
+      && (selectedLinkIds.has(l.id) || (selectedElementIds.has(l.fromId) && selectedElementIds.has(l.toId))));
+  }, [links, selectedLinkIds, selectedElementIds]);
+
+  // Every route drawn by hand on those links back to automatic, in one undo step
+  const handleResetSelectionRoutes = useCallback(() => {
+    if (selectionRoutedLinks.length === 0) return;
+    const ids = selectionRoutedLinks.map((l) => l.id);
+    pushAction({
+      type: 'update-bulk',
+      undo: { bulkLinks: selectionRoutedLinks.map((l) => ({ id: l.id, changes: routeFields(l) })) },
+      redo: { bulkCalls: [{ kind: 'links', ids, changes: CLEARED_ROUTE }] },
+    });
+    useDossierStore.getState().updateLinks(ids, CLEARED_ROUTE);
+  }, [selectionRoutedLinks, pushAction]);
+
+  const handleOrthogonalRouteChange = useCallback(
+    (linkId: string, route: OrthogonalRoute, handles: RouteHandles) => {
+      const link = linkMap.get(linkId);
+      if (!link) return;
+      const pinAnchors = (link.anchorMode ?? linkAnchorMode) === 'auto';
+      const changes = {
+        orthogonalRoute: route,
+        ...(pinAnchors ? { anchorMode: 'manual' as const, ...handles } : {}),
+      };
+      const previous = {
+        orthogonalRoute: link.orthogonalRoute ?? null,
+        ...(pinAnchors
+          ? { anchorMode: link.anchorMode ?? null, sourceHandle: link.sourceHandle ?? null, targetHandle: link.targetHandle ?? null }
+          : {}),
+      };
+      updateLink(linkId, changes);
+      pushAction({
+        type: 'update-link',
+        undo: { linkId, linkChanges: previous },
+        redo: { linkId, linkChanges: changes },
+      });
+    },
+    [linkMap, linkAnchorMode, updateLink, pushAction]
+  );
+
+  // Bend points of a straight link: saved with undo, ends pinned for the same reason
+  const handleBendPointsChange = useCallback(
+    (linkId: string, points: Point[] | null, handles: RouteHandles) => {
+      const link = linkMap.get(linkId);
+      if (!link) return;
+      const pinAnchors = (link.anchorMode ?? linkAnchorMode) === 'auto' && points !== null;
+      const changes = {
+        bendPoints: points,
+        ...(pinAnchors ? { anchorMode: 'manual' as const, ...handles } : {}),
+      };
+      const previous = {
+        bendPoints: link.bendPoints ?? null,
+        ...(pinAnchors
+          ? { anchorMode: link.anchorMode ?? null, sourceHandle: link.sourceHandle ?? null, targetHandle: link.targetHandle ?? null }
+          : {}),
+      };
+      updateLink(linkId, changes);
+      pushAction({
+        type: 'update-link',
+        undo: { linkId, linkChanges: previous },
+        redo: { linkId, linkChanges: changes },
+      });
+    },
+    [linkMap, linkAnchorMode, updateLink, pushAction]
+  );
+
   // --- Stable edge callback refs (eliminates closure recreations per edge recalc) ---
   const handleLinkLabelChangeRef = useRef(handleLinkLabelChange);
   const handleCurveOffsetChangeRef = useRef(handleCurveOffsetChange);
+  const handleOrthogonalRouteChangeRef = useRef(handleOrthogonalRouteChange);
+  const handleBendPointsChangeRef = useRef(handleBendPointsChange);
 
   useEffect(() => {
     handleLinkLabelChangeRef.current = handleLinkLabelChange;
     handleCurveOffsetChangeRef.current = handleCurveOffsetChange;
+    handleOrthogonalRouteChangeRef.current = handleOrthogonalRouteChange;
+    handleBendPointsChangeRef.current = handleBendPointsChange;
   });
 
   const edgeCallbacksCache = useRef(new Map<string, {
     onLabelChange: (newLabel: string) => void;
     onCurveOffsetChange: (offset: { x: number; y: number }) => void;
+    onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) => void;
+    onBendPointsChange: (points: Point[] | null, handles: RouteHandles) => void;
   }>());
 
   function getEdgeCallbacks(linkId: string) {
@@ -1339,6 +1432,10 @@ export function Canvas() {
       cached = {
         onLabelChange: (newLabel: string) => handleLinkLabelChangeRef.current(linkId, newLabel),
         onCurveOffsetChange: (offset: { x: number; y: number }) => handleCurveOffsetChangeRef.current(linkId, offset),
+        onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) =>
+          handleOrthogonalRouteChangeRef.current(linkId, route, handles),
+        onBendPointsChange: (points: Point[] | null, handles: RouteHandles) =>
+          handleBendPointsChangeRef.current(linkId, points, handles),
       };
       edgeCallbacksCache.current.set(linkId, cached);
     }
@@ -1550,6 +1647,7 @@ export function Canvas() {
     showUndated: canvasTemporal.showUndated,
     linkAnchorMode,
     linkCurveMode,
+    linkMultiplicity,
     confidenceDisplay,
     propertyDateLocale,
     language: i18n.language,
@@ -1732,7 +1830,11 @@ export function Canvas() {
   const linksLayerScene = useMemo<OverviewScene | null>(() => {
     if (overviewActive) return null;
     const drawn = new Set<string>();
-    for (const e of edges) drawn.add(e.id);
+    for (const e of edges) {
+      drawn.add(e.id);
+      // The links merged into a line are drawn by it
+      for (const id of (e.data as { bundle?: { ids: string[] } } | undefined)?.bundle?.ids ?? []) drawn.add(id);
+    }
     const rest = links.filter((link) => !drawn.has(link.id));
     if (rest.length === 0) return null;
     return buildOverviewScene({
@@ -2225,13 +2327,28 @@ export function Canvas() {
       setContextMenu(null);
       setCanvasContextMenu(null);
 
+      // A merged line: its links selected, with the menu of a selection
+      const bundleIds = (edge.data as { bundle?: { ids: string[] } } | undefined)?.bundle?.ids;
+      if (bundleIds) {
+        selectLinks(bundleIds);
+        const viewport = useViewStore.getState().viewport;
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        setCanvasContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          canvasX: (event.clientX - (bounds?.left ?? 0) - viewport.x) / viewport.zoom,
+          canvasY: (event.clientY - (bounds?.top ?? 0) - viewport.y) / viewport.zoom,
+        });
+        return;
+      }
+
       setLinkContextMenu({
         x: event.clientX,
         y: event.clientY,
         linkId: edge.id,
       });
     },
-    []
+    [selectLinks]
   );
 
   /** Link drawn on a canvas (overview, links layer) under a screen point */
@@ -2435,6 +2552,21 @@ export function Canvas() {
       // Shift / Ctrl / Cmd adds the link to the selection, or removes it
       const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
 
+      // A merged line selects all its links (no label to edit on it), and lists them where it was
+      // clicked to pick one alone
+      const bundle = (edge.data as { bundle?: { ids: string[]; items: BundleItem[] } } | undefined)?.bundle;
+      if (bundle) {
+        selectLinks(bundle.ids, isMultiSelect);
+        // One list at a time: the ends of a link clicked before go
+        setLinkTip(null);
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        if (bounds && !isMultiSelect) {
+          const x = event.clientX - bounds.left;
+          setBundleTip({ ids: bundle.ids, items: bundle.items, x, y: event.clientY - bounds.top, toLeft: x > bounds.width - 340 });
+        }
+        return;
+      }
+
       const clickData = edgeClickCountRef.current;
 
       if (clickData.id === edge.id) {
@@ -2466,7 +2598,7 @@ export function Canvas() {
         startEditingLink(edge.id);
       }
     },
-    [selectLink, toggleLink, startEditingLink, showLinkEnds]
+    [selectLink, selectLinks, toggleLink, startEditingLink, showLinkEnds]
   );
 
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
@@ -3029,6 +3161,20 @@ export function Canvas() {
             }
           }}
         >
+          {/* The links of a clicked merged line, while they are the selection */}
+          {bundleTip && selectedLinkIds.size === bundleTip.ids.length && bundleTip.ids.every((id) => selectedLinkIds.has(id)) && (
+            <LinkBundlePicker
+              items={bundleTip.items}
+              x={bundleTip.x}
+              y={bundleTip.y}
+              toLeft={bundleTip.toLeft}
+              onPick={(id) => {
+                setBundleTip(null);
+                selectLink(id);
+                useUIStore.getState().setSidePanelTab('detail');
+              }}
+            />
+          )}
           {/* Gone with the selection: a click elsewhere, Escape, another link */}
           {linkTip && selectedLinkIds.has(linkTip.linkId) && (() => {
             const link = links.find((l) => l.id === linkTip.linkId);
@@ -3288,6 +3434,7 @@ export function Canvas() {
               onDeleteSelection={handleSelectionDelete}
               onHideSelection={handleSelectionHide}
               onShowOnlySelection={handleSelectionShowOnly}
+              onResetRoutes={selectionRoutedLinks.length > 0 ? handleResetSelectionRoutes : undefined}
               selectionLocked={selectionLocked}
               onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
@@ -3348,12 +3495,40 @@ export function Canvas() {
               onResetRoute={(() => {
                 // Offset of the current route style only (curves and right angles keep their own)
                 const menuLink = links.find((l) => l.id === linkContextMenu.linkId);
-                const offset = linkCurveMode === 'orthogonal' ? menuLink?.orthogonalOffset : menuLink?.curveOffset;
+                if (!menuLink) return undefined;
+                if (linkCurveMode === 'orthogonal') {
+                  // Right angles: the offset and the route drawn by hand, both back to automatic
+                  const offset = menuLink.orthogonalOffset;
+                  const moved = !!offset && (offset.x !== 0 || offset.y !== 0);
+                  if (!moved && !menuLink.orthogonalRoute) return undefined;
+                  return () => {
+                    const reset = { orthogonalOffset: null, orthogonalRoute: null };
+                    updateLink(menuLink.id, reset);
+                    pushAction({
+                      type: 'update-link',
+                      undo: { linkId: menuLink.id, linkChanges: { orthogonalOffset: offset ?? null, orthogonalRoute: menuLink.orthogonalRoute ?? null } },
+                      redo: { linkId: menuLink.id, linkChanges: reset },
+                    });
+                    closeLinkContextMenu();
+                  };
+                }
+                if (linkCurveMode === 'straight') {
+                  // Straight: the bend points placed by hand
+                  if (!menuLink.bendPoints?.length) return undefined;
+                  return () => {
+                    updateLink(menuLink.id, { bendPoints: null });
+                    pushAction({
+                      type: 'update-link',
+                      undo: { linkId: menuLink.id, linkChanges: { bendPoints: menuLink.bendPoints } },
+                      redo: { linkId: menuLink.id, linkChanges: { bendPoints: null } },
+                    });
+                    closeLinkContextMenu();
+                  };
+                }
+                const offset = menuLink.curveOffset;
                 if (!offset || (offset.x === 0 && offset.y === 0)) return undefined;
                 return () => {
-                  updateLink(linkContextMenu.linkId, linkCurveMode === 'orthogonal'
-                    ? { orthogonalOffset: null }
-                    : { curveOffset: { x: 0, y: 0 } });
+                  updateLink(menuLink.id, { curveOffset: { x: 0, y: 0 } });
                   closeLinkContextMenu();
                 };
               })()}

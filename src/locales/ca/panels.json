@@ -603,6 +603,15 @@
     "sizeByDegree": "Mida dels elements segons el nombre d'enllaços",
     "links": "Enllaços",
     "linkShape": "Forma",
+    "linkMultiplicity": "Vincles múltiples",
+    "multiplicity": {
+      "multiple": "Separats",
+      "single": "Un de sol",
+      "directed": "Un per sentit",
+      "multipleHint": "Cada vincle té la seva línia",
+      "singleHint": "Una línia per a tots els vincles entre dos elements",
+      "directedHint": "Una línia per sentit"
+    },
     "linkCurves": "Corbes",
     "linkStraight": "Rectes",
     "linkOrthogonal": "Angles rectes",

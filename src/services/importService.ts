@@ -36,6 +36,7 @@ import { importFromCSV } from './importCsv';
 import { analyzeGeoJSONFields as analyzeGeoJSONFieldsImpl, importFromGeoJSON as importFromGeoJSONImpl } from './importGeoJSON';
 import { importFromGraphML as importFromGraphMLImpl } from './importGraphML';
 import { errorText, importMessage } from './importMessages';
+import { shiftedRoute } from '../utils/routeFollow';
 
 /**
  * Date / datetime property values of a ZeroNeurone archive, as Dates. An
@@ -1056,6 +1057,8 @@ export class ImportService {
 
       const link: Link = {
         ...importedLink,
+        // Every element lands moved by the offset (children with their group): routes drawn by hand too
+        ...(positionOffset ? shiftedRoute(importedLink, positionOffset) : {}),
         id: newLinkId,
         dossierId: targetDossierId,
         fromId: newFromId,

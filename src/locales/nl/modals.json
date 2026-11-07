@@ -143,6 +143,8 @@
       "pngDesc": "Visuele opname met resolutiekeuze",
       "svg": "SVG (vector)",
       "svgDesc": "Bewerkbare vectorafbeelding (Inkscape, Illustrator)",
+      "pdf": "PDF (afdrukken)",
+      "pdfDesc": "Vectorgraaf op één vel, A0 tot A4",
       "anx": "ANX (i2 Analyst's Notebook)",
       "anxDesc": "Diagram voor i2 (posities, kleuren, attributen)",
       "obsidian": "Obsidian (vault-ZIP)",
@@ -193,8 +195,18 @@
       "mismatch": "De wachtwoorden komen niet overeen",
       "success": "Versleutelde export gedownload (.znzip)"
     },
+    "json": {
+      "compact": "Compact (zonder opmaak)"
+    },
     "png": {
       "transparent": "Transparante achtergrond"
+    },
+    "pdf": {
+      "paper": "Papier",
+      "orientation": "Oriëntatie",
+      "auto": "Auto",
+      "portrait": "Staand",
+      "landscape": "Liggend"
     },
     "csv": {
       "content": "Inhoud",
@@ -215,7 +227,8 @@
     },
     "anx": {
       "images": "Afbeeldingen van elementen",
-      "shownProperties": "Getoonde eigenschappen"
+      "shownProperties": "Getoonde eigenschappen",
+      "routes": "Lijnvoering"
     }
   },
   "search": {

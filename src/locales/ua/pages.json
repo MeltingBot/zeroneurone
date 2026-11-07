@@ -175,6 +175,7 @@
       "queryFromSelection": "Запит з виділення",
       "editLinkLabel": "Редагувати мітку",
       "resetLinkRoute": "Скинути траєкторію",
+      "resetLinkRoutes": "Скинути траси",
       "reverseLink": "Змінити напрямок",
       "deleteLink": "Видалити зв'язок",
       "noLabel": "Без мітки",
@@ -195,6 +196,9 @@
       "suggestLinks": "Запропонувати зв'язки",
       "openDetail": "Відкрити деталі"
     },
+    "linkSegmentHandle": "Перетягніть: перемістити · Подвійний клік: розділити",
+    "linkBendPoint": "Перетягніть: перемістити · Подвійний клік: видалити",
+    "linkBendAdd": "Перетягніть: додати точку",
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",
       "redo": "Повторити (Ctrl+Shift+Z)",

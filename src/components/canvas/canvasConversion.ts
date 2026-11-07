@@ -336,6 +336,10 @@ export function linkToEdge(
       // Each route style keeps its own manual offset
       curveOffset: (linkCurveMode === 'orthogonal' ? link.orthogonalOffset : link.curveOffset) ?? { x: 0, y: 0 },
       onCurveOffsetChange,
+      // Right-angle route drawn by hand (segment handles)
+      orthogonalRoute: linkCurveMode === 'orthogonal' ? link.orthogonalRoute ?? null : null,
+      // Bend points placed by hand (straight mode)
+      bendPoints: linkCurveMode === 'straight' ? link.bendPoints ?? null : null,
       // Curve mode: straight or curved
       curveMode: linkCurveMode,
       // Include handles in data to force React Flow to re-render when they change

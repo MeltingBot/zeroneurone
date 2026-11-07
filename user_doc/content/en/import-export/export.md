@@ -12,7 +12,7 @@ Save and share your dossiers in various formats.
 
 Menu **⋯** → **Export**
 
-Formats are grouped by use: **Backup** (ZIP, JSON), **Graph** (GraphML, GEXF, GML, DOT, ANX), **Data** (CSV, GeoJSON), **Notes** (Obsidian) and **Image** (PNG, SVG). Pick a format, set its options if it has any, then **Export**. The window reopens on the last format used.
+Formats are grouped by use: **Backup** (ZIP, JSON), **Graph** (GraphML, GEXF, GML, DOT, ANX), **Data** (CSV, GeoJSON), **Notes** (Obsidian) and **Image** (PNG, SVG, PDF). Pick a format, set its options if it has any, then **Export**. The window reopens on the last format used.
 
 ## Redacted Export
 
@@ -89,6 +89,8 @@ Content:
   "links": [ ... ]
 }
 ```
+
+The file is indented to stay readable. Check **Compact (no formatting)** to write it on one line: it is smaller, and imports back the same way.
 
 ---
 
@@ -216,13 +218,13 @@ To copy only part of the graph: select at least two elements, then **right-click
 | Attached files | ❌ Not included |
 | Use | i2 Analyst's Notebook |
 
-The file opens directly in Analyst's Notebook, with no import specification. Canvas positions, colours, link direction and line width are preserved. Each element's first tag becomes its i2 entity type, further tags become attributes, and properties carry their type wherever i2 has an equivalent: numbers, dates and booleans survive, other types are sent as text.
+The file opens directly in Analyst's Notebook, with no import specification. Canvas positions, colours, link direction and line width are preserved. So is the route of links drawn by hand: with the **straight** curve, the bend points; with the **orthogonal** curve, the reshaped corners. They become the corners of the link in i2, which keeps them in place when entities move. An automatic route and curved links arrive straight: i2 lays them out freely. With **Multiple links** set to "Single" or "One per direction" (Views panel), the links of a pair are sent with that multiplicity: Analyst's Notebook shows them merged the same way. Each element's first tag becomes its i2 entity type, further tags become attributes, and properties carry their type wherever i2 has an equivalent: numbers, dates and booleans survive, other types are sent as text.
 
 The properties shown on the canvas (**Views** panel) reach i2 with **Show on chart**, **Value** and **Class name** ticked: they show under the entity or link ("Brand Audi A6 estate") with no setting in Analyst's Notebook. The other properties are sent without being shown. Numbers keep their decimals. When two entities are merged in i2, texts are combined with a space, numbers are added (i2's default, coordinates included), the latest date is kept and flags are combined with an OR.
 
 **Images**: the first image attached to an element shows in Analyst's Notebook instead of its type's icon. It is reduced to 128 pixels at most and made square (transparent edges), then embedded in the file as a custom icon: nothing to install. Analyst's Notebook copies these icons into its icon library, **on the computer that opens the file**, where they remain after the chart is deleted: keep this in mind for photos of people. Each image is named after its content, so that another chart never shows another's image. A redacted export carries no image.
 
-**Options**: **Element images** and **Shown properties**, ticked by default, decide whether the images and the display of properties on the chart are part of the export. Unticked, the images are not sent, and every property reaches i2 without being shown.
+**Options**: **Element images**, **Shown properties** and **Link routes**, ticked by default, decide whether the images, the display of properties on the chart and the corners of links are part of the export. Unticked, the images are not sent, every property reaches i2 without being shown, and every link arrives straight.
 
 Some ZeroNeurone notions have no i2 counterpart and are not carried over. Groups and annotations are not exported; elements inside a group are placed at their actual position and keep the group name in an attribute. A geographic area is reduced to its centre point, a date range to two attributes, and shapes, custom sizes and attached media other than the first image are lost. A link with an endpoint that is not exported is dropped, so that no reference points at nothing.
 
@@ -334,6 +336,30 @@ The image shows the part of the canvas on screen, without the grid or the minima
 {{< hint info >}}
 Ideal format for high-quality printing and graphic editing.
 {{< /hint >}}
+
+---
+
+### PDF (Print)
+
+**The graph on one sheet**, A0 to A4, to print or save as PDF.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.pdf` (through the browser) |
+| Content | Vector graphic on white |
+| Sizes | A0, A1, A2, A3, A4 |
+| Orientation | Auto, Portrait, Landscape |
+| Usage | Plotter, wall display, paper file |
+
+**Export** opens the browser's print window. To get a file, choose **Save as PDF** as the destination. The graph is fitted to the sheet, with a 10 mm margin. In **Auto**, the sheet is turned the way the graph is drawn.
+
+Shapes, links and text stay vector: sharp at any size. The images of the elements come from their original files, at the resolution needed for 300 dpi on the chosen sheet (4096 pixels at most). Other attached files (PDF, documents) keep their thumbnail.
+
+{{< hint warning >}}
+Chrome and Edge follow the sheet size. Firefox and Safari may fall back to their default size: check the size and the scale (100%) in the print window.
+{{< /hint >}}
+
+For a faithful print, leave the margins on **Default**. The more spread out the graph, the more it is reduced on the sheet: for a large dossier, pick a larger size or a filtered view.
 
 ---
 

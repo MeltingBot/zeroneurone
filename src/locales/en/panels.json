@@ -603,6 +603,15 @@
     "sizeByDegree": "Element size by number of links",
     "links": "Links",
     "linkShape": "Shape",
+    "linkMultiplicity": "Multiple links",
+    "multiplicity": {
+      "multiple": "Separate",
+      "single": "Single",
+      "directed": "One per direction",
+      "multipleHint": "Each link has its own line",
+      "singleHint": "One line for all the links between two elements",
+      "directedHint": "One line per direction"
+    },
     "linkCurves": "Curves",
     "linkStraight": "Straight",
     "linkOrthogonal": "Right angles",

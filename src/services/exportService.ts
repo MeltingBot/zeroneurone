@@ -161,7 +161,9 @@ class ExportService {
     views?: View[],
     queries?: SavedQuery[],
     queryHistory?: string[],
-    comments?: Comment[]
+    comments?: Comment[],
+    /** One line, no indentation: a smaller file (the ZIP compresses it anyway) */
+    compact = false
   ): string {
     // Strip local-only viewport from tabs before export
     const exportTabs = tabs?.map(({ viewport: _v, ...rest }) => rest);
@@ -183,7 +185,7 @@ class ExportService {
       tagSets: tagSets.length > 0 ? tagSets : undefined,
       customIcons: customIcons.length > 0 ? customIcons : undefined,
     };
-    return JSON.stringify(data, null, 2);
+    return JSON.stringify(data, null, compact ? undefined : 2);
   }
 
   /**
@@ -898,6 +900,7 @@ ${edges}
     csvOptions?: CSVExportOptions,
     anxOptions?: ANXExportOptions,
     redact = false,
+    jsonCompact = false,
   ): Promise<void> {
     if (redact) {
       ({ dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments } =
@@ -914,7 +917,7 @@ ${edges}
         break;
       }
       case 'json': {
-        const json = this.exportToJSON(dossier, elements, links, undefined, undefined, tabs, views, queries, queryHistory, comments);
+        const json = this.exportToJSON(dossier, elements, links, undefined, undefined, tabs, views, queries, queryHistory, comments, jsonCompact);
         this.download(json, `${baseName}.json`, 'application/json');
         break;
       }
@@ -951,7 +954,7 @@ ${edges}
       }
       case 'anx': {
         const images = anxOptions?.images === false ? undefined : await this.anxImages(elements, assets ?? []);
-        const anx = buildANXExport(dossier, elements, links, images, { shownProperties: anxOptions?.shownProperties !== false });
+        const anx = buildANXExport(dossier, elements, links, images, { shownProperties: anxOptions?.shownProperties !== false, routes: anxOptions?.routes !== false });
         this.download(anx, `${baseName}.anx`, 'application/xml');
         break;
       }

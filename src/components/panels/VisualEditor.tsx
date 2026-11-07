@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ElementVisual, ElementShape, FontSize } from '../../types';
-import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
+import { DEFAULT_COLORS, FONT_SIZE_PX, LINE_WIDTHS } from '../../types';
 
 interface VisualEditorProps {
   visual: ElementVisual;
@@ -19,7 +19,6 @@ const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xl', label: 'XL' },
 ];
 
-const BORDER_WIDTHS = [1, 2, 3, 4, 5];
 const BORDER_STYLES = ['solid', 'dashed', 'dotted'] as const;
 
 export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps) {
@@ -178,7 +177,7 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
           <span className="text-xs text-text-tertiary">{visual.borderWidth ?? 2}px</span>
         </div>
         <div className="flex gap-1">
-          {BORDER_WIDTHS.map((width) => (
+          {LINE_WIDTHS.map((width) => (
             <button
               key={width}
               onClick={() => handleBorderWidthChange(width)}

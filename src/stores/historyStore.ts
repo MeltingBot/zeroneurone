@@ -242,6 +242,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         if (action.undo.positions) {
           await store.updateElementPositions(action.undo.positions);
         }
+        // Then the routes drawn by hand the move had cleared (automatic layout)
+        for (const { id, changes } of action.undo.bulkLinks || []) {
+          await store.updateLink(id, changes);
+        }
         break;
 
       case 'extract-to-element':
@@ -511,6 +515,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       case 'move-element':
         if (action.redo.positions) {
           await store.updateElementPositions(action.redo.positions);
+        }
+        for (const call of action.redo.bulkCalls || []) {
+          if (call.kind === 'links') await store.updateLinks(call.ids, call.changes as Parameters<typeof store.updateLinks>[1]);
         }
         break;
 

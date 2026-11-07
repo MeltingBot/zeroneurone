@@ -12,7 +12,7 @@ Sauvegardez et partagez vos dossiers dans différents formats.
 
 Menu **⋯** → **Exporter**
 
-Les formats sont rangés par usage : **Sauvegarde** (ZIP, JSON), **Graphe** (GraphML, GEXF, GML, DOT, ANX), **Données** (CSV, GeoJSON), **Notes** (Obsidian) et **Image** (PNG, SVG). Choisissez un format, réglez ses options s'il en a, puis **Exporter**. La fenêtre se rouvre sur le dernier format utilisé.
+Les formats sont rangés par usage : **Sauvegarde** (ZIP, JSON), **Graphe** (GraphML, GEXF, GML, DOT, ANX), **Données** (CSV, GeoJSON), **Notes** (Obsidian) et **Image** (PNG, SVG, PDF). Choisissez un format, réglez ses options s'il en a, puis **Exporter**. La fenêtre se rouvre sur le dernier format utilisé.
 
 ## Export caviardé
 
@@ -89,6 +89,8 @@ Contenu :
   "links": [ ... ]
 }
 ```
+
+Le fichier est indenté pour rester lisible. Cochez **Compact (sans mise en forme)** pour l'écrire sur une ligne : il est plus petit, et se réimporte de la même façon.
 
 ---
 
@@ -216,13 +218,13 @@ Pour copier seulement une partie du graphe : sélectionnez au moins deux éléme
 | Fichiers joints | ❌ Non inclus |
 | Usage | i2 Analyst's Notebook |
 
-Le fichier s'ouvre directement dans Analyst's Notebook, sans spécification d'import. Les positions du canvas, les couleurs, la direction et l'épaisseur des liens sont conservées. Le premier tag de chaque élément devient son type d'entité i2, les tags suivants deviennent des attributs, et les propriétés sont transmises avec leur type lorsque i2 possède un équivalent : les nombres, les dates et les booléens sont préservés, les autres types sont transmis en texte.
+Le fichier s'ouvre directement dans Analyst's Notebook, sans spécification d'import. Les positions du canvas, les couleurs, la direction et l'épaisseur des liens sont conservées. Le tracé des liens dessiné à la main aussi : en courbure **droit**, les points de cassure ; en courbure **orthogonal**, les angles retouchés. Ils deviennent les coins du lien dans i2, qui les garde en place quand les entités bougent. Un tracé automatique et les liens courbes arrivent droits : i2 les dispose librement. Avec **Liens multiples** sur « Un seul » ou « Un par sens » (panneau Vues), les liens d'une même paire sont transmis avec cette multiplicité : Analyst's Notebook les affiche réunis de la même façon. Le premier tag de chaque élément devient son type d'entité i2, les tags suivants deviennent des attributs, et les propriétés sont transmises avec leur type lorsque i2 possède un équivalent : les nombres, les dates et les booléens sont préservés, les autres types sont transmis en texte.
 
 Les propriétés affichées sur le canvas (panneau **Vues**) arrivent dans i2 avec **Afficher sur graphe**, **Valeur** et **Nom de classe** cochés : elles s'affichent sous l'entité ou le lien (« Marque Audi A6 break ») sans réglage dans Analyst's Notebook. Les autres propriétés sont transmises sans être affichées. Les nombres gardent leurs décimales. Quand deux entités sont fusionnées dans i2, les textes sont combinés avec un espace, les nombres additionnés (réglage par défaut d'i2, coordonnées comprises), la date la plus récente est gardée et les booléens combinés par un OU.
 
 **Images** : la première image jointe à un élément s'affiche dans Analyst's Notebook à la place de l'icône de son type. Elle est réduite à 128 pixels au plus et rendue carrée (bords transparents), puis intégrée au fichier sous la forme d'une icône personnalisée : rien à installer. Analyst's Notebook copie ces icônes dans sa bibliothèque d'icônes, **sur le poste qui ouvre le fichier**, où elles restent après la suppression du graphe : pensez-y pour des photos de personnes. Chaque image porte un nom tiré de son contenu, de sorte qu'un autre graphe n'affiche jamais l'image d'un autre. Un export caviardé ne contient aucune image.
 
-**Options** : **Images des éléments** et **Propriétés affichées**, cochées par défaut, décident si les images et l'affichage des propriétés sur le graphe font partie de l'export. Décochées, les images ne sont pas transmises, et toutes les propriétés arrivent dans i2 sans être affichées.
+**Options** : **Images des éléments**, **Propriétés affichées** et **Tracé des liens**, cochées par défaut, décident si les images, l'affichage des propriétés sur le graphe et les coins des liens font partie de l'export. Décochées, les images ne sont pas transmises, toutes les propriétés arrivent dans i2 sans être affichées, et tous les liens arrivent droits.
 
 Certaines notions de ZeroNeurone n'ont pas d'équivalent dans i2 et ne sont pas transmises. Les groupes et les annotations ne sont pas exportés ; les éléments contenus dans un groupe sont placés à leur position réelle et conservent le nom du groupe dans un attribut. Une zone géographique est réduite à son point central, une plage de dates à deux attributs, et les formes, les tailles personnalisées et les médias joints autres que la première image sont perdus. Un lien dont une extrémité n'est pas exportée est omis, pour ne pas produire de référence sans cible.
 
@@ -334,6 +336,30 @@ L'image reprend la partie du canvas affichée à l'écran, sans la grille ni la 
 {{< hint info >}}
 Format idéal pour l'impression haute qualité et l'édition graphique.
 {{< /hint >}}
+
+---
+
+### PDF (Impression)
+
+**Le graphe sur une feuille**, de A0 à A4, à imprimer ou à enregistrer en PDF.
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.pdf` (via le navigateur) |
+| Contenu | Graphique vectoriel sur fond blanc |
+| Formats | A0, A1, A2, A3, A4 |
+| Orientation | Auto, Portrait, Paysage |
+| Usage | Traceur, affichage mural, dossier papier |
+
+**Exporter** ouvre la fenêtre d'impression du navigateur. Pour obtenir un fichier, choisissez **Enregistrer au format PDF** comme destination. Le graphe est ajusté à la feuille, avec 10 mm de marge. En **Auto**, la feuille est tournée dans le sens du graphe.
+
+Formes, liens et textes restent vectoriels : nets à toute taille. Les images des éléments sont reprises de leurs fichiers d'origine, à la résolution nécessaire pour 300 dpi sur la feuille choisie (4096 pixels au plus). Les autres fichiers joints (PDF, documents) gardent leur miniature.
+
+{{< hint warning >}}
+Chrome et Edge respectent le format de feuille. Firefox et Safari peuvent revenir à leur format par défaut : vérifiez le format et l'échelle (100 %) dans la fenêtre d'impression.
+{{< /hint >}}
+
+Pour une impression fidèle, laissez les marges sur **Par défaut**. Plus le graphe est étalé, plus il est réduit sur la feuille : sur un grand dossier, préférez un format plus grand ou une vue filtrée.
 
 ---
 
