@@ -1,9 +1,29 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setupCleanEnvironment, waitForAppLoad } from './fixtures/test-utils';
 import { buildLargeDossierJson } from './fixtures/large-dossier';
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __znImport(path: string): Promise<any>;
+  }
+}
+
+/** Import an app module as the app loaded it (a reused dev server adds `?t=`) */
+const exposeImporter = (page: Page) =>
+  page.addInitScript(() => {
+    window.__znImport = (path: string) => {
+      const loaded = performance
+        .getEntriesByType('resource')
+        .map((e) => e.name)
+        .filter((name) => new URL(name).pathname === path);
+      return import(/* @vite-ignore */ loaded.length > 0 ? loaded[loaded.length - 1] : path);
+    };
+  });
+
 
 /**
  * A dense graph, with more links on screen than React Flow renders (800):
@@ -20,16 +40,17 @@ test.use({ viewport: { width: 1920, height: 1200 } });
 
 test('clicking an element keeps the links on screen', async ({ page }) => {
   test.setTimeout(300_000);
+  await exposeImporter(page);
   await setupCleanEnvironment(page);
   await waitForAppLoad(page);
   // The overview layer would draw everything on a canvas: test the DOM path
-  await page.evaluate(async () => (await import('/src/stores/uiStore.ts')).useUIStore.getState().setCanvasOverviewLayer(false));
+  await page.evaluate(async () => (await window.__znImport('/src/stores/uiStore.ts')).useUIStore.getState().setCanvasOverviewLayer(false));
   const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'dense.json');
   writeFileSync(file, buildLargeDossierJson(3000));
   await page.click('[data-testid="import-button"]');
   await page.setInputFiles('input[type="file"]', file);
   await page.waitForSelector('.react-flow__node', { timeout: 120_000 });
-  await page.evaluate(async () => (await import('/src/stores/viewStore.ts')).useViewStore.getState()
+  await page.evaluate(async () => (await window.__znImport('/src/stores/viewStore.ts')).useViewStore.getState()
     .requestViewportChange({ x: -800, y: -200, zoom: 0.2 }));
   await page.waitForTimeout(4000);
 
