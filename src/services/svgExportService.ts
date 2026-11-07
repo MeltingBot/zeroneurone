@@ -15,6 +15,8 @@ interface SVGExportSettings {
   assetDataUrls?: Map<string, string>;
   /** Dossier option: link labels wrap past this many characters. */
   linkLabelWrap?: number;
+  /** Fill behind the graph; null leaves it out (print on white paper). Default: canvas colour. */
+  background?: string | null;
 }
 
 interface NodeDimensions {
@@ -230,6 +232,15 @@ function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions, ima
   return `  <g id="node-${element.id}">\n    ${shapeSvg}\n    ${textSvg}\n  </g>`;
 }
 
+/** Height of the label bar under the image of a media node. */
+export const MEDIA_LABEL_BAR_HEIGHT = 18;
+
+/** Height of the image of a media node: the node minus its label bar. */
+export function mediaImageHeight(nodeHeight: number): number {
+  const height = nodeHeight - MEDIA_LABEL_BAR_HEIGHT;
+  return height > 0 ? height : nodeHeight;
+}
+
 function buildMediaNodeSVG(
   element: Element, pos: Position, dims: NodeDimensions,
   cx: number, cy: number,
@@ -238,8 +249,7 @@ function buildMediaNodeSVG(
 ): string {
   const label = element.label || 'Sans nom';
   const clipId = `clip-${element.id}`;
-  const labelBarHeight = 18;
-  const imageHeight = dims.height - labelBarHeight;
+  const labelBarHeight = MEDIA_LABEL_BAR_HEIGHT;
   const parts: string[] = [];
 
   // clipPath matching the shape (for clipping the image)
@@ -277,7 +287,7 @@ function buildMediaNodeSVG(
   parts.push(`    ${borderShape}`);
 
   // Embedded image — clipped to shape, preserveAspectRatio for contain
-  parts.push(`    <image href="${imageDataUrl}" x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${imageHeight > 0 ? imageHeight : dims.height}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`);
+  parts.push(`    <image href="${imageDataUrl}" x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${mediaImageHeight(dims.height)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`);
 
   // Label bar at bottom (only for rect/square shapes where it looks natural)
   const shape = element.visual.shape;
@@ -563,8 +573,11 @@ export function buildSVGExport(
   const svgParts: string[] = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}">`,
-    `  <rect x="${minX}" y="${minY}" width="${svgWidth}" height="${svgHeight}" fill="#faf8f5"/>`,
   ];
+  const background = settings.background === undefined ? '#faf8f5' : settings.background;
+  if (background) {
+    svgParts.push(`  <rect x="${minX}" y="${minY}" width="${svgWidth}" height="${svgHeight}" fill="${safeColor(background, '#faf8f5')}"/>`);
+  }
 
   if (groupSvgs.length > 0) {
     svgParts.push(`  <g id="groups">`);

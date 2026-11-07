@@ -12,7 +12,7 @@ Save and share your dossiers in various formats.
 
 Menu **⋯** → **Export**
 
-Formats are grouped by use: **Backup** (ZIP, JSON), **Graph** (GraphML, GEXF, GML, DOT, ANX), **Data** (CSV, GeoJSON), **Notes** (Obsidian) and **Image** (PNG, SVG). Pick a format, set its options if it has any, then **Export**. The window reopens on the last format used.
+Formats are grouped by use: **Backup** (ZIP, JSON), **Graph** (GraphML, GEXF, GML, DOT, ANX), **Data** (CSV, GeoJSON), **Notes** (Obsidian) and **Image** (PNG, SVG, PDF). Pick a format, set its options if it has any, then **Export**. The window reopens on the last format used.
 
 ## Redacted Export
 
@@ -334,6 +334,30 @@ The image shows the part of the canvas on screen, without the grid or the minima
 {{< hint info >}}
 Ideal format for high-quality printing and graphic editing.
 {{< /hint >}}
+
+---
+
+### PDF (Print)
+
+**The graph on one sheet**, A0 to A4, to print or save as PDF.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.pdf` (through the browser) |
+| Content | Vector graphic on white |
+| Sizes | A0, A1, A2, A3, A4 |
+| Orientation | Auto, Portrait, Landscape |
+| Usage | Plotter, wall display, paper file |
+
+**Export** opens the browser's print window. To get a file, choose **Save as PDF** as the destination. The graph is fitted to the sheet, with a 10 mm margin. In **Auto**, the sheet is turned the way the graph is drawn.
+
+Shapes, links and text stay vector: sharp at any size. The images of the elements come from their original files, at the resolution needed for 300 dpi on the chosen sheet (4096 pixels at most). Other attached files (PDF, documents) keep their thumbnail.
+
+{{< hint warning >}}
+Chrome and Edge follow the sheet size. Firefox and Safari may fall back to their default size: check the size and the scale (100%) in the print window.
+{{< /hint >}}
+
+For a faithful print, leave the margins on **Default**. The more spread out the graph, the more it is reduced on the sheet: for a large dossier, pick a larger size or a filtered view.
 
 ---
 

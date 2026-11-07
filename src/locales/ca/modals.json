@@ -143,6 +143,8 @@
       "pngDesc": "Captura visual amb elecció de resolució",
       "svg": "SVG (vectorial)",
       "svgDesc": "Imatge vectorial editable (Inkscape, Illustrator)",
+      "pdf": "PDF (impressió)",
+      "pdfDesc": "Graf vectorial en un full, d'A0 a A4",
       "anx": "ANX (i2 Analyst's Notebook)",
       "anxDesc": "Gràfic per a i2 (posicions, colors, atributs)",
       "obsidian": "Obsidian (caixa forta ZIP)",
@@ -195,6 +197,13 @@
     },
     "png": {
       "transparent": "Fons transparent"
+    },
+    "pdf": {
+      "paper": "Paper",
+      "orientation": "Orientació",
+      "auto": "Auto",
+      "portrait": "Vertical",
+      "landscape": "Horitzontal"
     },
     "csv": {
       "content": "Contingut",

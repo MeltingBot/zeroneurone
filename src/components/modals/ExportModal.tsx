@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { X, FileSpreadsheet, FileArchive, Image, Eye, EyeOff, Network, NotebookText } from 'lucide-react';
 import { exportService, type CSVExportOptions, type ExportFormat } from '../../services/exportService';
 import type { ANXExportOptions } from '../../services/exportANX';
-import { buildSVGExport } from '../../services/svgExportService';
+import { buildSVGExport, computeNodeLayout, mediaImageHeight } from '../../services/svgExportService';
+import { buildPrintHtml, pageSize, printHtml, printImageDataUrl, printPixelsPerUnit, svgSize, PAPER_SIZES, type PaperOrientation, type PaperSize } from '../../services/printExportService';
 import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { fileService } from '../../services/fileService';
 import { reportRepository, tabRepository } from '../../db/repositories';
@@ -23,7 +24,7 @@ interface ExportModalProps {
 }
 
 type CategoryId = 'backup' | 'graph' | 'data' | 'notes' | 'image';
-type FormatId = ExportFormat | 'png' | 'svg';
+type FormatId = ExportFormat | 'png' | 'svg' | 'pdf';
 
 /** Formats by use, in the order of the user documentation. */
 const CATEGORIES: { id: CategoryId; icon: typeof FileArchive; formats: { id: FormatId; ext: string }[] }[] = [
@@ -48,6 +49,7 @@ const CATEGORIES: { id: CategoryId; icon: typeof FileArchive; formats: { id: For
   { id: 'image', icon: Image, formats: [
     { id: 'png', ext: '.png' },
     { id: 'svg', ext: '.svg' },
+    { id: 'pdf', ext: '.pdf' },
   ] },
 ];
 
@@ -55,6 +57,19 @@ const PNG_SCALES = [1, 2, 3, 4] as const;
 const PNG_SCALE_KEYS: Record<number, string> = { 1: '1x', 2: '2x', 3: '3x', 4: '4x' };
 /** Last format chosen, per viewer: the modal reopens on it. */
 const LAST_FORMAT_KEY = 'zn.export.lastFormat';
+/** Last sheet size chosen for the PDF, per viewer. */
+const LAST_PAPER_KEY = 'zn.export.lastPaper';
+const PAPER_ORIENTATIONS: PaperOrientation[] = ['auto', 'portrait', 'landscape'];
+
+function readLastPaper(): PaperSize {
+  try {
+    const saved = localStorage.getItem(LAST_PAPER_KEY);
+    if (saved && (PAPER_SIZES as string[]).includes(saved)) return saved as PaperSize;
+  } catch {
+    // Storage unavailable: default size
+  }
+  return 'A4';
+}
 
 function readLastFormat(): { category: CategoryId; format: FormatId } {
   try {
@@ -76,6 +91,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [obsidianByTag, setObsidianByTag] = useState(true);
   const [pngScale, setPngScale] = useState(2);
   const [pngTransparent, setPngTransparent] = useState(false);
+  const [paper, setPaper] = useState<PaperSize>(readLastPaper);
+  const [orientation, setOrientation] = useState<PaperOrientation>('auto');
   const [csvContent, setCsvContent] = useState<NonNullable<CSVExportOptions['content']>>('all');
   const [csvDelimiter, setCsvDelimiter] = useState<NonNullable<CSVExportOptions['delimiter']>>(',');
   const [csvExcel, setCsvExcel] = useState(false);
@@ -248,34 +265,72 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     }
   }, [currentDossier, pngTransparent, redact, onClose, t]);
 
+  /**
+   * The graph as vector SVG, drawn as on the canvas (redacted when asked).
+   * With `pixelsPerUnit`, the images of the elements come from their original
+   * files at that resolution instead of the 200 px thumbnails (print).
+   */
+  const buildCanvasSvg = useCallback(async (background?: string | null, pixelsPerUnit?: number) => {
+    if (!currentDossier) return '';
+    // Fetch assets to embed media thumbnails in SVG nodes (none in a redacted export)
+    const assets = redact ? [] : await fileService.getAssetsByDossier(currentDossier.id);
+    const assetDataUrls = new Map<string, string>();
+    for (const asset of assets) {
+      if (asset.thumbnailDataUrl) {
+        assetDataUrls.set(asset.id, asset.thumbnailDataUrl);
+      }
+    }
+
+    const data = redact ? redactExport({ dossier: currentDossier, elements, links }) : { elements, links };
+    const settings = currentDossier.settings;
+    // Drawn as on the canvas: larger with more links when the option is on
+    const shownElements = currentDossier.settings?.sizeByDegree
+      ? scaleElementsByDegree(data.elements, data.links, (el) =>
+        Boolean(el.assetIds?.[0] && assetDataUrls.has(el.assetIds[0])) && el.visual.hideMedia !== true)
+      : data.elements;
+    if (pixelsPerUnit) {
+      // Largest frame each image is drawn in on the sheet, in print pixels
+      const { dimensions } = computeNodeLayout(shownElements);
+      const frames = new Map<string, { width: number; height: number }>();
+      for (const el of shownElements) {
+        const assetId = el.assetIds?.[0];
+        const dims = dimensions.get(el.id);
+        if (!assetId || !dims || !assetDataUrls.has(assetId)) continue;
+        const frame = frames.get(assetId);
+        frames.set(assetId, {
+          width: Math.max(frame?.width ?? 0, Math.ceil(dims.width * pixelsPerUnit)),
+          height: Math.max(frame?.height ?? 0, Math.ceil(mediaImageHeight(dims.height) * pixelsPerUnit)),
+        });
+      }
+      const byId = new Map(assets.map((a) => [a.id, a]));
+      for (const [assetId, frame] of frames) {
+        const asset = byId.get(assetId);
+        if (!asset) continue;
+        try {
+          const url = await printImageDataUrl(await fileService.getAssetFile(asset), frame);
+          if (url) assetDataUrls.set(assetId, url);
+        } catch (err) {
+          // Unreadable file: its thumbnail stays
+          console.warn('Print image unavailable:', asset.filename, err);
+        }
+      }
+    }
+    return buildSVGExport(shownElements, data.links, {
+      // Same default as the canvas
+      linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
+      linkCurveMode: settings?.linkCurveMode ?? 'curved',
+      assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
+      linkLabelWrap: currentDossier.options?.linkLabelWrap,
+      background,
+    });
+  }, [currentDossier, elements, links, redact]);
+
   const handleExportSvg = useCallback(async () => {
     if (!currentDossier) return;
 
     setIsProcessing(true);
     try {
-      // Fetch assets to embed media thumbnails in SVG nodes (none in a redacted export)
-      const assets = redact ? [] : await fileService.getAssetsByDossier(currentDossier.id);
-      const assetDataUrls = new Map<string, string>();
-      for (const asset of assets) {
-        if (asset.thumbnailDataUrl) {
-          assetDataUrls.set(asset.id, asset.thumbnailDataUrl);
-        }
-      }
-
-      const data = redact ? redactExport({ dossier: currentDossier, elements, links }) : { elements, links };
-      const settings = currentDossier.settings;
-      // Drawn as on the canvas: larger with more links when the option is on
-      const shownElements = currentDossier.settings?.sizeByDegree
-        ? scaleElementsByDegree(data.elements, data.links, (el) =>
-          Boolean(el.assetIds?.[0] && assetDataUrls.has(el.assetIds[0])) && el.visual.hideMedia !== true)
-        : data.elements;
-      const svgString = buildSVGExport(shownElements, data.links, {
-        // Same default as the canvas
-        linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
-        linkCurveMode: settings?.linkCurveMode ?? 'curved',
-        assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
-        linkLabelWrap: currentDossier.options?.linkLabelWrap,
-      });
+      const svgString = await buildCanvasSvg();
       const baseName = redact ? REDACTED_FILE_BASE : currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
       exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
       emitExport('svg', redact ? { redacted: true } : undefined, currentDossier.id);
@@ -287,7 +342,32 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, redact, onClose, t]);
+  }, [currentDossier, buildCanvasSvg, redact, onClose, t]);
+
+  // Printed from the browser: "Save as PDF" in its dialog writes the file
+  const handleExportPdf = useCallback(async () => {
+    if (!currentDossier) return;
+
+    setIsProcessing(true);
+    try {
+      // On white paper: no canvas-coloured fill over the whole sheet. A first
+      // draw gives the scale on the sheet, the images are then sized for it
+      const draft = await buildCanvasSvg(null);
+      const svgString = await buildCanvasSvg(null, printPixelsPerUnit(draft, { paper, orientation }));
+      const baseName = redact ? REDACTED_FILE_BASE : currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
+      await printHtml(buildPrintHtml(svgString, { paper, orientation, title: `${baseName}_canvas_${paper}` }));
+      // Sent once the print window closes, printed or not: the browser does not tell
+      const sheet = pageSize(paper, orientation, svgSize(svgString));
+      const meta = { paper, orientation: sheet.width > sheet.height ? 'landscape' : 'portrait' };
+      emitExport('pdf', redact ? { ...meta, redacted: true } : meta, currentDossier.id);
+      onClose();
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      toast.error(t('export.error'));
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [currentDossier, buildCanvasSvg, paper, orientation, redact, onClose, t]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -307,6 +387,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const chooseFormat = (id: FormatId) => {
     setFormat(id);
     try { localStorage.setItem(LAST_FORMAT_KEY, id); } catch { /* per-viewer convenience only */ }
+  };
+  const choosePaper = (size: PaperSize) => {
+    setPaper(size);
+    try { localStorage.setItem(LAST_PAPER_KEY, size); } catch { /* per-viewer convenience only */ }
   };
   const chooseCategory = (id: CategoryId) => {
     setCategory(id);
@@ -332,6 +416,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     switch (format) {
       case 'png': return handleExportPng(pngScale);
       case 'svg': return handleExportSvg();
+      case 'pdf': return handleExportPdf();
       case 'zip': return zipEncrypted ? handleExportEncryptedZip() : handleExport('zip');
       case 'obsidian': return handleExport('obsidian', obsidianByTag);
       case 'csv': return handleExport('csv', undefined, { content: csvContent, delimiter: csvDelimiter, excel: csvExcel });
@@ -571,6 +656,23 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                   })), setPngScale)}
                 </div>
                 {checkbox(pngTransparent, setPngTransparent, t('export.png.transparent'))}
+              </div>
+            )}
+
+            {format === 'pdf' && (
+              <div className="space-y-3">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                <div className="flex items-center gap-3">
+                  <span className={fieldLabel}>{t('export.pdf.paper')}</span>
+                  {segmented(paper, PAPER_SIZES.map((size) => ({ value: size, label: size })), choosePaper)}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={fieldLabel}>{t('export.pdf.orientation')}</span>
+                  {segmented(orientation, PAPER_ORIENTATIONS.map((o) => ({
+                    value: o,
+                    label: t(`export.pdf.${o}`),
+                  })), setOrientation)}
+                </div>
               </div>
             )}
           </div>

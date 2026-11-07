@@ -143,6 +143,8 @@
       "pngDesc": "Kaptura bisuala bereizmen aukerarekin",
       "svg": "SVG (bektoriala)",
       "svgDesc": "Irudi bektorial editagarria (Inkscape, Illustrator)",
+      "pdf": "PDF (inprimatzea)",
+      "pdfDesc": "Grafo bektoriala orri batean, A0tik A4ra",
       "anx": "ANX (i2 Analyst's Notebook)",
       "anxDesc": "i2rako grafikoa (kokapenak, koloreak, atributuak)",
       "obsidian": "Obsidian (ZIP biltegia)",
@@ -195,6 +197,13 @@
     },
     "png": {
       "transparent": "Atzeko plano gardena"
+    },
+    "pdf": {
+      "paper": "Papera",
+      "orientation": "Orientazioa",
+      "auto": "Auto",
+      "portrait": "Bertikala",
+      "landscape": "Horizontala"
     },
     "csv": {
       "content": "Edukia",

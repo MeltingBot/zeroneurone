@@ -12,7 +12,7 @@ Sauvegardez et partagez vos dossiers dans différents formats.
 
 Menu **⋯** → **Exporter**
 
-Les formats sont rangés par usage : **Sauvegarde** (ZIP, JSON), **Graphe** (GraphML, GEXF, GML, DOT, ANX), **Données** (CSV, GeoJSON), **Notes** (Obsidian) et **Image** (PNG, SVG). Choisissez un format, réglez ses options s'il en a, puis **Exporter**. La fenêtre se rouvre sur le dernier format utilisé.
+Les formats sont rangés par usage : **Sauvegarde** (ZIP, JSON), **Graphe** (GraphML, GEXF, GML, DOT, ANX), **Données** (CSV, GeoJSON), **Notes** (Obsidian) et **Image** (PNG, SVG, PDF). Choisissez un format, réglez ses options s'il en a, puis **Exporter**. La fenêtre se rouvre sur le dernier format utilisé.
 
 ## Export caviardé
 
@@ -334,6 +334,30 @@ L'image reprend la partie du canvas affichée à l'écran, sans la grille ni la 
 {{< hint info >}}
 Format idéal pour l'impression haute qualité et l'édition graphique.
 {{< /hint >}}
+
+---
+
+### PDF (Impression)
+
+**Le graphe sur une feuille**, de A0 à A4, à imprimer ou à enregistrer en PDF.
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.pdf` (via le navigateur) |
+| Contenu | Graphique vectoriel sur fond blanc |
+| Formats | A0, A1, A2, A3, A4 |
+| Orientation | Auto, Portrait, Paysage |
+| Usage | Traceur, affichage mural, dossier papier |
+
+**Exporter** ouvre la fenêtre d'impression du navigateur. Pour obtenir un fichier, choisissez **Enregistrer au format PDF** comme destination. Le graphe est ajusté à la feuille, avec 10 mm de marge. En **Auto**, la feuille est tournée dans le sens du graphe.
+
+Formes, liens et textes restent vectoriels : nets à toute taille. Les images des éléments sont reprises de leurs fichiers d'origine, à la résolution nécessaire pour 300 dpi sur la feuille choisie (4096 pixels au plus). Les autres fichiers joints (PDF, documents) gardent leur miniature.
+
+{{< hint warning >}}
+Chrome et Edge respectent le format de feuille. Firefox et Safari peuvent revenir à leur format par défaut : vérifiez le format et l'échelle (100 %) dans la fenêtre d'impression.
+{{< /hint >}}
+
+Pour une impression fidèle, laissez les marges sur **Par défaut**. Plus le graphe est étalé, plus il est réduit sur la feuille : sur un grand dossier, préférez un format plus grand ou une vue filtrée.
 
 ---
 
