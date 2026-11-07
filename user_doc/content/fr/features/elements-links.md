@@ -146,6 +146,21 @@ Pour que les libellés longs passent à la ligne, cochez **Retour à la ligne de
 | **Épaisseur** | Fine, normale, épaisse |
 | **Taille du texte** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
+### Tracé à angles droits
+
+Avec la courbure **orthogonal** (panneau Vue, Style des liens), un lien sélectionné porte une poignée sur chacun de ses segments.
+
+| Geste | Effet |
+|-------|-------|
+| Glisser une poignée | Déplace le segment, les angles restent droits |
+| Glisser la poignée d'un segment collé à un élément | Crée un décrochement : le bout contre l'élément reste en place |
+| Double-cliquer une poignée | Coupe le segment en deux, chaque moitié se déplace seule |
+| Réaligner deux segments | Ils se rejoignent (aimantation près de l'alignement) |
+
+Le tracé est gardé quand les éléments bougent : seuls les bouts suivent l'élément. Le premier tracé à la main fixe les côtés de départ et d'arrivée du lien, que l'ancrage automatique ne change plus. **Réinitialiser le tracé** (clic droit sur le lien) revient au tracé automatique. Chaque modification s'annule par Ctrl+Z.
+
+Le tracé dessiné apparaît dans les exports SVG, PDF et rapport interactif. Sur un grand graphe dessiné en vue simplifiée, les liens restent droits.
+
 
 ---
 

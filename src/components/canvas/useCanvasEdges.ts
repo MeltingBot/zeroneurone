@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import type { Edge, Node } from '@xyflow/react';
 
-import type { EvaluationModel, Link, Position } from '../../types';
+import type { EvaluationModel, Link, OrthogonalRoute, Position } from '../../types';
+import type { RouteHandles } from './CustomEdge';
 import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { formatPropertyValue } from '../../utils/dates';
 import { computeHandleSlots as computeLinkHandleSlots, type HandleSlots } from '../../utils/edgeRouting';
@@ -18,6 +19,7 @@ const EMPTY_EDGES: Edge[] = [];
 interface EdgeCallbacks {
   onLabelChange: (newLabel: string) => void;
   onCurveOffsetChange: (offset: { x: number; y: number }) => void;
+  onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) => void;
 }
 
 /** Handle slots of every link, from the handles it is drawn between (see utils/edgeRouting). */
@@ -306,6 +308,8 @@ export function useCanvasEdges({
           false,
           handleSlots.get(link.id)
         );
+        (edge.data as { onOrthogonalRouteChange?: EdgeCallbacks['onOrthogonalRouteChange'] }).onOrthogonalRouteChange =
+          edgeCbs.onOrthogonalRouteChange;
       }
 
       const edgeData = edge.data as any;

@@ -195,6 +195,7 @@
       "suggestLinks": "Verbindungen vorschlagen",
       "openDetail": "Details öffnen"
     },
+    "linkSegmentHandle": "Ziehen: verschieben · Doppelklick: teilen",
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",
       "redo": "Wiederholen (Strg+Umschalt+Z)",

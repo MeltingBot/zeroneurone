@@ -195,6 +195,7 @@
       "suggestLinks": "Suggest links",
       "openDetail": "Open details"
     },
+    "linkSegmentHandle": "Drag: move · Double-click: split",
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",
       "redo": "Redo (Ctrl+Shift+Z)",

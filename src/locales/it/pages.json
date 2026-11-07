@@ -195,6 +195,7 @@
       "suggestLinks": "Suggerisci collegamenti",
       "openDetail": "Apri il dettaglio"
     },
+    "linkSegmentHandle": "Trascina: sposta · Doppio clic: dividi",
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",
       "redo": "Ripristina (Ctrl+Maiusc+Z)",

@@ -195,6 +195,7 @@
       "suggestLinks": "Zaproponuj połączenia",
       "openDetail": "Otwórz szczegóły"
     },
+    "linkSegmentHandle": "Przeciągnij: przesuń · Dwuklik: podziel",
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
       "redo": "Ponów (Ctrl+Shift+Z)",

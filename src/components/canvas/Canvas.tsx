@@ -14,7 +14,7 @@ import { DraggableMinimap } from './DraggableMinimap';
 import { CanvasGrid } from './CanvasGrid';
 import { SuggestionPreviewLines } from './SuggestionPreviewLines';
 import { AlignmentGuides, computeGuides } from './AlignmentGuides';
-import { CustomEdge } from './CustomEdge';
+import { CustomEdge, type RouteHandles } from './CustomEdge';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
@@ -35,7 +35,7 @@ import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore } from '../../stores';
-import type { Element, Position, Asset } from '../../types';
+import type { Element, OrthogonalRoute, Position, Asset } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
@@ -1319,18 +1319,48 @@ export function Canvas() {
     [updateLink, linkCurveMode]
   );
 
+  // Right-angle route drawn by hand: saved with undo. Its ends stay on the sides it was drawn
+  // from (auto anchors would turn them as nodes move and undo the drawing).
+  const handleOrthogonalRouteChange = useCallback(
+    (linkId: string, route: OrthogonalRoute, handles: RouteHandles) => {
+      const link = linkMap.get(linkId);
+      if (!link) return;
+      const pinAnchors = (link.anchorMode ?? linkAnchorMode) === 'auto';
+      const changes = {
+        orthogonalRoute: route,
+        ...(pinAnchors ? { anchorMode: 'manual' as const, ...handles } : {}),
+      };
+      const previous = {
+        orthogonalRoute: link.orthogonalRoute ?? null,
+        ...(pinAnchors
+          ? { anchorMode: link.anchorMode ?? null, sourceHandle: link.sourceHandle ?? null, targetHandle: link.targetHandle ?? null }
+          : {}),
+      };
+      updateLink(linkId, changes);
+      pushAction({
+        type: 'update-link',
+        undo: { linkId, linkChanges: previous },
+        redo: { linkId, linkChanges: changes },
+      });
+    },
+    [linkMap, linkAnchorMode, updateLink, pushAction]
+  );
+
   // --- Stable edge callback refs (eliminates closure recreations per edge recalc) ---
   const handleLinkLabelChangeRef = useRef(handleLinkLabelChange);
   const handleCurveOffsetChangeRef = useRef(handleCurveOffsetChange);
+  const handleOrthogonalRouteChangeRef = useRef(handleOrthogonalRouteChange);
 
   useEffect(() => {
     handleLinkLabelChangeRef.current = handleLinkLabelChange;
     handleCurveOffsetChangeRef.current = handleCurveOffsetChange;
+    handleOrthogonalRouteChangeRef.current = handleOrthogonalRouteChange;
   });
 
   const edgeCallbacksCache = useRef(new Map<string, {
     onLabelChange: (newLabel: string) => void;
     onCurveOffsetChange: (offset: { x: number; y: number }) => void;
+    onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) => void;
   }>());
 
   function getEdgeCallbacks(linkId: string) {
@@ -1339,6 +1369,8 @@ export function Canvas() {
       cached = {
         onLabelChange: (newLabel: string) => handleLinkLabelChangeRef.current(linkId, newLabel),
         onCurveOffsetChange: (offset: { x: number; y: number }) => handleCurveOffsetChangeRef.current(linkId, offset),
+        onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) =>
+          handleOrthogonalRouteChangeRef.current(linkId, route, handles),
       };
       edgeCallbacksCache.current.set(linkId, cached);
     }
@@ -3348,12 +3380,27 @@ export function Canvas() {
               onResetRoute={(() => {
                 // Offset of the current route style only (curves and right angles keep their own)
                 const menuLink = links.find((l) => l.id === linkContextMenu.linkId);
-                const offset = linkCurveMode === 'orthogonal' ? menuLink?.orthogonalOffset : menuLink?.curveOffset;
+                if (!menuLink) return undefined;
+                if (linkCurveMode === 'orthogonal') {
+                  // Right angles: the offset and the route drawn by hand, both back to automatic
+                  const offset = menuLink.orthogonalOffset;
+                  const moved = !!offset && (offset.x !== 0 || offset.y !== 0);
+                  if (!moved && !menuLink.orthogonalRoute) return undefined;
+                  return () => {
+                    const reset = { orthogonalOffset: null, orthogonalRoute: null };
+                    updateLink(menuLink.id, reset);
+                    pushAction({
+                      type: 'update-link',
+                      undo: { linkId: menuLink.id, linkChanges: { orthogonalOffset: offset ?? null, orthogonalRoute: menuLink.orthogonalRoute ?? null } },
+                      redo: { linkId: menuLink.id, linkChanges: reset },
+                    });
+                    closeLinkContextMenu();
+                  };
+                }
+                const offset = menuLink.curveOffset;
                 if (!offset || (offset.x === 0 && offset.y === 0)) return undefined;
                 return () => {
-                  updateLink(linkContextMenu.linkId, linkCurveMode === 'orthogonal'
-                    ? { orthogonalOffset: null }
-                    : { curveOffset: { x: 0, y: 0 } });
+                  updateLink(menuLink.id, { curveOffset: { x: 0, y: 0 } });
                   closeLinkContextMenu();
                 };
               })()}

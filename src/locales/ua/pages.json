@@ -195,6 +195,7 @@
       "suggestLinks": "Запропонувати зв'язки",
       "openDetail": "Відкрити деталі"
     },
+    "linkSegmentHandle": "Перетягніть: перемістити · Подвійний клік: розділити",
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",
       "redo": "Повторити (Ctrl+Shift+Z)",

@@ -195,6 +195,7 @@
       "suggestLinks": "Loturak iradoki",
       "openDetail": "Ireki xehetasuna"
     },
+    "linkSegmentHandle": "Arrastatu: mugitu · Klik bikoitza: zatitu",
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
       "redo": "Berregin (Ctrl+Shift+Z)",

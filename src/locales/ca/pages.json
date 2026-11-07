@@ -195,6 +195,7 @@
       "suggestLinks": "Suggerir enllaços",
       "openDetail": "Obre el detall"
     },
+    "linkSegmentHandle": "Arrossegar: moure · Doble clic: dividir",
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
       "redo": "Refer (Ctrl+Maj+Z)",

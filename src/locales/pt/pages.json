@@ -195,6 +195,7 @@
       "suggestLinks": "Sugerir ligações",
       "openDetail": "Abrir o detalhe"
     },
+    "linkSegmentHandle": "Arrastar: mover · Duplo clique: dividir",
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",
       "redo": "Refazer (Ctrl+Shift+Z)",

@@ -146,6 +146,21 @@ To make long labels wrap, check **Wrap link labels** in the same **Options**, th
 | **Thickness** | Thin, normal, thick |
 | **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
+### Right-angle route
+
+With the **orthogonal** curve (View panel, Link style), a selected link carries a handle on each of its segments.
+
+| Gesture | Effect |
+|---------|--------|
+| Drag a handle | Moves the segment, corners stay square |
+| Drag the handle of a segment attached to an element | Adds a step: the end against the element stays put |
+| Double-click a handle | Cuts the segment in two, each half moves on its own |
+| Line two segments up again | They join (snapping near the alignment) |
+
+The route is kept when elements move: only the ends follow the element. The first hand-drawn route pins the sides the link leaves and reaches, which auto anchoring no longer changes. **Reset route** (right-click on the link) goes back to the automatic route. Every change undoes with Ctrl+Z.
+
+The drawn route shows in the SVG, PDF and interactive report exports. On a large graph drawn in simplified view, links stay straight.
+
 
 ---
 

@@ -195,6 +195,7 @@
       "suggestLinks": "Suggérer des liens",
       "openDetail": "Ouvrir le détail"
     },
+    "linkSegmentHandle": "Glisser : déplacer · Double-clic : couper",
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",
       "redo": "Refaire (Ctrl+Shift+Z)",

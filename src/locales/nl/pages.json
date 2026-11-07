@@ -195,6 +195,7 @@
       "suggestLinks": "Verbindingen voorstellen",
       "openDetail": "Details openen"
     },
+    "linkSegmentHandle": "Slepen: verplaatsen · Dubbelklik: splitsen",
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
       "redo": "Opnieuw doen (Ctrl+Shift+Z)",

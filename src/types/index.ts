@@ -438,8 +438,23 @@ export interface Link {
    * Kept apart from curveOffset so a curve drawn by hand does not distort right-angle routes.
    */
   orthogonalOffset?: { x: number; y: number } | null;
+  /**
+   * Right-angle route drawn by hand (segment handles). When set, it replaces the automatic
+   * right-angle route and orthogonalOffset. Null or absent: automatic route.
+   */
+  orthogonalRoute?: OrthogonalRoute | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * Inner segments of a right-angle route drawn by hand, from the source side: the x of each vertical
+ * segment and the y of each horizontal one, in turn, starting with `first`. Values are relative to
+ * the middle of the link (between its two handles). See utils/orthogonalBends.
+ */
+export interface OrthogonalRoute {
+  first: 'x' | 'y';
+  positions: number[];
 }
 
 // ============================================================================
