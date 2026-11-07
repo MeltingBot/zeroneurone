@@ -58,6 +58,7 @@ Customize the appearance of each element:
 | **Shape** | Circle, square, diamond, hexagon |
 | **Size** | Small, medium, large |
 | **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
+| **Border** | Colour, style, width 1, 2, 3, 4 or 8 px |
 
 Select an element to show its resize handles. Hold **Alt (⌥)** while dragging a handle to **keep the aspect ratio**.
 
@@ -268,7 +269,7 @@ Organize your elements into visual **groups**.
 
 After a lasso selection (Shift + drag), right-click on the selection frame.
 
-The group appears as a frame containing its members, where they stand. Groups and elements already in a group are left out.
+The group appears as a frame containing its members, where they stand. Groups and elements already in a group are left out. Its colour (Detail panel, **Appearance**) lightly tints its background, on the canvas as in the exports.
 
 For scattered elements, **Group and gather** (same menu) first packs them in a grid around the centre of their spread, in reading order, so the group stays compact. **Group** moves nothing. A group already made is tightened with **Gather members** (below).
 

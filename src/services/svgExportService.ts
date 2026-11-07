@@ -1,6 +1,6 @@
 import type { Element, Link, Position, ElementSize } from '../types';
 import { GROUP_TINT } from '../types';
-import { bundleLine, bundleLinks, type LinkMultiplicity } from '../utils/linkBundles';
+import { bundleLine, bundleLinks, type LinkBundle, type LinkMultiplicity } from '../utils/linkBundles';
 import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
@@ -367,12 +367,34 @@ function buildAnnotationSVG(element: Element, pos: Position, dims: NodeDimension
   return `  <g id="annotation-${element.id}">\n    ${rectSvg}\n    ${textSvg}\n  </g>`;
 }
 
+/** Labels of a merged line, one per row around its label anchor, each behind a swatch. */
+function bundleLabelsSVG(bundle: LinkBundle, geometry: EdgeRoute): string[] {
+  const rows = bundle.links.filter((l) => l.label.trim());
+  if (rows.length === 0) return [];
+  const lineHeight = 15;
+  const swatch = 8;
+  const gap = 4;
+  // Centred on the anchor, as a single label is: width from the longest label (system font, ~6.5 px a character)
+  const width = swatch + gap + Math.max(...rows.map((l) => l.label.length)) * 6.5;
+  const left = geometry.labelX - width / 2;
+  const top = geometry.labelY - ((rows.length - 1) * lineHeight) / 2;
+  const font = `font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"`;
+  return rows.flatMap((l, i) => {
+    const y = top + i * lineHeight;
+    return [
+      `    <rect x="${left}" y="${y - swatch / 2}" width="${swatch}" height="${swatch}" rx="1.5" fill="${resolveColor(l.visual.color)}" stroke="#ffffff" stroke-width="1"/>`,
+      `    <text x="${left + swatch + gap}" y="${y}" dominant-baseline="middle" ${font} fill="#3d3833" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${escapeXml(l.label)}</text>`,
+    ];
+  });
+}
+
 function buildEdgeSVG(
   link: Link,
   geometry: EdgeRoute,
   hasStartArrow: boolean,
   hasEndArrow: boolean,
-  labelWrap?: number
+  labelWrap?: number,
+  bundle?: LinkBundle
 ): string {
   const color = resolveColor(link.visual.color);
   const thickness = link.visual.thickness ?? 2;
@@ -399,6 +421,10 @@ function buildEdgeSVG(
   if (link.label) {
     parts.push(`    <text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${svgLabelTspans(wrapLabelLines(link.label, labelWrap), geometry.labelX, geometry.labelY, 15, escapeXml)}</text>`);
   }
+
+  // Merged line: no hover on paper, so the labels of its links are written on it, each behind
+  // the colour of its link, as the canvas lists them
+  if (bundle) parts.push(...bundleLabelsSVG(bundle, geometry));
 
   return `  <g id="edge-${link.id}">\n${parts.join('\n')}\n  </g>`;
 }
@@ -548,7 +574,8 @@ export function buildSVGExport(
   const { shown, bundles } = bundleLinks(links, settings.linkMultiplicity);
   const drawnLinks = shown.map((l) => { const b = bundles.get(l.id); return b ? bundleLine(b) : l; });
   const edgeSvgs = computeLinkRoutes(drawnLinks, layout, settings)
-    .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap));
+    .map(({ link, route, hasStartArrow, hasEndArrow }) =>
+      buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap, bundles.get(link.id)));
 
   const assetDataUrls = settings.assetDataUrls;
   const groupSvgs = groups.map(g => buildGroupSVG(g, positionsMap.get(g.id)!, dimensionsMap.get(g.id)!));

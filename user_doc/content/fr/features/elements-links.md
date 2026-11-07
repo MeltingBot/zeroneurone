@@ -58,6 +58,7 @@ Personnalisez l'apparence de chaque élément :
 | **Forme** | Cercle, carré, losange, hexagone |
 | **Taille** | Petit, moyen, grand |
 | **Taille du texte** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
+| **Bordure** | Couleur, style, épaisseur 1, 2, 3, 4 ou 8 px |
 
 Sélectionnez un élément pour afficher ses poignées de redimensionnement. Maintenez **Alt (⌥)** pendant le glissement d'une poignée pour **conserver les proportions**.
 
@@ -268,7 +269,7 @@ Organisez vos éléments en **groupes** visuels.
 
 Après une sélection au lasso (Maj + glisser), le clic-droit se fait sur le cadre de sélection.
 
-Le groupe apparaît comme un cadre englobant ses membres, là où ils se trouvent. Les groupes et les éléments déjà dans un groupe ne sont pas repris.
+Le groupe apparaît comme un cadre englobant ses membres, là où ils se trouvent. Les groupes et les éléments déjà dans un groupe ne sont pas repris. Sa couleur (panneau Détail, **Apparence**) teinte légèrement son fond, sur le canvas comme dans les exports.
 
 Pour des éléments dispersés, **Grouper et rapprocher** (même menu) les range d'abord en grille autour du centre de leur ensemble, dans leur ordre de lecture : le groupe reste compact. **Grouper** ne déplace rien. Un groupe déjà créé se resserre avec **Rapprocher les membres** (ci-dessous).
 
