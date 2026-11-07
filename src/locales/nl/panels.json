@@ -603,6 +603,15 @@
     "sizeByDegree": "Grootte van elementen volgens aantal koppelingen",
     "links": "Verbindingen",
     "linkShape": "Vorm",
+    "linkMultiplicity": "Meerdere relaties",
+    "multiplicity": {
+      "multiple": "Apart",
+      "single": "Eén",
+      "directed": "Eén per richting",
+      "multipleHint": "Elke relatie heeft een eigen lijn",
+      "singleHint": "Eén lijn voor alle relaties tussen twee elementen",
+      "directedHint": "Eén lijn per richting"
+    },
     "linkCurves": "Curven",
     "linkStraight": "Recht",
     "linkOrthogonal": "Rechte hoeken",

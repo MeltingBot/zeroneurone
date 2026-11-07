@@ -61,6 +61,7 @@ import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 import { hexToRgb } from '../utils/themeColors';
 import type { AnxImage } from './anxImages';
 import { computeLinkRoutes, computeNodeLayout } from './svgExportService';
+import { bundleLinks } from '../utils/linkBundles';
 
 // ============================================================================
 // TUNING — every unknown that only a real i2 can settle lives here, so that a
@@ -414,7 +415,11 @@ function linkCorners(dossier: Dossier, links: Link[], layout: ReturnType<typeof 
   const linkCurveMode = dossier.settings?.linkCurveMode ?? 'curved';
   const corners = new Map<string, Position[]>();
   if (linkCurveMode === 'curved') return corners;
-  const routes = computeLinkRoutes(links, layout, { linkAnchorMode: dossier.settings?.linkAnchorMode ?? 'manual', linkCurveMode });
+  const routes = computeLinkRoutes(links, layout, {
+    linkAnchorMode: dossier.settings?.linkAnchorMode ?? 'manual',
+    linkCurveMode,
+    linkMultiplicity: dossier.settings?.linkMultiplicity,
+  });
   for (const { link, route } of routes) {
     const points = linkCurveMode === 'orthogonal'
       ? (link.orthogonalRoute ? route.orthogonal?.points : undefined)
@@ -449,6 +454,21 @@ export function buildANXExport(
     x: Math.round(p.x * ANX_COORD_SCALE),
     y: Math.round(p.y * ANX_COORD_SCALE) * (NEGATE_Y ? -1 : 1),
   });
+  // Several links between two elements merged on the canvas: an i2 connection per pair, with the
+  // same multiplicity, so Analyst's Notebook draws them alike (the links stay apart)
+  const multiplicity = dossier.settings?.linkMultiplicity ?? 'multiple';
+  const connectionOf = new Map<string, string>();
+  const connections: string[] = [];
+  if (multiplicity !== 'multiple') {
+    const { bundles } = bundleLinks(emittedLinks, 'single');
+    const style = multiplicity === 'single' ? 'MultiplicitySingle' : 'MultiplicityDirected';
+    for (const bundle of bundles.values()) {
+      const id = `CONN${connections.length + 1}`;
+      connections.push(`    <Connection Id="${id}">`, `      <ConnectionStyle Multiplicity="${style}" />`, '    </Connection>');
+      for (const l of bundle.links) connectionOf.set(l.id, id);
+    }
+  }
+
   const cornersOf = options.routes === false ? new Map<string, Position[]>() : linkCorners(dossier, emittedLinks, layout);
 
   // ── Collect definitions ───────────────────────────────────────────────────
@@ -712,7 +732,7 @@ export function buildANXExport(
 
     items.push(
       `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" ${chartItemDateAttrs(linkWhen, link.dateRange?.precision)} GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
-      `      <Link LabelPos="50" LabelSegment="${labelSegment}" Offset="0"${ends}>`,
+      `      <Link LabelPos="50" LabelSegment="${labelSegment}" Offset="0"${connectionOf.has(link.id) ? ` ConnectionReference="${connectionOf.get(link.id)}"` : ''}${ends}>`,
       ...(cards.length ? ['        <CardCollection>', ...cards.map((c) => `  ${c}`), '        </CardCollection>'] : []),
       ...(corners.length ? ['        <CornerCollection>', ...corners.map((c) => `          <Corner X="${c.x}" Y="${c.y}" Z="0" />`), '        </CornerCollection>'] : []),
       `        <LinkStyle ArrowStyle="${directionToArrowStyle(link)}" LineWidth="${width}" LineColour="${hexToColorref(link.visual?.color)}" Strength="${escapeAttr(strength.name)}" Type="${escapeAttr(linkType.name)}" LinkTypeReference="${linkType.id}" StrengthReference="${strength.id}" />`,
@@ -789,7 +809,9 @@ export function buildANXExport(
     );
   }
 
-  out.push('  <ChartItemCollection>', ...items, '  </ChartItemCollection>', '</Chart>');
+  out.push('  <ChartItemCollection>', ...items, '  </ChartItemCollection>');
+  if (connections.length > 0) out.push('  <ConnectionCollection>', ...connections, '  </ConnectionCollection>');
+  out.push('</Chart>');
 
   void dossier; // the emitted subset has no slot for the dossier name
   return out.join('\n');

@@ -15,6 +15,8 @@ import { CanvasGrid } from './CanvasGrid';
 import { SuggestionPreviewLines } from './SuggestionPreviewLines';
 import { AlignmentGuides, computeGuides } from './AlignmentGuides';
 import { CustomEdge, type RouteHandles } from './CustomEdge';
+import { LinkBundlePicker } from './LinkBundlePicker';
+import type { BundleItem } from './LinkBundleTooltip';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
@@ -366,9 +368,12 @@ export function Canvas() {
   const [isViewportMoving, setIsViewportMoving] = useState(false);
   // Clicked link with an end outside the view: its ends, where it was clicked
   const [linkTip, setLinkTip] = useState<{ linkId: string; x: number; y: number; toLeft: boolean } | null>(null);
+  // Clicked merged line: its links, where it was clicked, to pick one alone
+  const [bundleTip, setBundleTip] = useState<{ ids: string[]; items: BundleItem[]; x: number; y: number; toLeft: boolean } | null>(null);
 
   const handleMoveStart = useCallback(() => {
     setLinkTip(null);
+    setBundleTip(null);
     isViewportMovingRef.current = true;
     setIsViewportMoving(true);
   }, []);
@@ -824,6 +829,9 @@ export function Canvas() {
   );
   const linkCurveMode = useDossierStore(
     (state) => state.currentDossier?.settings?.linkCurveMode ?? 'curved'
+  );
+  const linkMultiplicity = useDossierStore(
+    (state) => state.currentDossier?.settings?.linkMultiplicity ?? 'multiple'
   );
   const displayedProperties = useMemo(
     () => currentDossier?.settings?.displayedProperties ?? [],
@@ -1639,6 +1647,7 @@ export function Canvas() {
     showUndated: canvasTemporal.showUndated,
     linkAnchorMode,
     linkCurveMode,
+    linkMultiplicity,
     confidenceDisplay,
     propertyDateLocale,
     language: i18n.language,
@@ -1821,7 +1830,11 @@ export function Canvas() {
   const linksLayerScene = useMemo<OverviewScene | null>(() => {
     if (overviewActive) return null;
     const drawn = new Set<string>();
-    for (const e of edges) drawn.add(e.id);
+    for (const e of edges) {
+      drawn.add(e.id);
+      // The links merged into a line are drawn by it
+      for (const id of (e.data as { bundle?: { ids: string[] } } | undefined)?.bundle?.ids ?? []) drawn.add(id);
+    }
     const rest = links.filter((link) => !drawn.has(link.id));
     if (rest.length === 0) return null;
     return buildOverviewScene({
@@ -2314,13 +2327,28 @@ export function Canvas() {
       setContextMenu(null);
       setCanvasContextMenu(null);
 
+      // A merged line: its links selected, with the menu of a selection
+      const bundleIds = (edge.data as { bundle?: { ids: string[] } } | undefined)?.bundle?.ids;
+      if (bundleIds) {
+        selectLinks(bundleIds);
+        const viewport = useViewStore.getState().viewport;
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        setCanvasContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          canvasX: (event.clientX - (bounds?.left ?? 0) - viewport.x) / viewport.zoom,
+          canvasY: (event.clientY - (bounds?.top ?? 0) - viewport.y) / viewport.zoom,
+        });
+        return;
+      }
+
       setLinkContextMenu({
         x: event.clientX,
         y: event.clientY,
         linkId: edge.id,
       });
     },
-    []
+    [selectLinks]
   );
 
   /** Link drawn on a canvas (overview, links layer) under a screen point */
@@ -2524,6 +2552,21 @@ export function Canvas() {
       // Shift / Ctrl / Cmd adds the link to the selection, or removes it
       const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
 
+      // A merged line selects all its links (no label to edit on it), and lists them where it was
+      // clicked to pick one alone
+      const bundle = (edge.data as { bundle?: { ids: string[]; items: BundleItem[] } } | undefined)?.bundle;
+      if (bundle) {
+        selectLinks(bundle.ids, isMultiSelect);
+        // One list at a time: the ends of a link clicked before go
+        setLinkTip(null);
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        if (bounds && !isMultiSelect) {
+          const x = event.clientX - bounds.left;
+          setBundleTip({ ids: bundle.ids, items: bundle.items, x, y: event.clientY - bounds.top, toLeft: x > bounds.width - 340 });
+        }
+        return;
+      }
+
       const clickData = edgeClickCountRef.current;
 
       if (clickData.id === edge.id) {
@@ -2555,7 +2598,7 @@ export function Canvas() {
         startEditingLink(edge.id);
       }
     },
-    [selectLink, toggleLink, startEditingLink, showLinkEnds]
+    [selectLink, selectLinks, toggleLink, startEditingLink, showLinkEnds]
   );
 
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
@@ -3118,6 +3161,20 @@ export function Canvas() {
             }
           }}
         >
+          {/* The links of a clicked merged line, while they are the selection */}
+          {bundleTip && selectedLinkIds.size === bundleTip.ids.length && bundleTip.ids.every((id) => selectedLinkIds.has(id)) && (
+            <LinkBundlePicker
+              items={bundleTip.items}
+              x={bundleTip.x}
+              y={bundleTip.y}
+              toLeft={bundleTip.toLeft}
+              onPick={(id) => {
+                setBundleTip(null);
+                selectLink(id);
+                useUIStore.getState().setSidePanelTab('detail');
+              }}
+            />
+          )}
           {/* Gone with the selection: a click elsewhere, Escape, another link */}
           {linkTip && selectedLinkIds.has(linkTip.linkId) && (() => {
             const link = links.find((l) => l.id === linkTip.linkId);

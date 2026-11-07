@@ -8,6 +8,7 @@ import type { EvaluationBadge } from '../../utils/evaluation';
 import { arrowPolygon, computeEdgeRoute, type OrthogonalGeometry } from '../../utils/edgeRouting';
 import { mergeEmptySegments, segmentAxis, snapPosition, splitSegment, storedRoute, type SegmentAxis } from '../../utils/orthogonalBends';
 import { snapBend, storedBendPoints, type Point } from '../../utils/freeBends';
+import { LinkBundleTooltip, type BundleItem } from './LinkBundleTooltip';
 
 /** Segments shorter than this get no handle (steps of the automatic route, cut steps). */
 const MIN_HANDLE_SEGMENT = 24;
@@ -76,6 +77,8 @@ interface CustomEdgeData {
   // Remote user presence (passed from Canvas level)
   remoteLinkSelectors?: RemoteLinkPresence[];
   fontSize?: FontSize;
+  // Several links merged into this line (dossier option): their labels show on hover
+  bundle?: { ids: string[]; items: BundleItem[] };
 }
 
 function CustomEdgeComponent(props: EdgeProps) {
@@ -454,6 +457,16 @@ function CustomEdgeComponent(props: EdgeProps) {
   const createStartArrow = (): string => arrowPolygon(sourceX, sourceY, route.startAngle + Math.PI);
 
   const edgeOpacity = isDimmed ? 0.3 : 1;
+  // A merged line: where the pointer is on it, for the list of its links
+  const bundle = edgeData?.bundle;
+  const [hoverAt, setHoverAt] = useState<{ x: number; y: number } | null>(null);
+  const trackHover = bundle
+    ? {
+      onMouseEnter: (e: React.MouseEvent) => setHoverAt({ x: e.clientX, y: e.clientY }),
+      onMouseMove: (e: React.MouseEvent) => setHoverAt({ x: e.clientX, y: e.clientY }),
+      onMouseLeave: () => setHoverAt(null),
+    }
+    : {};
   // Insights emphasis: glow the links belonging to the highlighted structure
   const edgeFilter = isHighlighted && !isDimmed
     ? 'drop-shadow(0 0 3px var(--color-accent)) drop-shadow(0 0 1px var(--color-accent))'
@@ -510,7 +523,10 @@ function CustomEdgeComponent(props: EdgeProps) {
         stroke="transparent"
         strokeWidth={20}
         style={{ cursor: 'pointer' }}
+        {...trackHover}
       />
+      {/* Once the line is selected, the list where it was clicked takes over */}
+      {bundle && hoverAt && !isSelected && <LinkBundleTooltip items={bundle.items} x={hoverAt.x} y={hoverAt.y} />}
 
       {/* End arrow - at target connection point */}
       {hasEndArrow && (
@@ -868,6 +884,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.curveMode !== nextData.curveMode) return false;
   if (prevData.orthogonalRoute !== nextData.orthogonalRoute) return false;
   if (prevData.bendPoints !== nextData.bendPoints) return false;
+  if (prevData.bundle !== nextData.bundle) return false;
   if (prevProps.sourceHandleId !== nextProps.sourceHandleId) return false;
   if (prevProps.targetHandleId !== nextProps.targetHandleId) return false;
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;

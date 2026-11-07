@@ -323,6 +323,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       linkCurveMode: settings?.linkCurveMode ?? 'curved',
       assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
       linkLabelWrap: currentDossier.options?.linkLabelWrap,
+      linkMultiplicity: settings?.linkMultiplicity,
       background,
     });
   }, [currentDossier, elements, links, redact]);

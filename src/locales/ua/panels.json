@@ -605,6 +605,15 @@
     "sizeByDegree": "Розмір елементів за кількістю зв'язків",
     "links": "Зв'язки",
     "linkShape": "Форма",
+    "linkMultiplicity": "Кілька зв’язків",
+    "multiplicity": {
+      "multiple": "Окремо",
+      "single": "Один",
+      "directed": "Один на напрямок",
+      "multipleHint": "Кожен зв’язок має свою лінію",
+      "singleHint": "Одна лінія для всіх зв’язків між двома елементами",
+      "directedHint": "Одна лінія на напрямок"
+    },
     "linkCurves": "Криві",
     "linkStraight": "Прямі",
     "linkOrthogonal": "Прямі кути",

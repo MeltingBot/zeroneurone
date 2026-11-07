@@ -220,6 +220,7 @@ interface DossierState {
   setLinkAnchorMode: (mode: 'auto' | 'manual') => Promise<void>;
   setLinkCurveMode: (mode: 'straight' | 'curved' | 'orthogonal') => Promise<void>;
   setSizeByDegree: (enabled: boolean) => Promise<void>;
+  setLinkMultiplicity: (mode: 'multiple' | 'single' | 'directed') => Promise<void>;
 
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
@@ -3159,6 +3160,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         },
       };
     });
+  },
+
+  setLinkMultiplicity: async (mode: 'multiple' | 'single' | 'directed') => {
+    const { currentDossier } = get();
+    if (!currentDossier) return;
+    const settings = { ...currentDossier.settings, linkMultiplicity: mode };
+    await dossierRepository.update(currentDossier.id, { settings });
+    set((state) => (state.currentDossier?.id === currentDossier.id
+      ? { currentDossier: { ...state.currentDossier, settings: { ...state.currentDossier.settings, linkMultiplicity: mode } } }
+      : state));
   },
 
   setSizeByDegree: async (enabled: boolean) => {

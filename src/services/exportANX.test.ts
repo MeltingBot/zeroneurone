@@ -707,3 +707,34 @@ describe('buildANXExport — corners of links', () => {
     expect(after.across).toBeCloseTo(before.across, 1);
   });
 });
+
+describe('buildANXExport — merged links', () => {
+  const a = makeElement({ id: 'e1', label: 'A', position: { x: 0, y: 0 } });
+  const b = makeElement({ id: 'e2', label: 'B', position: { x: 400, y: 0 } });
+  const c = makeElement({ id: 'e3', label: 'C', position: { x: 0, y: 300 } });
+  const links = [
+    makeLink({ id: 'l1', fromId: 'e1', toId: 'e2' }),
+    makeLink({ id: 'l2', fromId: 'e2', toId: 'e1' }),
+    makeLink({ id: 'l3', fromId: 'e1', toId: 'e3' }),
+  ];
+  const withMultiplicity = (linkMultiplicity: 'multiple' | 'single' | 'directed') =>
+    ({ ...DOSSIER, settings: { linkMultiplicity } }) as unknown as Dossier;
+
+  it('writes one i2 connection per pair with several links, with the multiplicity, the links kept apart', () => {
+    const doc = expectWellFormed(buildANXExport(withMultiplicity('single'), [a, b, c], links));
+    const connections = [...doc.querySelectorAll('ConnectionCollection > Connection')];
+    expect(connections).toHaveLength(1);
+    expect(connections[0].querySelector('ConnectionStyle')?.getAttribute('Multiplicity')).toBe('MultiplicitySingle');
+    const id = connections[0].getAttribute('Id');
+    const refs = [...doc.querySelectorAll('Link')].map((l) => l.getAttribute('ConnectionReference'));
+    // The two links between A and B in the connection, the A–C link alone
+    expect(refs).toEqual([id, id, null]);
+    expect(doc.querySelectorAll('Link')).toHaveLength(3);
+  });
+
+  it('writes the directed multiplicity, and nothing when links are drawn apart', () => {
+    const directed = expectWellFormed(buildANXExport(withMultiplicity('directed'), [a, b, c], links));
+    expect(directed.querySelector('ConnectionStyle')?.getAttribute('Multiplicity')).toBe('MultiplicityDirected');
+    expect(buildANXExport(withMultiplicity('multiple'), [a, b, c], links)).not.toContain('ConnectionCollection');
+  });
+});

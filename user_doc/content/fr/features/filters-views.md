@@ -169,6 +169,9 @@ Le panneau **Vues** contrôle aussi l'affichage général :
 |--------|---------|
 | **Ancrage** | Auto, centre, bords |
 | **Courbure** | Droit, courbe, orthogonal |
+| **Liens multiples** | Éclatés, un seul, un par sens |
+
+**Liens multiples** règle l'affichage de plusieurs liens entre deux mêmes éléments, comme la multiplicité des connexions d'Analyst's Notebook. **Éclatés** (par défaut) dessine chaque lien. **Un seul** les réunit en une ligne, quel que soit leur sens ; **Un par sens** en dessine une par sens. La ligne réunie porte les flèches de ses liens, sans libellé : au survol, la liste de ses liens s'affiche, chaque libellé précédé de la couleur de son lien. Un clic la sélectionne avec tous ses liens (modification en masse, suppression). Dans ces deux modes, les liens qui quittent un même côté d'un élément partent aussi d'un même point : une seule ligne sort de l'élément, puis bifurque vers chaque destination. Les liens restent distincts dans le dossier : seul l'affichage change, ainsi que les exports SVG et PDF.
 
 
 ---

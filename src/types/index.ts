@@ -364,6 +364,11 @@ export interface DossierSettings {
   linkCurveMode?: 'straight' | 'curved' | 'orthogonal';
   /** Elements drawn larger the more links they have (display only, this device). */
   sizeByDegree?: boolean;
+  /**
+   * Several links between two elements: each drawn (multiple, default), one line for all (single)
+   * or one line per direction (directed), as i2's connection multiplicity. Display only.
+   */
+  linkMultiplicity?: 'multiple' | 'single' | 'directed';
 }
 
 // ============================================================================

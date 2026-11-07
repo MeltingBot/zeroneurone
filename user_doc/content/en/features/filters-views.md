@@ -169,6 +169,9 @@ The **Views** panel also controls general display:
 |--------|--------|
 | **Anchor** | Auto, center, edges |
 | **Curve** | Straight, curved, orthogonal |
+| **Multiple links** | Separate, single, one per direction |
+
+**Multiple links** sets how several links between the same two elements are drawn, as Analyst's Notebook's connection multiplicity. **Separate** (default) draws each link. **Single** merges them into one line, whatever their direction; **One per direction** draws one per direction. The merged line carries the arrows of its links, without a label: on hover, the list of its links shows, each label behind the colour of its link. A click selects it with all its links (bulk edit, deletion). In both modes, the links leaving the same side of an element also start from one point: a single line comes out of the element, then branches off to each end. The links stay apart in the dossier: only the display changes, as do the SVG and PDF exports.
 
 
 ---

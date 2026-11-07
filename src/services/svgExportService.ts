@@ -1,5 +1,6 @@
 import type { Element, Link, Position, ElementSize } from '../types';
 import { GROUP_TINT } from '../types';
+import { bundleLine, bundleLinks, type LinkMultiplicity } from '../utils/linkBundles';
 import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
@@ -18,6 +19,8 @@ interface SVGExportSettings {
   linkLabelWrap?: number;
   /** Fill behind the graph; null leaves it out (print on white paper). Default: canvas colour. */
   background?: string | null;
+  /** Dossier option: several links between two elements drawn as one line */
+  linkMultiplicity?: LinkMultiplicity;
 }
 
 interface NodeDimensions {
@@ -445,7 +448,7 @@ export interface RoutedLink {
 export function computeLinkRoutes(
   links: Link[],
   layout: NodeLayout,
-  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode'>
+  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode' | 'linkMultiplicity'>
 ): RoutedLink[] {
   const { positions, dimensions } = layout;
   const placed: { link: Link; sourceHandle: string; targetHandle: string; parallelIndex: number; parallelCount: number }[] = [];
@@ -477,7 +480,9 @@ export function computeLinkRoutes(
       placed.push({ link, sourceHandle, targetHandle, parallelIndex: index, parallelCount: group.length });
     });
   }
-  const handleSlots = computeHandleSlots(
+  // Links merged as in i2 leave a node side from one point (one line out, then branching off)
+  const merged = settings.linkMultiplicity === 'single' || settings.linkMultiplicity === 'directed';
+  const handleSlots = merged ? new Map<string, { source: number; target: number }>() : computeHandleSlots(
     placed.map(r => ({
       id: r.link.id, fromId: r.link.fromId, toId: r.link.toId,
       sourceHandle: r.sourceHandle, targetHandle: r.targetHandle, tie: r.parallelIndex,
@@ -539,7 +544,10 @@ export function buildSVGExport(
   const positionsMap = layout.positions;
   const dimensionsMap = layout.dimensions;
 
-  const edgeSvgs = computeLinkRoutes(links, layout, settings)
+  // Merged lines as the canvas draws them (no label, arrows of the bundle)
+  const { shown, bundles } = bundleLinks(links, settings.linkMultiplicity);
+  const drawnLinks = shown.map((l) => { const b = bundles.get(l.id); return b ? bundleLine(b) : l; });
+  const edgeSvgs = computeLinkRoutes(drawnLinks, layout, settings)
     .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap));
 
   const assetDataUrls = settings.assetDataUrls;
