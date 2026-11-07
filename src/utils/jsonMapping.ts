@@ -797,6 +797,65 @@ export function detectCrossReferences(
   return result;
 }
 
+/** Field names of a link's start and of its end, as stems ("source_id" → "source") */
+const LINK_FROM_STEMS = new Set(['from', 'source', 'src', 'de', 'origine', 'origin', 'start', 'sender', 'emetteur', 'expediteur', 'caller', 'appelant'].map(nameStem));
+const LINK_TO_STEMS = new Set(['to', 'target', 'dst', 'dest', 'destination', 'vers', 'cible', 'end', 'receiver', 'recipient', 'destinataire', 'callee', 'appele'].map(nameStem));
+/** Field naming what a link is: its label */
+const LINK_LABEL_STEMS = new Set(['type', 'label', 'libelle', 'relation', 'relationship', 'kind', 'nature', 'role', 'predicate'].map(nameStem));
+
+/** Ends of a link table pointing into the tables of its elements */
+export interface LinkEnds {
+  fromField: string;
+  toField: string;
+  /** Table whose ids each end names */
+  fromTable: string;
+  toTable: string;
+  /** Field naming the link, when there is one */
+  labelField?: string;
+}
+
+/**
+ * A table of links between the records of other tables (`{elements, links}`,
+ * `{nodes, edges}`): two fields named as a link's ends ("source"/"target",
+ * "from_id"/"to_id", "de"/"vers"…) whose values are mostly (≥ 50 %) ids of
+ * another table. Its own ids do not count: links do not point at links.
+ */
+export function detectLinkEnds(records: Record<string, unknown>[], fields: FieldInfo[], others: SourceIds[]): LinkEnds | null {
+  const scalar = fields.filter((f) => f.kind === 'scalar');
+  const tableOf = (key: string): string | undefined => {
+    const vals: string[] = [];
+    for (const r of records) {
+      const v = r[key];
+      for (const x of Array.isArray(v) ? v : (isBlank(v) ? [] : [v])) {
+        const s = idKey(x);
+        if (s) vals.push(s);
+      }
+    }
+    if (vals.length === 0) return undefined;
+    const best = others
+      .map((o) => ({ key: o.key, r: vals.filter((v) => o.ids.has(v)).length / vals.length }))
+      .filter((c) => c.r >= 0.5)
+      .sort((a, b) => b.r - a.r)[0];
+    return best?.key;
+  };
+  // The first field named as an end whose values are ids ("source" may be the
+  // origin of the information, a text, beside "from")
+  const endOf = (stems: Set<string>, not?: string) => {
+    for (const f of scalar) {
+      if (f.key === not || !stems.has(nameStem(f.key))) continue;
+      const table = tableOf(f.key);
+      if (table) return { key: f.key, table };
+    }
+    return null;
+  };
+  const from = endOf(LINK_FROM_STEMS);
+  const to = from && endOf(LINK_TO_STEMS, from.key);
+  if (!from || !to) return null;
+  const labelField = scalar.find((f) => f.key !== from.key && f.key !== to.key && LINK_LABEL_STEMS.has(nameStem(f.key))
+    && records.some((r) => !isBlank(r[f.key])))?.key;
+  return { fromField: from.key, toField: to.key, fromTable: from.table, toTable: to.table, labelField };
+}
+
 /** Default mapping of a record set's fields, as the import opens it. */
 export function autoFieldMappings(
   records: Record<string, unknown>[],

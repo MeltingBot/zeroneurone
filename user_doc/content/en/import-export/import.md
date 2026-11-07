@@ -96,7 +96,7 @@ For **arbitrary JSON** (an API export, another tool's output…) or **any CSV** 
 
 **Open it:** import → *Map a JSON or spreadsheet* (paste the text, or cells copied from Excel or Calc, or pick a `.json`, `.csv`, `.tsv`, `.xlsx` or `.ods` file; for a workbook, pick the sheet, see [Spreadsheet](#spreadsheet-xlsx-ods)) — from a dossier, or from the home page, where the entry creates a new dossier (or opens the one picked in *Import into*) and shows the assistant there — or **paste (Ctrl+V) raw JSON directly onto the canvas**. A recognized format (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) is imported normally; generic JSON opens the mapper. Once loaded or pasted, the content folds into one line (name and size) to leave room for the mapping: **Show** opens it again.
 
-A CSV imported without the native format's columns (see [CSV](#csv)) opens the mapper too, from the home page as well: the dossier is created, then opens on the assistant. If the import is given up (assistant closed or placement cancelled) while this new dossier is still empty, it is deleted and you are back on the home page; an existing dossier is never touched. The CSV becomes a table named after the file: each row is a record, each column a field. The delimiter (`,`, `;` or tab) is detected; every value is read as text.
+A CSV imported without the native format's columns (see [CSV](#csv)), like a `.json` file of no recognized format, opens the mapper too, from the home page as well: the dossier is created, then opens on the assistant. If the import is given up (assistant closed or placement cancelled) while this new dossier is still empty, it is deleted and you are back on the home page; an existing dossier is never touched. The CSV becomes a table named after the file: each row is a record, each column a field. The delimiter (`,`, `;` or tab) is detected; every value is read as text.
 
 **Auto-detection:**
 - the **record source** (an array of objects like `records`, or the whole object = 1 element); an object keyed by id (`{"P1": {...}, "P2": {...}}`, like the `facts` of an xBRL report) also counts as an array, its key in the `_key` field. It is picked by default only when the file holds no values of its own beside it; otherwise it stays offered in the list of sources;
@@ -169,6 +169,14 @@ Events go on elements the import creates. To add events to an element already in
 - the import cap counts links.
 
 Example, a statement of transfers (`payer;payee;amount;date;time;payer_phone;payee_phone`): *From* = `payer`, *To* = `payee`, *Start date* = `date` (the *Start time* `time` is found on its own), label `{amount} EUR`, `payer_phone` and `payee_phone` as **pivot**, the latter attached to `payee`. Each transfer becomes an arrow dated to the second, and each number is linked to its holder.
+
+**Elements and links in two arrays:** many tools write a graph as two arrays, the elements in one, the links in the other naming their ends by id (`{"nodes": [{"id": 12, "name": "Dupont"}, …], "edges": [{"source": 12, "target": 47, "type": "manager"}, …]}`). When two fields of an array are named like the ends of a link (`source`/`target`, `from`/`to`, `de`/`vers`, `origin`/`destination`, with or without `_id`) and their values are found among the `id`s of another array:
+- both arrays are ticked by default, and the elements array opens;
+- the links array is set to *a link*; **From** and **To** point to the elements array (*→ nodes* next to the column). Each row then links the elements that array creates; it creates no new ones;
+- a `type`, `label` or `relation` field gives the link label;
+- an end whose id matches no element creates an element named after it, counted in a message.
+
+The same menu, next to **From**, **To** or the **Element** of an events array, picks another array, or *by value* to go back to one element per distinct value. The ends can point to two different arrays (people to companies).
 
 In JSON, an array of objects of a record (`calls: [...]`) can become **events of the element** instead of linked sub-elements: tick *As events of the element* on that array. Each object is dated by its first field named like a date (`date`, `timestamp`…), else by the first one holding one.
 

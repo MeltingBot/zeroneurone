@@ -88,10 +88,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       dossierId = dossier.id;
       createdNewDossier = true;
 
-      // CSV without the native columns: the dossier opens on the column mapping
-      if (/\.(csv|tsv)$/i.test(file.name)) {
+      // CSV without the native columns, JSON of no known format: the dossier
+      // opens on the field mapping
+      if (/\.(csv|tsv|json)$/i.test(file.name)) {
         const content = await importService.readFileAsText(file);
-        if (!isNativeCSV(content)) {
+        if (/\.json$/i.test(file.name) ? importService.isUnknownJson(content) : !isNativeCSV(content)) {
           useUIStore.getState().setProvisionalDossierId(dossierId);
           setPendingDossierImport({ dossierId, file });
           onClose();

@@ -906,6 +906,9 @@
       "hint": "Trascina un campo su una tabella per collegarlo; clicca una freccia per rimuoverla.",
       "matchedHint": "Quota di valori trovati tra gli identificativi della tabella di destinazione"
     },
-    "refTableNotIncluded": "Tabella non selezionata: mantenuto come proprietà"
+    "refTableNotIncluded": "Tabella non selezionata: mantenuto come proprietà",
+    "endByValue": "per valore",
+    "endTableNotIncluded": "Tabella non selezionata: per valore",
+    "linkEndsNotFound": "{{count}} identificativo/i non trovato/i: elemento/i creato/i dal valore"
   }
 }

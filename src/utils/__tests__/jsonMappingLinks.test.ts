@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  autoFieldMappings, coerceForTarget, collectFields, compactDate, guessEventFields, guessLinkFields,
-  guessTarget, guessTimeField, linkDates, rowDate,
+  autoFieldMappings, coerceForTarget, collectFields, compactDate, detectLinkEnds, guessEventFields, guessLinkFields,
+  guessTarget, guessTimeField, idValuesOf, linkDates, rowDate,
 } from '../jsonMapping';
 
 // A bank statement: one transfer per row, the date and the time apart
@@ -152,5 +152,43 @@ describe('time zone of the file', () => {
     const { range } = linkDates({ d: '2024-02-10', h: '09:15' }, { fromField: 'a', toField: 'b', dateField: 'd', timeField: 'h', timeZone: 'UTC' });
     expect(range?.timeZone).toBe('UTC');
     expect(range?.start?.toISOString()).toBe('2024-02-10T09:15:00.000Z');
+  });
+});
+
+describe('detectLinkEnds', () => {
+  const nodes = [{ id: 1, nom: 'Dupont' }, { id: 2, nom: 'Martin' }, { id: 3, nom: 'SCI Horizon' }];
+  const others = [{ key: 'array:nodes', name: 'nodes', ids: idValuesOf(nodes, 'id') }];
+
+  it('finds the ends of an edge list and the table they point into', () => {
+    // Links with ids of their own, overlapping the nodes' ones
+    const edges = [
+      { id: 1, source: 1, target: 3, type: 'gérant' },
+      { id: 2, source: 2, target: 3, type: 'associé' },
+      { id: 3, source: 1, target: 2, type: '' },
+    ];
+    const ends = detectLinkEnds(edges, collectFields(edges), others);
+    expect(ends).toEqual({ fromField: 'source', toField: 'target', fromTable: 'array:nodes', toTable: 'array:nodes', labelField: 'type' });
+  });
+
+  it('reads French and suffixed names, each end in its own table', () => {
+    const societes = [{ id: 'S1' }, { id: 'S2' }];
+    const liens = [{ de_id: 1, vers_id: 'S1' }, { de_id: 2, vers_id: 'S2' }];
+    const ends = detectLinkEnds(liens, collectFields(liens), [...others, { key: 'array:societes', name: 'societes', ids: idValuesOf(societes, 'id') }]);
+    expect(ends).toMatchObject({ fromField: 'de_id', toField: 'vers_id', fromTable: 'array:nodes', toTable: 'array:societes' });
+    expect(ends?.labelField).toBeUndefined();
+  });
+
+  it('skips an end-named field that holds no ids (a source of information)', () => {
+    const rows = [{ source: 'Rapport X', from: 1, to: 2 }, { source: 'Rapport Y', from: 3, to: 1 }];
+    expect(detectLinkEnds(rows, collectFields(rows), others)).toMatchObject({ fromField: 'from', toField: 'to' });
+  });
+
+  it('needs both ends to name ids of another table', () => {
+    const transfers = [{ from: 'Jean', to: 'Paul' }, { from: 'Anne', to: 'Paul' }];
+    expect(detectLinkEnds(transfers, collectFields(transfers), others)).toBeNull();
+    const oneSided = [{ source: 1, target: 'Paul' }, { source: 2, target: 'Anne' }];
+    expect(detectLinkEnds(oneSided, collectFields(oneSided), others)).toBeNull();
+    const unnamed = [{ a: 1, b: 2 }];
+    expect(detectLinkEnds(unnamed, collectFields(unnamed), others)).toBeNull();
   });
 });

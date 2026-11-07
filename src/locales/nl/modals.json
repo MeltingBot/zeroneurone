@@ -906,6 +906,9 @@
       "hint": "Sleep een veld naar een tabel om het te koppelen; klik op een pijl om hem te verwijderen.",
       "matchedHint": "Aandeel waarden gevonden onder de identificaties van de doeltabel"
     },
-    "refTableNotIncluded": "Tabel niet aangevinkt: als eigenschap behouden"
+    "refTableNotIncluded": "Tabel niet aangevinkt: als eigenschap behouden",
+    "endByValue": "op waarde",
+    "endTableNotIncluded": "Tabel niet aangevinkt: op waarde",
+    "linkEndsNotFound": "{{count}} id('s) niet gevonden: element(en) gemaakt op basis van de waarde"
   }
 }

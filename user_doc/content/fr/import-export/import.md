@@ -96,7 +96,7 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) ou un **C
 
 **Ouvrir :** import → *Mapper un JSON ou un tableur* (coller le texte, ou des cellules copiées depuis Excel ou Calc, ou choisir un fichier `.json`, `.csv`, `.tsv`, `.xlsx` ou `.ods` ; d'un classeur on choisit la feuille, voir [Tableur](#tableur-xlsx-ods)) — depuis un dossier, ou depuis la page d'accueil, où l'entrée crée un nouveau dossier (ou ouvre celui choisi dans *Importer dans*) et y affiche l'assistant — ou **coller (Ctrl+V) du JSON brut directement sur le canvas**. Un format reconnu (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) est importé normalement ; un JSON générique ouvre le mapping. Une fois chargé ou collé, le contenu se replie en une ligne (nom et taille) pour laisser la place au mapping : **Afficher** le rouvre.
 
-Un CSV importé sans les colonnes du format natif (voir [CSV](#csv)) ouvre aussi le mapping, y compris depuis la page d'accueil : le dossier est créé puis s'ouvre sur l'assistant. Si l'import est abandonné (assistant fermé ou placement annulé) alors que ce nouveau dossier est encore vide, il est supprimé et l'on revient à l'accueil ; un dossier existant n'est jamais touché. Le CSV devient un tableau nommé d'après le fichier : chaque ligne est un enregistrement, chaque colonne un champ. Le séparateur (`,`, `;` ou tabulation) est détecté ; toutes les valeurs sont lues comme du texte.
+Un CSV importé sans les colonnes du format natif (voir [CSV](#csv)), comme un fichier `.json` d'aucun format reconnu, ouvre aussi le mapping, y compris depuis la page d'accueil : le dossier est créé puis s'ouvre sur l'assistant. Si l'import est abandonné (assistant fermé ou placement annulé) alors que ce nouveau dossier est encore vide, il est supprimé et l'on revient à l'accueil ; un dossier existant n'est jamais touché. Le CSV devient un tableau nommé d'après le fichier : chaque ligne est un enregistrement, chaque colonne un champ. Le séparateur (`,`, `;` ou tabulation) est détecté ; toutes les valeurs sont lues comme du texte.
 
 **Détection automatique :**
 - la **source d'enregistrements** (un tableau d'objets comme `records`, ou l'objet entier = 1 élément) ; un objet indexé par identifiant (`{"P1": {...}, "P2": {...}}`, comme les `facts` d'un rapport xBRL) compte aussi comme un tableau, sa clé dans le champ `_key`. Il n'est choisi par défaut que si le fichier n'a pas de valeurs propres à côté ; sinon il reste proposé dans la liste des sources ;
@@ -169,6 +169,14 @@ Les événements vont sur des éléments créés par l'import. Pour ajouter des 
 - le plafond d'import compte les liens.
 
 Exemple, un relevé de virements (`donneur;beneficiaire;montant;date;heure;tel_donneur;tel_beneficiaire`) : *De* = `donneur`, *Vers* = `beneficiaire`, *Date début* = `date` (l'*Heure début* `heure` est trouvée seule), libellé `{montant} EUR`, `tel_donneur` et `tel_beneficiaire` en **pivot**, ce dernier rattaché à `beneficiaire`. Chaque virement devient une flèche datée à la seconde, et chaque numéro est relié à son titulaire.
+
+**Éléments et liens dans deux tableaux :** beaucoup d'outils écrivent un graphe en deux tableaux, les éléments d'un côté, les liens de l'autre, qui désignent leurs extrémités par identifiant (`{"nodes": [{"id": 12, "nom": "Dupont"}, …], "edges": [{"source": 12, "target": 47, "type": "gérant"}, …]}`). Quand deux champs d'un tableau sont nommés comme les extrémités d'un lien (`source`/`target`, `from`/`to`, `de`/`vers`, `origine`/`destination`, avec ou sans `_id`) et que leurs valeurs se retrouvent parmi les `id` d'un autre tableau :
+- les deux tableaux sont cochés d'office, et le tableau des éléments s'ouvre ;
+- le tableau des liens passe en *un lien* ; **De** et **Vers** pointent vers le tableau des éléments (*→ nodes* à côté de la colonne). Chaque ligne relie alors les éléments créés par ce tableau ; elle n'en crée pas de nouveaux ;
+- un champ `type`, `label`, `libelle` ou `relation` donne le libellé du lien ;
+- une extrémité dont l'identifiant n'est dans aucun élément crée un élément à son nom, compté dans un message.
+
+Le même menu, à côté de **De**, **Vers** ou de l'**Élément** d'un tableau d'événements, choisit un autre tableau, ou *par valeur* pour revenir à un élément par valeur distincte. Les extrémités peuvent viser deux tableaux différents (des personnes vers des sociétés).
 
 En JSON, un tableau d'objets d'un enregistrement (`appels: [...]`) peut devenir des **événements de l'élément** au lieu de sous-éléments liés : cochez *En événements de l'élément* sur ce tableau. Chaque objet est daté par son premier champ nommé comme une date (`date`, `timestamp`…), sinon par le premier qui en contient une.
 

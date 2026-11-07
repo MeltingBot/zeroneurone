@@ -237,8 +237,11 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         content = await importService.readFileAsText(file);
       }
 
-      // CSV without the native columns (label, from/to, type) → column mapping
-      if (/\.(csv|tsv)$/i.test(file.name) && onOpenJsonMapping && !isNativeCSV(content)) {
+      // CSV without the native columns (label, from/to, type), JSON of no
+      // known format → field mapping
+      const unmapped = /\.(csv|tsv)$/i.test(file.name) ? !isNativeCSV(content)
+        : /\.json$/i.test(file.name) && importService.isUnknownJson(content);
+      if (unmapped && onOpenJsonMapping) {
         setIsProcessing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
         onClose();

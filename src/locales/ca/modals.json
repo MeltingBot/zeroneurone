@@ -906,6 +906,9 @@
       "hint": "Arrossegueu un camp a una taula per enllaçar-lo; feu clic en una fletxa per treure-la.",
       "matchedHint": "Proporció de valors trobats entre els identificadors de la taula de destinació"
     },
-    "refTableNotIncluded": "Taula no marcada: es conserva com a propietat"
+    "refTableNotIncluded": "Taula no marcada: es conserva com a propietat",
+    "endByValue": "per valor",
+    "endTableNotIncluded": "Taula no marcada: per valor",
+    "linkEndsNotFound": "{{count}} identificador(s) no trobat(s): element(s) creat(s) a partir del valor"
   }
 }
