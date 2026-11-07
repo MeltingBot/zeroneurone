@@ -4,21 +4,18 @@ import { X, AlertCircle } from 'lucide-react';
 import { importService } from '../../services/importService';
 import type { ZipTabsOverview } from '../../services/zipTabSelection';
 import { exportService } from '../../services/exportService';
-import { importANB, isANBFormat } from '../../services/importANB';
+import { anbBoundingBox, isANBFormat } from '../../services/importANB';
 import { previewFECGraph } from '../../services/importFEC';
 import { useImportOptionSteps } from '../../hooks/useImportOptionSteps';
 import { useSpreadsheetToCsv } from '../../hooks/useSpreadsheetToCsv';
 import { FECOptionsPanel } from './FECOptionsPanel';
 import { GeoJSONOptionsPanel } from './GeoJSONOptionsPanel';
-import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
-import { withImportProgress } from '../../services/importProgress';
 import { ImportDropZone, ImportMappingEntry, CsvTemplateCard } from './ImportSections';
 import { startMermaidPlacement } from '../../services/mermaidPlacement';
 import { startDotPlacement } from '../../services/dotPlacement';
-import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
+import { useDossierStore, useUIStore } from '../../stores';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { splitCSVRecords, isNativeCSV } from '../../utils/csv';
-import { useShallow } from 'zustand/react/shallow';
 
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
@@ -137,9 +134,8 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
   const [zipReport, setZipReport] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentDossier, loadDossier } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, loadDossier: s.loadDossier })));
+  const currentDossier = useDossierStore((s) => s.currentDossier);
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
-  const requestFitView = useViewStore((state) => state.requestFitView);
 
   const { toCsv, picker: sheetPicker } = useSpreadsheetToCsv();
 
@@ -162,28 +158,18 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     const file = converted.file;
 
     try {
-      // ANB (binary) → import directly without placement mode
+      // ANB (binary) → chart read for its exact extent, then placement mode
       if (file.name.toLowerCase().endsWith('.anb')) {
         const buffer = await file.arrayBuffer();
-        if (!isANBFormat(buffer)) {
+        const boundingBox = isANBFormat(buffer) ? await anbBoundingBox(buffer) : null;
+        if (!boundingBox) {
           setError(t('import.unknownFormat'));
           setIsProcessing(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
           return;
         }
-        const snapshot = await snapshotBeforeImport(dossierId);
-        const result = await withImportProgress(() => importANB(buffer, dossierId));
-        if (result.success) {
-          await commitImportToYDoc(snapshot, 'anb');
-          await loadDossier(dossierId);
-          toast.success(t('import.success'));
-          requestFitView();
-          onClose();
-        } else {
-          setError(result.errors[0] ?? t('import.unknownError'));
-        }
-        setIsProcessing(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        enterImportPlacementMode({ boundingBox, file, dossierId, onComplete: () => setError(null) });
+        onClose();
         return;
       }
 
@@ -310,7 +296,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         fileInputRef.current.value = '';
       }
     }
-  }, [currentDossier, enterImportPlacementMode, onClose, onOpenJsonMapping, t, requestFitView, loadDossier, openOptionStep, toCsv]);
+  }, [currentDossier, enterImportPlacementMode, onClose, onOpenJsonMapping, t, openOptionStep, toCsv]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

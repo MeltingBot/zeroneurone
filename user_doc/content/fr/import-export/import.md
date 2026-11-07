@@ -426,7 +426,7 @@ Ne sont pas importés : les ports (`a:nord`, le lien part de l'élément), les l
 |------------|----------------------|
 | Label / Identity | Label de l'élément |
 | Description | Notes |
-| Position (X, Y) | Position sur le canvas |
+| Position (X, Y) | Position sur le canvas (échelle uniforme) |
 | EntityType.Name | Tag (+ ancêtres via hiérarchie de types) |
 | EntityType.Colour (COLORREF) | Couleur |
 | IconStyle.Enlargement | Taille (small/medium/large) |
