@@ -426,7 +426,7 @@ Not imported: ports (`a:north`, the link starts from the element), invisible edg
 |----------|---------------------|
 | Label / Identity | Element label |
 | Description | Notes |
-| Position (X, Y) | Canvas position |
+| Position (X, Y) | Canvas position (uniform scale) |
 | EntityType.Name | Tag (+ ancestors via type hierarchy) |
 | EntityType.Colour (COLORREF) | Color |
 | IconStyle.Enlargement | Size (small/medium/large) |

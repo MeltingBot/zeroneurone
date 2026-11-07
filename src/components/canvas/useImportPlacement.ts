@@ -155,15 +155,19 @@ export function useImportPlacement({
         const preImportIds = new Set(elements.map(e => e.id));
         const snapshot = await snapshotBeforeImport(importPlacementData.dossierId);
 
-        if (importPlacementData.fileContent != null) {
+        if (importPlacementData.fileContent != null || fileName.endsWith('.anb')) {
           // ── Non-ZIP format: import then shift new elements ──
-          const content = importPlacementData.fileContent;
+          const content = importPlacementData.fileContent ?? '';
           const invId = importPlacementData.dossierId;
 
           const existingIds = snapshot.elementIds;
           const geojsonOptions = importPlacementData.importOptions?.geojson;
 
-          if (geojsonOptions || fileName.endsWith('.geojson')) {
+          if (fileName.endsWith('.anb')) {
+            // Binary: read from the file, not from fileContent
+            const { importANB } = await import('../../services/importANB');
+            result = await importANB(await importPlacementData.file.arrayBuffer(), invId);
+          } else if (geojsonOptions || fileName.endsWith('.geojson')) {
             result = await importService.importFromGeoJSON(content, invId, geojsonOptions);
           } else if (fileName.endsWith('.osintracker')) {
             result = await importService.importFromOsintracker(content, invId);
