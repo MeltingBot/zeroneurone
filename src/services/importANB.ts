@@ -33,6 +33,7 @@ import {
   type ANBItem,
   type ANBLink,
 } from './anbParser';
+import { normalizeChartPositions } from '../utils/chartScale';
 
 // ============================================================================
 // i18n
@@ -163,40 +164,6 @@ function issueToWarning(issue: ANBIssue): string {
   return t(`warnings.${code}`, options);
 }
 
-/**
- * i2 coordinates → canvas positions with one uniform scale (no distortion): the median
- * nearest-neighbour distance becomes ~180 px. Items without a position go on a row below.
- */
-function computePositions(items: ANBItem[]): Array<{ x: number; y: number }> {
-  const placed = items.filter(i => i.x !== null && i.y !== null);
-  let scale = 1;
-  if (placed.length > 1) {
-    const nearest = placed.map(a => {
-      let best = Infinity;
-      for (const b of placed) {
-        if (a === b) continue;
-        const d = Math.hypot(a.x! - b.x!, a.y! - b.y!);
-        if (d > 0 && d < best) best = d;
-      }
-      return best;
-    }).filter(Number.isFinite).sort((p, q) => p - q);
-    const median = nearest[Math.floor(nearest.length / 2)];
-    if (median) scale = Math.min(4, Math.max(0.2, 180 / median));
-  }
-  const minX = Math.min(...placed.map(i => i.x!));
-  const minY = Math.min(...placed.map(i => i.y!));
-  const maxY = Math.max(...placed.map(i => i.y!));
-
-  let orphan = 0;
-  return items.map(i => {
-    if (i.x !== null && i.y !== null) {
-      return { x: 200 + (i.x - minX) * scale, y: 200 + (i.y - minY) * scale };
-    }
-    const base = placed.length > 0 ? 200 + (maxY - minY) * scale + 300 : 200;
-    return { x: 200 + (orphan++) * 220, y: base };
-  });
-}
-
 function buildElement(
   item: ANBItem,
   dossierId: DossierId,
@@ -311,6 +278,39 @@ async function attachPictures(chart: ANBChart, elements: Element[], dossierId: D
 // MAIN IMPORT
 // ============================================================================
 
+/** The chart held by an .anb file, null when it has no readable Contents stream */
+async function readANBChart(buffer: ArrayBuffer): Promise<ANBChart | null> {
+  // Dynamic import of cfb (OLE2/CFB parser)
+  const cfbModule = await import('cfb');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CFB = (cfbModule as any).default ?? cfbModule;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cfbData = CFB.read(new Uint8Array(buffer), { type: 'buffer' }) as any;
+  const contentsEntry = CFB.find(cfbData, '/Contents') ?? CFB.find(cfbData, 'Contents');
+  if (!contentsEntry?.content) return null;
+  const raw = contentsEntry.content;
+  return parseANBContents(raw instanceof Uint8Array ? raw : new Uint8Array(raw));
+}
+
+/**
+ * Area the chart takes on the canvas once imported, for placement mode (the
+ * frame that follows the cursor). Null when the file holds no item.
+ */
+export async function anbBoundingBox(buffer: ArrayBuffer): Promise<{
+  minX: number; minY: number; maxX: number; maxY: number; width: number; height: number; elementCount: number;
+} | null> {
+  const chart = await readANBChart(buffer);
+  if (!chart || chart.items.length === 0) return null;
+  const positions = normalizeChartPositions(chart.items);
+  const minX = Math.min(...positions.map((p) => p.x));
+  const minY = Math.min(...positions.map((p) => p.y));
+  // Positions are top-left corners: add a default element's size
+  const maxX = Math.max(...positions.map((p) => p.x)) + 120;
+  const maxY = Math.max(...positions.map((p) => p.y)) + 60;
+  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, elementCount: chart.items.length };
+}
+
 export async function importANB(
   buffer: ArrayBuffer,
   targetDossierId: DossierId
@@ -322,24 +322,14 @@ export async function importANB(
 
   try {
     const rows = new ImportedRows();
-    // Dynamic import of cfb (OLE2/CFB parser)
-    const cfbModule = await import('cfb');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const CFB = (cfbModule as any).default ?? cfbModule;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cfbData = CFB.read(new Uint8Array(buffer), { type: 'buffer' }) as any;
-    const contentsEntry = CFB.find(cfbData, '/Contents') ?? CFB.find(cfbData, 'Contents');
-    if (!contentsEntry?.content) {
+    const chart = await readANBChart(buffer);
+    if (!chart) {
       return {
         success: false, elementsImported: 0, linksImported: 0,
         assetsImported: 0, reportImported: false,
         errors: [t('errors.invalidChart')], warnings,
       };
     }
-    const raw = contentsEntry.content;
-    const chart = parseANBContents(raw instanceof Uint8Array ? raw : new Uint8Array(raw));
-
     if (chart.items.length === 0) {
       return {
         success: false, elementsImported: 0, linksImported: 0,
@@ -350,7 +340,7 @@ export async function importANB(
     warnings.push(...chart.issues.map(issueToWarning));
 
     // ── Elements ──
-    const positions = computePositions(chart.items);
+    const positions = normalizeChartPositions(chart.items);
     const elementIds: ElementId[] = [];
     const elements: Element[] = [];
     for (let i = 0; i < chart.items.length; i++) {

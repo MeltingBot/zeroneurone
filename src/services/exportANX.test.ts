@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { Dossier, Element, Link } from '../types';
-import { buildANXExport } from './exportANX';
+import { ANX_COORD_SCALE, buildANXExport } from './exportANX';
 import { importANX } from './importANX';
 import { db } from '../db/database';
 
@@ -219,8 +219,8 @@ describe('buildANXExport — groups', () => {
     const items = [...doc.querySelectorAll('ChartItem')];
     expect(items).toHaveLength(1);
     const end = doc.querySelector('End');
-    expect(end?.getAttribute('X')).toBe('110');
-    expect(end?.getAttribute('Y')).toBe('110');
+    expect(end?.getAttribute('X')).toBe(String(110 * ANX_COORD_SCALE));
+    expect(end?.getAttribute('Y')).toBe(String(110 * ANX_COORD_SCALE));
   });
 
   it('records the group membership as an attribute rather than losing it', () => {
@@ -407,7 +407,12 @@ describe('buildANXExport — round trip through importANX', () => {
     const elements = await db.elements.where({ dossierId: 'd-target' }).toArray();
     const camille = elements.find((e) => e.label === 'Camille Laurent');
     expect(camille).toBeDefined();
-    expect(camille!.position).toEqual({ x: 120, y: 80 });
+    // Positions come back rescaled (median neighbour distance 180 px), proportions kept
+    const vortex = elements.find((e) => e.label === 'Société Vortex')!;
+    const dx = vortex.position.x - camille!.position.x;
+    const dy = vortex.position.y - camille!.position.y;
+    expect(dx / dy).toBeCloseTo(180 / 120, 1);
+    expect(Math.hypot(dx, dy)).toBeCloseTo(180, 0);
     expect(camille!.tags).toContain('Personne');
     expect(camille!.notes).toContain('note');
     expect(camille!.confidence).toBe(80);

@@ -72,9 +72,15 @@ import type { AnxImage } from './anxImages';
  *  standard-only. importANX falls back between both, so round-tripping is safe. */
 const EMIT_IBASE_DIALECT = false;
 
-/** Canvas units per i2 unit. The reference chart's coordinates look like screen
- *  pixels, but nothing proves i2's unit is one. */
-const COORD_SCALE = 1;
+/** i2 world units per canvas pixel.
+ *  At 1, charts opened in i2 with tiny icons far apart. Two measures agree:
+ *  - an i2 icon is about 32 units (label at TextY=16 under its centre, XSD
+ *    default), a medium ZN element 56 px: 0.57;
+ *  - neighbour spacing (median) is 144 to 174 units in hand-laid i2 charts
+ *    (doc_perso/fixtures/anb), 317 to 438 in ZN exports: 0.33 to 0.55.
+ *  Fixed rather than fitted to each dossier: re-exporting onto an existing
+ *  chart (i2 merges by Identity) must not move the items already there. */
+export const ANX_COORD_SCALE = 0.5;
 
 /** i2's Y axis direction is unverified. If charts open mirrored, flip this. */
 const NEGATE_Y = false;
@@ -567,8 +573,8 @@ export function buildANXExport(
     const identity = identityOf(el.label ?? '');
     const type = entityTypeOf.get(el.id)!;
     const pos = resolveAbsolutePosition(el, byId);
-    const x = Math.round(pos.x * COORD_SCALE);
-    const y = Math.round(pos.y * COORD_SCALE) * (NEGATE_Y ? -1 : 1);
+    const x = Math.round(pos.x * ANX_COORD_SCALE);
+    const y = Math.round(pos.y * ANX_COORD_SCALE) * (NEGATE_Y ? -1 : 1);
 
     collectDate(el.date);
 

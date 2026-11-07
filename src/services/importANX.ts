@@ -30,6 +30,7 @@ import { ImportedRows } from './importedRows';
 import { parseDateValue } from '../utils/dates';
 import { darkenColor } from './importGephi';
 import { stripBom } from '../utils/csv';
+import { normalizeChartPositions } from '../utils/chartScale';
 
 // ============================================================================
 // i18n
@@ -328,6 +329,8 @@ export async function importANX(
     const entityIdMap = new Map<string, ElementId>();
 
     const chartItems = Array.from(doc.querySelectorAll('ChartItemCollection > ChartItem'));
+    // Raw i2 coordinates, rescaled once every entity is read
+    const placements: Array<{ element: Element; x: number | null; y: number | null }> = [];
 
     // ================================================================
     // PASS 1: ENTITIES
@@ -497,7 +500,7 @@ export async function importANX(
         source,
         date,
         dateRange: null,
-        position: { x: isNaN(x) ? 0 : x, y: isNaN(y) ? 0 : y },
+        position: { x: 0, y: 0 },
         isPositionLocked: false,
         geo: null,
         events,
@@ -518,9 +521,15 @@ export async function importANX(
       };
 
       rows.addElement(element);
+      placements.push({ element, x: isNaN(x) ? null : x, y: isNaN(y) ? null : y });
       if (imageData) entityImages.push({ element, data: imageData });
       result.elementsImported++;
     }
+
+    // Same density as an .anb import, whatever wrote the chart: i2, or ZN at
+    // any export scale (ANX_COORD_SCALE has changed once already).
+    const positions = normalizeChartPositions(placements);
+    placements.forEach((p, i) => { p.element.position = positions[i]; });
 
     // ================================================================
     // PASS 2: LINKS
