@@ -906,6 +906,9 @@
       "hint": "Drag a field onto a table to link it; click an arrow to remove it.",
       "matchedHint": "Share of values found among the target table's identifiers"
     },
-    "refTableNotIncluded": "Table not ticked: kept as a property"
+    "refTableNotIncluded": "Table not ticked: kept as a property",
+    "endByValue": "by value",
+    "endTableNotIncluded": "Table not checked: by value",
+    "linkEndsNotFound": "{{count}} id(s) not found: element(s) created from the value"
   }
 }

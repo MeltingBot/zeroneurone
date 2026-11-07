@@ -906,6 +906,9 @@
       "hint": "Arrastatu eremu bat taula batera lotzeko; egin klik gezi batean kentzeko.",
       "matchedHint": "Helburuko taularen identifikatzaileen artean aurkitutako balioen proportzioa"
     },
-    "refTableNotIncluded": "Taula ez dago markatuta: propietate gisa gordeta"
+    "refTableNotIncluded": "Taula ez dago markatuta: propietate gisa gordeta",
+    "endByValue": "balioaren arabera",
+    "endTableNotIncluded": "Taula markatu gabe: balioaren arabera",
+    "linkEndsNotFound": "Aurkitu ez diren {{count}} identifikatzaile: elementuak balioaren arabera sortu dira"
   }
 }

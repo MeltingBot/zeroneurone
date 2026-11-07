@@ -170,6 +170,14 @@ Events go on elements the import creates. To add events to an element already in
 
 Example, a statement of transfers (`payer;payee;amount;date;time;payer_phone;payee_phone`): *From* = `payer`, *To* = `payee`, *Start date* = `date` (the *Start time* `time` is found on its own), label `{amount} EUR`, `payer_phone` and `payee_phone` as **pivot**, the latter attached to `payee`. Each transfer becomes an arrow dated to the second, and each number is linked to its holder.
 
+**Elements and links in two arrays:** many tools write a graph as two arrays, the elements in one, the links in the other naming their ends by id (`{"nodes": [{"id": 12, "name": "Dupont"}, …], "edges": [{"source": 12, "target": 47, "type": "manager"}, …]}`). When two fields of an array are named like the ends of a link (`source`/`target`, `from`/`to`, `de`/`vers`, `origin`/`destination`, with or without `_id`) and their values are found among the `id`s of another array:
+- both arrays are ticked by default, and the elements array opens;
+- the links array is set to *a link*; **From** and **To** point to the elements array (*→ nodes* next to the column). Each row then links the elements that array creates; it creates no new ones;
+- a `type`, `label` or `relation` field gives the link label;
+- an end whose id matches no element creates an element named after it, counted in a message.
+
+The same menu, next to **From**, **To** or the **Element** of an events array, picks another array, or *by value* to go back to one element per distinct value. The ends can point to two different arrays (people to companies).
+
 In JSON, an array of objects of a record (`calls: [...]`) can become **events of the element** instead of linked sub-elements: tick *As events of the element* on that array. Each object is dated by its first field named like a date (`date`, `timestamp`…), else by the first one holding one.
 
 **Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users. A CSV template applies to any file with the same columns, whatever its name (next month's phone bill, say). A template saved on a CSV is offered for CSV only, one saved on JSON for JSON only; a template made before this distinction counts as a JSON one, offered for a CSV only when its fields match the file's columns; saving it again on a CSV makes it a CSV template.

@@ -26,6 +26,7 @@ import {
   signatureOverlap,
   autoFieldMappings,
   detectCrossReferences,
+  detectLinkEnds,
   idValuesOf,
   idKey,
   findSharedIdHub,
@@ -42,6 +43,7 @@ import {
   type FilterOp,
   type EventMapping,
   type LinkMapping,
+  type LinkEnds,
   buildEvent,
   recordDate,
   guessEventFields,
@@ -141,6 +143,19 @@ function fieldsOf(raw: Record<string, unknown>[]) {
     childArrayFields: fields.filter((f) => f.kind === 'objectArray'),
     fieldSig: fields.map((f) => `${f.key}:${f.kind}`).join('|'),
   };
+}
+
+/** Tables of a payload whose records are links between the records of others */
+function linkTablesOf(data: unknown, srcs: RecordSource[]): { key: string; ends: LinkEnds }[] {
+  const tables = srcs.filter((src) => src.kind === 'array').map((src) => {
+    const raw = rawRecordsForSource(data, src);
+    const f = fieldsOf(raw);
+    return { key: sourceKey(src), name: src.path, f, ids: idValuesOf(raw, f.scalarFields.find((x) => guessTarget(x.key) === 'id')?.key) };
+  });
+  return tables.flatMap((tb) => {
+    const ends = detectLinkEnds(tb.f.records, tb.f.fields, tables.filter((o) => o.key !== tb.key));
+    return ends ? [{ key: tb.key, ends }] : [];
+  });
 }
 
 /** Whether a condition is usable (has a field, and a value unless 'nonempty'). */
@@ -253,7 +268,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
 
   // ── Several tables ────────────────────────────────────────────────────
   const activeKey = selectedSource ? sourceKey(selectedSource) : '';
-  const defaultKey = useMemo(() => { const d = pickDefaultSource(sources); return d ? sourceKey(d) : ''; }, [sources]);
+  // Tables of links between the records of others (their ids are their own
+  // row numbers, no shared key, whatever they overlap)
+  const linkTables = useMemo(() => linkTablesOf(parsed, sources), [parsed, sources]);
+  const linkTableKeys = useMemo(() => new Set(linkTables.map((l) => l.key)), [linkTables]);
+  // The main table: that of the elements when the default one holds their links
+  const defaultKey = useMemo(() => {
+    const d = pickDefaultSource(sources);
+    const key = d ? sourceKey(d) : '';
+    return linkTables.find((l) => l.key === key)?.ends.fromTable ?? key;
+  }, [sources, linkTables]);
   // Tables other records can point into: arrays of objects
   const tableSources = useMemo(() => sources.filter((src) => src.kind === 'array'), [sources]);
   const wholeObject = t('importJsonMapping.wholeObject');
@@ -278,13 +302,13 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
 
   // Tables all keyed by a shared id (e.g. the case number in every "id"):
   // the hub and the tables whose id points at it
-  const sharedIdHub = useMemo(() => findSharedIdHub(tableSources.map((src) => {
+  const sharedIdHub = useMemo(() => findSharedIdHub(tableSources.filter((src) => !linkTableKeys.has(sourceKey(src))).map((src) => {
     const raw = rawRecordsForSource(parsed, src);
     const idField = fieldsOf(raw).scalarFields.find((f) => guessTarget(f.key) === 'id')?.key;
     const ids = idValuesOf(raw, idField);
     const filled = idField ? raw.filter((r) => !isBlank(r[idField])).length : 0;
     return { key: sourceKey(src), ids, unique: ids.size > 0 && ids.size === filled };
-  })), [tableSources, parsed]);
+  })), [tableSources, parsed, linkTableKeys]);
 
   /** Default config of a table, references to the other tables included */
   const autoConfigFor = useCallback((key: string): SourceConfig | null => {
@@ -299,11 +323,25 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     if (ownIdKey && sharedIdHub.hub && sharedIdHub.members.has(key)) {
       auto.mapping[ownIdKey] = { enabled: true, target: 'ref', propKey: '', refSource: sharedIdHub.hub };
     }
+    // A table of links between the records of other tables: its rows are links
+    const ends = detectLinkEnds(f.records, f.fields, tableIds.filter((x) => x.key !== key));
+    let links: LinkMapping | undefined;
+    if (ends) {
+      auto.mapping[ends.fromField] = { enabled: true, target: 'ref', propKey: '', refSource: ends.fromTable };
+      auto.mapping[ends.toField] = { enabled: true, target: 'ref', propKey: '', refSource: ends.toTable };
+      const guess = guessLinkFields(f.records, f.fields, (k) => auto.mapping[k]?.target === 'date');
+      links = { ...guess, fromField: ends.fromField, toField: ends.toField };
+      auto.labelTemplate = ends.labelField ? `{${ends.labelField}}` : '';
+      // The label field names the link: not repeated as a property of it
+      if (ends.labelField && auto.mapping[ends.labelField]) auto.mapping[ends.labelField] = { ...auto.mapping[ends.labelField], enabled: false };
+    }
     return {
       fieldSig: f.fieldSig,
       ...auto,
+      links,
       // Tables beyond the main one get their name as tag, to tell their elements apart
-      tagName: key === defaultKey ? '' : (src.kind === 'array' ? lastSegment(src.path) : ''),
+      // (a link table creates no element: its name would only label its links)
+      tagName: key === defaultKey || links ? '' : (src.kind === 'array' ? lastSegment(src.path) : ''),
       filters: [],
       filterMode: 'all',
       maxImport: 2000,
@@ -508,9 +546,17 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       setParsed(data);
       const srcs = findRecordSources(data);
       const def = pickDefaultSource(srcs);
-      setSrcKey(def ? sourceKey(def) : '');
+      // A table of links and the tables it links come together, the elements open
+      const links = def ? linkTablesOf(data, srcs) : [];
+      const defKey = def ? sourceKey(def) : '';
+      const openKey = links.find((l) => l.key === defKey)?.ends.fromTable ?? defKey;
+      const inc = new Set(openKey ? [openKey] : []);
+      for (const l of links) {
+        if (inc.has(l.ends.fromTable) || inc.has(l.ends.toTable)) [l.key, l.ends.fromTable, l.ends.toTable].forEach((k) => inc.add(k));
+      }
+      setSrcKey(openKey);
       setConfigs({});
-      setIncluded(new Set(def ? [sourceKey(def)] : []));
+      setIncluded(inc);
       setSelectedTemplateId('');
       if (!def) setError(t('importJsonMapping.noArray'));
     } catch {
@@ -588,6 +634,12 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     });
   const setFieldRefSource = (key: string, refSource: string | undefined) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], refSource } }));
+  // Tables a link end or an event's element can name the ids of
+  const endTables = tableSources.filter((src) => sourceKey(src) !== activeKey);
+  const setEndTable = (key: string, table: string | undefined) =>
+    setMapping((m) => ({ ...m, [key]: table
+      ? { ...m[key], enabled: true, target: 'ref', refSource: table }
+      : { ...m[key], target: 'property', propKey: m[key]?.propKey || lastSegment(key), refSource: undefined } }));
   const setFieldHolder = (key: string, holder: 'link' | 'from' | 'to') =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], holder: holder === 'link' ? undefined : holder } }));
   const setFieldOwner = (key: string, pivotOwner: string | undefined) =>
@@ -697,9 +749,21 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       // The element's name labelled every record: an event wants its kind instead
       setLabelTemplate(guess.labelTemplate);
     } else if (as === 'link') {
-      setLinkMapping(guessLinkFields(records, fields, isDate));
+      const guess = guessLinkFields(records, fields, isDate);
+      // Ends naming the ids of other tables: they link those tables' elements
+      const ends = detectLinkEnds(records, fields, tableIds.filter((x) => x.key !== activeKey));
+      if (ends) {
+        setLinkMapping({ ...guess, fromField: ends.fromField, toField: ends.toField });
+        setMapping((m) => ({
+          ...m,
+          [ends.fromField]: { ...m[ends.fromField], enabled: true, target: 'ref', refSource: ends.fromTable },
+          [ends.toField]: { ...m[ends.toField], enabled: true, target: 'ref', refSource: ends.toTable },
+        }));
+      } else {
+        setLinkMapping(guess);
+      }
       // The label of each link is written by the analyst; empty, it takes the tag
-      setLabelTemplate('');
+      setLabelTemplate(ends?.labelField ? `{${ends.labelField}}` : '');
     } else {
       setLabelTemplate(guessLabelTemplate(scalarFields));
     }
@@ -788,6 +852,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     let skippedLinks = 0;
     // Rows naming the same element at both ends: events of it
     let selfEvents = 0;
+    // Link ends naming an id no table has: an element named after it instead
+    const unmatchedEnds = new Set<string>();
     // Values of a date column that are no date: kept as text, counted
     let unreadDates = 0;
     setCreating(true);
@@ -949,6 +1015,14 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         // Records as links: the ends and dates are read apart; a link has no
         // id, references, media nor place of its own
         const lk = !ev && cfg.links?.fromField && cfg.links.toField ? cfg.links : undefined;
+        // A link end naming the ids of another table: the elements of that table
+        const endIds = (field: string) => {
+          const m = cfg.mapping[field];
+          return m?.enabled && m.target === 'ref' && m.refSource && m.refSource !== plan.key && included.has(m.refSource)
+            ? idMaps.get(m.refSource) : undefined;
+        };
+        const fromIds = lk ? endIds(lk.fromField) : undefined;
+        const toIds = lk ? endIds(lk.toField) : undefined;
         if (lk) {
           const own = [lk.fromField, lk.toField, lk.dateField, lk.timeField, lk.endField, lk.endTimeField];
           for (const [k, m] of Object.entries(mapping)) {
@@ -1164,10 +1238,19 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
             const fromVal = valueToString(flat[lk.fromField]).trim();
             const toVal = valueToString(flat[lk.toField]).trim();
             if (!fromVal || !toVal) { skippedLinks++; return; }
+            // An id of another table: its element; not found, one named after the value
+            const refEnd = (ids: Map<string, string> | undefined, field: string) => {
+              if (!ids) return undefined;
+              const el = elementById.get(ids.get(idKey(flat[field])) ?? '');
+              if (!el) unmatchedEnds.add(`${plan.key}|${idKey(flat[field])}`);
+              return el;
+            };
+            const fromRef = refEnd(fromIds, lk.fromField);
+            const toRef = refEnd(toIds, lk.toField);
             // The same element at both ends (a transfer to oneself): no link
             // can be drawn, the row becomes an event of that element
-            if (keyOf(fromVal) === keyOf(toVal)) {
-              const self = endOf(fromVal);
+            if (fromRef && toRef ? fromRef === toRef : !fromRef && !toRef && keyOf(fromVal) === keyOf(toVal)) {
+              const self = fromRef ?? endOf(fromVal);
               const label = applyTemplate(cfg.labelTemplate, flat) || tn || fromVal;
               const event = lk.dateField
                 ? buildEvent(flat, label, { dateField: lk.dateField, timeField: lk.timeField, endField: lk.endField, endTimeField: lk.endTimeField, timeZone: lk.timeZone }, { properties, source, notes, geo: null })
@@ -1180,8 +1263,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
               addChildren(flat, self);
               return;
             }
-            const fromEl = endOf(fromVal);
-            const toEl = endOf(toVal);
+            const fromEl = fromRef ?? endOf(fromVal);
+            const toEl = toRef ?? endOf(toVal);
             const { range, unread } = linkDates(flat, lk);
             if (unread && lk.dateField) {
               properties.push({ key: lastSegment(lk.dateField), value: valueToString(flat[lk.dateField]), type: 'text' });
@@ -1343,6 +1426,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       if (skippedEvents > 0) toast.warning(t('importJsonMapping.eventsSkipped', { count: skippedEvents }));
       if (skippedLinks > 0) toast.warning(t('importJsonMapping.linksSkipped', { count: skippedLinks }));
       if (selfEvents > 0) toast.info(t('importJsonMapping.selfLinksAsEvents', { count: selfEvents }));
+      if (unmatchedEnds.size > 0) toast.warning(t('importJsonMapping.linkEndsNotFound', { count: unmatchedEnds.size }));
       if (unreadDates > 0) toast.warning(t('importJsonMapping.datesKeptAsText', { count: unreadDates }));
       handleClose();
     } catch (e) {
@@ -1779,7 +1863,26 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                           <span />
                           <span className="text-xs font-mono text-text-primary truncate" title={f.key}>{f.key}</span>
                           <span className="text-xs text-text-tertiary truncate" title={f.sample}>{f.sample}</span>
-                          <span className={`text-xs text-text-secondary ${showAttach ? 'col-span-3' : 'col-span-2'}`} data-testid={`json-mapping-role-${f.key}`}>{t(`importJsonMapping.${role}`)}</span>
+                          <div className={`flex items-center gap-2 min-w-0 ${showAttach ? 'col-span-3' : 'col-span-2'}`}>
+                            <span className="text-xs text-text-secondary" data-testid={`json-mapping-role-${f.key}`}>{t(`importJsonMapping.${role}`)}</span>
+                            {(role === 'linkFrom' || role === 'linkTo' || role === 'eventHost') && endTables.length > 0 && (
+                              <select
+                                value={m.target === 'ref' && m.refSource && m.refSource !== activeKey ? m.refSource : ''}
+                                onChange={(e) => setEndTable(f.key, e.target.value || undefined)}
+                                aria-label={t('importJsonMapping.refTable')}
+                                data-testid={`json-mapping-end-table-${f.key}`}
+                                className="min-w-0 px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                              >
+                                <option value="">{t('importJsonMapping.endByValue')}</option>
+                                {endTables.map((src) => (
+                                  <option key={sourceKey(src)} value={sourceKey(src)}>→ {sourceName(src, wholeObject)}</option>
+                                ))}
+                              </select>
+                            )}
+                            {m.target === 'ref' && m.refSource && m.refSource !== activeKey && !included.has(m.refSource) && (
+                              <span className="text-[10px] text-warning leading-tight truncate">{t('importJsonMapping.endTableNotIncluded')}</span>
+                            )}
+                          </div>
                         </div>
                       );
                     }

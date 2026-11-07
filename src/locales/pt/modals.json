@@ -906,6 +906,9 @@
       "hint": "Arraste um campo para uma tabela para o ligar; clique numa seta para a remover.",
       "matchedHint": "Proporção de valores encontrados entre os identificadores da tabela de destino"
     },
-    "refTableNotIncluded": "Tabela não marcada: mantido como propriedade"
+    "refTableNotIncluded": "Tabela não marcada: mantido como propriedade",
+    "endByValue": "por valor",
+    "endTableNotIncluded": "Tabela não marcada: por valor",
+    "linkEndsNotFound": "{{count}} identificador(es) não encontrado(s): elemento(s) criado(s) a partir do valor"
   }
 }

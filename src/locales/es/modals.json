@@ -906,6 +906,9 @@
       "hint": "Arrastre un campo a una tabla para enlazarlo; haga clic en una flecha para quitarla.",
       "matchedHint": "Proporción de valores encontrados entre los identificadores de la tabla destino"
     },
-    "refTableNotIncluded": "Tabla no marcada: se conserva como propiedad"
+    "refTableNotIncluded": "Tabla no marcada: se conserva como propiedad",
+    "endByValue": "por valor",
+    "endTableNotIncluded": "Tabla no marcada: por valor",
+    "linkEndsNotFound": "{{count}} identificador(es) no encontrado(s): elemento(s) creado(s) a partir del valor"
   }
 }

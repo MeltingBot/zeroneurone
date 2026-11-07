@@ -906,6 +906,9 @@
       "hint": "Ziehen Sie ein Feld auf eine Tabelle, um es zu verknüpfen; klicken Sie auf einen Pfeil, um ihn zu entfernen.",
       "matchedHint": "Anteil der Werte, die unter den Kennungen der Zieltabelle gefunden wurden"
     },
-    "refTableNotIncluded": "Tabelle nicht markiert: als Eigenschaft behalten"
+    "refTableNotIncluded": "Tabelle nicht markiert: als Eigenschaft behalten",
+    "endByValue": "nach Wert",
+    "endTableNotIncluded": "Tabelle nicht markiert: nach Wert",
+    "linkEndsNotFound": "{{count}} ID(s) nicht gefunden: Element(e) aus dem Wert erstellt"
   }
 }
