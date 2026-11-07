@@ -168,7 +168,9 @@
       "linkCountMismatch": "Collegamenti letti: {{found}} su {{expected}}",
       "unresolvedLinks": "{{count}} collegamenti senza estremità ignorati",
       "unknownTypes": "{{count}} elementi senza tipo di tavolozza",
-      "missingPositions": "{{count}} elementi senza posizione"
+      "missingPositions": "{{count}} elementi senza posizione",
+      "picturesMismatch": "Immagini non importate: {{found}} lette, {{expected}} attese",
+      "picturesOrderUnknown": "{{count}} immagini non importate: la loro associazione agli elementi è incerta"
     }
   },
   "fec": {

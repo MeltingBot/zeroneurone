@@ -168,7 +168,9 @@
       "linkCountMismatch": "Links read: {{found}} of {{expected}}",
       "unresolvedLinks": "{{count}} links without ends skipped",
       "unknownTypes": "{{count}} items without palette type",
-      "missingPositions": "{{count}} items without position"
+      "missingPositions": "{{count}} items without position",
+      "picturesMismatch": "Pictures not imported: {{found}} read, {{expected}} expected",
+      "picturesOrderUnknown": "{{count}} pictures not imported: which item each belongs to is uncertain"
     }
   },
   "fec": {

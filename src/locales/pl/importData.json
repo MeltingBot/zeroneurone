@@ -168,7 +168,9 @@
       "linkCountMismatch": "Odczytane łącza: {{found}} z {{expected}}",
       "unresolvedLinks": "Pominięto łącza bez końców: {{count}}",
       "unknownTypes": "Elementy bez typu palety: {{count}}",
-      "missingPositions": "Elementy bez pozycji: {{count}}"
+      "missingPositions": "Elementy bez pozycji: {{count}}",
+      "picturesMismatch": "Obrazy nie zostały zaimportowane: odczytano {{found}}, oczekiwano {{expected}}",
+      "picturesOrderUnknown": "Nie zaimportowano obrazów ({{count}}): ich przypisanie do elementów jest niepewne"
     }
   },
   "fec": {

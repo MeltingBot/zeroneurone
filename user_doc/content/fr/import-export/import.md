@@ -489,6 +489,7 @@ Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
 | Attributs | Propriétés (dates et dates-heures typées) |
 | Date et heure | Événement sur la timeline : ponctuel, ou période si un attribut date-heure donne le début et un autre la fin |
 | Bloc de texte | Annotation |
+| Image affichée à la place de l'icône | Média joint (PNG) |
 
 Icônes, cadres, cercles, événements et lignes de thème deviennent des éléments. La date d'une ligne de thème n'est pas reprise.
 
@@ -511,7 +512,7 @@ Les heures saisies dans i2 sont enregistrées en UTC et s'affichent dans le fuse
 L'import ANB repose sur une analyse du format binaire i2 (rétro-ingénierie). Testé sur des graphiques à palette personnalisée et sur un graphique récent utilisant la palette i2 complète.
 
 - **Cartes** : les cartes de renseignement associées aux éléments ne sont pas importées.
-- **Images** : les images incorporées ne sont pas importées.
+- **Images** : le fichier ne dit pas directement quelle image va sur quel élément ; l'import le déduit de l'ordre des clés d'image. Quand cet ordre est ambigu, ou que le nombre d'images ne correspond pas, aucune image n'est importée et un avertissement le signale, plutôt que de joindre une photo au mauvais élément.
 - **Icônes** : seules les icônes i2 courantes ont un équivalent ; les autres prennent l'icône par défaut.
 - Si la structure du fichier diffère de celle attendue, l'import le signale par un avertissement plutôt que de produire des liens faux.
 {{< /hint >}}

@@ -28,6 +28,7 @@ import {
   parseANBContents,
   parseAttributeDate,
   type ANBAttribute,
+  type ANBChart,
   type ANBIssue,
   type ANBItem,
   type ANBLink,
@@ -273,6 +274,39 @@ function buildElement(
   };
 }
 
+/**
+ * Pictures shown by items in i2 → media of their elements, as PNG; one file per
+ * picture, however many items show it. Returns the number of media attached.
+ */
+async function attachPictures(chart: ANBChart, elements: Element[], dossierId: DossierId): Promise<number> {
+  if (chart.pictures.size === 0) return 0;
+  const { anbPictureToPng } = await import('./anxImages');
+  const { fileService } = await import('./fileService');
+  const saved = new Map<string, Promise<string | null>>();
+  let attached = 0;
+  for (let i = 0; i < chart.items.length; i++) {
+    const key = chart.items[i].pictureKey;
+    const picture = key ? chart.pictures.get(key) : undefined;
+    if (!key || !picture) continue;
+    const element = elements[i];
+    let assetId = saved.get(key);
+    if (!assetId) {
+      const name = `${(element.label || 'image').replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 60)}.png`;
+      assetId = anbPictureToPng(picture)
+        .then((png) => (png ? fileService.saveAsset(dossierId, new File([png], name, { type: 'image/png' })) : null))
+        .then((asset) => asset?.id ?? null)
+        .catch(() => null);
+      saved.set(key, assetId);
+    }
+    const id = await assetId;
+    if (id && !element.assetIds.includes(id)) {
+      element.assetIds.push(id);
+      attached++;
+    }
+  }
+  return attached;
+}
+
 // ============================================================================
 // MAIN IMPORT
 // ============================================================================
@@ -318,12 +352,15 @@ export async function importANB(
     // ── Elements ──
     const positions = computePositions(chart.items);
     const elementIds: ElementId[] = [];
+    const elements: Element[] = [];
     for (let i = 0; i < chart.items.length; i++) {
       const element = buildElement(chart.items[i], targetDossierId, positions[i]);
       rows.addElement(element);
       elementIds.push(element.id);
+      elements.push(element);
       elementsImported++;
     }
+    const assetsImported = await attachPictures(chart, elements, targetDossierId);
 
     // ── Links ──
     for (const l of chart.links) {
@@ -369,7 +406,7 @@ export async function importANB(
       success: elementsImported > 0,
       elementsImported,
       linksImported,
-      assetsImported: 0,
+      assetsImported,
       reportImported: false,
       errors,
       warnings,

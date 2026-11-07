@@ -168,7 +168,9 @@
       "linkCountMismatch": "Irakurritako loturak: {{found}} / {{expected}}",
       "unresolvedLinks": "Muturrik gabeko {{count}} lotura saltatu dira",
       "unknownTypes": "Paleta-motarik gabeko {{count}} elementu",
-      "missingPositions": "Posiziorik gabeko {{count}} elementu"
+      "missingPositions": "Posiziorik gabeko {{count}} elementu",
+      "picturesMismatch": "Irudiak ez dira inportatu: {{found}} irakurrita, {{expected}} espero ziren",
+      "picturesOrderUnknown": "{{count}} irudi ez dira inportatu: elementuei esleitzea ez da ziurra"
     }
   },
   "fec": {

@@ -537,6 +537,22 @@ describe('buildANXExport — attributes shown on the chart', () => {
     expect(classOf(doc, 'Couleur').getAttribute('Visible')).toBe('false');
   });
 
+  it('merges each type with a behaviour its schema accepts, never AttMergeAssign', () => {
+    const doc = expectWellFormed(buildANXExport(shownDossier, [
+      makeElement({ properties: [
+        { key: 'Marque', value: 'Audi', type: 'text' },
+        { key: 'montant', value: 12, type: 'number' },
+        { key: 'vu le', value: new Date(2024, 1, 10), type: 'date' },
+        { key: 'armé', value: true, type: 'boolean' },
+      ] as never }),
+    ], []));
+    const merge = (name: string) => [classOf(doc, name).getAttribute('Type'), classOf(doc, name).getAttribute('MergeBehaviour')];
+    expect(merge('Marque')).toEqual(['AttText', 'AttMergeAddWithSpace']);
+    expect(merge('montant')).toEqual(['AttNumber', 'AttMergeAdd']);
+    expect(merge('vu le')).toEqual(['AttTime', 'AttMergeMax']);
+    expect(merge('armé')).toEqual(['AttFlag', 'AttMergeOR']);
+  });
+
   it('keeps the decimals of numbers, and the time of dates that have one', () => {
     const doc = expectWellFormed(buildANXExport(shownDossier, [
       makeElement({ id: 'e1', properties: [{ key: 'montant', value: 70.941, type: 'number' }, { key: 'vu le', value: new Date(2024, 1, 10, 9, 15), type: 'datetime' }] as never }),

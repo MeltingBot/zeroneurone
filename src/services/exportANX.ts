@@ -338,7 +338,23 @@ function attributeClassXml(a: AttributeClassDef): string {
     + ` ShowClassName="${shown}" ShowSymbol="false" ShowPrefix="false" ShowSuffix="false" ShowValue="${shown}"`
     + ` ShowDate="${a.shown && isTime}" ShowTime="${a.shown && isTime && a.hasTime}" ShowSeconds="false"`
     + ` DecimalPlaces="${a.decimals}" Visible="${shown}" ShowIfSet="false"`
-    + ` MergeBehaviour="${a.attType === 'AttText' ? 'AttMergeAddWithSpace' : 'AttMergeAssign'}" PasteBehaviour="AttMergeAssign" />`;
+    + ` MergeBehaviour="${mergeBehaviourOf(a.attType)}" PasteBehaviour="AttMergeAssign" />`;
+}
+
+/**
+ * What i2 does with two values when merging items. Each type has its own
+ * list in the ANB 7 schema, and AttMergeAssign is in none of them: i2 warns
+ * "Invalid merge behaviour for classes of this type". Numbers are summed, as
+ * i2 does by default (its own Latitude and Longitude classes included), dates
+ * keep the latest, flags are ORed. PasteBehaviour accepts AttMergeAssign.
+ */
+function mergeBehaviourOf(attType: string): string {
+  switch (attType) {
+    case 'AttNumber': return 'AttMergeAdd';
+    case 'AttTime': return 'AttMergeMax';
+    case 'AttFlag': return 'AttMergeOR';
+    default: return 'AttMergeAddWithSpace';
+  }
 }
 
 /** Decimals of a number as written: 70.941 → 3 (at most 6) */

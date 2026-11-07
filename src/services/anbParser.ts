@@ -58,6 +58,8 @@ export interface ANBItem {
   /** False when i2 holds a date without time of day */
   dateHasTime: boolean;
   attributes: ANBAttribute[];
+  /** Key of the picture the item shows instead of its icon, null when none */
+  pictureKey: string | null;
 }
 
 export interface ANBLink {
@@ -83,12 +85,16 @@ export type ANBIssue =
   | { code: 'linkCountMismatch'; expected: number; found: number }
   | { code: 'unresolvedLinks'; count: number }
   | { code: 'unknownTypes'; count: number }
-  | { code: 'missingPositions'; count: number };
+  | { code: 'missingPositions'; count: number }
+  | { code: 'picturesMismatch'; expected: number; found: number }
+  | { code: 'picturesOrderUnknown'; count: number };
 
 export interface ANBChart {
   items: ANBItem[];
   links: ANBLink[];
   issues: ANBIssue[];
+  /** Pictures shown by items, by ANBItem.pictureKey: a zlib-compressed DIB (BMP without its file header) */
+  pictures: Map<string, Uint8Array>;
 }
 
 // ============================================================================
@@ -289,10 +295,104 @@ function readPropertyBag(b: Uint8Array, p: number): { props: Map<string, Uint8Ar
     if (!name) return null;
     const ref = readClassRef(b, name.end);
     p = ref.name ? skipChain(b, ref.end) : ref.end;
-    props.set(name.value, b.subarray(p, p + 14));
-    p += 14;
+    const size = propertySize(b, p);
+    if (size < 0) return null;
+    props.set(name.value, b.subarray(p, p + size));
+    p += size;
   }
   return { props, end: p };
+}
+
+/** A property value: a 14-byte VARIANT, or VT_BSTR (8) + u32 length + bytes (PictureStyleInfo). -1 when truncated */
+function propertySize(b: Uint8Array, p: number): number {
+  if (p + 6 > b.length) return -1;
+  const size = u16(b, p) === 0x08 ? 6 + u32(b, p + 2) : 14;
+  return p + size <= b.length ? size : -1;
+}
+
+/**
+ * Key of the picture an item shows: its PictureStyleInfo value is VT_BSTR, u32 length, u32 1,
+ * f64 1.0 (scale?), then the key CString (e.g. "Yf0o5Rl61W1K5XTsKcp9dwAA").
+ */
+function pictureKeyOf(value: Uint8Array | undefined): string | null {
+  if (!value || value.length < 22 || u16(value, 0) !== 0x08) return null;
+  return readUStr(value, 18)?.value || null;
+}
+
+/**
+ * The chart's pictures, in stream order. The chart's own PictureStyleInfo value holds, after
+ * VT_BSTR and its length: u32 1, u32 count, then per picture u32 (0x7412), u32 format (3: DIB),
+ * u32 size, and size bytes: a big-endian u32 raw length then the zlib stream (Qt's qCompress).
+ * A picture of another format keeps its place, as null. Empty when no such list is found.
+ */
+export function readChartPictures(b: Uint8Array): Array<Uint8Array | null> {
+  const marker = [0xff, 0xfe, 0xff, 0x10, ...Array.from('PictureStyleInfo').flatMap(c => [c.charCodeAt(0), 0])];
+  for (let p = indexOfBytes(b, marker, 0, b.length); p >= 0; p = indexOfBytes(b, marker, p + 1, b.length)) {
+    const ref = readClassRef(b, p + marker.length);
+    const at = ref.name ? skipChain(b, ref.end) : ref.end;
+    if (propertySize(b, at) < 0 || u16(b, at) !== 0x08) continue;
+    const end = at + 6 + u32(b, at + 2);
+    let q = at + 6;
+    const count = u32(b, q + 4);
+    if (u32(b, q) !== 1 || count === 0 || count > 10000) continue; // an item's key, not the list
+    q += 8;
+    const pictures: Array<Uint8Array | null> = [];
+    for (let k = 0; k < count && q + 16 <= end; k++) {
+      const size = u32(b, q + 8);
+      if (size < 4 || q + 12 + size > end) break;
+      pictures.push(u32(b, q + 4) === 3 ? b.subarray(q + 16, q + 12 + size) : null);
+      q += 12 + size;
+    }
+    if (pictures.length === count) return pictures;
+  }
+  return [];
+}
+
+/** Alphabet of i2 keys (22 characters + "AA", e.g. "K1RU183-ZnMATAje-U-OaQAA"): base64 with '-' for '/' */
+const KEY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-';
+
+function compareKeyValues(x: string, y: string): number {
+  for (let k = 0; k < Math.min(x.length, y.length); k++) {
+    const d = KEY_ALPHABET.indexOf(x[k]) - KEY_ALPHABET.indexOf(y[k]);
+    if (d !== 0) return d;
+  }
+  return x.length - y.length;
+}
+
+/**
+ * Picture keys in the order of the chart's picture list, null when it cannot be known.
+ *
+ * The list carries no keys: i2 writes it sorted by key, checked on a chart with four pictures
+ * added in another order than their keys and their items. Whether i2 compares the keys as text
+ * or by the bytes they encode is unknown: both orders agree unless keys mix a digit, '+' or '-'
+ * with a letter where they first differ. Then nothing tells which order holds.
+ */
+export function pictureListOrder(keys: string[]): string[] | null {
+  const asText = [...keys].sort((x, y) => (x < y ? -1 : x > y ? 1 : 0));
+  const asBytes = [...keys].sort(compareKeyValues);
+  return asText.every((key, k) => key === asBytes[k]) ? asText : null;
+}
+
+/** Pictures by item key; none rather than a wrong one when the counts differ or the order is unknown */
+function picturesByKey(b: Uint8Array, items: ANBItem[], issues: ANBIssue[]): Map<string, Uint8Array> {
+  const byKey = new Map<string, Uint8Array>();
+  const distinct = [...new Set(items.map(i => i.pictureKey).filter((k): k is string => !!k))];
+  if (distinct.length === 0) return byKey;
+  const keys = pictureListOrder(distinct);
+  if (!keys) {
+    issues.push({ code: 'picturesOrderUnknown', count: distinct.length });
+    return byKey;
+  }
+  const pictures = readChartPictures(b);
+  if (pictures.length !== keys.length) {
+    issues.push({ code: 'picturesMismatch', expected: keys.length, found: pictures.length });
+    return byKey;
+  }
+  keys.forEach((key, k) => {
+    const picture = pictures[k];
+    if (picture) byKey.set(key, picture);
+  });
+  return byKey;
 }
 
 /** COLORREF stored in a VT_I4 property value. */
@@ -304,6 +404,7 @@ function propColor(value: Uint8Array | undefined): string | null {
 export interface ItemTail {
   key: string | null;
   color: string | null;
+  pictureKey: string | null;
   labelText: string | null;
   /** Position of the label CString, -1 when not found */
   labelPos: number;
@@ -313,7 +414,7 @@ export interface ItemTail {
 
 /** Read what follows the GUID up to `limit`: label, card attributes, property bag and NB_Key. */
 function readItemTail(b: Uint8Array, from: number, limit: number): ItemTail {
-  const tail: ItemTail = { key: null, color: null, labelText: null, labelPos: -1, identity: null, fields: [] };
+  const tail: ItemTail = { key: null, color: null, pictureKey: null, labelText: null, labelPos: -1, identity: null, fields: [] };
   const clsid = indexOfBytes(b, CLSID_TAIL, from, limit);
   const fieldsLimit = clsid >= 0 ? clsid : limit;
 
@@ -356,6 +457,7 @@ function readItemTail(b: Uint8Array, from: number, limit: number): ItemTail {
     const bag = readPropertyBag(b, clsid + CLSID_TAIL.length);
     if (bag) {
       tail.color = propColor(bag.props.get('LineColour'));
+      tail.pictureKey = pictureKeyOf(bag.props.get('PictureStyleInfo'));
       const key = readUStr(b, skipChain(b, bag.end + 4));
       if (key) tail.key = key.value;
     }
@@ -564,7 +666,7 @@ export function parseANBContents(b: Uint8Array): ANBChart {
     if (nc.name === 'LCI_Link') { firstLinkPos = p; break; }
     p = nc.end - 1;
   }
-  if (firstItemPos < 4) return { items: [], links: [], issues: [{ code: 'noItems' }] };
+  if (firstItemPos < 4) return { items: [], links: [], issues: [{ code: 'noItems' }], pictures: new Map() };
 
   const itemCount = u32(b, firstItemPos - 4);
   const defs = buildDefinitions(b, firstItemPos);
@@ -658,6 +760,7 @@ export function parseANBContents(b: Uint8Array): ANBChart {
       date: time.date,
       dateHasTime: time.dateHasTime,
       attributes,
+      pictureKey: tail.pictureKey,
     });
   }
   if (unknownTypes > 0) issues.push({ code: 'unknownTypes', count: unknownTypes });
@@ -715,5 +818,5 @@ export function parseANBContents(b: Uint8Array): ANBChart {
     if (unresolved > 0) issues.push({ code: 'unresolvedLinks', count: unresolved });
   }
 
-  return { items, links, issues };
+  return { items, links, issues, pictures: picturesByKey(b, items, issues) };
 }

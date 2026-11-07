@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.91.1
+
+### Corrections
+
+- **Export ANX : avertissements d'Analyst's Notebook** — i2 affichait
+  « LNAttributeClass::SetMergeBehaviour: Invalid merge behaviour for
+  classes of this type » à l'ouverture, une fois par propriété numérique,
+  date ou booléenne : le comportement de fusion exporté n'était pas admis
+  pour ces types. Les nombres sont désormais additionnés à la fusion
+  (réglage par défaut d'i2), la date la plus récente est gardée, les
+  booléens sont combinés par un OU ; les textes restent combinés avec un
+  espace.
+- **Import ANB : images** — l'image qu'un élément affiche dans i2 à la
+  place de son icône est importée comme média joint (PNG). Quand le
+  rattachement d'une image à son élément est incertain, aucune image n'est
+  importée et un avertissement le signale.
+- **Import ANB : clé des éléments illustrés** — la clé i2 d'un élément
+  portant une image n'était pas lue.
+
+### Documentation
+
+- Import ANB : images ; export ANX : comportement à la fusion dans i2
+  (FR/EN).
+
 ## 2.91.0
 
 ### Nouveautés

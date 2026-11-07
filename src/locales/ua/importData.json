@@ -168,7 +168,9 @@
       "linkCountMismatch": "Прочитано зв'язків: {{found}} з {{expected}}",
       "unresolvedLinks": "Пропущено зв'язків без кінців: {{count}}",
       "unknownTypes": "Елементів без типу палітри: {{count}}",
-      "missingPositions": "Елементів без позиції: {{count}}"
+      "missingPositions": "Елементів без позиції: {{count}}",
+      "picturesMismatch": "Зображення не імпортовано: прочитано {{found}}, очікувалось {{expected}}",
+      "picturesOrderUnknown": "Зображення не імпортовано ({{count}}): їх прив'язка до елементів невизначена"
     }
   },
   "fec": {

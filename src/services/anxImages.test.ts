@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { inflateSync } from 'node:zlib';
-import { rgbaToBmp24, bmpToRgba, bmpToAnxImage, anxImageToBmp } from './anxImages';
+import { rgbaToBmp24, bmpToRgba, bmpToAnxImage, anxImageToBmp, dibToBmp } from './anxImages';
 
 // 3 × 2 pixels: red, green, transparent / blue, magenta, white
 const RGBA = new Uint8ClampedArray([
@@ -58,5 +58,21 @@ describe('icon names', () => {
     expect(a.name).toMatch(/^ZN_[0-9a-f]{24}$/);
     expect(b.name).toBe(a.name);
     expect(c.name).not.toBe(a.name);
+  });
+});
+
+describe('ANB pictures (DIB)', () => {
+  it('gives a DIB its BMP file header, and keeps magenta in a photo', () => {
+    const bmp = rgbaToBmp24(new Uint8Array([255, 0, 255, 255, 10, 20, 30, 255]), 2, 1);
+    const fromDib = dibToBmp(bmp.subarray(14))!;
+    expect(Array.from(fromDib)).toEqual(Array.from(bmp));
+    // rgbaToBmp24 nudges magenta off: put it back to test the photo case
+    fromDib[54] = 255; fromDib[55] = 0; fromDib[56] = 255;
+    expect(Array.from(bmpToRgba(fromDib, false)!.rgba.subarray(0, 4))).toEqual([255, 0, 255, 255]);
+    expect(bmpToRgba(fromDib)!.rgba[3]).toBe(0);
+  });
+
+  it('rejects what is no DIB', () => {
+    expect(dibToBmp(new Uint8Array(10))).toBeNull();
   });
 });

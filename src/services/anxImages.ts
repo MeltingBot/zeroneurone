@@ -79,9 +79,10 @@ export function rgbaToBmp24(rgba: Uint8ClampedArray | Uint8Array, width: number,
 
 /**
  * RGBA pixels (rows top first) of an 8-, 24- or 32-bit uncompressed BMP;
- * magenta becomes transparent. Null when the file is no such BMP.
+ * magenta becomes transparent, unless `magentaTransparent` is false (a
+ * photo). Null when the file is no such BMP.
  */
-export function bmpToRgba(bmp: Uint8Array): { width: number; height: number; rgba: Uint8ClampedArray<ArrayBuffer> } | null {
+export function bmpToRgba(bmp: Uint8Array, magentaTransparent = true): { width: number; height: number; rgba: Uint8ClampedArray<ArrayBuffer> } | null {
   if (bmp.length < 54 || bmp[0] !== 0x42 || bmp[1] !== 0x4d) return null;
   const view = new DataView(bmp.buffer, bmp.byteOffset, bmp.byteLength);
   const offset = view.getUint32(10, true);
@@ -116,11 +117,35 @@ export function bmpToRgba(bmp: Uint8Array): { width: number; height: number; rgb
         [b, g, r] = [bmp[at], bmp[at + 1], bmp[at + 2]];
       }
       const i = (y * width + x) * 4;
-      const transparent = r === 255 && g === 0 && b === 255;
+      const transparent = magentaTransparent && r === 255 && g === 0 && b === 255;
       rgba[i] = r; rgba[i + 1] = g; rgba[i + 2] = b; rgba[i + 3] = transparent ? 0 : 255;
     }
   }
   return { width, height, rgba };
+}
+
+/**
+ * A DIB (a BMP without its 14-byte file header, as ANB stores its pictures)
+ * as a BMP file: the pixels follow the header, the palette and, for
+ * BI_BITFIELDS with a 40-byte header, the three colour masks.
+ */
+export function dibToBmp(dib: Uint8Array): Uint8Array | null {
+  if (dib.length < 40) return null;
+  const view = new DataView(dib.buffer, dib.byteOffset, dib.byteLength);
+  const headerSize = view.getUint32(0, true);
+  const bpp = view.getUint16(14, true);
+  const compression = view.getUint32(16, true);
+  const colours = bpp <= 8 ? view.getUint32(32, true) || 1 << bpp : 0;
+  const masks = compression === 3 && headerSize === 40 ? 12 : 0;
+  const offset = 14 + headerSize + colours * 4 + masks;
+  if (headerSize < 40 || offset > 14 + dib.length) return null;
+  const bmp = new Uint8Array(14 + dib.length);
+  const out = new DataView(bmp.buffer);
+  bmp[0] = 0x42; bmp[1] = 0x4d; // "BM"
+  out.setUint32(2, bmp.length, true);
+  out.setUint32(10, offset, true);
+  bmp.set(dib, 14);
+  return bmp;
 }
 
 // ── zlib + base64 ───────────────────────────────────────────────
@@ -187,14 +212,29 @@ export async function imageToAnxImage(file: Blob): Promise<AnxImage | null> {
   return bmpToAnxImage(rgbaToBmp24(data, side, side));
 }
 
+/** RGBA pixels as a PNG file; null when the browser cannot draw them */
+function rgbaToPng(pixels: { width: number; height: number; rgba: Uint8ClampedArray<ArrayBuffer> }): Promise<Blob | null> {
+  const canvas = canvasOf(pixels.width, pixels.height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return Promise.resolve(null);
+  ctx.putImageData(new ImageData(pixels.rgba, pixels.width, pixels.height), 0, 0);
+  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'));
+}
+
+/** A picture of an .anb (zlib-compressed DIB, a photo: magenta kept) as a PNG file; null when it cannot be read */
+export async function anbPictureToPng(zlib: Uint8Array): Promise<Blob | null> {
+  try {
+    const bmp = dibToBmp(await pipe(zlib, new DecompressionStream('deflate')));
+    const pixels = bmp ? bmpToRgba(bmp, false) : null;
+    return pixels ? await rgbaToPng(pixels) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** An embedded image as a PNG file (magenta transparent); null when it cannot be read */
 export async function anxImageToPng(data: string): Promise<Blob | null> {
   const bmp = await anxImageToBmp(data);
   const pixels = bmp ? bmpToRgba(bmp) : null;
-  if (!pixels) return null;
-  const canvas = canvasOf(pixels.width, pixels.height);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-  ctx.putImageData(new ImageData(pixels.rgba, pixels.width, pixels.height), 0, 0);
-  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'));
+  return pixels ? rgbaToPng(pixels) : null;
 }

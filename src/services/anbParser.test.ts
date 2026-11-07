@@ -1,14 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import { resolve } from 'node:path';
 import CFB from 'cfb';
-import { findEventEnd, itemLabel, parseANBContents, readUStr, type ANBLink } from './anbParser';
+import { findEventEnd, itemLabel, parseANBContents, pictureListOrder, readUStr, type ANBLink } from './anbParser';
 
 // Real charts live in doc_perso/fixtures/anb/ (git-ignored: they contain real case data). Skipped when absent.
 const DIR = resolve(__dirname, '../../doc_perso/fixtures/anb');
 const TEST = resolve(DIR, 'Test ANB pour import ZN.anb');
 const RELATIONAL = resolve(DIR, 'RELATIONNEL ST MAIXENT.anb');
 const EVENTS = resolve(DIR, 'EVENEMENTIEL SIMPLIFIE.anb');
+const PICTURES = resolve(DIR, 'Graphe7.anb');
+const ABCD = resolve(DIR, 'ABCD.anb');
 
 function contents(path: string): Uint8Array {
   const cfb = CFB.read(readFileSync(path), { type: 'buffer' });
@@ -214,5 +217,50 @@ describe('itemLabel', () => {
   it('keeps the key for events (first CString is the type) and themes', () => {
     expect(itemLabel({ key: 'Fait 1', identity: '', labelText: 'Date et heure' })).toBe('Fait 1');
     expect(itemLabel({ key: 'Faits', identity: null, labelText: null })).toBe('Faits');
+  });
+});
+
+/** Width and height of an item's picture (DIB header after zlib), null when it has none */
+function pictureSize(chart: ReturnType<typeof parseANBContents>, label: string): [number, number] | null {
+  const item = chart.items.find(i => i.label === label);
+  const zlib = item?.pictureKey ? chart.pictures.get(item.pictureKey) : undefined;
+  if (!zlib) return null;
+  const dib = inflateSync(zlib);
+  return [dib.readInt32LE(4), Math.abs(dib.readInt32LE(8))];
+}
+
+describe.skipIf(!existsSync(ABCD))('pictures: four items, pictures added in another order (B, D, A, C)', () => {
+  const chart = parseANBContents(contents(ABCD));
+
+  it('attaches each picture to its item: the list is sorted by key', () => {
+    expect(chart.issues).toEqual([]);
+    expect(pictureSize(chart, 'A')).toEqual([380, 380]); // Droopy
+    expect(pictureSize(chart, 'B')).toEqual([115, 216]); // Groot
+    expect(pictureSize(chart, 'C')).toEqual([115, 216]); // Groot again, under its own key
+    expect(pictureSize(chart, 'D')).toEqual([770, 513]); // Yoda
+  });
+});
+
+describe.skipIf(!existsSync(PICTURES))('pictures: vehicle and person', () => {
+  const chart = parseANBContents(contents(PICTURES));
+
+  it('reads the picture of each item and keeps reading what follows it', () => {
+    expect(pictureSize(chart, 'XX-254-YG')).toEqual([800, 450]);
+    expect(pictureSize(chart, 'YODA')).toEqual([770, 513]);
+    const vehicle = chart.items.find(i => i.label === 'XX-254-YG')!;
+    expect(vehicle.attributes.map(a => a.value)).toEqual(['RENAULT', 'Clio Esprit Alpine', 'Noir']);
+  });
+});
+
+describe('pictureListOrder', () => {
+  it('sorts keys when text and encoded bytes agree', () => {
+    expect(pictureListOrder(['i9akRuNgSfSgzvhP09Dh7gAA', 'K1RU183-ZnMATAje-U-OaQAA', 'Yf0o5Rl61W1K5XTsKcp9dwAA', 'YQsSS2kFO-FKE05CWbWT6wAA']))
+      .toEqual(['K1RU183-ZnMATAje-U-OaQAA', 'YQsSS2kFO-FKE05CWbWT6wAA', 'Yf0o5Rl61W1K5XTsKcp9dwAA', 'i9akRuNgSfSgzvhP09Dh7gAA']);
+  });
+
+  it('gives up when a digit, + or - meets a letter where keys first differ', () => {
+    expect(pictureListOrder(['3abcAA', 'KxyzAA'])).toBeNull();
+    expect(pictureListOrder(['Y-bcAA', 'YQbcAA'])).toBeNull();
+    expect(pictureListOrder(['3abcAA', '7xyzAA'])).toEqual(['3abcAA', '7xyzAA']);
   });
 });

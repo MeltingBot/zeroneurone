@@ -168,7 +168,9 @@
       "linkCountMismatch": "Gelezen koppelingen: {{found}} van {{expected}}",
       "unresolvedLinks": "{{count}} koppelingen zonder eindpunten overgeslagen",
       "unknownTypes": "{{count}} elementen zonder palettype",
-      "missingPositions": "{{count}} elementen zonder positie"
+      "missingPositions": "{{count}} elementen zonder positie",
+      "picturesMismatch": "Afbeeldingen niet geïmporteerd: {{found}} gelezen, {{expected}} verwacht",
+      "picturesOrderUnknown": "{{count}} afbeeldingen niet geïmporteerd: de koppeling aan de elementen is onzeker"
     }
   },
   "fec": {

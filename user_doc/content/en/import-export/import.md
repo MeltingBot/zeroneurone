@@ -489,6 +489,7 @@ The `lcx:LibraryCatalogue` hierarchy is parsed: non-abstract ancestor types are 
 | Attributes | Properties (typed dates and date-times) |
 | Date and time | Timeline event: one-off, or a period when one date-time attribute gives the start and another the end |
 | Text block | Annotation |
+| Image shown instead of the icon | Attached media (PNG) |
 
 Icons, boxes, circles, events and theme lines become elements. A theme line's date is not kept.
 
@@ -511,7 +512,7 @@ Times entered in i2 are stored in UTC and shown in the computer's time zone; a d
 ANB import is based on reverse-engineering of i2's binary format. Tested on charts with custom palettes and on a recent chart using the full i2 palette.
 
 - **Cards**: intelligence cards attached to items are not imported.
-- **Images**: embedded images are not imported.
+- **Images**: the file does not say directly which image belongs to which item; the import deduces it from the order of the image keys. When that order is ambiguous, or the number of images does not match, no image is imported and a warning says so, rather than attaching a photo to the wrong item.
 - **Icons**: only common i2 icons have an equivalent; others get the default icon.
 - If the file structure differs from what is expected, the import reports it in a warning instead of producing wrong links.
 {{< /hint >}}
