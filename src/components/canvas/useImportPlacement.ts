@@ -75,7 +75,8 @@ export function useImportPlacement({
           const placedLinks = importPlacementData.prebuilt.links;
           pasteElements(shifted, placedLinks);
           const placedIds = shifted.map((e) => e.id);
-          if (activeTabId) addTabMembers(activeTabId, placedIds);
+          // Filed before the import counts as done (undo step, selection, end of placement)
+          if (activeTabId) await addTabMembers(activeTabId, placedIds);
           // Events for elements already in the dossier: added to them, and
           // taken back by the same undo as the elements created
           const before: { id: string; changes: Partial<Element> }[] = [];
@@ -292,7 +293,8 @@ export function useImportPlacement({
               .filter(el => !preImportIds.has(el.id) && !placed.has(el.id))
               .map(el => el.id);
             if (importedIds.length > 0) {
-              addTabMembers(activeTabId, importedIds);
+              // Filed before the import counts as done (undo step, selection, end of placement)
+              await addTabMembers(activeTabId, importedIds);
             }
           }
 
