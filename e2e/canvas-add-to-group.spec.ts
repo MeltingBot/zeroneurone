@@ -169,3 +169,41 @@ test('an element left over from a deleted group can be grouped again', async ({ 
     return !!group && parentOf(a) === group.id;
   }, [a, b] as const)).toBe(true);
 });
+
+/** A palette colour (a theme variable) tints the background of a group, as a custom colour does. */
+test('a group takes the background of a palette colour', async ({ page }) => {
+  test.setTimeout(120_000);
+  await exposeImporter(page);
+  await setupCleanEnvironment(page);
+  await waitForAppLoad(page);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'tint.json');
+  writeFileSync(file, buildLargeDossierJson(2));
+  await page.click('[data-testid="import-button"]');
+  await page.setInputFiles('input[type="file"]', file);
+  await page.waitForSelector('.react-flow__node');
+
+  const background = async (color: string) => {
+    const id = await page.evaluate(async (color) => {
+      const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
+      const s = useDossierStore.getState();
+      const group = await s.createGroup('G', { x: 0, y: 400 }, { width: 300, height: 200 });
+      await s.updateElement(group.id, { visual: { ...group.visual, color } });
+      return group.id;
+    }, color);
+    await page.waitForSelector(`.react-flow__node[data-id="${id}"]`);
+    // The background drawn behind the group, as the browser computes it
+    return page.evaluate((id) => {
+      const node = document.querySelector(`.react-flow__node[data-id="${id}"]`)!;
+      const tinted = [node, ...node.querySelectorAll('*')]
+        .map((el) => getComputedStyle(el).backgroundColor)
+        .find((bg) => bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent');
+      return tinted ?? null;
+    }, id);
+  };
+
+  const palette = await background('var(--color-node-blue)');
+  const custom = await background('#93c5fd');
+  expect(palette).not.toBeNull();
+  // The palette blue and its hex code give the same tint
+  expect(palette).toBe(custom);
+});

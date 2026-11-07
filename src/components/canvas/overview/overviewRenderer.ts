@@ -4,6 +4,7 @@
  * interface so a WebGL backend can replace it if a measurement asks for one.
  */
 
+import { GROUP_TINT } from '../../../types';
 import { EDGE_ARROW_LENGTH, EDGE_ARROW_WIDTH } from '../../../utils/edgeRouting';
 import { queryCells, DIAMOND_HALF_DIAGONAL } from './overviewHitTest';
 import {
@@ -49,7 +50,7 @@ export interface OverviewRenderer {
 const DIMMED_ALPHA = 0.15;
 const DIMMED_GROUP_ALPHA = 0.3;
 /** Group frames are a tint of their colour (hex alpha "12" in GroupNode). */
-const GROUP_TINT_ALPHA = 0x12 / 255;
+const GROUP_TINT_ALPHA = GROUP_TINT;
 /** Below this on-screen size every node is a plain square: shapes are not discernible. */
 const TINY_PX = 3;
 /** Arrows are only drawn from this on-screen length. */

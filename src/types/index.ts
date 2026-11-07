@@ -733,6 +733,9 @@ export const DEFAULT_FILTERS: ViewFilters = {
   includeTabs: [],
 };
 
+/** Share of its colour a group's background takes: canvas, overview and SVG/PDF export alike. */
+export const GROUP_TINT = 0.2;
+
 // Saturated colors for nodes - work well on both light and dark backgrounds
 // These use CSS variables to automatically adapt to the current theme
 export const DEFAULT_COLORS = [

@@ -1,4 +1,5 @@
 import type { Element, Link, Position, ElementSize } from '../types';
+import { GROUP_TINT } from '../types';
 import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
@@ -319,7 +320,7 @@ function buildGroupSVG(element: Element, pos: Position, dims: NodeDimensions): s
     : '#f3f4f6';
 
   // Low opacity fill for groups
-  const bgOpacity = 0.12;
+  const bgOpacity = GROUP_TINT;
 
   let dashArray = '';
   if (borderStyle === 'dashed') dashArray = ` stroke-dasharray="4 2"`;
