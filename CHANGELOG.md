@@ -1,5 +1,60 @@
 # Changelog
 
+## 2.92.0
+
+### Nouveautés
+
+- **Export PDF, de A0 à A4** — catégorie **Image** de l'export : le schéma
+  posé sur une feuille A0, A1, A2, A3 ou A4 (orientation auto, portrait ou
+  paysage), à imprimer ou à enregistrer en PDF depuis la fenêtre
+  d'impression du navigateur. Le dessin reste net à toute taille ; les
+  photos des éléments sont reprises des fichiers d'origine, à la résolution
+  utile pour la feuille choisie.
+- **Liens à angles droits retouchables** — en courbure orthogonale, un lien
+  sélectionné porte une poignée sur chaque segment : glisser déplace le
+  segment, glisser celui qui touche un élément crée un décrochement,
+  double-cliquer coupe le segment en deux.
+- **Liens à angles libres** — en courbure droite, un lien se casse à
+  n'importe quel angle, comme dans Analyst's Notebook : tirer le rond au
+  milieu d'un segment ajoute un point, les points se déplacent (ils
+  s'alignent sur leurs voisins) et se suppriment d'un double-clic.
+- **Tracés fixes** — les coudes dessinés restent à leur place quand un
+  élément bouge, et suivent quand les deux éléments bougent ensemble (ainsi
+  qu'au copier-coller). **Arrange** efface les tracés qu'il casse, et
+  **Réinitialiser les tracés** (clic droit sur une sélection) les remet tous
+  en automatique.
+- **Liens multiples** — réglage du panneau Vues : **Éclatés**, **Un seul**
+  ou **Un par sens**, comme la multiplicité des connexions d'Analyst's
+  Notebook. Les liens entre deux mêmes éléments se réunissent en une ligne,
+  sans libellé : au survol, la liste de ses liens, chacun précédé de sa
+  couleur ; au clic, la même liste pour en choisir un. Les liens qui
+  quittent un même côté d'un élément partent alors d'un même point.
+- **ANX : tracé des liens et multiplicité** — les tracés dessinés à la main
+  arrivent dans i2 en coins de lien (option **Tracé des liens** à l'export)
+  et reviennent à l'import ; les liens réunis gardent leur multiplicité.
+- **Export JSON compact** — option **Compact** : le fichier sur une ligne,
+  plus petit, réimporté de la même façon.
+
+### Améliorations
+
+- **Fond des groupes** — il prend 20 % de la couleur du groupe, sur le
+  canevas comme dans les exports.
+- **Épaisseurs de trait et de bordure** — 1, 2, 3, 4 et 8 px : la dernière
+  se distingue enfin des autres.
+- **ANX : positions** — les entités sont placées par leur centre, comme i2
+  les dessine ; l'échelle de l'export suit celle des graphes i2 réels, et
+  l'import ANX met le graphe à la même densité que l'import ANB.
+
+### Corrections
+
+- **Couleurs de la palette sur les groupes** — un groupe coloré avec la
+  palette restait sans fond.
+- **Grouper** — un élément resté lié à un groupe supprimé empêchait de
+  grouper à deux éléments.
+- **Import dans le dossier ouvert** — un fichier ANB passe par le mode
+  placement comme les autres formats, et les éléments importés sont rangés
+  dans l'onglet ouvert avant la fin de l'import.
+
 ## 2.91.1
 
 ### Corrections

@@ -634,7 +634,7 @@ Chaque poste emet les actions faites sur lui : une modification recue d'un colla
 | `dossier:caseClosed` / `dossier:caseReopened` | — | Dossier cloture (lecture seule) / rouvert | |
 | `dossier:opened` / `dossier:closed` | — | Dossier charge / decharge dans la fenetre | |
 | `dossier:imported` | — | Import termine | `format`, `into` (dossier existant), `elements`, `links`, `assets`, `via` |
-| `dossier:exported` | — | Quelque chose sort de l'application | `format` : zip, json, csv, png, svg, znzip, report-md, report-html, synthesis-*, print, query-csv, matrix-csv, matrix-xlsx, matrix-ods (2.91+), timeline-csv, map-csv, asset, backup, clipboard-mermaid, clipboard-dot… |
+| `dossier:exported` | — | Quelque chose sort de l'application | `format` : zip, json, csv, png, svg, znzip, report-md, report-html, synthesis-*, print, query-csv, matrix-csv, matrix-xlsx, matrix-ods (2.91+), pdf (2.92+), timeline-csv, map-csv, asset, backup, clipboard-mermaid, clipboard-dot… |
 | `dossier:shared` / `dossier:joined` | — | Dossier partage depuis ce poste / rejoint par un lien | |
 | `element:created` | elementId | Element cree | `via: 'paste'` pour un collage |
 | `element:updated` | elementId | Element modifie | `fields`, `bulk` pour une modification en lot |

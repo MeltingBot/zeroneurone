@@ -634,7 +634,7 @@ Each device emits the actions done on it: a change received from a collaborator 
 | `dossier:caseClosed` / `dossier:caseReopened` | — | Dossier closed (read-only) / reopened | |
 | `dossier:opened` / `dossier:closed` | — | Dossier loaded / unloaded in the window | |
 | `dossier:imported` | — | Import finished | `format`, `into` (existing dossier), `elements`, `links`, `assets`, `via` |
-| `dossier:exported` | — | Something left the app | `format`: zip, json, csv, png, svg, znzip, report-md, report-html, synthesis-*, print, query-csv, matrix-csv, matrix-xlsx, matrix-ods (2.91+), timeline-csv, map-csv, asset, backup, clipboard-mermaid, clipboard-dot… |
+| `dossier:exported` | — | Something left the app | `format`: zip, json, csv, png, svg, znzip, report-md, report-html, synthesis-*, print, query-csv, matrix-csv, matrix-xlsx, matrix-ods (2.91+), pdf (2.92+), timeline-csv, map-csv, asset, backup, clipboard-mermaid, clipboard-dot… |
 | `dossier:shared` / `dossier:joined` | — | Dossier shared from this device / joined from a link | |
 | `element:created` | elementId | Element created | `via: 'paste'` for a paste |
 | `element:updated` | elementId | Element changed | `fields`, `bulk` for a bulk edit |
