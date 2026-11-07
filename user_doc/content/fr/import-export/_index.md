@@ -8,5 +8,5 @@ bookCollapseSection: true
 
 Échangez vos données avec d'autres outils et sauvegardez vos dossiers.
 
-- [Exporter]({{< relref "export" >}}) — ZIP, JSON, CSV, GraphML, GeoJSON, PNG, SVG
+- [Exporter]({{< relref "export" >}}) — ZIP, JSON, CSV, GraphML, GeoJSON, PNG, SVG, PDF
 - [Importer]({{< relref "import" >}}) — ZIP, JSON, CSV, STIX 2.1

@@ -88,11 +88,15 @@ describe('svgExportService links', () => {
     expect(new Set(starts(buildSVGExport(fan, out, settings))).size).toBe(2);
   });
 
-  it('draws the links between two elements as one line without label when merged', () => {
-    const merged = buildSVGExport(nodes, parallel, { linkAnchorMode: 'auto', linkCurveMode: 'straight', linkMultiplicity: 'single' });
+  it('draws the links between two elements as one line, its labels listed with their colours, when merged', () => {
+    const coloured = parallel.map((l, i) => ({ ...l, visual: { ...l.visual, color: ['#e07a5f', '#4a8c59', '#c9952c'][i] } }));
+    const merged = buildSVGExport(nodes, coloured, { linkAnchorMode: 'auto', linkCurveMode: 'straight', linkMultiplicity: 'single' });
     const paths = [...merged.matchAll(/<g id="edge-[^"]+">/g)];
     expect(paths).toHaveLength(1);
-    for (const l of parallel) expect(merged).not.toContain(`>${l.label}<`);
+    // On paper there is no hover: the line lists its links' labels, each behind its colour
+    for (const l of coloured) expect(merged).toContain(`>${l.label}</text>`);
+    const swatches = [...merged.matchAll(/<rect [^>]*width="8" height="8"[^>]*fill="([^"]+)"/g)].map((m) => m[1]);
+    expect(swatches).toEqual(['#e07a5f', '#4a8c59', '#c9952c']);
     // Separate (default): one line each
     expect([...buildSVGExport(nodes, parallel, { linkAnchorMode: 'auto', linkCurveMode: 'straight' }).matchAll(/<g id="edge-[^"]+">/g)]).toHaveLength(3);
   });
