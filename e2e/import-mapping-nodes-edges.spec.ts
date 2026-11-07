@@ -80,3 +80,18 @@ test('an array of elements and an array of links between them import together', 
   // The type names the link: not repeated as a property
   expect(links.every((l) => !l.properties.some((p) => p.key === 'type'))).toBe(true);
 });
+
+test('a JSON file of no known format, imported as a file, opens the mapping', async ({ page }) => {
+  await setupCleanEnvironment(page);
+  await page.click('[data-testid="import-button"]');
+  await page.locator('[data-testid="import-file-input"]').setInputFiles({
+    name: 'graphe.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(GRAPH), 'utf-8'),
+  });
+  const modal = page.locator('[data-testid="json-mapping-modal"]');
+  await expect(modal).toBeVisible({ timeout: 15000 });
+  await expect(modal.locator('[data-testid="json-mapping-tables"]').getByRole('checkbox', { name: /edges/ })).toBeChecked();
+  await modal.locator('[data-testid="json-mapping-import"]').click();
+  await expect(modal).toBeHidden({ timeout: 15000 });
+  await page.locator('.react-flow__pane').click({ position: { x: 400, y: 300 } });
+  await expect.poll(async () => (await readStore(page, 'links')).length, { timeout: 10000 }).toBe(4);
+});

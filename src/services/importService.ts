@@ -489,6 +489,15 @@ export class ImportService {
     return result;
   }
 
+  /** A JSON of no known format, whose fields are mapped by hand (an invalid JSON is not one) */
+  isUnknownJson(content: string): boolean {
+    try {
+      return this.detectJsonFormat(JSON.parse(content)) === 'unknown';
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Detect the JSON format from parsed data
    */
