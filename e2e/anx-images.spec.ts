@@ -1,6 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { setupCleanEnvironment } from './fixtures/test-utils';
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __znImport(path: string): Promise<any>;
+  }
+}
+
+/** Import an app module as the app loaded it (a reused dev server adds `?t=`) */
+const exposeImporter = (page: Page) =>
+  page.addInitScript(() => {
+    window.__znImport = (path: string) => {
+      const loaded = performance
+        .getEntriesByType('resource')
+        .map((e) => e.name)
+        .filter((name) => new URL(name).pathname === path);
+      return import(/* @vite-ignore */ loaded.length > 0 ? loaded[loaded.length - 1] : path);
+    };
+  });
 
 // The browser side of embedded images: canvas, zlib of the browser, media files
 test('an element image goes into the .anx as an embedded icon and comes back as its media', async ({ page }) => {
@@ -78,6 +97,7 @@ test('the export reads the image of each element (appearance, else first attache
 });
 
 test('the Export window puts the element images into the .anx', async ({ page }) => {
+  await exposeImporter(page);
   await setupCleanEnvironment(page);
   await page.click('[data-testid="import-button"]');
   await page.locator('[data-testid="import-file-input"]').setInputFiles({
@@ -90,7 +110,7 @@ test('the Export window puts the element images into the .anx', async ({ page })
     canvas.width = 60; canvas.height = 80;
     canvas.getContext('2d')!.fillRect(0, 0, 60, 80);
     const png = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
-    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
     const { fileService } = await import('/src/services/fileService.ts');
     const s = useDossierStore.getState();
     const sophie = s.elements.find((e) => e.label === 'Sophie Arnaud')!;

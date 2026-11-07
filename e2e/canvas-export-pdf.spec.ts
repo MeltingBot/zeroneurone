@@ -5,8 +5,28 @@ import { tmpdir } from 'node:os';
 import { setupCleanEnvironment, waitForAppLoad } from './fixtures/test-utils';
 import { buildLargeDossierJson } from './fixtures/large-dossier';
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __znImport(path: string): Promise<any>;
+  }
+}
+
+/** Import an app module as the app loaded it (a reused dev server adds `?t=`) */
+const exposeImporter = (page: Page) =>
+  page.addInitScript(() => {
+    window.__znImport = (path: string) => {
+      const loaded = performance
+        .getEntriesByType('resource')
+        .map((e) => e.name)
+        .filter((name) => new URL(name).pathname === path);
+      return import(/* @vite-ignore */ loaded.length > 0 ? loaded[loaded.length - 1] : path);
+    };
+  });
+
 /** Open a small dossier on the canvas */
 async function openDossier(page: Page) {
+  await exposeImporter(page);
   await setupCleanEnvironment(page);
   await waitForAppLoad(page);
   const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'small.json');
@@ -124,7 +144,7 @@ test('canvas PDF export embeds the original photo of an element, not its thumbna
   // A 3000 × 2000 photo attached to the first element
   await page.evaluate(async (make) => {
     const makeJpeg = eval(make) as (w: number, h: number) => Promise<File>;
-    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
     const { fileService } = await import('/src/services/fileService.ts');
     const s = useDossierStore.getState();
     const element = s.elements.find((e) => !e.isGroup && !e.isAnnotation)!;
