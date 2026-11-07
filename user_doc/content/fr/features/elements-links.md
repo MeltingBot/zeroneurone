@@ -143,7 +143,7 @@ Pour que les libellés longs passent à la ligne, cochez **Retour à la ligne de
 |--------|---------|
 | **Couleur** | Palette de couleurs |
 | **Style** | Continu, pointillé, tirets |
-| **Épaisseur** | Fine, normale, épaisse |
+| **Épaisseur** | 1, 2, 3, 4 ou 8 px |
 | **Taille du texte** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
 ### Tracé à angles droits

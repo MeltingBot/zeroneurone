@@ -733,6 +733,9 @@ export const DEFAULT_FILTERS: ViewFilters = {
   includeTabs: [],
 };
 
+/** Line widths offered (px), for links and element borders: the last step is wide apart so it stands out */
+export const LINE_WIDTHS = [1, 2, 3, 4, 8];
+
 /** Share of its colour a group's background takes: canvas, overview and SVG/PDF export alike. */
 export const GROUP_TINT = 0.2;
 

@@ -143,7 +143,7 @@ To make long labels wrap, check **Wrap link labels** in the same **Options**, th
 |--------|--------|
 | **Color** | Color palette |
 | **Style** | Solid, dotted, dashed |
-| **Thickness** | Thin, normal, thick |
+| **Thickness** | 1, 2, 3, 4 or 8 px |
 | **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
 ### Right-angle route

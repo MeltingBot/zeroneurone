@@ -10,7 +10,7 @@ import { FONT_SIZE_PX } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
 import { TagsEditor } from './TagsEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
-import { DEFAULT_COLORS } from '../../types';
+import { DEFAULT_COLORS, LINE_WIDTHS } from '../../types';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
 import { CopyableId } from './CopyableId';
@@ -25,7 +25,6 @@ interface LinkDetailProps {
 
 const STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
 
-const THICKNESSES = [1, 2, 3, 4, 5];
 const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xs', label: 'XS' },
   { value: 'sm', label: 'S' },
@@ -706,7 +705,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
               <span className="text-xs text-text-tertiary">{link.visual.thickness}px</span>
             </div>
             <div className="flex gap-1">
-              {THICKNESSES.map((thickness) => (
+              {LINE_WIDTHS.map((thickness) => (
                 <button
                   key={thickness}
                   onClick={() => handleThicknessChange(thickness)}
