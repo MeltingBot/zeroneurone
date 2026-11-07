@@ -128,3 +128,44 @@ test('free elements of the selection can be added to its group', async ({ page }
   await page.keyboard.press('Control+Shift+z');
   await expect.poll(() => readState(page, groupId, outsider)).toEqual(added);
 });
+
+/**
+ * An element left with the id of a group that no longer exists counts as free: two such
+ * elements can be grouped, and end up in the new group.
+ */
+test('an element left over from a deleted group can be grouped again', async ({ page }) => {
+  test.setTimeout(120_000);
+  await exposeImporter(page);
+  await setupCleanEnvironment(page);
+  await waitForAppLoad(page);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'leftover.json');
+  writeFileSync(file, buildLargeDossierJson(4));
+  await page.click('[data-testid="import-button"]');
+  await page.setInputFiles('input[type="file"]', file);
+  await page.waitForSelector('.react-flow__node');
+  await page.waitForTimeout(1000);
+
+  // Two free elements, the first one still pointing at a group that is gone
+  const [a, b] = await page.evaluate(async () => {
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
+    const { useSelectionStore } = await window.__znImport('/src/stores/selectionStore.ts');
+    const els = useDossierStore.getState().elements;
+    await useDossierStore.getState().updateElement(els[0].id, { parentGroupId: 'deleted-group' });
+    useSelectionStore.getState().selectElements([els[0].id, els[1].id]);
+    return [els[0].id, els[1].id];
+  });
+  await page.waitForTimeout(300);
+  const point = await uncoveredPoint(page, b);
+  await page.mouse.click(point!.x, point!.y, { button: 'right' });
+  await page.getByRole('menuitem', { name: 'Organize' }).hover();
+  await page.getByRole('menuitem', { name: 'Group', exact: true }).click();
+
+  // Both in the new group
+  await expect.poll(() => page.evaluate(async ([a, b]) => {
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
+    const els = useDossierStore.getState().elements;
+    const parentOf = (id: string) => els.find((e: { id: string }) => e.id === id).parentGroupId;
+    const group = els.find((e: { id: string; isGroup: boolean }) => e.isGroup && e.id === parentOf(b));
+    return !!group && parentOf(a) === group.id;
+  }, [a, b] as const)).toBe(true);
+});

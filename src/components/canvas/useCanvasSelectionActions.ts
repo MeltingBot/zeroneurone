@@ -719,7 +719,9 @@ export function useCanvasSelectionActions({
     const ids: string[] = [];
     for (const id of selectedElementIds) {
       const el = elementMap.get(id);
-      if (el && !el.isGroup && !el.parentGroupId) ids.push(id);
+      // A parent group that no longer exists (left over) does not hold the element
+      const inGroup = !!el?.parentGroupId && !!elementMap.get(el.parentGroupId)?.isGroup;
+      if (el && !el.isGroup && !inGroup) ids.push(id);
     }
     return ids;
   }, [selectedElementIds, elementMap]);
