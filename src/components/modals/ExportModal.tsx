@@ -100,6 +100,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   // ANX: the images of the elements, and "Show on chart" for the properties shown
   const [anxImages, setAnxImages] = useState(true);
   const [anxShownProperties, setAnxShownProperties] = useState(true);
+  const [anxRoutes, setAnxRoutes] = useState(true);
   const [zipPassword, setZipPassword] = useState('');
   const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
   const [showZipPassword, setShowZipPassword] = useState(false);
@@ -421,7 +422,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       case 'zip': return zipEncrypted ? handleExportEncryptedZip() : handleExport('zip');
       case 'obsidian': return handleExport('obsidian', obsidianByTag);
       case 'csv': return handleExport('csv', undefined, { content: csvContent, delimiter: csvDelimiter, excel: csvExcel });
-      case 'anx': return handleExport('anx', undefined, undefined, { images: anxImages, shownProperties: anxShownProperties });
+      case 'anx': return handleExport('anx', undefined, undefined, { images: anxImages, shownProperties: anxShownProperties, routes: anxRoutes });
       default: return handleExport(format);
     }
   };
@@ -649,6 +650,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 <div className={sectionTitle}>{t('export.optionsTitle')}</div>
                 {checkbox(anxImages, setAnxImages, t('export.anx.images'))}
                 {checkbox(anxShownProperties, setAnxShownProperties, t('export.anx.shownProperties'))}
+                {checkbox(anxRoutes, setAnxRoutes, t('export.anx.routes'))}
               </div>
             )}
 

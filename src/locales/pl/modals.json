@@ -231,7 +231,8 @@
     },
     "anx": {
       "images": "Obrazy elementów",
-      "shownProperties": "Wyświetlane właściwości"
+      "shownProperties": "Wyświetlane właściwości",
+      "routes": "Przebieg powiązań"
     }
   },
   "search": {

@@ -454,6 +454,7 @@ Ne sont pas importés : les ports (`a:nord`, le lien part de l'élément), les l
 | DatabaseProperty[] | Propriétés |
 | Attribute[] | Propriétés typées |
 | Card.DateTime | Date |
+| CornerCollection (coins) | Points de cassure (visibles en courbure **droit**) |
 
 #### Attributs affichés sur le graphe
 

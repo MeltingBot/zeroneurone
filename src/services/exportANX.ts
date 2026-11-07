@@ -60,6 +60,7 @@ import { flattenSourceLines, sourceToPlainText } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 import { hexToRgb } from '../utils/themeColors';
 import type { AnxImage } from './anxImages';
+import { computeLinkRoutes, computeNodeLayout } from './svgExportService';
 
 // ============================================================================
 // TUNING — every unknown that only a real i2 can settle lives here, so that a
@@ -395,15 +396,37 @@ export interface ANXExportOptions {
   images?: boolean;
   /** Tick "Show on chart" for the properties shown on the canvas (default: yes) */
   shownProperties?: boolean;
+  /** Corners of the links drawn by hand (default: yes) */
+  routes?: boolean;
 }
 
 /**
  * @param images image of an element, ready to embed (see anxImages.ts):
  *   shown as the icon of its entity
  */
+/**
+ * Corners of the links drawn by hand, as the canvas draws them, in canvas coordinates: the bend
+ * points of a straight line, the corners of a right-angle route. i2 keeps a corner where it is
+ * when entities move: an automatic route is left out (a straight link i2 lays out freely), and so
+ * are curves (i2 draws straight segments only).
+ */
+function linkCorners(dossier: Dossier, links: Link[], layout: ReturnType<typeof computeNodeLayout>): Map<string, Position[]> {
+  const linkCurveMode = dossier.settings?.linkCurveMode ?? 'curved';
+  const corners = new Map<string, Position[]>();
+  if (linkCurveMode === 'curved') return corners;
+  const routes = computeLinkRoutes(links, layout, { linkAnchorMode: dossier.settings?.linkAnchorMode ?? 'manual', linkCurveMode });
+  for (const { link, route } of routes) {
+    const points = linkCurveMode === 'orthogonal'
+      ? (link.orthogonalRoute ? route.orthogonal?.points : undefined)
+      : link.bendPoints?.length ? route.free?.points : undefined;
+    if (points && points.length > 2) corners.set(link.id, points.slice(1, -1));
+  }
+  return corners;
+}
+
 export function buildANXExport(
   dossier: Dossier, elements: Element[], links: Link[],
-  images?: ReadonlyMap<string, AnxImage>, options: Pick<ANXExportOptions, 'shownProperties'> = {},
+  images?: ReadonlyMap<string, AnxImage>, options: Pick<ANXExportOptions, 'shownProperties' | 'routes'> = {},
 ): string {
   const byId = new Map(elements.map((el) => [el.id, el]));
   const model = getEvaluationModel(dossier);
@@ -418,6 +441,15 @@ export function buildANXExport(
   // A link pointing at a skipped element would reference a ChartItem that does
   // not exist, which i2 rejects or silently drops.
   const emittedLinks = links.filter((l) => idMap.has(l.fromId) && idMap.has(l.toId));
+
+  // i2 draws an entity centred on its position and its links from there: the
+  // centres of the nodes, and the corners of the links as the canvas draws them
+  const layout = computeNodeLayout(elements);
+  const toChart = (p: Position) => ({
+    x: Math.round(p.x * ANX_COORD_SCALE),
+    y: Math.round(p.y * ANX_COORD_SCALE) * (NEGATE_Y ? -1 : 1),
+  });
+  const cornersOf = options.routes === false ? new Map<string, Position[]>() : linkCorners(dossier, emittedLinks, layout);
 
   // ── Collect definitions ───────────────────────────────────────────────────
   let defCounter = 0;
@@ -573,8 +605,8 @@ export function buildANXExport(
     const identity = identityOf(el.label ?? '');
     const type = entityTypeOf.get(el.id)!;
     const pos = resolveAbsolutePosition(el, byId);
-    const x = Math.round(pos.x * ANX_COORD_SCALE);
-    const y = Math.round(pos.y * ANX_COORD_SCALE) * (NEGATE_Y ? -1 : 1);
+    const dims = layout.dimensions.get(el.id) ?? { width: 0, height: 0 };
+    const { x, y } = toChart({ x: pos.x + dims.width / 2, y: pos.y + dims.height / 2 });
 
     collectDate(el.date);
 
@@ -674,10 +706,15 @@ export function buildANXExport(
       ? ` End1Id="${end1}" End2Id="${end2}" End1Reference="${end1}" End2Reference="${end2}"`
       : ` End1Reference="${end1}" End2Reference="${end2}"`;
 
+    // Corners of the line as drawn; the label on its middle segment, as on the canvas
+    const corners = (cornersOf.get(link.id) ?? []).map(toChart);
+    const labelSegment = Math.floor((corners.length + 1) / 2);
+
     items.push(
       `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" ${chartItemDateAttrs(linkWhen, link.dateRange?.precision)} GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeSourceRef(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
-      `      <Link LabelPos="50" LabelSegment="0" Offset="0"${ends}>`,
+      `      <Link LabelPos="50" LabelSegment="${labelSegment}" Offset="0"${ends}>`,
       ...(cards.length ? ['        <CardCollection>', ...cards.map((c) => `  ${c}`), '        </CardCollection>'] : []),
+      ...(corners.length ? ['        <CornerCollection>', ...corners.map((c) => `          <Corner X="${c.x}" Y="${c.y}" Z="0" />`), '        </CornerCollection>'] : []),
       `        <LinkStyle ArrowStyle="${directionToArrowStyle(link)}" LineWidth="${width}" LineColour="${hexToColorref(link.visual?.color)}" Strength="${escapeAttr(strength.name)}" Type="${escapeAttr(linkType.name)}" LinkTypeReference="${linkType.id}" StrengthReference="${strength.id}" />`,
       '      </Link>',
       ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),

@@ -227,7 +227,8 @@
     },
     "anx": {
       "images": "Imágenes de los elementos",
-      "shownProperties": "Propiedades mostradas"
+      "shownProperties": "Propiedades mostradas",
+      "routes": "Trazado de los vínculos"
     }
   },
   "search": {

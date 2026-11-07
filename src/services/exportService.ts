@@ -954,7 +954,7 @@ ${edges}
       }
       case 'anx': {
         const images = anxOptions?.images === false ? undefined : await this.anxImages(elements, assets ?? []);
-        const anx = buildANXExport(dossier, elements, links, images, { shownProperties: anxOptions?.shownProperties !== false });
+        const anx = buildANXExport(dossier, elements, links, images, { shownProperties: anxOptions?.shownProperties !== false, routes: anxOptions?.routes !== false });
         this.download(anx, `${baseName}.anx`, 'application/xml');
         break;
       }
