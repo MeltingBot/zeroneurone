@@ -195,6 +195,9 @@
       "mismatch": "Die Passwörter stimmen nicht überein",
       "success": "Verschlüsselter Export heruntergeladen (.znzip)"
     },
+    "json": {
+      "compact": "Kompakt (ohne Formatierung)"
+    },
     "png": {
       "transparent": "Transparenter Hintergrund"
     },

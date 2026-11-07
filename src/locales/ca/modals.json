@@ -195,6 +195,9 @@
       "mismatch": "Les contrasenyes no coincideixen",
       "success": "Exportació xifrada baixada (.znzip)"
     },
+    "json": {
+      "compact": "Compacte (sense format)"
+    },
     "png": {
       "transparent": "Fons transparent"
     },

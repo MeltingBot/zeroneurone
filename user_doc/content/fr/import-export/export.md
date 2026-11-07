@@ -90,6 +90,8 @@ Contenu :
 }
 ```
 
+Le fichier est indenté pour rester lisible. Cochez **Compact (sans mise en forme)** pour l'écrire sur une ligne : il est plus petit, et se réimporte de la même façon.
+
 ---
 
 ### CSV

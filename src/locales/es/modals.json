@@ -195,6 +195,9 @@
       "mismatch": "Las contraseñas no coinciden",
       "success": "Exportación cifrada descargada (.znzip)"
     },
+    "json": {
+      "compact": "Compacto (sin formato)"
+    },
     "png": {
       "transparent": "Fondo transparente"
     },

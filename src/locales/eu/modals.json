@@ -195,6 +195,9 @@
       "mismatch": "Pasahitzak ez datoz bat",
       "success": "Esportazio zifratua deskargatu da (.znzip)"
     },
+    "json": {
+      "compact": "Trinkoa (formaturik gabe)"
+    },
     "png": {
       "transparent": "Atzeko plano gardena"
     },

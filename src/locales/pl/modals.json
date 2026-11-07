@@ -199,6 +199,9 @@
       "mismatch": "Hasła nie są zgodne",
       "success": "Pobrano zaszyfrowany eksport (.znzip)"
     },
+    "json": {
+      "compact": "Kompaktowy (bez formatowania)"
+    },
     "png": {
       "transparent": "Przezroczyste tło"
     },

@@ -90,6 +90,8 @@ Content:
 }
 ```
 
+The file is indented to stay readable. Check **Compact (no formatting)** to write it on one line: it is smaller, and imports back the same way.
+
 ---
 
 ### CSV

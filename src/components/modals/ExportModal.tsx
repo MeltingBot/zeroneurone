@@ -89,6 +89,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [format, setFormat] = useState<FormatId>(() => readLastFormat().format);
   const [zipEncrypted, setZipEncrypted] = useState(false);
   const [obsidianByTag, setObsidianByTag] = useState(true);
+  const [jsonCompact, setJsonCompact] = useState(false);
   const [pngScale, setPngScale] = useState(2);
   const [pngTransparent, setPngTransparent] = useState(false);
   const [paper, setPaper] = useState<PaperSize>(readLastPaper);
@@ -157,7 +158,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           }
         : undefined;
 
-      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions, anxOptions, redact);
+      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions, anxOptions, redact, jsonCompact);
       await (format === 'zip' || format === 'obsidian' ? withExportProgress(build) : build());
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
@@ -166,7 +167,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, comments, redact, onClose, t]);
+  }, [currentDossier, elements, links, comments, redact, jsonCompact, onClose, t]);
 
   const handleExportEncryptedZip = useCallback(async () => {
     if (!currentDossier || zipPassword.length < 1) return;
@@ -600,6 +601,13 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                     {passwordsMismatch && <p className="text-xs text-error">{t('export.zip.mismatch')}</p>}
                   </div>
                 )}
+              </div>
+            )}
+
+            {format === 'json' && (
+              <div className="space-y-2">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                {checkbox(jsonCompact, setJsonCompact, t('export.json.compact'))}
               </div>
             )}
 

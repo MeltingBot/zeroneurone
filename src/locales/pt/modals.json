@@ -195,6 +195,9 @@
       "mismatch": "As palavras-passe não coincidem",
       "success": "Exportação encriptada transferida (.znzip)"
     },
+    "json": {
+      "compact": "Compacto (sem formatação)"
+    },
     "png": {
       "transparent": "Fundo transparente"
     },

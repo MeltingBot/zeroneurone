@@ -195,6 +195,9 @@
       "mismatch": "De wachtwoorden komen niet overeen",
       "success": "Versleutelde export gedownload (.znzip)"
     },
+    "json": {
+      "compact": "Compact (zonder opmaak)"
+    },
     "png": {
       "transparent": "Transparante achtergrond"
     },

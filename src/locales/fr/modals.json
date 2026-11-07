@@ -195,6 +195,9 @@
       "mismatch": "Les mots de passe ne correspondent pas",
       "success": "Export chiffré téléchargé (.znzip)"
     },
+    "json": {
+      "compact": "Compact (sans mise en forme)"
+    },
     "png": {
       "transparent": "Fond transparent"
     },

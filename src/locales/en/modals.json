@@ -195,6 +195,9 @@
       "mismatch": "Passwords do not match",
       "success": "Encrypted export downloaded (.znzip)"
     },
+    "json": {
+      "compact": "Compact (no formatting)"
+    },
     "png": {
       "transparent": "Transparent background"
     },
