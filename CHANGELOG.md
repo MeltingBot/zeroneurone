@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.92.2
+
+### Nouveautés
+
+- **Import JSON : éléments et liens dans deux tableaux** — un fichier qui
+  range les éléments dans un tableau et les liens dans un autre
+  (`{"nodes": [...], "edges": [{"source": 12, "target": 47}]}`) s'importe
+  d'un coup : les deux tableaux sont cochés, et chaque lien relie les
+  éléments du premier tableau au lieu d'en créer de nouveaux à partir de
+  leurs identifiants. Le champ `type` (ou `label`, `relation`) donne le
+  libellé du lien ; un identifiant introuvable crée un élément à son nom,
+  signalé. Un menu à côté de De et Vers choisit le tableau visé, ou
+  « par valeur ».
+- **JSON inconnu ouvert dans le mapping** — un fichier `.json` d'aucun
+  format reconnu, importé comme fichier, ouvre le mapping, comme un CSV
+  sans les colonnes natives, au lieu d'une erreur.
+
 ## 2.92.1
 
 ### Corrections
