@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.92.1
+
+### Corrections
+
+- **Liens multiples à l'impression** — avec « Un seul » ou « Un par
+  sens », la ligne qui réunit plusieurs liens arrivait sans libellé dans
+  les exports PDF et SVG. Sur papier, pas de survol : elle porte désormais
+  la liste de ses libellés, chacun précédé de la couleur de son lien.
+
+### Documentation
+
+- Nouveautés de la 2.92 complétées : PDF dans la liste des exports,
+  épaisseur de bordure des éléments, fond des groupes, libellés des liens
+  réunis à l'export.
+
 ## 2.92.0
 
 ### Nouveautés
