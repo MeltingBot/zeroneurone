@@ -3,6 +3,7 @@
 import { useTabStore } from '../../stores';
 import type { Element, Link } from '../../types';
 import { generateUUID } from '../../utils';
+import { routeOfCopiedLink } from '../../utils/routeFollow';
 
 /** Capture tab membership for undo restore (tabId → elementIds[]) */
 export function captureTabMembership(elementIds: string[]): Record<string, string[]> | undefined {
@@ -55,9 +56,13 @@ export function cloneClipboardForPaste(
     };
   });
 
+  const originals = new Map(clip.elements.map((el) => [el.id, el]));
+  const copies = new Map(newElements.map((el) => [el.id, el]));
   const newLinks: Link[] = clip.links
     .map((link) => ({
       ...link,
+      // A route drawn by hand moves with the pasted elements
+      ...routeOfCopiedLink(link, originals, copies, oldToNewIdMap),
       id: generateUUID(),
       dossierId: dossierId as Link['dossierId'],
       fromId: oldToNewIdMap.get(link.fromId)!,

@@ -175,6 +175,7 @@
       "queryFromSelection": "Consulta desde selección",
       "editLinkLabel": "Editar etiqueta",
       "resetLinkRoute": "Restablecer el trazado",
+      "resetLinkRoutes": "Restablecer trazados",
       "reverseLink": "Invertir dirección",
       "deleteLink": "Eliminar enlace",
       "noLabel": "Sin etiqueta",
@@ -196,6 +197,8 @@
       "openDetail": "Abrir el detalle"
     },
     "linkSegmentHandle": "Arrastrar: mover · Doble clic: dividir",
+    "linkBendPoint": "Arrastrar: mover · Doble clic: quitar",
+    "linkBendAdd": "Arrastrar: añadir un punto",
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",
       "redo": "Rehacer (Ctrl+Shift+Z)",

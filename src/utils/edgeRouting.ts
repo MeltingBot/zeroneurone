@@ -123,6 +123,8 @@ export interface EdgeRouteInput {
   offset: Point;
   /** Right-angle route drawn by hand: replaces the automatic route and `offset` (orthogonal mode) */
   bends?: OrthogonalRoute | null;
+  /** Straight mode: bend points placed by hand, from the source side, on the canvas */
+  bendPoints?: Point[] | null;
   hasStartArrow: boolean;
   hasEndArrow: boolean;
 }
@@ -130,14 +132,31 @@ export interface EdgeRouteInput {
 /** Room out of a node before the first corner of a hand-drawn route: an arrowhead and some line. */
 export const ORTHOGONAL_MIN_STUB = EDGE_ARROW_LENGTH + 12;
 
+/** A straight line with bend points: source handle, bend points, target handle (straight mode). */
+export interface FreeGeometry {
+  points: Point[];
+}
+
+/** The point halfway along a polyline. */
+function halfway(points: Point[]): Point {
+  const lengths = points.slice(1).map((p, i) => Math.hypot(p.x - points[i].x, p.y - points[i].y));
+  let rest = lengths.reduce((a, b) => a + b, 0) / 2;
+  for (let i = 0; i < lengths.length; i++) {
+    if (rest <= lengths[i] && lengths[i] > 0) {
+      const t = rest / lengths[i];
+      return { x: points[i].x + (points[i + 1].x - points[i].x) * t, y: points[i].y + (points[i + 1].y - points[i].y) * t };
+    }
+    rest -= lengths[i];
+  }
+  return points[points.length - 1];
+}
+
 /** A right-angle route as segments, for the segment handles (orthogonal mode only). */
 export interface OrthogonalGeometry {
   /** Positions of all segments, end segments included */
   route: RoutePositions;
   /** Source handle, corners, target handle */
   points: Point[];
-  /** Middle of the link: what stored positions are relative to */
-  origin: Point;
 }
 
 export interface EdgeRoute {
@@ -154,6 +173,8 @@ export interface EdgeRoute {
   adjustable: boolean;
   /** Orthogonal mode: the route as segments */
   orthogonal?: OrthogonalGeometry;
+  /** Straight mode: the line as drawn, for its handles */
+  free?: FreeGeometry;
 }
 
 export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
@@ -193,8 +214,29 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
   let endAngle: number;
   let adjustable = false;
   let orthogonal: OrthogonalGeometry | undefined;
+  let free: FreeGeometry | undefined;
 
-  if (curveMode === 'straight' && isParallel && edgeLength > 0) {
+  if (curveMode === 'straight' && input.bendPoints && input.bendPoints.length > 0) {
+    // Bend points placed by hand: a line through them, arrows on the end segments
+    const bends = input.bendPoints;
+    const points = [{ x: sourceX, y: sourceY }, ...bends, { x: targetX, y: targetY }];
+    const angle = (from: Point, to: Point) =>
+      Math.hypot(to.x - from.x, to.y - from.y) < 0.5 ? Math.atan2(edgeDy, edgeDx) : Math.atan2(to.y - from.y, to.x - from.x);
+    startAngle = angle(points[0], points[1]);
+    endAngle = angle(points[points.length - 2], points[points.length - 1]);
+
+    const adjustedSourceX = sourceX + (hasStartArrow ? arrowLength * Math.cos(startAngle) : 0);
+    const adjustedSourceY = sourceY + (hasStartArrow ? arrowLength * Math.sin(startAngle) : 0);
+    const adjustedTargetX = targetX - (hasEndArrow ? arrowLength * Math.cos(endAngle) : 0);
+    const adjustedTargetY = targetY - (hasEndArrow ? arrowLength * Math.sin(endAngle) : 0);
+    path = [
+      `M ${adjustedSourceX} ${adjustedSourceY}`,
+      ...bends.map((p) => `L ${p.x} ${p.y}`),
+      `L ${adjustedTargetX} ${adjustedTargetY}`,
+    ].join(' ');
+    ({ x: labelX, y: labelY } = halfway(points));
+    free = { points };
+  } else if (curveMode === 'straight' && isParallel && edgeLength > 0) {
     // Parallel edge: leave the handle, run alongside the others, come back to the target handle,
     // so every edge stays attached and keeps its own arrow
     const ux = edgeDx / edgeLength;
@@ -214,6 +256,8 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
     const adjustedTargetY = targetY - (hasEndArrow ? arrowLength * Math.sin(endAngle) : 0);
 
     path = `M ${adjustedSourceX} ${adjustedSourceY} L ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${adjustedTargetX} ${adjustedTargetY}`;
+    // The lane points become bend points on the first drag (no jump)
+    free = { points: [{ x: sourceX, y: sourceY }, p1, p2, { x: targetX, y: targetY }] };
   } else if (curveMode === 'straight') {
     labelX = (sourceX + targetX) / 2;
     labelY = (sourceY + targetY) / 2;
@@ -226,6 +270,7 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
     const adjustedTargetY = targetY - (hasEndArrow ? arrowLength * Math.sin(endAngle) : 0);
 
     path = `M ${adjustedSourceX} ${adjustedSourceY} L ${adjustedTargetX} ${adjustedTargetY}`;
+    free = { points: [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }] };
   } else if (curveMode === 'orthogonal') {
     const sourceDir = getHandleDirection(sourceHandleId, 'source');
     const targetDir = getHandleDirection(targetHandleId, 'target');
@@ -272,7 +317,6 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
       ? (parallelIndex - (parallelCount - 1) / 2) * Math.min(LABEL_STAGGER_STEP, facingGap / Math.max(1, parallelCount))
       : 0;
     let labelOverride: Point | null = null;
-    const origin = { x: (input.sourceX + input.targetX) / 2, y: (input.sourceY + input.targetY) / 2 };
     let manual: RoutePositions | null = null;
 
     if (input.bends) {
@@ -282,7 +326,7 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
         input.bends,
         { x: sourceX, y: sourceY }, { x: sourceDir.dx, y: sourceDir.dy },
         { x: targetX, y: targetY }, { x: targetDir.dx, y: targetDir.dy },
-        origin, ORTHOGONAL_MIN_STUB,
+        ORTHOGONAL_MIN_STUB,
       );
       waypoints = routeCorners(manual);
     } else if (srcHorizontal && tgtHorizontal) {
@@ -401,7 +445,6 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
       orthogonal = {
         route: segments,
         points: manual ? points : [points[0], ...routeCorners(segments), points[points.length - 1]],
-        origin,
       };
     }
 
@@ -475,6 +518,7 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
     targetPoint: { x: targetX, y: targetY },
     adjustable,
     orthogonal,
+    free,
   };
 }
 

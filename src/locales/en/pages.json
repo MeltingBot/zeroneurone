@@ -175,6 +175,7 @@
       "queryFromSelection": "Query from selection",
       "editLinkLabel": "Edit label",
       "resetLinkRoute": "Reset route",
+      "resetLinkRoutes": "Reset routes",
       "reverseLink": "Reverse direction",
       "deleteLink": "Delete link",
       "noLabel": "No label",
@@ -196,6 +197,8 @@
       "openDetail": "Open details"
     },
     "linkSegmentHandle": "Drag: move · Double-click: split",
+    "linkBendPoint": "Drag: move · Double-click: remove",
+    "linkBendAdd": "Drag: add a point",
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",
       "redo": "Redo (Ctrl+Shift+Z)",

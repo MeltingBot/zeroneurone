@@ -443,14 +443,19 @@ export interface Link {
    * right-angle route and orthogonalOffset. Null or absent: automatic route.
    */
   orthogonalRoute?: OrthogonalRoute | null;
+  /**
+   * Straight mode: bend points placed by hand, from the source side, on the canvas
+   * (utils/freeBends). Null or absent: a straight line.
+   */
+  bendPoints?: { x: number; y: number }[] | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 /**
  * Inner segments of a right-angle route drawn by hand, from the source side: the x of each vertical
- * segment and the y of each horizontal one, in turn, starting with `first`. Values are relative to
- * the middle of the link (between its two handles). See utils/orthogonalBends.
+ * segment and the y of each horizontal one, in turn, starting with `first`, on the canvas. They
+ * stay in place when one end moves and move with both ends (utils/routeFollow).
  */
 export interface OrthogonalRoute {
   first: 'x' | 'y';

@@ -4,6 +4,28 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setupCleanEnvironment, waitForAppLoad } from './fixtures/test-utils';
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __znImport(path: string): Promise<any>;
+  }
+}
+
+/**
+ * Imports a module as the app loaded it: a dev server that reloaded edited modules serves them
+ * under ?t=, and a plain import would give a second, empty store.
+ */
+const exposeImporter = (page: Page) =>
+  page.addInitScript(() => {
+    window.__znImport = (path: string) => {
+      const loaded = performance
+        .getEntriesByType('resource')
+        .map((e) => e.name)
+        .filter((name) => new URL(name).pathname === path);
+      return import(/* @vite-ignore */ loaded.length > 0 ? loaded[loaded.length - 1] : path);
+    };
+  });
+
 /** Two nodes, the second lower right, one link from the right side of A to the left side of B. */
 function twoNodeDossier(): string {
   const now = new Date().toISOString();
@@ -42,7 +64,7 @@ const rightAngled = (points: Pt[]) =>
 
 /** The link as stored */
 const storedLink = (page: Page) => page.evaluate(async (id) => {
-  const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+  const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
   const link = useDossierStore.getState().links.find((l) => l.id === id)!;
   return { route: link.orthogonalRoute ?? null, anchorMode: link.anchorMode ?? null };
 }, linkId);
@@ -51,7 +73,7 @@ const storedLink = (page: Page) => page.evaluate(async (id) => {
 async function clickLink(page: Page, index = 1, button: 'left' | 'right' = 'left') {
   const points = await pathPoints(page);
   const { x: vx, y: vy, zoom } = await page.evaluate(async () => {
-    const { useViewStore } = await import('/src/stores/viewStore.ts');
+    const { useViewStore } = await window.__znImport('/src/stores/viewStore.ts');
     return useViewStore.getState().viewport;
   });
   const canvas = (await page.locator('.react-flow').boundingBox())!;
@@ -73,6 +95,7 @@ async function dragSegment(page: Page, index: number, dx: number, dy: number) {
 
 test('right-angle links get a handle per segment: move, bend, split, undo, reset', async ({ page }) => {
   test.setTimeout(120_000);
+  await exposeImporter(page);
   await setupCleanEnvironment(page);
   await waitForAppLoad(page);
   const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'bends.json');
@@ -83,7 +106,7 @@ test('right-angle links get a handle per segment: move, bend, split, undo, reset
 
   // Right angles, auto anchors, the link selected
   ({ linkId, bravoId } = await page.evaluate(async () => {
-    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
     await useDossierStore.getState().setLinkCurveMode('orthogonal');
     await useDossierStore.getState().setLinkAnchorMode('auto');
     const s = useDossierStore.getState();
@@ -132,12 +155,27 @@ test('right-angle links get a handle per segment: move, bend, split, undo, reset
   await expect.poll(async () => (await storedLink(page)).route?.positions.length).toBe(3);
   await expect(page.locator('.react-flow__edges foreignObject input')).toHaveCount(0); // no label editing
 
-  // Bravo moved: still a right-angle line, still ending on Bravo
+  // Bravo moved alone: the corners stay where they were drawn, still a right-angle line
+  const drawn = (await storedLink(page)).route;
   await page.evaluate(async (id) => {
-    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
-    await useDossierStore.getState().updateElement(id, { position: { x: 420, y: 320 } });
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
+    await useDossierStore.getState().updateElementPositions([{ id, position: { x: 420, y: 320 } }]);
   }, bravoId);
   await expect.poll(async () => rightAngled(await pathPoints(page))).toBe(true);
+  expect((await storedLink(page)).route).toEqual(drawn);
+
+  // Both moved by the same amount: the route moves with them
+  await page.evaluate(async (id) => {
+    const { useDossierStore } = await window.__znImport('/src/stores/dossierStore.ts');
+    const s = useDossierStore.getState();
+    const alpha = s.elements.find((e) => e.label === 'Alpha')!;
+    await s.updateElementPositions([
+      { id: alpha.id, position: { x: alpha.position.x + 40, y: alpha.position.y + 30 } },
+      { id, position: { x: 460, y: 350 } },
+    ]);
+  }, bravoId);
+  await expect.poll(async () => (await storedLink(page)).route?.positions)
+    .toEqual(drawn!.positions.map((v, i) => v + ((i % 2 === 0) === (drawn!.first === 'x') ? 40 : 30)));
 
   // Kept after a reload
   const kept = (await storedLink(page)).route;

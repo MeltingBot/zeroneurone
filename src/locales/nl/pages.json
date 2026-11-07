@@ -175,6 +175,7 @@
       "queryFromSelection": "Zoekopdracht uit selectie",
       "editLinkLabel": "Label bewerken",
       "resetLinkRoute": "Verloop herstellen",
+      "resetLinkRoutes": "Lijnvoering herstellen",
       "reverseLink": "Richting omkeren",
       "deleteLink": "Verbinding verwijderen",
       "noLabel": "Zonder label",
@@ -196,6 +197,8 @@
       "openDetail": "Details openen"
     },
     "linkSegmentHandle": "Slepen: verplaatsen · Dubbelklik: splitsen",
+    "linkBendPoint": "Slepen: verplaatsen · Dubbelklik: verwijderen",
+    "linkBendAdd": "Slepen: punt toevoegen",
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
       "redo": "Opnieuw doen (Ctrl+Shift+Z)",

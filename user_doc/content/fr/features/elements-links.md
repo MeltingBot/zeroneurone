@@ -157,9 +157,23 @@ Avec la courbure **orthogonal** (panneau Vue, Style des liens), un lien sélecti
 | Double-cliquer une poignée | Coupe le segment en deux, chaque moitié se déplace seule |
 | Réaligner deux segments | Ils se rejoignent (aimantation près de l'alignement) |
 
-Le tracé est gardé quand les éléments bougent : seuls les bouts suivent l'élément. Le premier tracé à la main fixe les côtés de départ et d'arrivée du lien, que l'ancrage automatique ne change plus. **Réinitialiser le tracé** (clic droit sur le lien) revient au tracé automatique. Chaque modification s'annule par Ctrl+Z.
+Les coudes restent à leur place sur le canevas quand un élément bouge : seuls les segments qui le touchent suivent. Quand les deux éléments du lien bougent ensemble du même déplacement (sélection glissée, flèches du clavier, groupe déplacé), le tracé suit en entier ; pendant un glisser, il rejoint le lien au relâchement. Le premier tracé à la main fixe les côtés de départ et d'arrivée du lien, que l'ancrage automatique ne change plus. **Réinitialiser le tracé** (clic droit sur le lien) revient au tracé automatique. Chaque modification s'annule par Ctrl+Z.
+
+Une réorganisation automatique (**Arrange**) éloigne les deux bouts d'un lien différemment : elle efface les tracés dessinés qu'elle casse, et Ctrl+Z les rend avec les positions. Pour effacer d'un coup les tracés de plusieurs liens, sélectionnez-les (ou leurs éléments), clic droit, **Réinitialiser les tracés**.
 
 Le tracé dessiné apparaît dans les exports SVG, PDF et rapport interactif. Sur un grand graphe dessiné en vue simplifiée, les liens restent droits.
+
+### Points de cassure (angles libres)
+
+Avec la courbure **droit**, un lien sélectionné peut être cassé à n'importe quel angle, comme dans i2 Analyst's Notebook. Une petite poignée ronde marque le milieu de chaque segment, une poignée carrée chaque point de cassure.
+
+| Geste | Effet |
+|-------|-------|
+| Glisser la poignée ronde | Ajoute un point de cassure à cet endroit |
+| Glisser un point de cassure | Le déplace ; il s'aimante à l'horizontale ou à la verticale d'un point voisin |
+| Double-cliquer un point de cassure | Le supprime |
+
+Comme pour les angles droits : les points restent en place quand un seul élément bouge et suivent quand les deux bougent ensemble, le premier point fixe les côtés de départ et d'arrivée du lien, **Réinitialiser le tracé** revient à la ligne droite, Ctrl+Z annule. Les points apparaissent dans les exports SVG, PDF et rapport interactif. Ils sont gardés à part du tracé à angles droits : changer de courbure ne les perd pas.
 
 
 ---

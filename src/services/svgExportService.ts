@@ -506,6 +506,7 @@ export function computeLinkRoutes(
       // Each route style keeps its own manual offset
       offset: (settings.linkCurveMode === 'orthogonal' ? link.orthogonalOffset : link.curveOffset) ?? { x: 0, y: 0 },
       bends: settings.linkCurveMode === 'orthogonal' ? link.orthogonalRoute : null,
+      bendPoints: settings.linkCurveMode === 'straight' ? link.bendPoints : null,
       hasStartArrow,
       hasEndArrow,
     });

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Spline, Layers, ArrowRight, X } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, Eye, EyeOff, Spline, Layers, ArrowRight, X, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -25,6 +25,8 @@ interface CanvasContextMenuProps {
   onDeleteSelection?: () => void;
   onHideSelection?: () => void;
   onShowOnlySelection?: () => void;
+  /** Routes drawn by hand on the links of the selection, back to automatic */
+  onResetRoutes?: () => void;
   // Position lock: "unlock" when every selected element is already locked
   selectionLocked?: boolean;
   onToggleLockSelection?: () => void;
@@ -82,6 +84,7 @@ function CanvasContextMenuComponent({
   onDeleteSelection,
   onHideSelection,
   onShowOnlySelection,
+  onResetRoutes,
   selectionLocked = false,
   onToggleLockSelection,
   onGroupSelection,
@@ -186,6 +189,7 @@ function CanvasContextMenuComponent({
           ]),
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
           onShowOnlySelection && { id: 'show-only', label: cm('showOnly'), icon: Eye, onSelect: onShowOnlySelection },
+          onResetRoutes && { id: 'reset-routes', label: cm('resetLinkRoutes'), icon: RotateCcw, onSelect: onResetRoutes },
         ] : [],
         hasSelection ? selectFromItems(cm, onSelectNeighbors, onSelectLinks) : [],
         [

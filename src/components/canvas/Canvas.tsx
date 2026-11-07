@@ -35,7 +35,9 @@ import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore } from '../../stores';
-import type { Element, OrthogonalRoute, Position, Asset } from '../../types';
+import type { Element, Link, OrthogonalRoute, Position, Asset } from '../../types';
+import type { Point } from '../../utils/freeBends';
+import { CLEARED_ROUTE, routeFields } from '../../utils/routeFollow';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
@@ -1321,6 +1323,30 @@ export function Canvas() {
 
   // Right-angle route drawn by hand: saved with undo. Its ends stay on the sides it was drawn
   // from (auto anchors would turn them as nodes move and undo the drawing).
+  // Links of the selection (selected, or between two selected elements) with a route drawn by hand
+  const selectionRoutedLinks = useMemo(() => {
+    const drawn = (l: Link) => {
+      const fields = routeFields(l);
+      return !!fields.orthogonalRoute || !!fields.bendPoints?.length
+        || (!!fields.orthogonalOffset && (fields.orthogonalOffset.x !== 0 || fields.orthogonalOffset.y !== 0))
+        || fields.curveOffset.x !== 0 || fields.curveOffset.y !== 0;
+    };
+    return links.filter((l) => drawn(l)
+      && (selectedLinkIds.has(l.id) || (selectedElementIds.has(l.fromId) && selectedElementIds.has(l.toId))));
+  }, [links, selectedLinkIds, selectedElementIds]);
+
+  // Every route drawn by hand on those links back to automatic, in one undo step
+  const handleResetSelectionRoutes = useCallback(() => {
+    if (selectionRoutedLinks.length === 0) return;
+    const ids = selectionRoutedLinks.map((l) => l.id);
+    pushAction({
+      type: 'update-bulk',
+      undo: { bulkLinks: selectionRoutedLinks.map((l) => ({ id: l.id, changes: routeFields(l) })) },
+      redo: { bulkCalls: [{ kind: 'links', ids, changes: CLEARED_ROUTE }] },
+    });
+    useDossierStore.getState().updateLinks(ids, CLEARED_ROUTE);
+  }, [selectionRoutedLinks, pushAction]);
+
   const handleOrthogonalRouteChange = useCallback(
     (linkId: string, route: OrthogonalRoute, handles: RouteHandles) => {
       const link = linkMap.get(linkId);
@@ -1346,21 +1372,50 @@ export function Canvas() {
     [linkMap, linkAnchorMode, updateLink, pushAction]
   );
 
+  // Bend points of a straight link: saved with undo, ends pinned for the same reason
+  const handleBendPointsChange = useCallback(
+    (linkId: string, points: Point[] | null, handles: RouteHandles) => {
+      const link = linkMap.get(linkId);
+      if (!link) return;
+      const pinAnchors = (link.anchorMode ?? linkAnchorMode) === 'auto' && points !== null;
+      const changes = {
+        bendPoints: points,
+        ...(pinAnchors ? { anchorMode: 'manual' as const, ...handles } : {}),
+      };
+      const previous = {
+        bendPoints: link.bendPoints ?? null,
+        ...(pinAnchors
+          ? { anchorMode: link.anchorMode ?? null, sourceHandle: link.sourceHandle ?? null, targetHandle: link.targetHandle ?? null }
+          : {}),
+      };
+      updateLink(linkId, changes);
+      pushAction({
+        type: 'update-link',
+        undo: { linkId, linkChanges: previous },
+        redo: { linkId, linkChanges: changes },
+      });
+    },
+    [linkMap, linkAnchorMode, updateLink, pushAction]
+  );
+
   // --- Stable edge callback refs (eliminates closure recreations per edge recalc) ---
   const handleLinkLabelChangeRef = useRef(handleLinkLabelChange);
   const handleCurveOffsetChangeRef = useRef(handleCurveOffsetChange);
   const handleOrthogonalRouteChangeRef = useRef(handleOrthogonalRouteChange);
+  const handleBendPointsChangeRef = useRef(handleBendPointsChange);
 
   useEffect(() => {
     handleLinkLabelChangeRef.current = handleLinkLabelChange;
     handleCurveOffsetChangeRef.current = handleCurveOffsetChange;
     handleOrthogonalRouteChangeRef.current = handleOrthogonalRouteChange;
+    handleBendPointsChangeRef.current = handleBendPointsChange;
   });
 
   const edgeCallbacksCache = useRef(new Map<string, {
     onLabelChange: (newLabel: string) => void;
     onCurveOffsetChange: (offset: { x: number; y: number }) => void;
     onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) => void;
+    onBendPointsChange: (points: Point[] | null, handles: RouteHandles) => void;
   }>());
 
   function getEdgeCallbacks(linkId: string) {
@@ -1371,6 +1426,8 @@ export function Canvas() {
         onCurveOffsetChange: (offset: { x: number; y: number }) => handleCurveOffsetChangeRef.current(linkId, offset),
         onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) =>
           handleOrthogonalRouteChangeRef.current(linkId, route, handles),
+        onBendPointsChange: (points: Point[] | null, handles: RouteHandles) =>
+          handleBendPointsChangeRef.current(linkId, points, handles),
       };
       edgeCallbacksCache.current.set(linkId, cached);
     }
@@ -3320,6 +3377,7 @@ export function Canvas() {
               onDeleteSelection={handleSelectionDelete}
               onHideSelection={handleSelectionHide}
               onShowOnlySelection={handleSelectionShowOnly}
+              onResetRoutes={selectionRoutedLinks.length > 0 ? handleResetSelectionRoutes : undefined}
               selectionLocked={selectionLocked}
               onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
@@ -3393,6 +3451,19 @@ export function Canvas() {
                       type: 'update-link',
                       undo: { linkId: menuLink.id, linkChanges: { orthogonalOffset: offset ?? null, orthogonalRoute: menuLink.orthogonalRoute ?? null } },
                       redo: { linkId: menuLink.id, linkChanges: reset },
+                    });
+                    closeLinkContextMenu();
+                  };
+                }
+                if (linkCurveMode === 'straight') {
+                  // Straight: the bend points placed by hand
+                  if (!menuLink.bendPoints?.length) return undefined;
+                  return () => {
+                    updateLink(menuLink.id, { bendPoints: null });
+                    pushAction({
+                      type: 'update-link',
+                      undo: { linkId: menuLink.id, linkChanges: { bendPoints: menuLink.bendPoints } },
+                      redo: { linkId: menuLink.id, linkChanges: { bendPoints: null } },
                     });
                     closeLinkContextMenu();
                   };

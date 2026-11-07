@@ -5,7 +5,8 @@
  * positions of its segments: the y of a horizontal one, the x of a vertical one. The first segment
  * leaves the source handle and the last one reaches the target handle, so their positions come
  * from the handles; the link stores the positions of the inner segments only (OrthogonalRoute),
- * relative to the middle of the link so the route follows when both ends move together.
+ * on the canvas: moving one end leaves the corners in place, only the end segments follow it.
+ * When both ends move together, the store moves the route with them (utils/routeFollow).
  *
  * Whatever the handles become (auto anchors turn sides when nodes move), a stored route always
  * gives a valid right-angle line: a value that no longer fits is dropped, a missing one is added.
@@ -49,26 +50,21 @@ export function resolveRoute(
   sourceDir: Point,
   target: Point,
   targetDir: Point,
-  origin: Point,
   minStub: number,
 ): RoutePositions {
+  const middle = { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
   const firstAxis = handleAxis(sourceDir);
   const lastAxis = handleAxis(targetDir);
   // The segment after a horizontal one is vertical: its position is an x
   const expectedFirst = firstAxis === 'h' ? 'x' : 'y';
 
-  let coordinate = route.first;
-  let values = route.positions.map((value) => {
-    const absolute = value + (coordinate === 'x' ? origin.x : origin.y);
-    coordinate = coordinate === 'x' ? 'y' : 'x';
-    return absolute;
-  });
+  let values = [...route.positions];
   if (route.first !== expectedFirst) values = values.slice(1);
   // Same orientation at both ends: an odd number of inner segments; otherwise even
   const wantOdd = firstAxis === lastAxis;
   if ((values.length % 2 === 1) !== wantOdd) {
     if (values.length > 0) values = values.slice(0, -1);
-    else values = [expectedFirst === 'x' ? origin.x : origin.y];
+    else values = [expectedFirst === 'x' ? middle.x : middle.y];
   }
 
   if (values.length > 0) {
@@ -125,13 +121,9 @@ export function routeFromPolyline(points: Point[]): RoutePositions | null {
   return { positions: segments.map((s) => s.position), firstAxis: segments[0].axis };
 }
 
-/** What a link stores of a route: its inner positions, relative to the middle of the link. */
-export function storedRoute({ positions, firstAxis }: RoutePositions, origin: Point): OrthogonalRoute {
-  const inner = positions.slice(1, -1);
-  return {
-    first: firstAxis === 'h' ? 'x' : 'y',
-    positions: inner.map((value, i) => value - (segmentAxis(firstAxis, i + 1) === 'v' ? origin.x : origin.y)),
-  };
+/** What a link stores of a route: the positions of its inner segments. */
+export function storedRoute({ positions, firstAxis }: RoutePositions): OrthogonalRoute {
+  return { first: firstAxis === 'h' ? 'x' : 'y', positions: positions.slice(1, -1) };
 }
 
 /**

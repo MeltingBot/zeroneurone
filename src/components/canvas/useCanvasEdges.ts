@@ -6,6 +6,7 @@ import type { Edge, Node } from '@xyflow/react';
 
 import type { EvaluationModel, Link, OrthogonalRoute, Position } from '../../types';
 import type { RouteHandles } from './CustomEdge';
+import type { Point } from '../../utils/freeBends';
 import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { formatPropertyValue } from '../../utils/dates';
 import { computeHandleSlots as computeLinkHandleSlots, type HandleSlots } from '../../utils/edgeRouting';
@@ -20,6 +21,7 @@ interface EdgeCallbacks {
   onLabelChange: (newLabel: string) => void;
   onCurveOffsetChange: (offset: { x: number; y: number }) => void;
   onOrthogonalRouteChange: (route: OrthogonalRoute, handles: RouteHandles) => void;
+  onBendPointsChange: (points: Point[] | null, handles: RouteHandles) => void;
 }
 
 /** Handle slots of every link, from the handles it is drawn between (see utils/edgeRouting). */
@@ -308,8 +310,9 @@ export function useCanvasEdges({
           false,
           handleSlots.get(link.id)
         );
-        (edge.data as { onOrthogonalRouteChange?: EdgeCallbacks['onOrthogonalRouteChange'] }).onOrthogonalRouteChange =
-          edgeCbs.onOrthogonalRouteChange;
+        const routeCallbacks = edge.data as Partial<Pick<EdgeCallbacks, 'onOrthogonalRouteChange' | 'onBendPointsChange'>>;
+        routeCallbacks.onOrthogonalRouteChange = edgeCbs.onOrthogonalRouteChange;
+        routeCallbacks.onBendPointsChange = edgeCbs.onBendPointsChange;
       }
 
       const edgeData = edge.data as any;

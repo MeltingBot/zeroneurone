@@ -7,6 +7,8 @@ import { importService } from '../../services/importService';
 import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
 import { withImportProgress } from '../../services/importProgress';
 import { elementRepository } from '../../db/repositories/elementRepository';
+import { db } from '../../db/database';
+import { hasHandDrawnRoute, shiftedRoute } from '../../utils/routeFollow';
 import { importFormatOf } from '../../plugins/pluginEventBus';
 import { sameValue } from '../../utils/jsonMapping';
 import type { DossierStore, HistoryStore, SelectionStore, TabStore, UIStore, ViewStore, WrapperRef } from './canvasHookTypes';
@@ -232,6 +234,13 @@ export function useImportPlacement({
               }));
 
               await elementRepository.updatePositions(positionUpdates);
+
+              // Routes drawn by hand on the imported links move with their elements
+              const newLinks = (await db.links.where('dossierId').equals(invId).toArray())
+                .filter((l) => !snapshot.linkIds.has(l.id) && hasHandDrawnRoute(l));
+              for (const link of newLinks) {
+                await db.links.update(link.id, shiftedRoute(link, { x: shiftX, y: shiftY }));
+              }
             }
           }
         } else {

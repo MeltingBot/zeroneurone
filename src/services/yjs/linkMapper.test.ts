@@ -70,6 +70,15 @@ describe('linkMapper — route offsets', () => {
     expect(yMapToLink(ymap).orthogonalRoute).toBeUndefined();
   });
 
+  it('keeps the bend points of a straight link, updates and clears them', () => {
+    const { ydoc, ymap } = attach(makeLink({ bendPoints: [{ x: -50, y: 120 }] }));
+    expect(yMapToLink(ymap).bendPoints).toEqual([{ x: -50, y: 120 }]);
+    updateLinkYMap(ymap, { bendPoints: [{ x: 1, y: 2 }, { x: 3, y: 4 }] }, ydoc);
+    expect(yMapToLink(ymap).bendPoints).toEqual([{ x: 1, y: 2 }, { x: 3, y: 4 }]);
+    updateLinkYMap(ymap, { bendPoints: null }, ydoc);
+    expect(yMapToLink(ymap).bendPoints).toBeUndefined();
+  });
+
   it('ignores a malformed right-angle route from a peer', () => {
     const { ymap } = attach(makeLink());
     ymap.set('orthogonalRoute', { first: 'z', positions: [1] });

@@ -175,6 +175,7 @@
       "queryFromSelection": "Zapytanie z zaznaczenia",
       "editLinkLabel": "Edytuj etykietę",
       "resetLinkRoute": "Resetuj przebieg",
+      "resetLinkRoutes": "Resetuj przebiegi",
       "reverseLink": "Odwróć kierunek",
       "deleteLink": "Usuń połączenie",
       "noLabel": "Bez etykiety",
@@ -196,6 +197,8 @@
       "openDetail": "Otwórz szczegóły"
     },
     "linkSegmentHandle": "Przeciągnij: przesuń · Dwuklik: podziel",
+    "linkBendPoint": "Przeciągnij: przesuń · Dwuklik: usuń",
+    "linkBendAdd": "Przeciągnij: dodaj punkt",
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
       "redo": "Ponów (Ctrl+Shift+Z)",

@@ -175,6 +175,7 @@
       "queryFromSelection": "Query dalla selezione",
       "editLinkLabel": "Modifica etichetta",
       "resetLinkRoute": "Ripristina il tracciato",
+      "resetLinkRoutes": "Ripristina tracciati",
       "reverseLink": "Inverti direzione",
       "deleteLink": "Elimina collegamento",
       "noLabel": "Senza etichetta",
@@ -196,6 +197,8 @@
       "openDetail": "Apri il dettaglio"
     },
     "linkSegmentHandle": "Trascina: sposta · Doppio clic: dividi",
+    "linkBendPoint": "Trascina: sposta · Doppio clic: rimuovi",
+    "linkBendAdd": "Trascina: aggiungi un punto",
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",
       "redo": "Ripristina (Ctrl+Maiusc+Z)",

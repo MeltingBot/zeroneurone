@@ -7,6 +7,7 @@ import { FONT_SIZE_PX, type FontSize, type OrthogonalRoute } from '../../types';
 import type { EvaluationBadge } from '../../utils/evaluation';
 import { arrowPolygon, computeEdgeRoute, type OrthogonalGeometry } from '../../utils/edgeRouting';
 import { mergeEmptySegments, segmentAxis, snapPosition, splitSegment, storedRoute, type SegmentAxis } from '../../utils/orthogonalBends';
+import { snapBend, storedBendPoints, type Point } from '../../utils/freeBends';
 
 /** Segments shorter than this get no handle (steps of the automatic route, cut steps). */
 const MIN_HANDLE_SEGMENT = 24;
@@ -63,6 +64,9 @@ interface CustomEdgeData {
   // Right-angle route drawn by hand (orthogonal mode), and where a new one is saved
   orthogonalRoute?: OrthogonalRoute | null;
   onOrthogonalRouteChange?: (route: OrthogonalRoute, handles: RouteHandles) => void;
+  // Bend points placed by hand (straight mode), and where new ones are saved (null: none left)
+  bendPoints?: Point[] | null;
+  onBendPointsChange?: (points: Point[] | null, handles: RouteHandles) => void;
   // Curve mode: straight lines, curved bezier, or orthogonal (right angles)
   curveMode?: 'straight' | 'curved' | 'orthogonal';
   // Confidence / grading indicator (precomputed by Canvas, null when hidden)
@@ -119,6 +123,8 @@ function CustomEdgeComponent(props: EdgeProps) {
   const curveMode = edgeData?.curveMode ?? 'curved';
   const orthogonalRoute = edgeData?.orthogonalRoute ?? null;
   const onOrthogonalRouteChange = edgeData?.onOrthogonalRouteChange;
+  const bendPoints = edgeData?.bendPoints ?? null;
+  const onBendPointsChange = edgeData?.onBendPointsChange;
   const confidenceBadge = edgeData?.confidenceBadge ?? null;
   const displayedPropertyValues = edgeData?.displayedPropertyValues;
   const labelFontSize = FONT_SIZE_PX[edgeData?.fontSize || 'sm'];
@@ -229,11 +235,22 @@ function CustomEdgeComponent(props: EdgeProps) {
   const [isSegmentDragging, setIsSegmentDragging] = useState(false);
   const draftRoute = draft && draft.over === orthogonalRoute ? draft.route : null;
   const setDraftRoute = (next: OrthogonalRoute | null) => setDraft(next ? { route: next, over: orthogonalRoute } : null);
+  // Straight mode: bend points, same draft rule (undefined: no draft; null: all removed)
+  const [bendDraft, setBendDraft] = useState<{ points: Point[] | null; over: Point[] | null } | null>(null);
+  const [isBendDragging, setIsBendDragging] = useState(false);
+  const draftBends = bendDraft && bendDraft.over === bendPoints ? bendDraft.points : undefined;
+  const bendDragRef = useRef<{
+    bends: Point[];
+    current: Point[];
+    ends: [Point, Point];
+    index: number;
+    start: Point;
+    moved: boolean;
+  } | null>(null);
   const segmentDragRef = useRef<{
     positions: number[];
     current: number[];
     firstAxis: SegmentAxis;
-    origin: { x: number; y: number };
     index: number;
     axis: SegmentAxis;
     startMouse: number;
@@ -265,6 +282,7 @@ function CustomEdgeComponent(props: EdgeProps) {
     targetSlot,
     offset: currentOffset,
     bends: curveMode === 'orthogonal' ? (draftRoute ?? orthogonalRoute) : null,
+    bendPoints: curveMode === 'straight' ? (draftBends !== undefined ? draftBends : bendPoints) : null,
     hasStartArrow,
     hasEndArrow,
   });
@@ -274,8 +292,8 @@ function CustomEdgeComponent(props: EdgeProps) {
     targetHandle: targetHandleId ?? 'target-left',
   };
 
-  const saveRoute = (positions: number[], firstAxis: SegmentAxis, origin: { x: number; y: number }) => {
-    const next = storedRoute({ positions, firstAxis }, origin);
+  const saveRoute = (positions: number[], firstAxis: SegmentAxis) => {
+    const next = storedRoute({ positions, firstAxis });
     setDraftRoute(next);
     onOrthogonalRouteChange?.(next, routeHandles);
   };
@@ -295,7 +313,7 @@ function CustomEdgeComponent(props: EdgeProps) {
     const axis = segmentAxis(firstAxis, dragged);
     const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
     segmentDragRef.current = {
-      positions, current: positions, firstAxis, origin: geometry.origin, index: dragged, axis,
+      positions, current: positions, firstAxis, index: dragged, axis,
       startMouse: axis === 'h' ? flowPos.y : flowPos.x, moved: false,
     };
     setIsSegmentDragging(true);
@@ -306,7 +324,7 @@ function CustomEdgeComponent(props: EdgeProps) {
     e.preventDefault();
     if (!geometry) return;
     const { positions, firstAxis } = geometry.route;
-    saveRoute(splitSegment(positions, index, segmentMiddle(geometry, index).along), firstAxis, geometry.origin);
+    saveRoute(splitSegment(positions, index, segmentMiddle(geometry, index).along), firstAxis);
   };
 
   useEffect(() => {
@@ -320,7 +338,7 @@ function CustomEdgeComponent(props: EdgeProps) {
       if (!drag.moved) return;
       const value = snapPosition(drag.positions, drag.index, drag.positions[drag.index] + delta, SEGMENT_SNAP_PX / getZoom());
       drag.current = drag.positions.map((p, i) => (i === drag.index ? value : p));
-      setDraftRoute(storedRoute({ positions: drag.current, firstAxis: drag.firstAxis }, drag.origin));
+      setDraftRoute(storedRoute({ positions: drag.current, firstAxis: drag.firstAxis }));
     };
     const handleMouseUp = () => {
       const drag = segmentDragRef.current;
@@ -335,7 +353,7 @@ function CustomEdgeComponent(props: EdgeProps) {
       window.addEventListener('click', stopClick, { capture: true, once: true });
       setTimeout(() => window.removeEventListener('click', stopClick, { capture: true }), 0);
       // Segments put back in line become one
-      saveRoute(mergeEmptySegments(drag.current), drag.firstAxis, drag.origin);
+      saveRoute(mergeEmptySegments(drag.current), drag.firstAxis);
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -344,6 +362,85 @@ function CustomEdgeComponent(props: EdgeProps) {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }); // re-bound each render: saveRoute reads the current handles
+
+  // Straight mode: a handle on each bend point (drag: move, double-click: remove) and one in the
+  // middle of each segment (drag: a new bend point there)
+  const freeLine = route.free;
+  // Square handles on stored points only: the lane points of a parallel link are not bends
+  const hasBends = ((draftBends !== undefined ? draftBends : bendPoints)?.length ?? 0) > 0;
+  const saveBends = (bends: Point[]) => {
+    const next = storedBendPoints(bends);
+    setBendDraft({ points: next, over: bendPoints });
+    onBendPointsChange?.(next, routeHandles);
+  };
+
+  const startBendDrag = (e: React.MouseEvent, bends: Point[], index: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!freeLine) return;
+    const ends: [Point, Point] = [freeLine.points[0], freeLine.points[freeLine.points.length - 1]];
+    bendDragRef.current = {
+      bends, current: bends, ends, index,
+      start: screenToFlowPosition({ x: e.clientX, y: e.clientY }), moved: false,
+    };
+    setIsBendDragging(true);
+  };
+  const handleBendMouseDown = (e: React.MouseEvent, index: number) => {
+    if (freeLine) startBendDrag(e, freeLine.points.slice(1, -1), index);
+  };
+  const handleBendAddMouseDown = (e: React.MouseEvent, segment: number) => {
+    if (!freeLine) return;
+    const a = freeLine.points[segment];
+    const b = freeLine.points[segment + 1];
+    const bends = freeLine.points.slice(1, -1);
+    // Added only once dragged: a click leaves the line as it is
+    startBendDrag(e, [...bends.slice(0, segment), { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, ...bends.slice(segment)], segment);
+  };
+  const handleBendDoubleClick = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!freeLine) return;
+    saveBends(freeLine.points.slice(1, -1).filter((_, i) => i !== index));
+  };
+
+  useEffect(() => {
+    if (!isBendDragging) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const drag = bendDragRef.current;
+      if (!drag) return;
+      const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      const dx = flowPos.x - drag.start.x;
+      const dy = flowPos.y - drag.start.y;
+      if (Math.hypot(dx, dy) > 0.5) drag.moved = true;
+      if (!drag.moved) return;
+      const previous = drag.index === 0 ? drag.ends[0] : drag.bends[drag.index - 1];
+      const next = drag.index === drag.bends.length - 1 ? drag.ends[1] : drag.bends[drag.index + 1];
+      const moved = { x: drag.bends[drag.index].x + dx, y: drag.bends[drag.index].y + dy };
+      // Level or plumb with a neighbour when close to it
+      const point = snapBend(moved, previous, next, SEGMENT_SNAP_PX / getZoom());
+      drag.current = drag.bends.map((p, i) => (i === drag.index ? point : p));
+      setBendDraft({ points: storedBendPoints(drag.current), over: bendPoints });
+    };
+    const handleMouseUp = () => {
+      const drag = bendDragRef.current;
+      bendDragRef.current = null;
+      setIsBendDragging(false);
+      if (!drag?.moved) {
+        setBendDraft(null);
+        return;
+      }
+      const stopClick = (ev: MouseEvent) => ev.stopPropagation();
+      window.addEventListener('click', stopClick, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener('click', stopClick, { capture: true }), 0);
+      saveBends(drag.current);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }); // re-bound each render: saveBends reads the current handles
   const edgePath = route.path;
   const { x: sourceX, y: sourceY } = route.sourcePoint;
   const { x: targetX, y: targetY } = route.targetPoint;
@@ -654,6 +751,50 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
+      {/* Straight mode: bend points and, in the middle of each segment, a handle to add one */}
+      {isStraight && isSelected && !isEditing && freeLine && onBendPointsChange && (
+        <g data-bend-handles="">
+          {freeLine.points.slice(0, -1).map((a, segment) => {
+            const b = freeLine.points[segment + 1];
+            if (Math.hypot(b.x - a.x, b.y - a.y) < MIN_HANDLE_SEGMENT) return null;
+            const x = (a.x + b.x) / 2;
+            const y = (a.y + b.y) / 2;
+            return (
+              <g
+                key={`add-${segment}`}
+                data-bend-add={segment}
+                onMouseDown={(e) => handleBendAddMouseDown(e, segment)}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                style={{ cursor: 'copy', pointerEvents: 'auto' }}
+              >
+                <title>{i18next.t('pages:dossier.linkBendAdd')}</title>
+                <circle cx={x} cy={y} r={9} fill="transparent" />
+                <circle cx={x} cy={y} r={3.5} style={{ fill: 'var(--color-bg-primary)', stroke: 'var(--color-accent)' }} strokeWidth={1.5} opacity={0.8} />
+              </g>
+            );
+          })}
+          {hasBends && freeLine.points.slice(1, -1).map((p, index) => (
+            <g
+              key={`bend-${index}`}
+              data-bend={index}
+              onMouseDown={(e) => handleBendMouseDown(e, index)}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => handleBendDoubleClick(e, index)}
+              style={{ cursor: 'move', pointerEvents: 'auto' }}
+            >
+              <title>{i18next.t('pages:dossier.linkBendPoint')}</title>
+              <circle cx={p.x} cy={p.y} r={10} fill="transparent" />
+              <rect
+                x={p.x - 5} y={p.y - 5} width={10} height={10} rx={2}
+                style={{ fill: 'var(--color-bg-primary)', stroke: 'var(--color-accent)' }}
+                strokeWidth={2}
+              />
+            </g>
+          ))}
+        </g>
+      )}
+
       {/* Draggable control point (curves) - hidden during label editing, in straight and
           right-angle modes; only interactive when selected */}
       {!isEditing && !isStraight && !isOrthogonal && (
@@ -726,6 +867,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.curveOffset?.y !== nextData.curveOffset?.y) return false;
   if (prevData.curveMode !== nextData.curveMode) return false;
   if (prevData.orthogonalRoute !== nextData.orthogonalRoute) return false;
+  if (prevData.bendPoints !== nextData.bendPoints) return false;
   if (prevProps.sourceHandleId !== nextProps.sourceHandleId) return false;
   if (prevProps.targetHandleId !== nextProps.targetHandleId) return false;
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;

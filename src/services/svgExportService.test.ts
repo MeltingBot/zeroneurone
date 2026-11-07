@@ -79,9 +79,18 @@ describe('svgExportService links', () => {
     expect(moved).not.toBe(plain);
   });
 
+  it('draws a straight link through its bend points, in straight mode only', () => {
+    const link = makeLink('l1', { bendPoints: [{ x: 0, y: 150 }] });
+    const straight = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'straight' });
+    const path = straight.match(/<g id="edge-[^"]+">\s*<path d="([^"]+)"/)![1];
+    expect(path.split(' L ')).toHaveLength(3);
+    const curved = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'curved' });
+    expect(curved).toBe(buildSVGExport(nodes, [makeLink('l1')], { linkAnchorMode: 'auto', linkCurveMode: 'curved' }));
+  });
+
   it('draws a right-angle route drawn by hand through its segments, in orthogonal mode only', () => {
-    // Down at x = middle + 0, along y 120, back up: corners at y 120 in the file
-    const bends = { first: 'x' as const, positions: [-60, 120, 60] };
+    // Down at x 250, along y 120, back up at x 350: two corners at y 120
+    const bends = { first: 'x' as const, positions: [250, 120, 350] };
     const link = makeLink('l1', { orthogonalRoute: bends });
     const orthogonal = buildSVGExport(nodes, [link], { linkAnchorMode: 'auto', linkCurveMode: 'orthogonal' });
     const path = orthogonal.match(/<g id="edge-[^"]+">\s*<path d="([^"]+)"/)![1];

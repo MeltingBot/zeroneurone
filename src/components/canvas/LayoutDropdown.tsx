@@ -9,6 +9,7 @@ import { buildLayoutScope } from '../../utils/layoutScope';
 import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { useProgressStore } from '../../stores/progressStore';
 import { avoidObstacles } from '../../utils/avoidObstacles';
+import { brokenRoutes, canvasMoves } from '../../utils/routeFollow';
 import { DropdownPortal } from '../common/DropdownPortal';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -19,7 +20,7 @@ export function LayoutDropdown() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setIsOpen(false), []);
 
-  const { elements, links, updateElementPositions } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, updateElementPositions: s.updateElementPositions })));
+  const { elements, links, updateElementPositions, updateLinks } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, updateElementPositions: s.updateElementPositions, updateLinks: s.updateLinks })));
   const { pushAction } = useHistoryStore(useShallow((s) => ({ pushAction: s.pushAction })));
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
@@ -111,12 +112,23 @@ export function LayoutDropdown() {
       newPositions = newPositions.map(toStored);
 
       if (newPositions.length > 0) {
+        // Routes drawn by hand no longer fit links whose ends moved apart: back to automatic,
+        // undone with the layout
+        const broken = brokenRoutes(links, canvasMoves(elements, new Map(newPositions.map((p) => [p.id, p.position]))));
+        const cleared = { orthogonalRoute: null, bendPoints: null };
         pushAction({
           type: 'move-elements',
-          undo: { positions: oldPositions },
-          redo: { positions: newPositions },
+          undo: {
+            positions: oldPositions,
+            bulkLinks: broken.map((l) => ({ id: l.id, changes: { orthogonalRoute: l.orthogonalRoute ?? null, bendPoints: l.bendPoints ?? null } })),
+          },
+          redo: {
+            positions: newPositions,
+            bulkCalls: broken.length > 0 ? [{ kind: 'links', ids: broken.map((l) => l.id), changes: cleared }] : undefined,
+          },
         });
         await updateElementPositions(newPositions);
+        if (broken.length > 0) await updateLinks(broken.map((l) => l.id), cleared);
         // Frame the result together with the locked elements it was placed around
         useViewStore.getState().requestFitView([
           ...newPositions.map((p) => p.id),
@@ -127,7 +139,7 @@ export function LayoutDropdown() {
       setIsApplying(false);
       useProgressStore.getState().end('layout');
     }
-  }, [elements, links, updateElementPositions, pushAction, selectedElementIds, activeTabId, tabMemberSet]);
+  }, [elements, links, updateElementPositions, updateLinks, pushAction, selectedElementIds, activeTabId, tabMemberSet]);
 
   const layouts = layoutService.getAvailableLayouts();
   // Selected elements the layout would move (in a tab: its members only)

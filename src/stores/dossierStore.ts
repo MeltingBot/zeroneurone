@@ -1,6 +1,7 @@
 import i18next from 'i18next';
 import { create } from 'zustand';
 import * as Y from 'yjs';
+import { canvasMoves, followedRoutes } from '../utils/routeFollow';
 import type {
   Dossier,
   DossierId,
@@ -1733,14 +1734,25 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // _syncFromYDoc will skip heavy parsing via localOpPending
     localOpPending = true;
     const updatesMap = new Map(updates.map(u => [u.id, u.position]));
+    // Hand-drawn routes stay on the canvas, unless both ends of the link move together
+    const followed = followedRoutes(get().links, canvasMoves(get().elements, updatesMap));
+    const followedById = new Map(followed.map((f) => [f.id, f.changes]));
     set((state) => ({
       elements: state.elements.map(el => {
         const pos = updatesMap.get(el.id);
         return pos ? { ...el, position: pos } : el;
       }),
+      ...(followed.length > 0
+        ? { links: state.links.map((lk) => { const c = followedById.get(lk.id); return c ? { ...lk, ...c } : lk; }) }
+        : {}),
     }));
 
+    const { links: linksMap } = getYMaps(ydoc);
     ydoc.transact(() => {
+      for (const { id, changes } of followed) {
+        const ymap = linksMap.get(id) as Y.Map<unknown> | undefined;
+        if (ymap) updateLinkYMap(ymap, changes, ydoc);
+      }
       updates.forEach(({ id, position }) => {
         const ymap = elementsMap.get(id) as Y.Map<unknown> | undefined;
         if (ymap) {
@@ -1760,6 +1772,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also update Dexie
     await elementRepository.updatePositions(updates).catch((err) => onPersistFailure(err, 'element.updatePositions'));
+    for (const { id, changes } of followed) {
+      await linkRepository.update(id, changes).catch((err) => onPersistFailure(err, 'link.update'));
+    }
   },
 
   // ============================================================================

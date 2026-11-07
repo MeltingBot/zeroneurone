@@ -175,6 +175,7 @@
       "queryFromSelection": "Kontsulta hautapenetik",
       "editLinkLabel": "Etiketa editatu",
       "resetLinkRoute": "Berrezarri ibilbidea",
+      "resetLinkRoutes": "Berrezarri trazadurak",
       "reverseLink": "Noranzkoa alderantzikatu",
       "deleteLink": "Lotura ezabatu",
       "noLabel": "Etiketarik gabe",
@@ -196,6 +197,8 @@
       "openDetail": "Ireki xehetasuna"
     },
     "linkSegmentHandle": "Arrastatu: mugitu · Klik bikoitza: zatitu",
+    "linkBendPoint": "Arrastatu: mugitu · Klik bikoitza: kendu",
+    "linkBendAdd": "Arrastatu: puntu bat gehitu",
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
       "redo": "Berregin (Ctrl+Shift+Z)",
