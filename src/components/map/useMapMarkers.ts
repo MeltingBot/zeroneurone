@@ -36,6 +36,8 @@ export interface MapMarkersParams {
   clusterMetaRef: RefObject<Map<number, ClusterMeta>>;
   forceSpiderfyKeysRef: RefObject<Set<string>>;
   toggleOffMapRef: RefObject<(elementId: string) => void>;
+  /** Right-click on an element marker: its menu at the pointer */
+  openElementMenuRef: RefObject<(elementId: string, x: number, y: number) => void>;
   eventPopoverHandlersRef: RefObject<EventPopoverHandlers>;
   dragStartGeoRef: RefObject<{ id: string; geo: GeoData } | null>;
   isDraggingRef: RefObject<boolean>;
@@ -83,6 +85,7 @@ export function useMapMarkers({
   clusterMetaRef,
   forceSpiderfyKeysRef,
   toggleOffMapRef,
+  openElementMenuRef,
   eventPopoverHandlersRef,
   dragStartGeoRef,
   isDraggingRef,
@@ -409,6 +412,17 @@ export function useMapMarkers({
           selectElement(markerId);
           setFocusedEventId(markerEventId ?? null);
         });
+        // Right-click: the element's menu. Part of a multiple selection, the
+        // menu acts on it; otherwise the element becomes the selection.
+        markerEl.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!useSelectionStore.getState().selectedElementIds.has(markerId)) {
+            selectElement(markerId);
+            setFocusedEventId(markerEventId ?? null);
+          }
+          openElementMenuRef.current(markerId, e.clientX, e.clientY);
+        });
         // Hovering the event badge opens the dated list (delegated: the marker
         // HTML is rewritten on every update)
         markerEl.addEventListener('mouseover', (e) => {
@@ -575,7 +589,7 @@ export function useMapMarkers({
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, getThumbnail, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t, clusterMarkersRef, clusterMetaRef, clusterStateRef, dragStartGeoRef, effectiveGeoElementsRef, elementIdToFirstMarkerKeyRef, eventPopoverHandlersRef, forceSpiderfyKeysRef, isDraggingRef, mapRef, markerOffsetsRef, markersRef, setClusteringVersion, setDraggedPositions, superclusterRef, toggleOffMapRef]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, getThumbnail, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t, clusterMarkersRef, clusterMetaRef, clusterStateRef, dragStartGeoRef, effectiveGeoElementsRef, elementIdToFirstMarkerKeyRef, eventPopoverHandlersRef, forceSpiderfyKeysRef, isDraggingRef, mapRef, markerOffsetsRef, markersRef, setClusteringVersion, setDraggedPositions, superclusterRef, toggleOffMapRef, openElementMenuRef]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
