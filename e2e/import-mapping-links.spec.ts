@@ -162,3 +162,58 @@ test('the hours of the file are read in the zone chosen for it', async ({ page }
   expect(new Date(link.dateRange.start).toISOString()).toBe('2024-02-10T00:15:30.000Z');
   expect(link.dateRange.timeZone).toBe('Asia/Tokyo');
 });
+
+// Councillors and their towns: two councillors of one name, two towns of one name
+const COUNCILLORS = [
+  'elu;prenom;naissance;commune;code_commune;csp',
+  'ARMANDO;Jean;1960-02-01;Saint-Martin;01001;Agriculteur',
+  'ARMANDO;Paul;1971-05-12;Saint-Martin;02002;Cadre',
+  'ARMANDO;Jean;1960-02-01;Lyon;69123;Agriculteur',
+  'DUPONT;Anne;1980-01-01;Lyon;69123;Cadre',
+].join('\n');
+
+test('fields identifying an end keep homonyms apart, their links too', async ({ page }) => {
+  await setupCleanEnvironment(page);
+  await page.click('[data-testid="import-button"]');
+  await page.locator('[data-testid="import-file-input"]').setInputFiles({
+    name: 'elus.csv', mimeType: 'text/csv', buffer: Buffer.from(COUNCILLORS, 'utf-8'),
+  });
+  const modal = page.locator('[data-testid="json-mapping-modal"]');
+  await expect(modal).toBeVisible({ timeout: 15000 });
+
+  await modal.locator('[data-testid="json-mapping-record-as"]').selectOption('link');
+  await modal.locator('[data-testid="json-mapping-link-fromField"]').selectOption('elu');
+  await modal.locator('[data-testid="json-mapping-link-toField"]').selectOption('commune');
+  // The birth date is the councillor's, not the link's
+  await modal.locator('[data-testid="json-mapping-link-dateField"]').selectOption('');
+  for (const f of ['prenom', 'naissance', 'csp']) {
+    await modal.locator(`[data-testid="json-mapping-holder-${f}"]`).selectOption('from');
+  }
+  await modal.locator('[data-testid="json-mapping-holder-code_commune"]').selectOption('to');
+  // Fields on an end, none telling homonyms apart: said
+  await expect(modal.locator('[data-testid="json-mapping-link-homonyms"]')).toHaveText(/From, To/);
+  await modal.locator('[data-testid="json-mapping-holder-prenom"]').selectOption('from-id');
+  await modal.locator('[data-testid="json-mapping-holder-naissance"]').selectOption('from-id');
+  await modal.locator('[data-testid="json-mapping-holder-code_commune"]').selectOption('to-id');
+  await expect(modal.locator('[data-testid="json-mapping-link-homonyms"]')).toHaveCount(0);
+  await modal.locator('[data-testid="json-mapping-import"]').click();
+  await expect(modal).toBeHidden();
+  await page.locator('.react-flow__pane').click({ position: { x: 400, y: 300 } });
+
+  await expect.poll(async () => (await readStore(page, 'elements')).length, { timeout: 10000 }).toBe(6);
+  const els = await readStore<{ id: string; label: string; properties: { key: string; value: unknown }[] }>(page, 'elements');
+  const prop = (e: { properties: { key: string; value: unknown }[] }, k: string) => e.properties.find((p) => p.key === k)?.value;
+  const armandos = els.filter((e) => e.label === 'ARMANDO');
+  expect(armandos.map((e) => prop(e, 'prenom')).sort()).toEqual(['Jean', 'Paul']);
+  const towns = els.filter((e) => e.label === 'Saint-Martin');
+  expect(towns.map((e) => String(prop(e, 'code_commune'))).sort()).toEqual(['01001', '02002']);
+
+  // Jean ARMANDO is linked to his two towns, Paul to his one
+  const links = await readStore<StoredLink>(page, 'links');
+  expect(links).toHaveLength(4);
+  const jean = armandos.find((e) => prop(e, 'prenom') === 'Jean')!;
+  const paul = armandos.find((e) => prop(e, 'prenom') === 'Paul')!;
+  const label = (id: string) => els.find((e) => e.id === id)!.label;
+  expect(links.filter((l) => l.fromId === jean.id).map((l) => label(l.toId)).sort()).toEqual(['Lyon', 'Saint-Martin']);
+  expect(links.filter((l) => l.fromId === paul.id).map((l) => l.toId)).toEqual([towns.find((e) => String(prop(e, 'code_commune')) === '02002')!.id]);
+});

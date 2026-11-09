@@ -54,6 +54,9 @@ export interface FieldMapping {
   pivotOwner?: string;
   /** Records as links: what takes the field, the link (absent) or one of its ends */
   holder?: 'link' | 'from' | 'to';
+  /** A field put on a link end that also tells that end's elements apart:
+   *  one value with two different such fields names two elements (homonyms) */
+  identifies?: boolean;
 }
 
 /** Config for turning an array-of-objects field into linked child elements. */
@@ -472,6 +475,21 @@ export function idKey(v: unknown): string {
   const s = valueToString(v).trim();
   if (/^[+-]?\d+(\.0+)?$/.test(s)) return String(parseInt(s, 10));
   return s;
+}
+
+/** Fields that tell apart the elements a link end names: put on that end and identifying it */
+export function endIdentityFields(mapping: Record<string, FieldMapping>, end: 'from' | 'to'): string[] {
+  return Object.entries(mapping).filter(([, m]) => m?.enabled && m.holder === end && m.identifies).map(([k]) => k);
+}
+
+/**
+ * Key of a link end: its value, and with identifying fields the values of
+ * those too (idKey), so that homonyms stay apart. Without any, the value
+ * alone: a phone number calls and is called, one element.
+ */
+export function endIdentityKey(value: string, flat: Record<string, unknown>, fields: readonly string[]): string {
+  const v = value.trim();
+  return fields.length === 0 ? v : [v, ...fields.map((f) => idKey(flat[f]))].join('\u001f');
 }
 
 /**

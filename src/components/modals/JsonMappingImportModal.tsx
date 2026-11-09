@@ -29,6 +29,8 @@ import {
   detectLinkEnds,
   idValuesOf,
   idKey,
+  endIdentityFields,
+  endIdentityKey,
   findSharedIdHub,
   type FieldMapping,
   type FieldInfo,
@@ -89,6 +91,8 @@ function csvAsTable(raw: string, name: string | undefined, delimiter?: string): 
 
 /** Targets a link record can put on the link or on one of its ends */
 const HOLDABLE_TARGETS: MappingTarget[] = ['property', 'number', 'date', 'country', 'link', 'notes', 'source'];
+/** Where a field of a link record goes; `-id`: on that end, telling its elements apart */
+type HolderChoice = 'link' | 'from' | 'from-id' | 'to' | 'to-id';
 
 /** Targets a link cannot take: it has no id, references, media nor place of its own */
 const LINK_OFF_TARGETS: MappingTarget[] = ['id', 'ref', 'asset', 'polygon', 'latlng', 'lat', 'lng'];
@@ -661,8 +665,23 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     setMapping((m) => ({ ...m, [key]: table
       ? { ...m[key], enabled: true, target: 'ref', refSource: table }
       : { ...m[key], target: 'property', propKey: m[key]?.propKey || lastSegment(key), refSource: undefined } }));
-  const setFieldHolder = (key: string, holder: 'link' | 'from' | 'to') =>
-    setMapping((m) => ({ ...m, [key]: { ...m[key], holder: holder === 'link' ? undefined : holder } }));
+  /** On the link or one of its ends; `-id`: that end, and it tells its elements apart */
+  const setFieldHolder = (key: string, choice: HolderChoice) =>
+    setMapping((m) => {
+      const holder = choice === 'link' ? undefined : choice.startsWith('from') ? 'from' as const : 'to' as const;
+      return { ...m, [key]: { ...m[key], holder, identifies: choice.endsWith('-id') || undefined } };
+    });
+  // Ends named by value that take fields of the row but none telling them
+  // apart: two homonyms there make one element, and its links mix
+  const homonymEnds = useMemo((): ('from' | 'to')[] => {
+    if (!linkMapping?.fromField || !linkMapping.toField) return [];
+    return (['from', 'to'] as const).filter((end) => {
+      const field = end === 'from' ? linkMapping.fromField : linkMapping.toField;
+      if (mapping[field]?.target === 'ref' && mapping[field]?.refSource) return false;
+      const held = Object.values(mapping).filter((m) => m?.enabled && m.holder === end && HOLDABLE_TARGETS.includes(m.target));
+      return held.length > 0 && !held.some((m) => m.identifies);
+    });
+  }, [linkMapping, mapping]);
   const setFieldOwner = (key: string, pivotOwner: string | undefined) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], pivotOwner } }));
   /** Fields a pivot can be attached to, besides the record's element: the
@@ -910,12 +929,14 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       // Elements of the dossier a value may name: they take the events and
       // links instead of a copy. A stand-in collects what they receive; the
       // placement adds it to the element itself.
-      const existingByKey = new Map<string, Element>();
+      const existingByKey = new Map<string, Element[]>();
       if (attachExisting) {
         for (const el of useDossierStore.getState().elements) {
           if (el.isGroup || el.isAnnotation) continue;
           const k = keyOf(el.label);
-          if (k && !existingByKey.has(k)) existingByKey.set(k, el);
+          if (!k) continue;
+          const same = existingByKey.get(k);
+          if (same) same.push(el); else existingByKey.set(k, [el]);
         }
         // Two elements of the dossier already linked: no second link between them
         for (const l of useDossierStore.getState().links) pivotLinked.add([l.fromId, l.toId].sort().join('|'));
@@ -942,8 +963,12 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
           el.source = el.source ? `${el.source} | ${p.source}` : p.source;
         }
       };
-      const existingFor = (key: string): Element | undefined => {
-        const el = existingByKey.get(key);
+      /** The dossier's element of that label (with `identity`, the one also
+       *  holding those properties, homonyms staying apart) */
+      const existingFor = (key: string, identity?: Property[]): Element | undefined => {
+        const el = identity
+          ? existingByKey.get(key)?.find((e) => identity.every((p) => e.properties.some((x) => x.key === p.key && sameValue(x.value, p.value))))
+          : existingByKey.get(key)?.[0];
         if (!el) return undefined;
         let standIn = attached.get(el.id);
         if (!standIn) {
@@ -1056,6 +1081,10 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         // value is the record's element, a link end or a pivot (a phone number
         // calls and is called)
         const byRow = !!(ev || lk);
+        // Fields telling apart the elements each end names (homonyms)
+        const idFieldsOf = (end: 'from' | 'to') => (lk ? endIdentityFields(mapping, end).filter((k) => HOLDABLE_TARGETS.includes(mapping[k]!.target)) : []);
+        const fromIdFields = idFieldsOf('from');
+        const toIdFields = idFieldsOf('to');
         const byValue = new Map<string, Element>();
         const withTag = (el: Element, tag: string) => { if (tag && !el.tags.includes(tag)) el.tags.push(tag); return el; };
         const flats = plan.raw.map((r) => flattenRecord(r));
@@ -1194,9 +1223,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
         };
 
         // End of a link: one element per distinct value (or the dossier's own)
-        const endOf = (val: string): Element => {
-          const k = keyOf(val);
-          let el = byValue.get(k) ?? existingFor(k);
+        // `key`: the value and its identifying fields (endIdentityKey); `identity`:
+        // the properties those fields make, to find the dossier's element
+        const endOf = (val: string, key = keyOf(val), identity?: Property[]): Element => {
+          const k = key;
+          let el = byValue.get(k) ?? existingFor(keyOf(val), identity);
           if (el) { withTag(el, tn); byValue.set(k, el); return el; }
           const n = byValue.size;
           el = mkElement({
@@ -1268,10 +1299,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
             };
             const fromRef = refEnd(fromIds, lk.fromField);
             const toRef = refEnd(toIds, lk.toField);
+            const fromKey = endIdentityKey(fromVal, flat, fromIdFields);
+            const toKey = endIdentityKey(toVal, flat, toIdFields);
+            const identityOf = (fields: string[]) => (fields.length === 0 ? undefined
+              : buildProps(flat, scalar, (k) => (fields.includes(k) ? mapping[k] : undefined)).properties);
+            const fromEnd = () => endOf(fromVal, fromKey, identityOf(fromIdFields));
+            const toEnd = () => endOf(toVal, toKey, identityOf(toIdFields));
             // The same element at both ends (a transfer to oneself): no link
             // can be drawn, the row becomes an event of that element
-            if (fromRef && toRef ? fromRef === toRef : !fromRef && !toRef && keyOf(fromVal) === keyOf(toVal)) {
-              const self = fromRef ?? endOf(fromVal);
+            if (fromRef && toRef ? fromRef === toRef : !fromRef && !toRef && fromKey === toKey) {
+              const self = fromRef ?? fromEnd();
               const label = applyTemplate(cfg.labelTemplate, flat) || tn || fromVal;
               const event = lk.dateField
                 ? buildEvent(flat, label, { dateField: lk.dateField, timeField: lk.timeField, endField: lk.endField, endTimeField: lk.endTimeField, timeZone: lk.timeZone }, { properties, source, notes, geo: null })
@@ -1284,8 +1321,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
               addChildren(flat, self);
               return;
             }
-            const fromEl = fromRef ?? endOf(fromVal);
-            const toEl = toRef ?? endOf(toVal);
+            const fromEl = fromRef ?? fromEnd();
+            const toEl = toRef ?? toEnd();
             const { range, unread } = linkDates(flat, lk);
             if (unread && lk.dateField) {
               properties.push({ key: lastSegment(lk.dateField), value: valueToString(flat[lk.dateField]), type: 'text' });
@@ -1723,6 +1760,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                   </>
                 )}
               </div>
+              {homonymEnds.length > 0 && (
+                <p className="text-[10px] text-warning -mt-1" data-testid="json-mapping-link-homonyms">
+                  {t('importJsonMapping.linkHomonyms', { ends: homonymEnds.map((e) => t(e === 'from' ? 'importJsonMapping.linkFrom' : 'importJsonMapping.linkTo')).join(', ') })}
+                </p>
+              )}
               {eventMapping && (
                 <>
                   <label className="flex items-center gap-1.5 text-xs text-text-secondary -mt-1">
@@ -1960,15 +2002,17 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                         {showAttach && (
                           !m.enabled ? <span /> : holdable && linkMapping ? (
                             <select
-                              value={m.holder ?? 'link'}
-                              onChange={(e) => setFieldHolder(f.key, e.target.value as 'link' | 'from' | 'to')}
+                              value={m.holder ? (m.identifies ? `${m.holder}-id` : m.holder) : 'link'}
+                              onChange={(e) => setFieldHolder(f.key, e.target.value as HolderChoice)}
                               aria-label={t('importJsonMapping.pivotOwner')}
                               data-testid={`json-mapping-holder-${f.key}`}
                               className={selectCls}
                             >
                               <option value="link">{t('importJsonMapping.holderLink')}</option>
                               <option value="from">{t('importJsonMapping.linkFrom')}</option>
+                              <option value="from-id">{t('importJsonMapping.holderFromId')}</option>
                               <option value="to">{t('importJsonMapping.linkTo')}</option>
+                              <option value="to-id">{t('importJsonMapping.holderToId')}</option>
                             </select>
                           ) : owners.length > 0 ? (
                             <select
