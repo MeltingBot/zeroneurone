@@ -133,7 +133,7 @@ Options :
 | Séparateur | Virgule, point-virgule ou tabulation. Excel en français attend le point-virgule |
 | Compatible Excel | Prépare le fichier pour un double-clic dans Excel : marque UTF-8 (BOM) pour les accents, et séparateur attendu par Excel dans la langue de l'interface (point-virgule, virgule en anglais). Le séparateur reste modifiable |
 
-L'import de ZeroNeurone reconnaît les trois séparateurs et la marque UTF-8.
+L'import de ZeroNeurone reconnaît ces trois séparateurs (et le `|`) ainsi que la marque UTF-8.
 
 
 ---

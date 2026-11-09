@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { csvToRecords, isNativeCSV } from '../csv';
+import { csvToRecords, detectCSVDelimiter, isNativeCSV } from '../csv';
 
 describe('csvToRecords', () => {
   it('reads rows as records keyed by header, with any delimiter', () => {
@@ -19,6 +19,28 @@ describe('csvToRecords', () => {
   it('keeps line breaks inside quoted cells', () => {
     const { records } = csvToRecords('a,b\n"ligne 1\nligne 2",x');
     expect(records[0].a).toBe('ligne 1\nligne 2');
+  });
+
+  it('detects a pipe delimiter', () => {
+    const { headers, records } = csvToRecords('nom|ville\nAlice|Paris, 75');
+    expect(headers).toEqual(['nom', 'ville']);
+    expect(records[0]).toEqual({ nom: 'Alice', ville: 'Paris, 75' });
+  });
+
+  it('splits on the delimiter given, whatever detection says', () => {
+    const { headers, records } = csvToRecords('nom#ville,pays\nAlice#Paris,France', '#');
+    expect(headers).toEqual(['nom', 'ville,pays']);
+    expect(records[0]).toEqual({ nom: 'Alice', 'ville,pays': 'Paris,France' });
+  });
+});
+
+describe('detectCSVDelimiter', () => {
+  it('picks the most frequent delimiter of the header, comma on a tie or none', () => {
+    expect(detectCSVDelimiter('a|b|c\n1|2|3')).toBe('|');
+    expect(detectCSVDelimiter('a\tb\n1\t2')).toBe('\t');
+    expect(detectCSVDelimiter('a,b|c\n1,2|3')).toBe(',');
+    expect(detectCSVDelimiter('"a|b";c\n1;2')).toBe(';');
+    expect(detectCSVDelimiter('seul\n1')).toBe(',');
   });
 });
 
