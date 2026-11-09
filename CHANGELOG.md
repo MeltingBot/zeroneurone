@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.92.3
+
+### Améliorations
+
+- **Import CSV : séparateur `|` et séparateur au choix** — la détection
+  reconnaît le `|` en plus de la virgule, du point-virgule et de la
+  tabulation. Dans le mapping, la liste **Séparateur**, sous le fichier,
+  impose un séparateur usuel ou n'importe quel caractère (**Autre**) ;
+  le fichier est relu aussitôt, gros fichiers compris.
+
 ## 2.92.2
 
 ### Nouveautés
