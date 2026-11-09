@@ -16,6 +16,7 @@ import { DropdownPortal } from '../common/DropdownPortal';
 import { ZoneDrawTool } from './ZoneDrawTool';
 import { ZoneEditTool } from './ZoneEditTool';
 import { ZoneLayers } from './ZoneLayers';
+import { MapElementMenu } from './MapElementMenu';
 import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
 import { toMinuteStart, eventInterval, overlaps, navigatorWindow, closestDateIndex, computeCanvasTemporalClassification, summarizeActiveEvents, type TemporalEventSummary } from '../../utils/temporalUtils';
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
@@ -260,6 +261,12 @@ export function MapView() {
   // Located elements whose unlocated neighbours are unfolded
   const [offMapExpanded, setOffMapExpanded] = useState<Set<string>>(new Set());
   const toggleOffMapRef = useRef((_elementId: string) => {});
+  // Element menu (right-click on a marker); a new key per opening remounts it
+  const [elementMenu, setElementMenu] = useState<{ x: number; y: number; elementId: string; key: number } | null>(null);
+  const openElementMenuRef = useRef((elementId: string, x: number, y: number) => {
+    setElementMenu({ x, y, elementId, key: Date.now() });
+  });
+  const closeElementMenu = useCallback(() => setElementMenu(null), []);
   toggleOffMapRef.current = (elementId: string) => {
     setOffMapExpanded((prev) => {
       const next = new Set(prev);
@@ -370,8 +377,9 @@ export function MapView() {
       setClusteringVersion(v => v + 1);
     });
 
-    // The event list is anchored to a marker: close it when the map moves
+    // The element menu and the event list are anchored to a marker: close them when the map moves
     map.on('movestart', () => {
+      setElementMenu(null);
       eventPopoverHandlersRef.current.scheduleClose();
     });
 
@@ -590,6 +598,7 @@ export function MapView() {
     clusterMetaRef,
     forceSpiderfyKeysRef,
     toggleOffMapRef,
+    openElementMenuRef,
     eventPopoverHandlersRef,
     dragStartGeoRef,
     isDraggingRef,
@@ -1009,11 +1018,13 @@ export function MapView() {
     if (didAutoZoomRef.current) return;
     const map = mapRef.current;
     if (!map || !mapLoadedRef.current || geoElements.length === 0) return;
+    // Decided once, when the map first shows elements: a selection made later
+    // on the map must not make it fly at the next change of an element
+    didAutoZoomRef.current = true;
     const selIds = useSelectionStore.getState().selectedElementIds;
     if (selIds.size === 0) return;
     const selectedGeo = geoElements.filter((el) => selIds.has(el.id));
     if (selectedGeo.length === 0) return;
-    didAutoZoomRef.current = true;
     // Small delay so markers are placed first
     setTimeout(() => {
       if (!mapRef.current) return;
@@ -1417,6 +1428,15 @@ export function MapView() {
       )}
 
       {/* Custom styles */}
+      {elementMenu && (
+        <MapElementMenu
+          key={elementMenu.key}
+          x={elementMenu.x}
+          y={elementMenu.y}
+          elementId={elementMenu.elementId}
+          onClose={closeElementMenu}
+        />
+      )}
       <style>{`
         .map-marker-card,
         .map-marker-simple {

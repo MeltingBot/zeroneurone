@@ -6,14 +6,13 @@ import { useDossierStore, useSelectionStore, useViewStore, useUIStore, useTabSto
 import type { useInsightsStore } from '../../stores';
 import type { TabMembershipSnapshot } from '../../stores/historyStore';
 import type { Element, Link, Asset } from '../../types';
-import type { QueryCondition, QueryNode, QueryOr } from '../../services/query/types';
 import { generateUUID } from '../../utils';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { scaleByDegree, type buildDegreeMap } from '../../utils/degreeSize';
 import { addElementsToGroup, gatherGroup, groupElements } from '../../utils/groupElements';
 import { buildMermaidExport } from '../../services/exportMermaid';
 import { buildDOTExport } from '../../services/exportDOT';
-import { serializeQuery } from '../../services/query/serializer';
+import { similarQueryText, labelsQueryText, neighbourhoodQueryText, showOnlySplit } from '../../utils/selectionQueries';
 import { insightsService } from '../../services/insightsService';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { withDossierLinkDefaults } from '../../utils/dossierOptions';
@@ -413,30 +412,9 @@ export function useCanvasSelectionActions({
   // among them
   const showOnly = useCallback((ids: string[]) => {
     if (ids.length === 0) return;
-    const all = useDossierStore.getState().elements;
-    const byId = new Map(all.map((el) => [el.id, el]));
-    // The chosen ones and, through nested groups, everything inside them
-    const chosen = new Set(ids);
-    let grew = true;
-    while (grew) {
-      grew = false;
-      for (const el of all) {
-        if (el.parentGroupId && chosen.has(el.parentGroupId) && !chosen.has(el.id)) {
-          chosen.add(el.id);
-          grew = true;
-        }
-      }
-    }
-    const keep = new Set(chosen);
-    for (const id of ids) {
-      let parent = byId.get(id)?.parentGroupId ?? null;
-      while (parent && !keep.has(parent)) {
-        keep.add(parent);
-        parent = byId.get(parent)?.parentGroupId ?? null;
-      }
-    }
-    showElements([...keep]);
-    hideElements(all.filter((el) => !keep.has(el.id)).map((el) => el.id));
+    const { keep, hide } = showOnlySplit(ids, useDossierStore.getState().elements);
+    showElements(keep);
+    hideElements(hide);
   }, [showElements, hideElements]);
 
   const handleSelectionShowOnly = useCallback(() => {
@@ -467,24 +445,11 @@ export function useCanvasSelectionActions({
     if (!el) return;
     // A label close to it (LIKE: case, accents, small typos) AND one of its
     // tags; either part alone when the element lacks the other
-    type Q = QueryNode;
-    const label = el.label.trim();
-    const tags = el.tags.filter(Boolean);
-    if (tags.length === 0 && !label) {
+    const text = similarQueryText(el);
+    if (!text) {
       useUIStore.getState().showToast('warning', tPages('dossier.findSimilarNoTags'));
       return;
     }
-
-    const tagConditions: Q[] = tags.map(tag => ({ type: 'condition' as const, field: 'tag', operator: 'eq' as const, value: tag }));
-    const tagPart: Q | null = tagConditions.length === 0 ? null
-      : tagConditions.length === 1 ? tagConditions[0]
-      : { type: 'or' as const, children: tagConditions };
-    const labelPart: Q | null = label ? { type: 'condition' as const, field: 'label', operator: 'like' as const, value: label } : null;
-    const ast: Q = labelPart && tagPart
-      ? { type: 'and' as const, children: [labelPart, tagPart] }
-      : (labelPart ?? tagPart)!;
-
-    const text = serializeQuery(ast);
     useQueryStore.getState().setText(text);
     useQueryStore.getState().execute();
     useUIStore.getState().setSidePanelTab('query');
@@ -507,23 +472,9 @@ export function useCanvasSelectionActions({
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length < 2) return;
 
-    const conditions: QueryCondition[] = selectedEls
-      .map(id => elements.find(e => e.id === id))
-      .filter(Boolean)
-      .map(el => ({
-        type: 'condition' as const,
-        field: 'label',
-        operator: 'eq' as const,
-        value: el!.label,
-      }));
+    const text = labelsQueryText(selectedEls.map(id => elements.find(e => e.id === id)).filter((el): el is Element => !!el));
+    if (!text) return;
 
-    if (conditions.length === 0) return;
-
-    const ast = conditions.length === 1
-      ? conditions[0]
-      : { type: 'or' as const, children: conditions } as QueryOr;
-
-    const text = serializeQuery(ast);
     useQueryStore.getState().setText(text);
     useQueryStore.getState().execute();
     useUIStore.getState().setSidePanelTab('query');
@@ -567,21 +518,11 @@ export function useCanvasSelectionActions({
   // then edit, save or keep in a view. A target is its label, readable; its id
   // only when another element bears the same label (label = is case-insensitive)
   const focusOn = useCallback((ids: string[], depth: number) => {
-    const conditions: QueryCondition[] = [];
-    for (const id of ids) {
-      const el = elementMap.get(id);
-      if (!el) continue;
-      const label = el.label.toLowerCase();
-      const shared = elements.some((e) => e.id !== el.id && e.label.toLowerCase() === label);
-      conditions.push(shared
-        ? { type: 'condition', field: '_id', operator: 'eq', value: el.id }
-        : { type: 'condition', field: 'label', operator: 'eq', value: el.label });
-    }
-    if (conditions.length === 0) return;
-    const target: QueryNode = conditions.length === 1 ? conditions[0] : { type: 'or', children: conditions };
-    useQueryStore.getState().setText(serializeQuery({ type: 'within', hops: depth, target }));
+    const text = neighbourhoodQueryText(ids, elements, depth);
+    if (!text) return;
+    useQueryStore.getState().setText(text);
     useUIStore.getState().setSidePanelTab('query');
-  }, [elements, elementMap]);
+  }, [elements]);
 
   const handleContextMenuFocus = useCallback(
     (depth: number) => focusOn(menuTargetIds(), depth),
