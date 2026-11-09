@@ -165,6 +165,7 @@ Events go on elements the import creates. To add events to an element already in
 - the **link label** comes from the label template (`{amount} {currency}`); left empty, the link takes the tag;
 - **properties**, **notes** and **source** go on the link; a link has no id, reference, media or place;
 - the **Attached to** column (*Link*, *From* or *To*) puts them on the **From** or **To** element instead (a birth date, an address). A value is added there once, however many rows hold it; two different values both stay. With **Add to existing elements**, they go on the element already there, and the same **Ctrl+Z** removes them;
+- **From, identifier** and **To, identifier** do the same, and the field also tells the element apart: one value with a different identifier makes two elements. Without an identifier, two homonyms (two councillors "ARMANDO", two towns "Saint-Martin") become one element taking the links of both; the window says so when fields are attached to that end. Choose fields always filled and written the same way (a town code; a first name and a birth date): an empty or differently written value makes one more element. With **Add to existing elements**, an element of the dossier is used only if it already holds those values;
 - **pivots** are linked to the **From** element, unless **Attached to** names **To** or another pivot. For a row that describes both parties, attach each column of the receiving side (phone, ID document…) to **To**: otherwise it is linked to the sender;
 - the import cap counts links.
 
