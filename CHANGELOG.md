@@ -1,5 +1,27 @@
 # Changelog
 
+## 2.92.4
+
+### Nouveautés
+
+- **Menu contextuel sur la carte** — un clic droit sur un marqueur ouvre
+  le menu de l'élément : focus sur le voisinage, analyse (éléments
+  similaires, requête depuis la sélection, chemins, suggestions de liens),
+  verrouillage de la position, masquer ou afficher seulement, sélection
+  des voisins, entrées des plugins. Il agit sur toute la sélection quand
+  le marqueur en fait partie.
+- **Import de liens : homonymes séparés** — dans « Rattaché à », **De,
+  identifiant** et **Vers, identifiant** placent le champ sur l'extrémité
+  et s'en servent pour la reconnaître : deux élus « ARMANDO » ou deux
+  communes « Saint-Martin » restent deux éléments, chacun avec ses liens.
+  La fenêtre signale une extrémité qui reçoit des champs sans identifiant.
+
+### Corrections
+
+- **Carte qui sautait sur la sélection** — le zoom sur l'élément
+  sélectionné, prévu à l'ouverture de la carte, se déclenchait aussi à la
+  première modification d'un élément sélectionné sur la carte.
+
 ## 2.92.3
 
 ### Améliorations
