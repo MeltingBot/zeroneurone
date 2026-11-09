@@ -133,7 +133,7 @@ Options:
 | Separator | Comma, semicolon or tab. Excel in some locales (French, German…) expects the semicolon |
 | Excel compatible | Gets the file ready for a double-click in Excel: UTF-8 mark (BOM) for accented characters, and the separator Excel expects in the interface language (comma in English, semicolon otherwise). The separator can still be changed |
 
-The ZeroNeurone import recognises all three separators and the UTF-8 mark.
+The ZeroNeurone import recognises these three separators (and `|`) as well as the UTF-8 mark.
 
 
 ---

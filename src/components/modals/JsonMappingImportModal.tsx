@@ -61,7 +61,7 @@ import { TimeZoneButton } from '../common/TimeZoneButton';
 import { JsonTablesDiagram, type DiagramTable } from './JsonTablesDiagram';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { useSpreadsheetToCsv } from '../../hooks/useSpreadsheetToCsv';
-import { csvToRecords } from '../../utils/csv';
+import { csvToRecords, detectCSVDelimiter, stripBom, CSV_DELIMITERS } from '../../utils/csv';
 
 const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
 
@@ -79,9 +79,9 @@ interface JsonMappingImportModalProps {
  * works on it as on a JSON array. Null when the text is not a CSV with a
  * header and at least one row (a pasted text needs two columns at least).
  */
-function csvAsTable(raw: string, name: string | undefined): Record<string, Record<string, string>[]> | null {
+function csvAsTable(raw: string, name: string | undefined, delimiter?: string): Record<string, Record<string, string>[]> | null {
   const isCsvName = !!name && /\.(csv|tsv)$/i.test(name);
-  const { headers, records } = csvToRecords(raw);
+  const { headers, records } = csvToRecords(raw, delimiter);
   if (records.length === 0 || (!isCsvName && headers.length < 2)) return null;
   const table = name ? name.replace(/\.[^.]+$/, '') : 'csv';
   return { [table || 'csv']: records };
@@ -184,6 +184,12 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   const [contentFile, setContentFile] = useState<string | undefined>(undefined);
   // The content is a CSV (one table; its templates apart from JSON ones)
   const [fromCsv, setFromCsv] = useState(false);
+  // CSV delimiter: detected, one of the usual ones, or any other character
+  const [delimChoice, setDelimChoice] = useState<'auto' | 'custom' | (typeof CSV_DELIMITERS)[number]>('auto');
+  const [customDelim, setCustomDelim] = useState('');
+  const [detectedDelim, setDetectedDelim] = useState(',');
+  // The content as loaded: a large file is kept out of the textarea, yet a new delimiter reads it again
+  const rawRef = useRef('');
   // Source of what the import creates: the file name, or free text
   const [importSource, setImportSource] = useState('');
   // Elements of the dossier named like a value take its events and links
@@ -222,7 +228,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
   useEffect(() => { if (isOpen) loadTemplates(); }, [isOpen, loadTemplates]);
 
   const reset = useCallback(() => {
-    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setRawHidden(false); setContentFile(undefined); setFromCsv(false); setImportSource(''); setAttachExisting(false); setSrcKey(''); setConfigs({}); setIncluded(new Set());
+    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setRawHidden(false); setContentFile(undefined); setFromCsv(false); setImportSource('');
+    rawRef.current = ''; setDelimChoice('auto'); setCustomDelim(''); setAttachExisting(false); setSrcKey(''); setConfigs({}); setIncluded(new Set());
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setMergeField(undefined); setEventMapping(undefined); setLinkMapping(undefined); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
     setFilters([]); setFilterMode('all'); setMaxImport(2000);
@@ -528,7 +535,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     attachExisting,
     templates, selectedTemplateId, sources, updateTemplate]);
 
-  const parse = useCallback((raw: string, name?: string) => {
+  /** delimiter: the CSV delimiter to use, detected when empty */
+  const parse = useCallback((raw: string, name?: string, delimiter = '') => {
+    rawRef.current = raw;
     if (!raw.trim()) { setError(null); setParsed(null); return; }
     try {
       // JSON first, unless the file says CSV; a text that is not JSON may be CSV
@@ -539,7 +548,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
       }
       setFromCsv(data === undefined);
       if (data === undefined) {
-        data = csvAsTable(raw, name);
+        setDetectedDelim(detectCSVDelimiter(stripBom(raw)));
+        data = csvAsTable(raw, name, delimiter);
         if (data === null) throw new Error('not JSON nor CSV');
       }
       setError(null);
@@ -579,8 +589,19 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
     setRawHidden(true);
     setContentFile(name);
     setImportSource(name ?? '');
+    // A new content: its delimiter is detected again
+    setDelimChoice('auto');
+    setCustomDelim('');
     parse(content, name);
   }, [parse, i18n.language]);
+
+  const delimiterOf = (choice: typeof delimChoice, custom: string) => (choice === 'auto' ? '' : choice === 'custom' ? custom : choice);
+  const changeDelimiter = (choice: typeof delimChoice, custom: string) => {
+    setDelimChoice(choice);
+    setCustomDelim(custom);
+    parse(rawRef.current, contentFile, delimiterOf(choice, custom));
+  };
+  const delimLabel = (d: string) => (d === '\t' ? t('export.csv.tab') : d);
 
   const { toCsv, picker: sheetPicker } = useSpreadsheetToCsv();
   const handleFile = useCallback(async (chosen: File) => {
@@ -1506,13 +1527,41 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson, initialNa
                 {!loadedInfo && (
                   <button onClick={() => setRawHidden(false)} data-testid="json-mapping-raw-show" className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.showRaw')}</button>
                 )}
-                <button onClick={() => { setText(''); setParsed(null); setLoadedInfo(null); setRawHidden(false); setContentFile(undefined); }} className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.clear')}</button>
+                <button onClick={() => { setText(''); setParsed(null); setLoadedInfo(null); setRawHidden(false); setContentFile(undefined); setFromCsv(false); rawRef.current = ''; }} className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.clear')}</button>
+              </div>
+            )}
+            {fromCsv && (text.trim() !== '' || loadedInfo) && (
+              <div className="flex items-center gap-2">
+                <label htmlFor={`${titleId}-delim`} className="text-xs font-medium text-text-secondary">{t('importJsonMapping.delimiter')}</label>
+                <select
+                  id={`${titleId}-delim`}
+                  value={delimChoice}
+                  data-testid="json-mapping-delimiter"
+                  onChange={(e) => changeDelimiter(e.target.value as typeof delimChoice, customDelim)}
+                  className="px-2 py-1 text-xs rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+                >
+                  <option value="auto">{t('importJsonMapping.delimiterAuto', { detected: delimLabel(detectedDelim) })}</option>
+                  {CSV_DELIMITERS.map((d) => <option key={d} value={d}>{delimLabel(d)}</option>)}
+                  <option value="custom">{t('importJsonMapping.delimiterOther')}</option>
+                </select>
+                {delimChoice === 'custom' && (
+                  <input
+                    value={customDelim}
+                    maxLength={1}
+                    autoFocus
+                    aria-label={t('importJsonMapping.delimiterOther')}
+                    data-testid="json-mapping-delimiter-custom"
+                    // A quote or a line break cannot split fields: they frame cells and rows
+                    onChange={(e) => changeDelimiter('custom', e.target.value.replace(/["\r\n]/g, ''))}
+                    className="w-10 px-2 py-1 text-xs font-mono text-center rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+                  />
+                )}
               </div>
             )}
             {!loadedInfo && (
               <textarea
                 value={text}
-                onChange={(e) => { setText(e.target.value); parse(e.target.value, contentFile); }}
+                onChange={(e) => { setText(e.target.value); parse(e.target.value, contentFile, delimiterOf(delimChoice, customDelim)); }}
                 onPaste={() => setRawHidden(true)}
                 placeholder={t('importJsonMapping.pastePlaceholder')}
                 spellCheck={false}

@@ -37,16 +37,19 @@ export function splitCSVRecords(content: string): string[] {
   return result.filter((r) => r.trim());
 }
 
+/** Delimiters the detection looks for, the first one winning a tie */
+export const CSV_DELIMITERS = [',', ';', '\t', '|'] as const;
+
 /**
- * Delimiter of a CSV, from its first record: the most frequent of `,`, `;`
- * and tab outside quotes (`,` when none).
+ * Delimiter of a CSV, from its first record: the most frequent of `,`, `;`,
+ * tab and `|` outside quotes (`,` when none).
  */
 export function detectCSVDelimiter(content: string): string {
-  const candidates = [',', ';', '\t'];
+  const candidates: readonly string[] = CSV_DELIMITERS;
   const firstLine = splitCSVRecords(content)[0] ?? '';
 
   let inQuotes = false;
-  const counts: Record<string, number> = { ',': 0, ';': 0, '\t': 0 };
+  const counts: Record<string, number> = Object.fromEntries(candidates.map((c) => [c, 0]));
   for (let i = 0; i < firstLine.length; i++) {
     const ch = firstLine[i];
     if (ch === '"') {
@@ -104,13 +107,14 @@ export function parseCSVLine(line: string, delimiter: string): string[] {
 /**
  * Rows of a CSV with a header line, as records keyed by column name (BOM
  * dropped, headers trimmed). Empty or duplicate header names get a
- * numbered name so that no column is lost.
+ * numbered name so that no column is lost. The delimiter is detected
+ * unless given.
  */
-export function csvToRecords(content: string): { headers: string[]; records: Record<string, string>[] } {
+export function csvToRecords(content: string, forcedDelimiter?: string): { headers: string[]; records: Record<string, string>[] } {
   const text = stripBom(content);
   const lines = splitCSVRecords(text);
   if (lines.length === 0) return { headers: [], records: [] };
-  const delimiter = detectCSVDelimiter(text);
+  const delimiter = forcedDelimiter || detectCSVDelimiter(text);
 
   const seen = new Map<string, number>();
   const headers = parseCSVLine(lines[0], delimiter).map((raw, i) => {

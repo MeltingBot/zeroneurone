@@ -223,3 +223,33 @@ test('two writings of a number stay two elements (Insights offers to merge them)
   await page.locator('.react-flow__pane').click({ position: { x: 400, y: 300 } });
   await expect.poll(async () => (await readStore(page, 'elements')).length, { timeout: 10000 }).toBe(4);
 });
+
+test('CSV delimiter: a pipe is detected, any other character can be chosen', async ({ page }) => {
+  await setupCleanEnvironment(page);
+  const openMapping = async (name: string, content: string) => {
+    await page.click('[data-testid="import-button"]');
+    await page.locator('[data-testid="import-file-input"]').setInputFiles({
+      name, mimeType: 'text/csv', buffer: Buffer.from(content, 'utf-8'),
+    });
+    const modal = page.locator('[data-testid="json-mapping-modal"]');
+    await expect(modal).toBeVisible({ timeout: 15000 });
+    return modal;
+  };
+
+  // A pipe: detected, the columns are read
+  let modal = await openMapping('pipe.csv', 'appelant|appele\n0601|0602\n0601|0603');
+  await expect(modal.locator('[data-testid="json-mapping-delimiter"]')).toHaveValue('auto');
+  await expect(modal.locator('[data-testid="json-mapping-delimiter"] option[value="auto"]')).toHaveText(/\|/);
+  await expect(modal.locator('[data-testid="json-mapping-target-appele"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(modal).toBeHidden();
+  await expect(page.locator('[data-testid="landing-section"]')).toBeVisible({ timeout: 10000 });
+
+  // A character detection does not know: chosen, the file is read again
+  modal = await openMapping('diese.csv', 'appelant#appele\n0601#0602\n0601#0603');
+  await expect(modal.locator('[data-testid="json-mapping-target-appele"]')).toHaveCount(0);
+  await modal.locator('[data-testid="json-mapping-delimiter"]').selectOption('custom');
+  await modal.locator('[data-testid="json-mapping-delimiter-custom"]').fill('#');
+  await expect(modal.locator('[data-testid="json-mapping-target-appele"]')).toBeVisible();
+  await expect(modal.locator('[data-testid="json-mapping-target-appelant"]')).toBeVisible();
+});
