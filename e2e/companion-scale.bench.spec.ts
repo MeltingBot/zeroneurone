@@ -73,7 +73,9 @@ for (const { elements: size, photos, name } of SIZES) {
         const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
         for (let i = 0; i < photos; i++) {
           const tail = new TextEncoder().encode(`#${i}#`);
-          await d.addAsset(`el-${i}`, new File([bytes, tail], `photo-${i}.png`, { type: 'image/png' }));
+          // The import gives elements new ids: by label, as the phone finds them
+          const el = d.elements.find((e) => e.label.endsWith(` ${i}`) && e.label.split(' ').at(-1) === String(i))!;
+          await d.addAsset(el.id, new File([bytes, tail], `photo-${i}.png`, { type: 'image/png' }));
         }
       }, { png, photos });
       await desktop.waitForTimeout(3000);
@@ -108,31 +110,30 @@ for (const { elements: size, photos, name } of SIZES) {
     });
     measures['rows in the DOM'] = await phone.locator('main ul li').count();
     if (photos > 0) {
-      // Until every photo is on the phone: its thumbnail shown on the first rows is not enough
-      await time('join → every photo on the phone (ms)', async () => {
-        const complete = () => phone.evaluate(async () => {
+      // Shared photos stay on the computers (files document): the phone gets
+      // each one's metadata and thumbnail, its bytes only when opened
+      await time('join → every photo listed (ms)', async () => {
+        const listed = () => phone.evaluate(async () => {
           const { syncService } = await import('/src/services/syncService.ts');
-          const { isAssetComplete } = await import('/src/services/assetSync.ts');
           let n = 0;
-          syncService.getYDoc()?.getMap('assets').forEach((a) => { if (isAssetComplete(a as never)) n++; });
+          syncService.getYDoc()?.getMap('assets').forEach((a) => { if ((a as { get(k: string): unknown }).get('thumbnailDataUrl')) n++; });
           return n;
         });
-        await expect.poll(complete, { timeout: 600_000, intervals: [2000] }).toBeGreaterThanOrEqual(photos);
+        await expect.poll(listed, { timeout: 600_000, intervals: [1000] }).toBeGreaterThanOrEqual(photos);
       });
-      measures['heap with every photo (MB)'] = await heapMB(phone);
       // Binary data lives outside the JS heap: counted from the document itself
       const held = await phone.evaluate(async () => {
         const { syncService } = await import('/src/services/syncService.ts');
-        const { getReceivedBytes, isAssetComplete } = await import('/src/services/assetSync.ts');
+        const { getReceivedBytes, isOnDemand } = await import('/src/services/assetSync.ts');
         let bytes = 0;
-        let complete = 0;
+        let onDemand = 0;
         syncService.getYDoc()?.getMap('assets').forEach((a) => {
           bytes += getReceivedBytes(a as never);
-          if (isAssetComplete(a as never)) complete++;
+          if (isOnDemand(a as never)) onDemand++;
         });
-        return { mb: Math.round(bytes / 1024 / 1024), complete };
+        return { mb: Math.round(bytes / 1024 / 1024), onDemand };
       });
-      measures['photos complete on the phone'] = held.complete;
+      measures['photos on demand'] = held.onDemand;
       measures['photo bytes held in memory (MB)'] = held.mb;
       measures['local copy on the phone (MB)'] = await phone.evaluate(async () => Math.round(((await navigator.storage.estimate()).usage ?? 0) / 1024 / 1024));
     }
@@ -159,6 +160,21 @@ for (const { elements: size, photos, name } of SIZES) {
       await phone.getByRole('button', { name: 'Éléments' }).click();
       await expect(phone.locator('main ul li').first()).toBeVisible({ timeout: 120_000 });
     });
+    if (photos > 0) {
+      await phone.getByPlaceholder('Rechercher').fill('Jean Dupont 0');
+      await phone.getByText('Jean Dupont 0', { exact: true }).click();
+      const full = phone.locator('img[alt="photo-0.png"][src^="blob:"]');
+      await time('open a photo from the computer (ms)', async () => {
+        await phone.getByRole('button', { name: 'photo-0.png' }).click({ timeout: 30_000 });
+        await expect(full).toBeVisible({ timeout: 60_000 });
+      });
+      await full.click();
+      await time('open it again from the cache (ms)', async () => {
+        await phone.getByRole('button', { name: 'photo-0.png' }).click({ timeout: 30_000 });
+        await expect(full).toBeVisible({ timeout: 60_000 });
+      });
+      await full.click();
+    }
     measures['heap at the end (MB)'] = await heapMB(phone);
 
     console.log(`\n=== Companion, ${size} elements (CPU x4) ===`);

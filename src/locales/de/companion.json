@@ -76,7 +76,9 @@
   },
   "asset": {
     "missing": "Nicht verfügbar",
-    "receiving": "Wird empfangen"
+    "receiving": "Wird empfangen",
+    "loading": "Wird geladen",
+    "offline": "Verfügbar, wenn ein Computer online ist"
   },
   "comments": {
     "resolve": "Erledigen",

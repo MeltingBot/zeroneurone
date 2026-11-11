@@ -5,6 +5,7 @@
  * failure is remembered to be retried rather than hidden.
  */
 
+import { dropCachedDossier } from './fileCache';
 import { deleteLocalCopy } from './localCopy';
 import { dropLockedId } from './lockState';
 import { addPendingDeletion, removePendingDeletion } from './sessions';
@@ -20,6 +21,7 @@ export async function eraseLocalCopy(dossierId: string): Promise<boolean> {
   if (erased) {
     removePendingDeletion(dossierId);
     dropLockedId(dossierId);
+    await dropCachedDossier(dossierId).catch(() => undefined);
   }
   else addPendingDeletion(dossierId);
   return erased;

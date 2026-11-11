@@ -76,7 +76,9 @@
   },
   "asset": {
     "missing": "Indisponível",
-    "receiving": "A receber"
+    "receiving": "A receber",
+    "loading": "A carregar",
+    "offline": "Disponível quando um computador estiver online"
   },
   "comments": {
     "resolve": "Resolver",

@@ -12,6 +12,8 @@ import {
 import type { Comment, Element, GeoData, Link, LinkDirection } from '../types';
 import { getYMaps } from '../types/yjs';
 import { assembleChunks } from '../services/assetSync';
+import { cachedFile, cacheFile } from './fileCache';
+import { FileUnavailableError, requestFile } from './fileRequests';
 import { eraseLocalCopy } from './erase';
 import { safeDataImageUrl } from '../utils/escapeHtml';
 import type { CompanionSession } from './sessions';
@@ -686,7 +688,7 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
       {element.assetIds.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {element.assetIds.map((id) => (
-            <AssetTile key={id} asset={s.data.assets.get(id)} ydoc={s.ydoc} />
+            <AssetTile key={id} asset={s.data.assets.get(id)} ydoc={s.ydoc} dossierId={s.dossierId} />
           ))}
         </div>
       )}
@@ -979,21 +981,19 @@ function LinkEditor({ link, outgoing, other, s, onDone }: {
   );
 }
 
-function AssetTile({ asset, ydoc }: { asset: AssetEntry | undefined; ydoc: Y.Doc | null }) {
+function AssetTile({ asset, ydoc, dossierId }: { asset: AssetEntry | undefined; ydoc: Y.Doc | null; dossierId: string }) {
   const { t } = useTranslation('companion');
   const [fullUrl, setFullUrl] = useState<string | null>(null);
+  /** Fetching from a computer: share received (0..1), or the reason it failed */
+  const [fetching, setFetching] = useState<number | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
   useEffect(() => () => { if (fullUrl) URL.revokeObjectURL(fullUrl); }, [fullUrl]);
 
   if (!asset) {
     return <div className="aspect-square rounded border border-border-default bg-bg-secondary flex items-center justify-center text-xs text-text-tertiary">{t('asset.missing')}</div>;
   }
   const thumb = asset.thumbnailDataUrl ? safeDataImageUrl(asset.thumbnailDataUrl) : null;
-  const open = () => {
-    if (!ydoc || !asset.complete) return;
-    const map = getYMaps(ydoc).assets.get(asset.id) as Y.Map<unknown> | undefined;
-    if (!map) return;
-    const bytes = assembleChunks(map);
-    const blob = new Blob([bytes as BlobPart], { type: asset.mimeType });
+  const show = (blob: Blob) => {
     if (asset.mimeType.startsWith('image/')) {
       setFullUrl(URL.createObjectURL(blob));
     } else {
@@ -1002,12 +1002,42 @@ function AssetTile({ asset, ydoc }: { asset: AssetEntry | undefined; ydoc: Y.Doc
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     }
   };
+  const fetchFromComputer = async () => {
+    setUnavailable(false);
+    try {
+      const cached = await cachedFile(asset.id);
+      if (cached) {
+        show(cached);
+        return;
+      }
+      setFetching(0);
+      const bytes = await requestFile(asset.id, (received, total) => setFetching(received / total));
+      await cacheFile(dossierId, asset.id, asset.mimeType, bytes).catch((err: unknown) => console.warn('[Companion] file not cached:', err));
+      show(new Blob([bytes as BlobPart], { type: asset.mimeType }));
+    } catch (err) {
+      if (!(err instanceof FileUnavailableError)) console.warn('[Companion] file not received:', err);
+      setUnavailable(true);
+    } finally {
+      setFetching(null);
+    }
+  };
+  const open = () => {
+    if (fetching !== null) return;
+    if (asset.onDemand) {
+      void fetchFromComputer();
+      return;
+    }
+    if (!ydoc || !asset.complete) return;
+    const map = getYMaps(ydoc).assets.get(asset.id) as Y.Map<unknown> | undefined;
+    if (!map) return;
+    show(new Blob([assembleChunks(map) as BlobPart], { type: asset.mimeType }));
+  };
   return (
     <>
       <button
         type="button"
         onClick={open}
-        className="aspect-square rounded border border-border-default bg-bg-secondary overflow-hidden flex items-center justify-center"
+        className="relative aspect-square rounded border border-border-default bg-bg-secondary overflow-hidden flex items-center justify-center"
         title={asset.filename}
       >
         {thumb ? (
@@ -1015,8 +1045,14 @@ function AssetTile({ asset, ydoc }: { asset: AssetEntry | undefined; ydoc: Y.Doc
         ) : (
           <span className="text-xs text-text-tertiary px-1 break-all line-clamp-3">{asset.filename}</span>
         )}
-        {!asset.complete && <span className="sr-only">{t('asset.receiving')}</span>}
+        {!asset.complete && !asset.onDemand && <span className="sr-only">{t('asset.receiving')}</span>}
+        {fetching !== null && (
+          <span className="absolute inset-x-0 bottom-0 h-1 bg-bg-tertiary" role="progressbar" aria-label={t('asset.loading')} aria-valuenow={Math.round(fetching * 100)}>
+            <span className="block h-full bg-accent" style={{ width: `${Math.round(fetching * 100)}%` }} />
+          </span>
+        )}
       </button>
+      {unavailable && <p className="col-span-3 text-xs text-text-secondary">{t('asset.offline')}</p>}
       {fullUrl && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setFullUrl(null)}>
           <img src={fullUrl} alt={asset.filename} className="max-w-full max-h-full object-contain" />

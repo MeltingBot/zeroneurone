@@ -90,7 +90,9 @@
   },
   "asset": {
     "missing": "Niedostępne",
-    "receiving": "Odbieranie"
+    "receiving": "Odbieranie",
+    "loading": "Wczytywanie",
+    "offline": "Dostępne, gdy komputer jest online"
   },
   "comments": {
     "resolve": "Rozwiąż",

@@ -76,7 +76,9 @@
   },
   "asset": {
     "missing": "No disponible",
-    "receiving": "Rebent"
+    "receiving": "Rebent",
+    "loading": "Carregant",
+    "offline": "Disponible quan un ordinador estigui en línia"
   },
   "comments": {
     "resolve": "Resol",

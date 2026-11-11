@@ -76,7 +76,9 @@
   },
   "asset": {
     "missing": "Niet beschikbaar",
-    "receiving": "Wordt ontvangen"
+    "receiving": "Wordt ontvangen",
+    "loading": "Laden",
+    "offline": "Beschikbaar wanneer een computer online is"
   },
   "comments": {
     "resolve": "Afhandelen",

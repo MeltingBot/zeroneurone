@@ -13,7 +13,7 @@ import { yMapToElement } from '../services/yjs/elementMapper';
 import { yMapToLink } from '../services/yjs/linkMapper';
 import { yMapToComment } from '../services/yjs/commentMapper';
 import { yMapToTab } from '../services/yjs/tabMapper';
-import { isAssetComplete, readAssetMeta, type AssetMeta } from '../services/assetSync';
+import { isAssetComplete, isOnDemand, readAssetMeta, type AssetMeta } from '../services/assetSync';
 import type { CompanionSession } from './sessions';
 import { renameSession } from './sessions';
 import { startPresence } from './presence';
@@ -63,6 +63,8 @@ const OPEN_TIMEOUT_MS = 15_000;
 
 export interface AssetEntry extends AssetMeta {
   complete: boolean;
+  /** Bytes kept by the computers, asked for when opened (fileRequests.ts) */
+  onDemand: boolean;
 }
 
 export interface CompanionData {
@@ -101,7 +103,7 @@ function readData(ydoc: Y.Doc, dossierId: string): CompanionData {
   maps.assets.forEach((m, id) => {
     try {
       const map = m as Y.Map<unknown>;
-      assets.set(id, { ...readAssetMeta(map, dossierId), complete: isAssetComplete(map) });
+      assets.set(id, { ...readAssetMeta(map, dossierId), complete: isAssetComplete(map), onDemand: isOnDemand(map) });
     } catch { /* malformed entry */ }
   });
   return {

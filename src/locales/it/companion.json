@@ -76,7 +76,9 @@
   },
   "asset": {
     "missing": "Non disponibile",
-    "receiving": "Ricezione in corso"
+    "receiving": "Ricezione in corso",
+    "loading": "Caricamento",
+    "offline": "Disponibile quando un computer è online"
   },
   "comments": {
     "resolve": "Risolvi",

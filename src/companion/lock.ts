@@ -24,6 +24,7 @@ import { adoptLegacyCopy } from './localCopy';
 import { clearPending, pendingCount } from './pending';
 import { dropAllSessions, listSessions, moveSessions, pendingDeletions, plainSessions } from './sessions';
 import { dropAllShares, setSharePublicKey } from './shareInbox';
+import { dropAllCachedFiles } from './fileCache';
 import { closeCompanionSession } from './useCompanionSession';
 
 /** The phone's own passkey, apart from the desktop's security keys */
@@ -136,8 +137,9 @@ async function completeEnabling(): Promise<void> {
   }
   const plain = plainSessions();
   if (plain.length > 0) moveSessions(plain, dek);
-  // Shares waiting in plain are dropped; new ones come encrypted
+  // Shares and files waiting in plain are dropped; new ones come encrypted
   await dropAllShares();
+  await dropAllCachedFiles();
   await setSharePublicKey(lock.sharePublicKey);
   writeLock({ ...readLock()!, state: 'on' });
 }
@@ -190,6 +192,7 @@ async function completeDisabling(): Promise<void> {
   moveSessions(sealed.length > 0 ? sealed : plainSessions(), null);
   await setSharePublicKey(null);
   await dropAllShares();
+  await dropAllCachedFiles();
   writeLock(null);
   setUnlocked(null, null);
   syncService.setAtRestDek(null);
@@ -216,6 +219,7 @@ export async function forgetEverything(): Promise<void> {
   dropAllSessions();
   await setSharePublicKey(null).catch(() => undefined);
   await dropAllShares().catch(() => undefined);
+  await dropAllCachedFiles().catch(() => undefined);
   writeLock(null);
   setUnlocked(null, null);
   syncService.setAtRestDek(null);

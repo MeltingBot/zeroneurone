@@ -76,7 +76,9 @@
   },
   "asset": {
     "missing": "Ez dago erabilgarri",
-    "receiving": "Jasotzen"
+    "receiving": "Jasotzen",
+    "loading": "Kargatzen",
+    "offline": "Ordenagailu bat linean dagoenean eskuragarri"
   },
   "comments": {
     "resolve": "Ebatzi",

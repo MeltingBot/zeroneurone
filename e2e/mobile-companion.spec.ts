@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { connect } from 'node:net';
 import { setupCleanEnvironment } from './fixtures/test-utils';
 import { buildLargeDossierJson } from './fixtures/large-dossier';
+import { ydocStorage } from './fixtures/ydoc-storage';
 
 /**
  * Mobile companion (/m/): a desktop shares a dossier in async mode, a phone
@@ -1036,4 +1037,73 @@ test('a local copy that cannot be opened says so, and the dossier can still be f
   await expect(again.getByText("Copie d'un dossier oublié encore sur ce téléphone")).toBeHidden({ timeout: 20_000 });
   const left = await again.evaluate(async (name) => (await indexedDB.databases()).some((d) => d.name === name), `zeroneurone-companion-ydoc-${dossierId}`);
   expect(left).toBe(false);
+});
+
+test('a file added on a computer opens on the phone on demand, then from its cache', async ({ browser }) => {
+  // Shared files' bytes go to the files document, which the phone does not
+  // sync: the phone asks the computers online (fileRequests.ts) and keeps
+  // what it got for 5 days (fileCache.ts)
+  test.setTimeout(3 * 60 * 1000);
+
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'small.json');
+  writeFileSync(file, buildLargeDossierJson(5));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  await desktop.waitForTimeout(1500);
+  const mobileUrl = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Fichiers', true);
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Fichiers', true, 'm');
+  });
+
+  // Two files on the computer: a photo opened while it is online, a PDF after it left
+  await desktop.evaluate(async () => {
+    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    const d = useDossierStore.getState();
+    const el = d.elements.find((e) => e.label === 'Jean Dupont 0')!;
+    const canvas = new OffscreenCanvas(640, 480);
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#e07a5f';
+    ctx.fillRect(0, 0, 640, 480);
+    const png = await canvas.convertToBlob({ type: 'image/png' });
+    await d.addAsset(el.id, new File([png], 'terrain.png', { type: 'image/png' }));
+    const pdf = '%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n' + 'x'.repeat(700_000);
+    await useDossierStore.getState().addAsset(el.id, new File([pdf], 'rapport.pdf', { type: 'application/pdf' }));
+  });
+
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  await phone.goto(mobileUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await phone.getByRole('button', { name: /^Jean Dupont 0/ }).click();
+  const photo = phone.getByRole('button', { name: 'terrain.png' });
+  await expect(photo).toBeVisible({ timeout: 30_000 });
+  await expect(phone.getByRole('button', { name: /Connecté, 1 poste/ })).toBeVisible({ timeout: 30_000 });
+
+  // Only metadata and thumbnails reached the phone: its copy stays far below
+  // the PDF alone (700 KB), the desktop's files document holds the bytes
+  await phone.waitForTimeout(1500);
+  const phoneCopy = await ydocStorage(phone, 'zeroneurone-companion-ydoc-');
+  expect(phoneCopy).toHaveLength(1);
+  expect(phoneCopy[0].bytes).toBeLessThan(200_000);
+
+  // Opened: asked to the computer, shown full screen
+  await photo.click();
+  const full = phone.locator('img[alt="terrain.png"][src^="blob:"]');
+  await expect(full).toBeVisible({ timeout: 30_000 });
+  await full.click();
+  await expect(full).toBeHidden();
+
+  // The computer leaves: the photo opens from the cache, the PDF waits for a computer
+  await desktop.close({ runBeforeUnload: true });
+  await expect(phone.getByRole('button', { name: /Connecté, 0 poste/ })).toBeVisible({ timeout: 45_000 });
+  await photo.click();
+  await expect(full).toBeVisible({ timeout: 10_000 });
+  await full.click();
+  await expect(full).toBeHidden();
+  await phone.getByRole('button', { name: 'rapport.pdf' }).click();
+  await expect(phone.getByText('Disponible quand un poste est en ligne')).toBeVisible({ timeout: 10_000 });
 });

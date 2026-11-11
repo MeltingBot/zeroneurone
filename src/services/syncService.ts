@@ -285,7 +285,7 @@ class SyncService {
   async sendToClient(tag: string, message: Uint8Array): Promise<boolean> {
     const ws = this.websocketProvider?.ws as (WebSocket & { sendTo?: (t: string, d: Uint8Array) => void }) | null | undefined;
     if (!ws || ws.readyState !== WebSocket.OPEN) return false;
-    if (ws.sendTo && await this.relaySupportsTargets()) ws.sendTo(tag, message);
+    if (tag && ws.sendTo && await this.relaySupportsTargets()) ws.sendTo(tag, message);
     else ws.send(message);
     return true;
   }
