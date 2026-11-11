@@ -28,7 +28,7 @@ import { randomBytes } from 'crypto';
 // Shared with the relay image (Dockerfile.combined copies it alongside)
 import { createAsyncBuffer, clientTagOf } from '../relay/asyncBuffer.js';
 import { loadEnvFile, relayConfig } from '../relay/config.js';
-import { forward } from '../relay/forward.js';
+import { forward, forwardToTarget, RELAY_FEATURES, targetOf } from '../relay/forward.js';
 
 // Settings from the environment or a .env file (relay/config.js, every one
 // listed in relay/.env.example); this server keeps its own defaults
@@ -270,6 +270,8 @@ function setupWebSocketRelay(wss) {
     const asyncEnabled = url.searchParams.get('async') === '1';
     const token = url.searchParams.get('token');
     const clientTag = clientTagOf(url.searchParams, () => randomBytes(9).toString('base64url'));
+    // Messages for one client find it by this tag (relay/forward.js)
+    ws.clientTag = clientTag;
 
     // Extract room ID from path
     let urlPath = url.pathname.slice(1) || 'default';
@@ -374,6 +376,13 @@ function setupWebSocketRelay(wss) {
       const currentRoom = rooms.get(roomId);
       if (!currentRoom) return;
 
+      // For one client only: delivered to it, never buffered
+      const target = targetOf(data);
+      if (target) {
+        forwardToTarget(currentRoom, ws, target, LIMITS.MAX_BUFFERED_AMOUNT, WebSocket.OPEN);
+        return;
+      }
+
       // Relay to other clients
       let relayed = 0;
       currentRoom.forEach((client) => {
@@ -432,6 +441,7 @@ const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Relay-Features');
 
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -446,6 +456,7 @@ const server = createServer((req, res) => {
 
   // Health check endpoint (minimal info - no stats exposed)
   if (req.url === '/health' || req.url === '/api/health') {
+    res.setHeader('X-Relay-Features', RELAY_FEATURES);
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('ok');
     return;

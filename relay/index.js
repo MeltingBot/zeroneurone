@@ -21,12 +21,12 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createHash, randomBytes } from 'crypto';
 import { createAsyncBuffer, clientTagOf } from './asyncBuffer.js';
 import { loadEnvFile, relayConfig } from './config.js';
-import { forward } from './forward.js';
+import { forward, forwardToTarget, RELAY_FEATURES, targetOf } from './forward.js';
 
 loadEnvFile();
 const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
 
-const VERSION = '4';
+const VERSION = '5';
 const startedAt = Date.now();
 
 // ============================================================================
@@ -148,6 +148,7 @@ const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Relay-Features');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -156,6 +157,7 @@ const server = createServer((req, res) => {
   }
 
   if (req.url === '/health' || req.url === '/api/health') {
+    res.setHeader('X-Relay-Features', RELAY_FEATURES);
     const totalClients = Array.from(rooms.values()).reduce((sum, r) => sum + r.size, 0);
     const metrics = {
       status: 'ok',
@@ -215,6 +217,8 @@ wss.on('connection', (ws, req) => {
   const asyncEnabled = url.searchParams.get('async') === '1';
   const token = url.searchParams.get('token');
   const clientTag = clientTagOf(url.searchParams, () => randomBytes(9).toString('base64url'));
+  // Messages for one client find it by this tag (forward.js)
+  ws.clientTag = clientTag;
 
   let urlPath = url.pathname.slice(1) || 'default';
   if (urlPath.startsWith('ws/')) urlPath = urlPath.slice(3);
@@ -316,6 +320,14 @@ wss.on('connection', (ws, req) => {
     if (!currentRoom) return;
 
     roomLastActivity.set(roomId, Date.now());
+
+    // For one client only: delivered to it, never buffered
+    const target = targetOf(data);
+    if (target) {
+      forwardToTarget(currentRoom, ws, target, LIMITS.MAX_BUFFERED_AMOUNT, WebSocket.OPEN);
+      totalMessagesRelayed++;
+      return;
+    }
 
     let relayed = 0;
     currentRoom.forEach((client) => {
