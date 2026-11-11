@@ -95,7 +95,7 @@ Tags, note, photos (tap to enlarge), details, links, comments.
 - **Tags**: tap a tag to show the elements carrying it; the dotted button (pencil or +) adds or removes tags already used in the dossier
 - **Properties**: tap a value to edit it, with the input suited to its type (text, number, date, yes/no, country from a list), or to delete it (bin, tapped twice); a location can only be deleted
 - **+** right of **Details**: pick a name already used in the dossier (its type is kept) or type a new one, then the type (text, number or date) and the value
-- **Events**: listed by date
+- **Events**: listed by date; the **+** adds one (label, date and time, filled with now, description, source, the phone's position), the pencil on an event edits or deletes it. They feed the timeline, and the map when they have a position. An event date left as it is keeps its precision (year, month)
 - **Tabs**: tap a tab to put the element in it or take it out
 - **+** right of **Links**: pick the other element (search, or create it on the spot, with the collection date), the direction, the label and the source
 - **Edit a link**: the pencil on a link row changes its label and its direction, as seen from the element shown, or deletes it (bin, tapped twice)

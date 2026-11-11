@@ -238,5 +238,15 @@
     "noDossier": "Cap dossier en aquest telèfon. Obriu-ne un i torneu a compartir.",
     "files_one": "{{count}} fitxer",
     "files_other": "{{count}} fitxers"
+  },
+  "events": {
+    "title": "Esdeveniments",
+    "add": "Afegeix un esdeveniment",
+    "edit": "Modifica l'esdeveniment",
+    "delete": "Suprimeix l'esdeveniment",
+    "label": "Etiqueta",
+    "date": "Data",
+    "time": "Hora",
+    "description": "Descripció"
   }
 }

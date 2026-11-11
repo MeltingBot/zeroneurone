@@ -95,7 +95,7 @@ Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 - **Tags** : toucher un tag affiche les éléments qui le portent ; le bouton en pointillés (crayon ou +) permet d'ajouter ou retirer les tags déjà utilisés dans le dossier
 - **Propriétés** : toucher une valeur pour la modifier, avec la saisie adaptée à son type (texte, nombre, date, oui/non, pays dans une liste), ou la supprimer (corbeille, à toucher deux fois) ; une position ne peut qu'être supprimée
 - **+** à droite d'**Informations** : choisir un nom déjà utilisé dans le dossier (son type est repris) ou en saisir un nouveau, puis le type (texte, nombre ou date) et la valeur
-- **Événements** : listés par date
+- **Événements** : listés par date ; le **+** en ajoute un (libellé, date et heure, pré-remplies à maintenant, description, source, position du téléphone), le crayon d'un événement le modifie ou le supprime. Ils alimentent la chronologie, et la carte s'ils ont une position. Une date d'événement laissée telle quelle garde sa précision (année, mois)
 - **Onglets** : toucher un onglet range l'élément dedans ou l'en retire
 - **+** à droite des **Liens** : choisir l'autre élément (recherche, ou création sur place, qui reçoit la date de collecte), le sens, le libellé et la source
 - **Modifier un lien** : le crayon d'une ligne de lien change son libellé et son sens, vu depuis l'élément affiché, ou le supprime (corbeille, deux appuis)

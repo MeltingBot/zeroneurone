@@ -23,6 +23,8 @@ import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes
 import { navigate } from './router';
 import { AppSettings } from './AppSettings';
 import { IconAction } from './IconAction';
+import { EventsSection } from './Events';
+import { locateOnce } from './geolocate';
 import { captureFromShare, deleteShare, readShare } from './shareInbox';
 import { usePeerMarks, useRemoteTouches, type PeerMark } from './activity';
 import { linkCounts, readSort, saveSort, sortElements, type ElementSort } from './sorting';
@@ -715,7 +717,7 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
         </section>
       )}
 
-      <EventsSection element={element} focusedEventId={focusedEventId} />
+      <EventsSection element={element} s={s} writable={!s.data.closed} focusedEventId={focusedEventId} />
 
       <TabMembership element={element} s={s} writable={!s.data.closed} />
 
@@ -763,44 +765,6 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
 }
 
 /** The element's dated events, in order; a focused one is scrolled to and marked */
-function EventsSection({ element, focusedEventId }: { element: Element; focusedEventId: string | null }) {
-  const { t, i18n } = useTranslation('companion');
-  const listRef = useRef<HTMLUListElement>(null);
-  const events = useMemo(
-    () => [...(element.events ?? [])].sort((a, b) => a.date.getTime() - b.date.getTime()),
-    [element.events],
-  );
-  useEffect(() => {
-    if (!focusedEventId) return;
-    const node = listRef.current?.querySelector(`[data-event-id="${CSS.escape(focusedEventId)}"]`);
-    node?.scrollIntoView({ block: 'center' });
-  }, [focusedEventId]);
-  if (events.length === 0) return null;
-  return (
-    <section className="space-y-2">
-      <h2 className={sectionTitle}>{t('element.events', { count: events.length })}</h2>
-      <ul ref={listRef} className="divide-y divide-border-default border border-border-default rounded">
-        {events.map((ev) => (
-          <li
-            key={ev.id}
-            data-event-id={ev.id}
-            aria-current={ev.id === focusedEventId ? 'true' : undefined}
-            className={`px-3 py-2 ${ev.id === focusedEventId ? 'bg-accent-light' : ''}`}
-          >
-            <div className="text-xs text-text-tertiary">
-              {formatPreciseDate(ev.date, ev.precision, ev.approximate, i18n.language)}
-              {ev.dateEnd && ` → ${formatPreciseDate(ev.dateEnd, ev.precision, ev.approximate, i18n.language)}`}
-            </div>
-            <div className="text-sm">{ev.label}</div>
-            {ev.description && <div className="text-xs text-text-secondary whitespace-pre-wrap break-words">{ev.description}</div>}
-            {ev.source && <div className="text-xs text-text-tertiary break-words">{ev.source}</div>}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function DeleteElement({ element, linkCount, s, onDeleted }: {
   element: Element;
   linkCount: number;
@@ -1180,18 +1144,10 @@ function CaptureTab({ s, tabId, shareId, onCreated }: {
   }, [shareId]);
 
   const locate = () => {
-    if (!('geolocation' in navigator)) {
-      setGeoStatus('error');
-      return;
-    }
     setGeoStatus('locating');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
-        setGeoStatus('idle');
-      },
+    locateOnce().then(
+      (where) => { setGeo(where); setGeoStatus('idle'); },
       () => setGeoStatus('error'),
-      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 30_000 },
     );
   };
 

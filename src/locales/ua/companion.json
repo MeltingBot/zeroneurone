@@ -262,5 +262,15 @@
     "files_other": "{{count}} файлів",
     "files_few": "{{count}} файли",
     "files_many": "{{count}} файлів"
+  },
+  "events": {
+    "title": "Події",
+    "add": "Додати подію",
+    "edit": "Змінити подію",
+    "delete": "Видалити подію",
+    "label": "Назва",
+    "date": "Дата",
+    "time": "Час",
+    "description": "Опис"
   }
 }

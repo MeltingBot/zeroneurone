@@ -102,7 +102,7 @@ async function readDesktop(page: Page) {
     const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
     return {
       labels: d.elements.map((e) => e.label),
-      elements: d.elements.map((e) => ({ id: e.id, label: e.label, notes: e.notes, geo: e.geo, assetIds: e.assetIds, tags: e.tags, properties: e.properties, source: e.source, date: e.date })),
+      elements: d.elements.map((e) => ({ id: e.id, label: e.label, notes: e.notes, geo: e.geo, assetIds: e.assetIds, tags: e.tags, properties: e.properties, source: e.source, date: e.date, events: (e.events ?? []).map((ev) => ({ label: ev.label, date: ev.date, precision: ev.precision, geo: ev.geo, description: ev.description })) })),
       tabs: (await import('/src/stores/tabStore.ts')).useTabStore.getState().tabs.map((t) => ({ name: t.name, members: t.memberElementIds })),
       assets: d.assets.map((a) => ({ id: a.id, thumb: !!a.thumbnailDataUrl, mime: a.mimeType })),
       comments: d.comments.map((c) => ({ content: c.content, author: c.authorName })),
@@ -512,6 +512,36 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
     const el = (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide');
     return el && { notes: el.notes, assets: el.assetIds.length, tags: el.tags, properties: el.properties.map((p) => [p.key, p.type ?? 'text', p.value]) };
   }, { timeout: 30_000 }).toEqual({ notes: 'Texte seul', assets: 0, tags: ['Témoin'], properties: [['ville', 'text', 'Paris'], ['Montant', 'number', 12.5]] });
+
+  // A dated event from the field: it feeds the timeline, and the map with its position
+  await phone.getByRole('button', { name: 'Ajouter un événement' }).click();
+  await phone.getByLabel('Libellé').fill('Vu au dépôt');
+  await phone.getByLabel('Date', { exact: true }).fill('2026-10-05');
+  await phone.getByLabel('Heure').fill('14:30');
+  await phone.getByLabel('Description').fill('Deux hommes, camion blanc');
+  await phone.getByRole('button', { name: 'Ajouter ma position' }).click();
+  await expect(phone.getByText('48.85660, 2.35220')).toBeVisible();
+  await shot(phone, '07g-event');
+  await phone.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(phone.getByText('Vu au dépôt')).toBeVisible();
+  await expect.poll(async () => {
+    const el = (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide');
+    const ev = el?.events[0];
+    return ev && { label: ev.label, at: new Date(ev.date as string | Date).getTime(), precision: ev.precision, geo: ev.geo, description: ev.description };
+  }, { timeout: 30_000 }).toEqual({
+    label: 'Vu au dépôt', at: new Date(2026, 9, 5, 14, 30).getTime(), precision: 'minute',
+    geo: { type: 'point', lat: 48.8566, lng: 2.3522 }, description: 'Deux hommes, camion blanc',
+  });
+  // Edited, then deleted
+  await phone.getByRole('button', { name: "Modifier l'événement" }).click();
+  await phone.getByLabel('Libellé').fill('Vu au dépôt (2e fois)');
+  await phone.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect.poll(async () => (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide')?.events.map((e) => e.label), { timeout: 30_000 })
+    .toEqual(['Vu au dépôt (2e fois)']);
+  await phone.getByRole('button', { name: "Modifier l'événement" }).click();
+  await phone.getByRole('button', { name: "Supprimer l'événement" }).click();
+  await phone.getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await expect.poll(async () => (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide')?.events.length, { timeout: 30_000 }).toBe(0);
 
   // ── Offline capture: pending, then delivered on reconnection ─────────────
   await phone.context().setOffline(true);

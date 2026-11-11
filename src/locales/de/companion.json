@@ -238,5 +238,15 @@
     "noDossier": "Kein Dossier auf diesem Telefon. Öffnen Sie eines und teilen Sie erneut.",
     "files_one": "{{count}} Datei",
     "files_other": "{{count}} Dateien"
+  },
+  "events": {
+    "title": "Ereignisse",
+    "add": "Ereignis hinzufügen",
+    "edit": "Ereignis bearbeiten",
+    "delete": "Ereignis löschen",
+    "label": "Bezeichnung",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "description": "Beschreibung"
   }
 }

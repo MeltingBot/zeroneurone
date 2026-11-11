@@ -238,5 +238,15 @@
     "noDossier": "Aucun dossier sur ce téléphone. Ouvrez-en un, puis partagez à nouveau.",
     "files_one": "{{count}} fichier",
     "files_other": "{{count}} fichiers"
+  },
+  "events": {
+    "title": "Événements",
+    "add": "Ajouter un événement",
+    "edit": "Modifier l'événement",
+    "delete": "Supprimer l'événement",
+    "label": "Libellé",
+    "date": "Date",
+    "time": "Heure",
+    "description": "Description"
   }
 }

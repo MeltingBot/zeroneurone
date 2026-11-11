@@ -262,5 +262,15 @@
     "files_other": "{{count}} plików",
     "files_few": "{{count}} pliki",
     "files_many": "{{count}} plików"
+  },
+  "events": {
+    "title": "Zdarzenia",
+    "add": "Dodaj zdarzenie",
+    "edit": "Edytuj zdarzenie",
+    "delete": "Usuń zdarzenie",
+    "label": "Etykieta",
+    "date": "Data",
+    "time": "Godzina",
+    "description": "Opis"
   }
 }

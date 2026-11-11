@@ -238,5 +238,15 @@
     "noDossier": "Geen dossier op deze telefoon. Open er een en deel opnieuw.",
     "files_one": "{{count}} bestand",
     "files_other": "{{count}} bestanden"
+  },
+  "events": {
+    "title": "Gebeurtenissen",
+    "add": "Gebeurtenis toevoegen",
+    "edit": "Gebeurtenis bewerken",
+    "delete": "Gebeurtenis verwijderen",
+    "label": "Label",
+    "date": "Datum",
+    "time": "Tijd",
+    "description": "Beschrijving"
   }
 }

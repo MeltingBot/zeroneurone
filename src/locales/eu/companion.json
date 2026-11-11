@@ -238,5 +238,15 @@
     "noDossier": "Ez dago espedienterik telefono honetan. Ireki bat eta partekatu berriro.",
     "files_one": "Fitxategi {{count}}",
     "files_other": "{{count}} fitxategi"
+  },
+  "events": {
+    "title": "Gertaerak",
+    "add": "Gehitu gertaera bat",
+    "edit": "Editatu gertaera",
+    "delete": "Ezabatu gertaera",
+    "label": "Etiketa",
+    "date": "Data",
+    "time": "Ordua",
+    "description": "Deskribapena"
   }
 }

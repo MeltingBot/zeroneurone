@@ -238,5 +238,15 @@
     "noDossier": "Ningún expediente en este teléfono. Abra uno y vuelva a compartir.",
     "files_one": "{{count}} archivo",
     "files_other": "{{count}} archivos"
+  },
+  "events": {
+    "title": "Eventos",
+    "add": "Añadir un evento",
+    "edit": "Editar evento",
+    "delete": "Eliminar evento",
+    "label": "Etiqueta",
+    "date": "Fecha",
+    "time": "Hora",
+    "description": "Descripción"
   }
 }
