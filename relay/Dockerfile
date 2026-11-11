@@ -25,14 +25,11 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 # Copy relay server
-COPY index.js asyncBuffer.js config.js forward.js blobStore.js ./
+COPY index.js asyncBuffer.js config.js forward.js ./
 
 # Create non-root user
-# Encrypted attachments on demand (BLOB_DIR): mount a volume here to keep them
-# across restarts
 RUN addgroup -g 1001 -S zeroneurone && \
     adduser -S zeroneurone -u 1001 -G zeroneurone && \
-    mkdir -p /app/blobs && \
     chown -R zeroneurone:zeroneurone /app
 
 USER zeroneurone
@@ -41,7 +38,6 @@ USER zeroneurone
 ENV NODE_ENV=production
 ENV PORT=4444
 ENV HOST=0.0.0.0
-ENV BLOB_DIR=/app/blobs
 
 EXPOSE 4444
 

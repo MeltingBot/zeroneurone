@@ -68,6 +68,3 @@ bench-results.json
 render-bench-*.json
 zeroneurone.tar.gz
 package-lock.json
-
-# Relay attachment deposit in development (relay/blobStore.js)
-blobs/

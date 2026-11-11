@@ -42,10 +42,6 @@ export const RELAY_DEFAULTS = {
   BUFFER_AGE_HOURS: 48,
   BUFFER_TOTAL_GB: 10,
   BUFFER_ORPHAN_HOURS: 24,
-  BLOB_TTL_DAYS: 10,
-  BLOB_MAX_MB: 64,
-  BLOB_ROOM_GB: 2,
-  BLOB_TOTAL_GB: 20,
 };
 
 function number(key, fallback) {
@@ -96,15 +92,6 @@ export function relayConfig(defaults = {}) {
       MAX_ROOMS_WITH_BUFFER: number('BUFFER_MAX_ROOMS', n('MAX_ROOMS')),
       MAX_TOTAL_BUFFER_SIZE: n('BUFFER_TOTAL_GB') * 1024 * MB,
       ORPHAN_MAX_AGE_MS: n('BUFFER_ORPHAN_HOURS') * 3600 * 1000,
-    },
-    /** Encrypted attachments fetched on demand (blobStore.js) */
-    BLOB_DIR: process.env.BLOB_DIR || './blobs',
-    BLOB_LIMITS: {
-      TTL_MS: n('BLOB_TTL_DAYS') * 24 * 3600 * 1000,
-      // Above the app's 50 MB attachment cap, encryption included
-      MAX_BLOB_SIZE: n('BLOB_MAX_MB') * MB,
-      MAX_ROOM_SIZE: n('BLOB_ROOM_GB') * 1024 * MB,
-      MAX_TOTAL_SIZE: n('BLOB_TOTAL_GB') * 1024 * MB,
     },
   };
 }

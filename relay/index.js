@@ -22,10 +22,9 @@ import { createHash, randomBytes } from 'crypto';
 import { createAsyncBuffer, clientTagOf } from './asyncBuffer.js';
 import { loadEnvFile, relayConfig } from './config.js';
 import { forward } from './forward.js';
-import { BLOB_CORS, createBlobStore, handleBlobRequest } from './blobStore.js';
 
 loadEnvFile();
-const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS, BLOB_DIR, BLOB_LIMITS } = relayConfig();
+const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
 
 const VERSION = '4';
 const startedAt = Date.now();
@@ -145,14 +144,10 @@ const cleanupInterval = setInterval(cleanupBuffers, 60 * 60 * 1000);
 // HTTP SERVER (health + metrics endpoint)
 // ============================================================================
 
-// Encrypted attachments fetched on demand (blobStore.js)
-const blobStore = createBlobStore({ dir: BLOB_DIR, limits: BLOB_LIMITS });
-await blobStore.init();
-setInterval(() => { blobStore.cleanup().catch((err) => console.warn('[Blob] cleanup failed:', err.message)); }, 3600 * 1000);
-
-const server = createServer(async (req, res) => {
+const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  for (const [name, value] of Object.entries(BLOB_CORS)) res.setHeader(name, value);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -173,15 +168,12 @@ const server = createServer(async (req, res) => {
       messagesRelayed: totalMessagesRelayed,
       connectionsServed: totalConnectionsServed,
       buffer: asyncBuffer.stats(),
-      blobs: blobStore.stats(),
       storage: redisClient ? 'redis' : 'memory',
     };
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(metrics));
     return;
   }
-
-  if (await handleBlobRequest(req, res, blobStore)) return;
 
   res.writeHead(404);
   res.end();
