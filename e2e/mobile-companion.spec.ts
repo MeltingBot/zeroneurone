@@ -102,7 +102,7 @@ async function readDesktop(page: Page) {
     const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
     return {
       labels: d.elements.map((e) => e.label),
-      elements: d.elements.map((e) => ({ id: e.id, label: e.label, notes: e.notes, geo: e.geo, assetIds: e.assetIds, properties: e.properties, source: e.source, date: e.date })),
+      elements: d.elements.map((e) => ({ id: e.id, label: e.label, notes: e.notes, geo: e.geo, assetIds: e.assetIds, tags: e.tags, properties: e.properties, source: e.source, date: e.date })),
       tabs: (await import('/src/stores/tabStore.ts')).useTabStore.getState().tabs.map((t) => ({ name: t.name, members: t.memberElementIds })),
       assets: d.assets.map((a) => ({ id: a.id, thumb: !!a.thumbnailDataUrl, mime: a.mimeType })),
       comments: d.comments.map((c) => ({ content: c.content, author: c.authorName })),
@@ -129,6 +129,8 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
       await d.updateElement(els[i].id, {
         geo: { type: 'point', lat: 48.85 + i * 0.004, lng: 2.33 + (i % 3) * 0.01 },
         date: new Date(2026, 9, 1 + (i % 3), 9 + i, 15),
+        // Periods over three years, for the timeline's jump strip
+        dateRange: { start: new Date(2024 + (i % 3), i, 10), end: null },
       });
     }
     await d.updateElement(els[0].id, {
@@ -168,6 +170,48 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   expect(phone.url()).not.toContain('key=');
   await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
   await shot(phone, '02-list');
+
+  // ── The desktop works on an element: the phone shows who, then the change ─
+  const watched = await desktop.evaluate(async () => {
+    const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const el = d.elements.find((e) => e.label === 'Jean Dupont 0')!;
+    useSyncStore.getState().updateSelection([el.id]);
+    return el.id;
+  });
+  await phone.bringToFront();
+  const watchedRow = phone.locator('li').filter({ has: phone.getByText('Jean Dupont 0', { exact: true }) });
+  await expect(watchedRow.getByRole('img', { name: / consulte$/ })).toBeVisible({ timeout: 20_000 });
+  await desktop.evaluate(async (id) => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    useSyncStore.getState().updateEditing(id);
+    const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    await d.updateElement(id, { notes: 'Repris sur le poste' });
+  }, watched);
+  await phone.bringToFront();
+  await expect(watchedRow.getByRole('img', { name: / modifie$/ })).toBeVisible({ timeout: 20_000 });
+  await expect(watchedRow).toHaveAttribute('data-touched', 'true', { timeout: 20_000 });
+  await shot(phone, '02b-peer-editing');
+  await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    useSyncStore.getState().updateEditing(null);
+    useSyncStore.getState().updateSelection([]);
+  });
+  await phone.bringToFront();
+  await expect(watchedRow.getByRole('img')).toBeHidden({ timeout: 20_000 });
+
+  // The list can be ordered by name or by links
+  const firstRow = () => phone.locator('main ul li').first().locator('span.block').first().innerText();
+  await phone.getByRole('button', { name: 'Nom', exact: true }).click();
+  const names = await phone.locator('main ul li span.block.text-sm').allInnerTexts();
+  expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base', numeric: true })));
+  await phone.getByRole('button', { name: 'Liens', exact: true }).click();
+  const counts = (await phone.locator('main ul li').allInnerTexts()).map((t) => Number(t.trim().split('\n').pop()));
+  expect(counts).toEqual([...counts].sort((a, b) => b - a));
+  expect(counts[0]).toBeGreaterThan(0);
+  await shot(phone, '02c-sorted-links');
+  await phone.getByRole('button', { name: 'Récents', exact: true }).click();
+  expect(await firstRow()).toBeTruthy();
 
   // Search
   await phone.getByPlaceholder('Rechercher').fill('sophie');
@@ -283,15 +327,15 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   const tagChip = phone.locator('main').getByRole('button', { name: /^tag-\d+$/ }).first();
   const sophieTag = (await tagChip.textContent())!;
   await tagChip.click();
-  await expect(phone.getByRole('button', { name: `Retirer l'étiquette ${sophieTag}` })).toBeVisible();
+  await expect(phone.getByRole('button', { name: `Retirer le tag ${sophieTag}` })).toBeVisible();
   await expect(phone.getByRole('button', { name: new RegExp(`^${sophie}`) })).toBeVisible();
-  await phone.getByRole('button', { name: `Retirer l'étiquette ${sophieTag}` }).click();
+  await phone.getByRole('button', { name: `Retirer le tag ${sophieTag}` }).click();
   await phone.getByPlaceholder('Rechercher').fill('#tag-1');
   await expect(phone.getByRole('button', { name: /^tag-1\b/ }).first()).toBeVisible();
   await shot(phone, '04j-tag-suggest');
   await phone.getByRole('button', { name: /^tag-1\s/ }).first().click();
-  await expect(phone.getByRole('button', { name: /^Retirer l'étiquette tag-1/ })).toBeVisible();
-  await phone.getByRole('button', { name: /^Retirer l'étiquette tag-1/ }).click();
+  await expect(phone.getByRole('button', { name: /^Retirer le tag tag-1/ })).toBeVisible();
+  await phone.getByRole('button', { name: /^Retirer le tag tag-1/ }).click();
 
   // Back on the element the flow continues from
   await phone.getByPlaceholder('Rechercher').fill(sophie);
@@ -320,9 +364,21 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   await phone.goBack();
   await phone.getByRole('button', { name: 'Chronologie' }).click();
   await expect(phone.getByText('Ouverture du compte')).toBeVisible();
+  // Jump strip by year; the order can be reversed
+  await expect(phone.getByRole('button', { name: /^2024, \d+ entrée/ })).toBeVisible();
   await shot(phone, '04d-timeline');
+  const firstEntry = () => phone.locator('li[data-index="0"]').innerText();
+  const oldest = await firstEntry();
+  await phone.getByRole('button', { name: "Plus récent d'abord" }).click();
+  await expect(phone.getByRole('button', { name: "Plus récent d'abord" })).toHaveAttribute('aria-pressed', 'true');
+  expect(await firstEntry()).not.toBe(oldest);
+  await phone.getByRole('button', { name: "Plus récent d'abord" }).click();
+  await phone.getByRole('button', { name: /^2026, / }).click();
+  await expect(phone.locator('button[data-period="2026"]')).toHaveAttribute('aria-current', 'true');
+  // An event opens its element on it
   await phone.getByText('Ouverture du compte').click();
   await expect(phone.locator('header span.truncate')).toHaveText(eventOwner);
+  await expect(phone.locator('[aria-current="true"]', { hasText: 'Ouverture du compte' })).toBeVisible();
   await phone.goBack();
   await phone.getByRole('button', { name: 'Carte' }).click();
   await expect(phone.locator('.maplibregl-canvas')).toBeVisible({ timeout: 20_000 });
@@ -342,11 +398,16 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   await shot(phone, '05-commented');
 
   // ── Capture with a photo and the position ────────────────────────────────
-  await phone.getByRole('button', { name: 'Capturer' }).click();
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
   await phone.getByLabel('Titre').fill('Véhicule suspect');
   await phone.getByLabel('Note').fill('Garé devant le n° 12');
   await phone.getByLabel('Source', { exact: true }).fill('Témoin rue Haute');
-  await phone.locator('input[type="file"]').setInputFiles('public/logo-512.png');
+  await phone.locator('input[type="file"][capture]').setInputFiles('public/logo-512.png');
+  // A file from the phone too; a type the desktop refuses is turned down
+  await phone.getByTestId('capture-files').setInputFiles({ name: 'outil.exe', mimeType: 'application/octet-stream', buffer: Buffer.from('MZ') });
+  await expect(phone.getByText('Type non pris en charge : outil.exe')).toBeVisible();
+  await phone.getByTestId('capture-files').setInputFiles({ name: 'releve.txt', mimeType: 'text/plain', buffer: Buffer.from('Plaque AB-123-CD') });
+  await expect(phone.getByText('releve.txt')).toBeVisible();
   await phone.getByRole('button', { name: 'Ajouter ma position' }).click();
   await expect(phone.getByText(/48\.85660, 2\.35220/)).toBeVisible();
   await shot(phone, '06-capture-form');
@@ -358,7 +419,9 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   await expect.poll(async () => {
     const s = await desktopState(desktop);
     const el = s.elements.find((e) => e.label === 'Véhicule suspect');
-    return !!el && el.assetIds.length === 1 && s.assets.some((a) => a.id === el.assetIds[0] && a.thumb);
+    if (!el || el.assetIds.length !== 2) return false;
+    const mine = s.assets.filter((a) => el.assetIds.includes(a.id));
+    return mine.some((a) => a.thumb && a.mime === 'image/jpeg') && mine.some((a) => a.mime === 'text/plain');
   }, { timeout: 30_000 }).toBe(true);
   const captured = (await desktopState(desktop)).elements.find((e) => e.label === 'Véhicule suspect')!;
   expect(captured.notes).toBe('Garé devant le n° 12');
@@ -387,11 +450,58 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   await phone.bringToFront();
   await expect(phone.getByText('Bien reçu, plaque ?')).toBeVisible({ timeout: 20_000 });
 
+  // ── Text only, then tags and properties from the dossier ─────────────────
+  await desktop.evaluate(async () => {
+    const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    await d.updateElement(d.elements[1].id, { tags: [...d.elements[1].tags, 'Témoin'] });
+  });
+  await phone.bringToFront();
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
+  await phone.getByLabel('Titre').fill('Note rapide');
+  await phone.getByLabel('Note').fill('Texte seul');
+  await phone.getByRole('button', { name: 'Ajouter au dossier' }).click();
+  await phone.getByRole('button', { name: 'Modifier les tags' }).click();
+  await phone.getByRole('button', { name: 'Témoin', exact: true }).click();
+  await expect(phone.getByRole('button', { name: 'Témoin', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await shot(phone, '07c-tags');
+  await phone.getByRole('button', { name: 'Terminé' }).click();
+  await phone.getByRole('button', { name: 'Propriété', exact: true }).click();
+  await phone.getByLabel('Nom de la propriété').fill('vil');
+  await phone.getByRole('button', { name: 'ville', exact: true }).click();
+  await phone.getByLabel('ville').fill('Paris');
+  await phone.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(phone.getByRole('button', { name: /^ville\s*Paris/ })).toBeVisible();
+  // A new key, then deleted
+  await phone.getByRole('button', { name: 'Propriété', exact: true }).click();
+  await phone.getByLabel('Nom de la propriété').fill('Plaque');
+  await phone.getByRole('button', { name: 'Suivant' }).click();
+  await phone.getByLabel('Plaque').fill('AB-123-CD');
+  await phone.getByRole('button', { name: 'Enregistrer' }).click();
+  await shot(phone, '07d-properties');
+  await phone.getByRole('button', { name: /^Plaque\s*AB-123-CD/ }).click();
+  await shot(phone, '07e-property-edit');
+  await phone.getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await phone.getByRole('button', { name: 'Confirmer la suppression' }).click();
+  await expect(phone.getByRole('button', { name: /^Plaque/ })).toBeHidden();
+  // A new key typed as a number
+  await phone.getByRole('button', { name: 'Propriété', exact: true }).click();
+  await phone.getByLabel('Nom de la propriété').fill('Montant');
+  await phone.getByRole('button', { name: 'Suivant' }).click();
+  await phone.getByRole('button', { name: 'Nombre', exact: true }).click();
+  await shot(phone, '07f-property-type');
+  await phone.getByLabel('Montant').fill('12,5');
+  await phone.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(phone.getByRole('button', { name: /^Montant\s*12\.5/ })).toBeVisible();
+  await expect.poll(async () => {
+    const el = (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide');
+    return el && { notes: el.notes, assets: el.assetIds.length, tags: el.tags, properties: el.properties.map((p) => [p.key, p.type ?? 'text', p.value]) };
+  }, { timeout: 30_000 }).toEqual({ notes: 'Texte seul', assets: 0, tags: ['Témoin'], properties: [['ville', 'text', 'Paris'], ['Montant', 'number', 12.5]] });
+
   // ── Offline capture: pending, then delivered on reconnection ─────────────
   await phone.context().setOffline(true);
   await phone.evaluate(() => window.dispatchEvent(new Event('offline')));
   await expect(phone.getByRole('button', { name: /Hors ligne|Reconnexion/ })).toBeVisible({ timeout: 40_000 });
-  await phone.getByRole('button', { name: 'Capturer' }).click();
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
   await phone.getByLabel('Titre').fill('Capture hors réseau');
   await phone.getByRole('button', { name: 'Ajouter au dossier' }).click();
   await expect(phone.getByText('1 en attente')).toBeVisible();
@@ -402,11 +512,36 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
 
   // ── Settings, then forget ────────────────────────────────────────────────
   await phone.getByRole('button', { name: /^Réglages/ }).click();
+  await shot(phone, '09-settings-dossier');
+  // The app's own settings, apart from the dossier's: theme and language
+  await phone.getByRole('tab', { name: 'Application' }).click();
+  await phone.getByRole('button', { name: 'Sombre' }).click();
+  await expect(phone.locator('html')).toHaveAttribute('data-theme', 'dark');
   await shot(phone, '09-settings');
+  // Scrolled to the end, the page stops at its last section, no empty area under it
+  const gap = await phone.evaluate(() => {
+    const main = document.querySelector('main')!;
+    main.scrollTop = main.scrollHeight;
+    const last = main.querySelector('ul:last-of-type li:last-child')!;
+    return Math.round(main.getBoundingClientRect().bottom - last.getBoundingClientRect().bottom);
+  });
+  expect(gap).toBeLessThanOrEqual(24);
+  await shot(phone, '09b-settings-end');
+  await phone.getByRole('button', { name: 'Système' }).click();
+  await expect(phone.locator('html')).toHaveAttribute('data-theme', 'light');
+  await phone.getByLabel('Langue').selectOption('en');
+  await expect(phone.getByRole('tab', { name: 'This dossier' })).toBeVisible();
+  await phone.getByLabel('Language').selectOption('fr');
+  await phone.getByRole('tab', { name: 'Ce dossier' }).click();
   await phone.getByRole('button', { name: 'Oublier ce dossier' }).click();
   await phone.getByRole('button', { name: 'Effacer', exact: true }).click();
   await expect(phone).toHaveURL(/\/m\/?$/);
   await shot(phone, '10-home-empty');
+  await phone.getByRole('button', { name: 'Réglages' }).click();
+  await expect(phone.getByLabel('Langue')).toBeVisible();
+  await shot(phone, '10b-app-settings');
+  await phone.getByRole('button', { name: 'Retour' }).click();
+  await expect(phone).toHaveURL(/\/m\/?$/);
   // The link can be pasted from inside the page too (desktop /join/ form accepted)
   await phone.getByPlaceholder('Coller le lien de partage').fill(mobileUrl.replace('/m/', '/join/'));
   await phone.getByPlaceholder('Coller le lien de partage').press('Enter');
@@ -444,9 +579,12 @@ test('a capture made while every computer is off reaches the desktop later', asy
 
   // The desktop goes away; the phone captures alone, then closes too
   const desktopContext = desktop.context();
-  await desktop.close();
-  await expect(phone.getByRole('button', { name: /Connecté, 0 poste/ })).toBeVisible({ timeout: 30_000 });
-  await phone.getByRole('button', { name: 'Capturer' }).click();
+  // As a closed tab does: announce the departure (Playwright skips
+  // beforeunload by default, and the phone then waits ~30 s for the presence
+  // to expire)
+  await desktop.close({ runBeforeUnload: true });
+  await expect(phone.getByRole('button', { name: /Connecté, 0 poste/ })).toBeVisible({ timeout: 45_000 });
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
   await phone.getByLabel('Titre').fill('Capture sans poste');
   await phone.getByRole('button', { name: 'Ajouter au dossier' }).click();
   await expect(phone.locator('header span.truncate')).toHaveText('Capture sans poste');
@@ -459,4 +597,136 @@ test('a capture made while every computer is off reaches the desktop later', asy
   await back.bringToFront();
   await expect.poll(async () => (await readDesktop(back)).labels.length, { timeout: 60_000 }).toBeGreaterThan(0);
   await expect.poll(async () => (await readDesktop(back)).labels, { timeout: 30_000 }).toContain('Capture sans poste');
+});
+
+test('a phone relaunched (app closed, reopened) syncs again both ways', async ({ browser }) => {
+  test.setTimeout(3 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'relaunch.json');
+  writeFileSync(file, buildLargeDossierJson(5));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  await desktop.waitForTimeout(1500);
+  const mobileUrl = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Relance', true);
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Relance', true, 'm');
+  });
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  await phone.goto(mobileUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+  const dossierUrl = phone.url();
+
+  // The app is closed (tab gone), then opened again from its address
+  const phoneContext = phone.context();
+  await phone.close({ runBeforeUnload: true });
+  const again = await phoneContext.newPage();
+  phonePage = again;
+  await again.goto(dossierUrl);
+  await expect(again.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  // Desktop → phone
+  await desktop.bringToFront();
+  await desktop.evaluate(async () => {
+    const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    await d.createElement('Ajout après relance', { x: 0, y: 900 });
+  });
+  await again.bringToFront();
+  await expect(again.getByText('Ajout après relance')).toBeVisible({ timeout: 30_000 });
+
+  // Phone → desktop
+  await again.getByRole('button', { name: 'Nouveau', exact: true }).click();
+  await again.getByLabel('Titre').fill('Capture après relance');
+  await again.getByRole('button', { name: 'Ajouter au dossier' }).click();
+  await expect.poll(async () => (await desktopState(desktop)).labels, { timeout: 30_000 }).toContain('Capture après relance');
+});
+
+test('presence replayed from the relay buffer is not taken for a computer online', async ({ browser }) => {
+  test.setTimeout(3 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'ghost.json');
+  writeFileSync(file, buildLargeDossierJson(3));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  const mobileUrl = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Fantôme', true);
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Fantôme', true, 'm');
+  });
+  // Alone in the room: its presence heartbeats (every 10 s) go to the buffer
+  await desktop.waitForTimeout(12_000);
+  await desktop.close({ runBeforeUnload: true });
+
+  // A phone that never had the dossier joins while no computer is online
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  await phone.goto(mobileUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await expect(phone.getByText("En attente d'un poste en ligne")).toBeVisible({ timeout: 10_000 });
+  await expect(phone.getByRole('button', { name: /Connecté, 0 poste/ })).toBeVisible();
+});
+
+test('a local copy that cannot be opened says so, and the dossier can still be forgotten', async ({ browser }) => {
+  test.setTimeout(3 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'blocked.json');
+  writeFileSync(file, buildLargeDossierJson(3));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  const { mobileUrl, dossierId } = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Bloqué', true);
+    const id = syncService.getDossierId()!;
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Bloqué', true, 'm'), dossierId: id };
+  });
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  await phone.goto(mobileUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+  const dossierUrl = phone.url();
+  const context = phone.context();
+  await phone.close({ runBeforeUnload: true });
+
+  // Another page holds the database and ignores the request to close it; a
+  // deletion then waits for it, and every later open waits behind the deletion
+  const holder = await context.newPage();
+  await holder.goto(new URL('/m/', dossierUrl).toString());
+  await holder.evaluate((name) => new Promise<void>((resolve) => {
+    const req = indexedDB.open(name);
+    req.onsuccess = () => {
+      (window as unknown as { held: IDBDatabase }).held = req.result;
+      indexedDB.deleteDatabase(name);
+      resolve();
+    };
+  }), `zeroneurone-ydoc-${dossierId}`);
+
+  const again = await context.newPage();
+  phonePage = again;
+  await again.goto(dossierUrl);
+  await expect(again.getByText('Ouverture impossible')).toBeVisible({ timeout: 30_000 });
+  await expect(again.getByRole('button', { name: 'Réessayer' })).toBeVisible();
+
+  // Forgetting does not wait on the open that never answers
+  await again.getByRole('button', { name: /^Réglages/ }).click();
+  await again.getByRole('button', { name: 'Oublier ce dossier' }).click();
+  await again.getByRole('button', { name: 'Effacer', exact: true }).click();
+  await expect(again).toHaveURL(/\/m\/?$/, { timeout: 15_000 });
+  await expect(again.getByText('Scannez le QR code de partage ou collez le lien.')).toBeVisible();
+
+  // The copy could not be erased: said so, not hidden, and retried once free
+  await expect(again.getByText("Copie d'un dossier oublié encore sur ce téléphone")).toBeVisible();
+  await holder.evaluate(() => (window as unknown as { held: IDBDatabase }).held.close());
+  // The erasure retried on arrival goes through once the database is free
+  await expect(again.getByText("Copie d'un dossier oublié encore sur ce téléphone")).toBeHidden({ timeout: 20_000 });
+  const left = await again.evaluate(async (name) => (await indexedDB.databases()).some((d) => d.name === name), `zeroneurone-ydoc-${dossierId}`);
+  expect(left).toBe(false);
 });

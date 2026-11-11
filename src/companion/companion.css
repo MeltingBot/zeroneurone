@@ -25,3 +25,7 @@ html.zn-companion-locked body {
   height: 100%;
   overscroll-behavior: none;
 }
+
+/* Strips scrolled sideways by touch: no scrollbar drawn */
+.zn-no-scrollbar { scrollbar-width: none; }
+.zn-no-scrollbar::-webkit-scrollbar { display: none; }

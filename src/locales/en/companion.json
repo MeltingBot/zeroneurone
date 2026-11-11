@@ -13,7 +13,9 @@
     "paste": "Paste",
     "scan": "Scan",
     "invalidLink": "Link not recognised",
-    "cameraUnavailable": "Camera unavailable"
+    "cameraUnavailable": "Camera unavailable",
+    "erasePending_one": "Copy of a forgotten dossier still on this phone",
+    "erasePending_other": "Copies of {{count}} forgotten dossiers still on this phone"
   },
   "join": {
     "title": "Shared dossier",
@@ -28,7 +30,7 @@
     "map": "Map",
     "timeline": "Timeline",
     "comments": "Comments",
-    "capture": "Capture",
+    "capture": "New",
     "settings": "Settings"
   },
   "status": {
@@ -53,7 +55,9 @@
     "clear": "Clear search",
     "results_one": "{{count}} result",
     "results_other": "{{count}} results",
-    "searchHint": "Search, or # for a tag"
+    "searchHint": "Search, or # for a tag",
+    "openFailed": "Could not open",
+    "retry": "Retry"
   },
   "element": {
     "untitled": "Untitled",
@@ -87,7 +91,6 @@
     "label": "Title",
     "notes": "Note",
     "photo": "Take a photo",
-    "removePhoto": "Remove photo",
     "position": "Add my location",
     "locating": "Locating…",
     "positionFailed": "Location unavailable",
@@ -95,18 +98,21 @@
     "save": "Add to dossier",
     "saving": "Adding…",
     "defaultLabel": "Capture {{time}}",
-    "tooLarge": "Photo too large",
+    "tooLarge": "File too large: {{name}}",
     "failed": "Could not add",
-    "source": "Source"
+    "source": "Source",
+    "addFile": "Add a file",
+    "removeFile": "Remove {{name}}",
+    "unsupported": "Unsupported type: {{name}}"
   },
   "settings": {
     "identity": "Your name",
-    "connection": "Connection",
-    "thisPhone": "This phone",
     "forget": "Forget this dossier",
     "forgetConfirm": "Erase",
     "forgetPending_one": "{{count}} unsent change will be lost.",
-    "forgetPending_other": "{{count}} unsent changes will be lost."
+    "forgetPending_other": "{{count}} unsent changes will be lost.",
+    "dossier": "This dossier",
+    "app": "App"
   },
   "graph": {
     "label": "Neighbourhood graph",
@@ -119,13 +125,35 @@
     "empty": "No located elements"
   },
   "timeline": {
-    "empty": "No dated elements"
+    "empty": "No dated elements",
+    "newestFirst": "Newest first",
+    "goTo": "Go to a date",
+    "period_one": "{{period}}, {{count}} entry",
+    "period_other": "{{period}}, {{count}} entries"
   },
   "edit": {
     "save": "Save",
     "notes": "Edit note",
     "addNote": "Add a note",
-    "invalid": "Invalid value"
+    "invalid": "Invalid value",
+    "addProperty": "Property",
+    "propertyKey": "Property name",
+    "keyTaken": "Already present",
+    "next": "Next",
+    "deleteProperty": "Delete",
+    "deletePropertyConfirm": "Confirm deletion",
+    "type": "Type",
+    "types": {
+      "text": "Text",
+      "number": "Number",
+      "date": "Date",
+      "datetime": "Date and time",
+      "boolean": "Yes/no",
+      "country": "Country",
+      "choice": "Choice",
+      "link": "Link",
+      "geo": "Location"
+    }
   },
   "links": {
     "add": "Link",
@@ -166,6 +194,39 @@
   },
   "tags": {
     "remove": "Remove tag {{tag}}",
-    "none": "No tags"
+    "none": "No tags",
+    "title": "Tags",
+    "filter": "Filter",
+    "noneInDossier": "No tags in this dossier",
+    "done": "Done",
+    "edit": "Edit tags",
+    "add": "Tag"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version {{version}}",
+    "license": "MIT licence",
+    "docs": "Documentation",
+    "github": "Source code",
+    "kofi": "Support on Ko-fi",
+    "thirdParty": "Third-party licences"
+  },
+  "preferences": {
+    "title": "Display",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "language": "Language"
+  },
+  "peers": {
+    "editing": "{{name}} is editing",
+    "viewing": "{{name}} is viewing"
+  },
+  "sort": {
+    "title": "Sort",
+    "recent": "Recent",
+    "name": "Name",
+    "links": "Links"
   }
 }

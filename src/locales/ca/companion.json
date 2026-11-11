@@ -13,7 +13,9 @@
     "paste": "Enganxa",
     "scan": "Escaneja",
     "invalidLink": "Enllaç no reconegut",
-    "cameraUnavailable": "Càmera no disponible"
+    "cameraUnavailable": "Càmera no disponible",
+    "erasePending_one": "Còpia d'un expedient oblidat encara en aquest telèfon",
+    "erasePending_other": "Còpies de {{count}} expedients oblidats encara en aquest telèfon"
   },
   "join": {
     "title": "Expedient compartit",
@@ -28,7 +30,7 @@
     "map": "Mapa",
     "timeline": "Cronologia",
     "comments": "Comentaris",
-    "capture": "Captura",
+    "capture": "Nou",
     "settings": "Configuració"
   },
   "status": {
@@ -53,7 +55,9 @@
     "clear": "Esborra la cerca",
     "results_one": "{{count}} resultat",
     "results_other": "{{count}} resultats",
-    "searchHint": "Cerca, o # per a una etiqueta"
+    "searchHint": "Cerca, o # per a una etiqueta",
+    "openFailed": "No s'ha pogut obrir",
+    "retry": "Torna-ho a provar"
   },
   "element": {
     "untitled": "Sense títol",
@@ -87,7 +91,6 @@
     "label": "Títol",
     "notes": "Nota",
     "photo": "Fes una foto",
-    "removePhoto": "Treu la foto",
     "position": "Afegeix la meva ubicació",
     "locating": "Localitzant…",
     "positionFailed": "Ubicació no disponible",
@@ -95,18 +98,21 @@
     "save": "Afegeix a l'expedient",
     "saving": "Afegint…",
     "defaultLabel": "Captura del {{time}}",
-    "tooLarge": "Foto massa pesada",
+    "tooLarge": "Fitxer massa pesat: {{name}}",
     "failed": "Error en afegir",
-    "source": "Font"
+    "source": "Font",
+    "addFile": "Afegeix un fitxer",
+    "removeFile": "Treu {{name}}",
+    "unsupported": "Tipus no admès: {{name}}"
   },
   "settings": {
     "identity": "El vostre nom",
-    "connection": "Connexió",
-    "thisPhone": "Aquest telèfon",
     "forget": "Oblida aquest expedient",
     "forgetConfirm": "Esborra",
     "forgetPending_one": "Es perdrà {{count}} canvi no enviat.",
-    "forgetPending_other": "Es perdran {{count}} canvis no enviats."
+    "forgetPending_other": "Es perdran {{count}} canvis no enviats.",
+    "dossier": "Aquest dossier",
+    "app": "Aplicació"
   },
   "graph": {
     "label": "Graf de veïnatge",
@@ -119,13 +125,35 @@
     "empty": "Cap element localitzat"
   },
   "timeline": {
-    "empty": "Cap element datat"
+    "empty": "Cap element datat",
+    "newestFirst": "Primer el més recent",
+    "goTo": "Anar a una data",
+    "period_one": "{{period}}, {{count}} entrada",
+    "period_other": "{{period}}, {{count}} entrades"
   },
   "edit": {
     "save": "Desa",
     "notes": "Edita la nota",
     "addNote": "Afegeix una nota",
-    "invalid": "Valor no vàlid"
+    "invalid": "Valor no vàlid",
+    "addProperty": "Propietat",
+    "propertyKey": "Nom de la propietat",
+    "keyTaken": "Ja hi és",
+    "next": "Següent",
+    "deleteProperty": "Suprimeix",
+    "deletePropertyConfirm": "Confirma la supressió",
+    "type": "Tipus",
+    "types": {
+      "text": "Text",
+      "number": "Nombre",
+      "date": "Data",
+      "datetime": "Data i hora",
+      "boolean": "Sí/no",
+      "country": "País",
+      "choice": "Opció",
+      "link": "Enllaç",
+      "geo": "Posició"
+    }
   },
   "links": {
     "add": "Enllaça",
@@ -166,6 +194,39 @@
   },
   "tags": {
     "remove": "Treu l'etiqueta {{tag}}",
-    "none": "Cap etiqueta"
+    "none": "Cap etiqueta",
+    "title": "Etiquetes",
+    "filter": "Filtra",
+    "noneInDossier": "Cap etiqueta en aquest dossier",
+    "done": "Fet",
+    "edit": "Modifica les etiquetes",
+    "add": "Etiqueta"
+  },
+  "about": {
+    "title": "Quant a",
+    "version": "Versió {{version}}",
+    "license": "Llicència MIT",
+    "docs": "Documentació",
+    "github": "Codi font",
+    "kofi": "Donar suport a Ko-fi",
+    "thirdParty": "Llicències de tercers"
+  },
+  "preferences": {
+    "title": "Visualització",
+    "theme": "Tema",
+    "light": "Clar",
+    "dark": "Fosc",
+    "system": "Sistema",
+    "language": "Idioma"
+  },
+  "peers": {
+    "editing": "{{name}} edita",
+    "viewing": "{{name}} consulta"
+  },
+  "sort": {
+    "title": "Ordena",
+    "recent": "Recents",
+    "name": "Nom",
+    "links": "Enllaços"
   }
 }

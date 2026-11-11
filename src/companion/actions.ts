@@ -14,6 +14,7 @@ import { linkToYMap } from '../services/yjs/linkMapper';
 import { tabToYMap } from '../services/yjs/tabMapper';
 import { MAX_SHARED_ASSET_SIZE, pushAssetChunked } from '../services/assetSync';
 import { downscaleImage, generateImageThumbnail } from '../utils/imageThumbnail';
+import { isAllowedAttachment } from '../utils/attachmentTypes';
 import { capturePosition } from './placement';
 import { beginWrite } from './pending';
 import { getLocalUser } from './presence';
@@ -21,7 +22,8 @@ import { getLocalUser } from './presence';
 export interface CaptureInput {
   label: string;
   notes: string;
-  photo: File | null;
+  /** Camera photos and files from the phone, attached to the element */
+  files: File[];
   geo: { lat: number; lng: number } | null;
   source?: string;
   /** Canvas tab the new element goes into */
@@ -38,12 +40,72 @@ function photoFilename(date: Date): string {
   return `photo-${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}.jpg`;
 }
 
-export class PhotoTooLargeError extends Error {}
+/** A file over the size the shared dossier carries (MAX_SHARED_ASSET_SIZE) */
+export class FileTooLargeError extends Error {
+  readonly fileName: string;
+  constructor(fileName: string) {
+    super(fileName);
+    this.fileName = fileName;
+  }
+}
+
+/** A file type the desktop refuses (attachmentTypes.ts) */
+export class UnsupportedFileError extends Error {
+  readonly fileName: string;
+  constructor(fileName: string) {
+    super(fileName);
+    this.fileName = fileName;
+  }
+}
+
+/** Images re-encoded smaller; GIF (animation) and SVG (vector) kept as they are */
+function shrinkable(file: File): boolean {
+  if (file.type === 'image/gif' || file.type === 'image/svg+xml') return false;
+  return file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name);
+}
+
+function baseName(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 ? name.slice(0, dot) : name;
+}
+
+/** Validates and encodes one file; throws before anything is written */
+async function prepareAttachment(file: File, dossierId: DossierId, now: Date): Promise<{ asset: Asset; buffer: ArrayBuffer }> {
+  let blob: Blob = file;
+  let filename = file.name || photoFilename(now);
+  if (shrinkable(file)) {
+    const smaller = await downscaleImage(file);
+    if (smaller !== file) {
+      blob = smaller;
+      filename = `${file.name ? baseName(file.name) : baseName(photoFilename(now))}.jpg`;
+    }
+  }
+  const mimeType = blob.type || 'application/octet-stream';
+  if (!isAllowedAttachment(filename, mimeType)) throw new UnsupportedFileError(file.name || filename);
+  if (blob.size > MAX_SHARED_ASSET_SIZE) throw new FileTooLargeError(file.name || filename);
+  const buffer = await blob.arrayBuffer();
+  return {
+    buffer,
+    asset: {
+      id: crypto.randomUUID(),
+      dossierId,
+      filename,
+      mimeType,
+      size: buffer.byteLength,
+      hash: await sha256Hex(buffer),
+      opfsPath: '',
+      thumbnailDataUrl: mimeType.startsWith('image/') ? await generateImageThumbnail(blob) : null,
+      extractedText: null,
+      createdAt: now,
+    },
+  };
+}
 
 /**
- * Creates the element, then streams the photo into the Y.Doc. The element is
- * written first so the desktop shows it at once; the thumbnail follows with
- * the asset. Resolves when the last chunk is pushed.
+ * Creates the element, then streams its files into the Y.Doc. Every file is
+ * checked first: one refused, nothing is written. The element is written
+ * before the files so the desktop shows it at once; the files follow.
+ * Resolves when the last chunk is pushed.
  */
 export async function createCapture(
   ydoc: Y.Doc,
@@ -52,27 +114,9 @@ export async function createCapture(
   connected: boolean,
 ): Promise<ElementId> {
   const { elements, assets } = getYMaps(ydoc);
-
-  let asset: Asset | null = null;
-  let buffer: ArrayBuffer | null = null;
-  if (input.photo) {
-    const blob = await downscaleImage(input.photo);
-    if (blob.size > MAX_SHARED_ASSET_SIZE) throw new PhotoTooLargeError();
-    buffer = await blob.arrayBuffer();
-    const now = new Date();
-    asset = {
-      id: crypto.randomUUID(),
-      dossierId,
-      filename: blob === input.photo && input.photo.name ? input.photo.name : photoFilename(now),
-      mimeType: blob.type || 'image/jpeg',
-      size: buffer.byteLength,
-      hash: await sha256Hex(buffer),
-      opfsPath: '',
-      thumbnailDataUrl: await generateImageThumbnail(blob),
-      extractedText: null,
-      createdAt: now,
-    };
-  }
+  const now = new Date();
+  const attachments: { asset: Asset; buffer: ArrayBuffer }[] = [];
+  for (const file of input.files) attachments.push(await prepareAttachment(file, dossierId, now));
 
   const positions: { x: number; y: number }[] = [];
   elements.forEach((ymap) => {
@@ -84,7 +128,7 @@ export async function createCapture(
   const element = buildNewElement(dossierId, input.label.trim(), capturePosition(positions), {
     notes: input.notes.trim(),
     geo,
-    assetIds: asset ? [asset.id] : [],
+    assetIds: attachments.map((a) => a.asset.id),
     // Element.date is the collection date (not a fact: kept off the timeline)
     date: new Date(),
     source: input.source?.trim() ?? '',
@@ -96,18 +140,18 @@ export async function createCapture(
   });
   if (input.tabId) setTabMember(ydoc, dossierId, input.tabId, element.id, true, connected);
 
-  if (asset && buffer) {
+  for (const { asset, buffer } of attachments) {
     await pushAssetChunked(ydoc, assets, asset, buffer);
   }
   return element.id;
 }
 
-/** Edits an existing element's notes or property values */
+/** Edits an existing element's notes, properties, source or tags */
 export function updateElementFields(
   ydoc: Y.Doc,
   dossierId: DossierId,
   elementId: ElementId,
-  changes: { notes?: string; properties?: Property[]; source?: string },
+  changes: { notes?: string; properties?: Property[]; source?: string; tags?: string[] },
   connected: boolean,
 ): boolean {
   const ymap = getYMaps(ydoc).elements.get(elementId) as Y.Map<unknown> | undefined;

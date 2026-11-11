@@ -6,11 +6,12 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Settings2, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Settings2, Trash2, X } from 'lucide-react';
+import { IconAction } from './IconAction';
 import type { CanvasTab, Element } from '../types';
 import { createTab, deleteTab, renameTab, setTabMember } from './actions';
 import type { useCompanionSession } from './useCompanionSession';
-import { choiceButton, inputClass, primaryButton, secondaryButton, sectionTitle } from './ui';
+import { choiceButton, inputClass, primaryButton, sectionTitle } from './ui';
 
 type Session = ReturnType<typeof useCompanionSession>;
 
@@ -94,34 +95,32 @@ export function TabsManager({ s, onClose }: { s: Session; onClose: () => void })
                     autoFocus
                   />
                   <div className="flex justify-end gap-2">
-                    <button type="button" className={secondaryButton} onClick={() => setRenaming(null)}>{t('cancel')}</button>
-                    <button
-                      type="button"
-                      className={primaryButton}
+                    <IconAction icon={X} label={t('cancel')} onClick={() => setRenaming(null)} />
+                    <IconAction
+                      icon={Check}
+                      label={t('edit.save')}
+                      variant="primary"
                       disabled={!renaming.name.trim()}
                       onClick={() => {
                         write((ydoc) => renameTab(ydoc, s.dossierId, tab.id, renaming.name, s.syncState.connected));
                         setRenaming(null);
                       }}
-                    >
-                      {t('edit.save')}
-                    </button>
+                    />
                   </div>
                 </div>
               ) : confirmDelete === tab.id ? (
                 <div className="flex items-center gap-2">
                   <span className="flex-1 min-w-0 text-sm">{t('tabsBar.confirmDelete', { name: tab.name })}</span>
-                  <button type="button" className={secondaryButton} onClick={() => setConfirmDelete(null)}>{t('cancel')}</button>
-                  <button
-                    type="button"
-                    className={`${secondaryButton} text-error`}
+                  <IconAction icon={X} label={t('cancel')} onClick={() => setConfirmDelete(null)} />
+                  <IconAction
+                    icon={Trash2}
+                    label={t('delete.confirm')}
+                    variant="confirm"
                     onClick={() => {
                       write((ydoc) => deleteTab(ydoc, s.dossierId, tab.id, s.syncState.connected));
                       setConfirmDelete(null);
                     }}
-                  >
-                    {t('delete.confirm')}
-                  </button>
+                  />
                 </div>
               ) : (
                 <div className="flex items-center gap-1">

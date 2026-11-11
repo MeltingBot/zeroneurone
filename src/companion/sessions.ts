@@ -51,3 +51,36 @@ export function renameSession(dossierId: string, name: string): void {
 export function removeSession(dossierId: string): void {
   write(listSessions().filter((s) => s.dossierId !== dossierId));
 }
+
+// ----------------------------------------------------------------------------
+// Local copies still to erase: "Forget" could not delete them (database held
+// by another connection). Retried until done, and shown meanwhile: the copy
+// is not encrypted on the phone.
+// ----------------------------------------------------------------------------
+
+const PENDING_DELETE_KEY = 'zeroneurone-companion-pending-delete';
+
+export function pendingDeletions(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(PENDING_DELETE_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingDeletions(ids: string[]): void {
+  try {
+    if (ids.length > 0) localStorage.setItem(PENDING_DELETE_KEY, JSON.stringify(ids));
+    else localStorage.removeItem(PENDING_DELETE_KEY);
+  } catch { /* storage unavailable */ }
+}
+
+export function addPendingDeletion(dossierId: string): void {
+  const ids = pendingDeletions();
+  if (!ids.includes(dossierId)) writePendingDeletions([...ids, dossierId]);
+}
+
+export function removePendingDeletion(dossierId: string): void {
+  writePendingDeletions(pendingDeletions().filter((id) => id !== dossierId));
+}

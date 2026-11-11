@@ -7,9 +7,13 @@ import { parseJoinLink } from '../utils/joinUrl';
 import { capturePosition, CAPTURE_GAP } from './placement';
 import { beginWrite, clearPending, markDisconnected, pendingCount, updateToResend } from './pending';
 import { excerptAround, stripMarkdown } from './search';
-import { timelineEntries } from './timeline';
+import { buckets, entryIndexFor, scaleOf, timelineEntries } from './timeline';
 import { layoutNeighborhood } from './neighborhoodLayout';
 import { companionPathOf } from './shareLink';
+import { dossierPropertyKeys, dossierTags, findKey } from './vocabulary';
+import { peerMarks, remoteTouchedIds } from './activity';
+import { linkCounts, sortElements } from './sorting';
+import { getYMaps } from '../types/yjs';
 
 const el = (id: string, label: string, extra: Partial<Element> = {}): Element =>
   ({ ...buildNewElement('d', label, { x: 0, y: 0 }), id, ...extra });
@@ -129,6 +133,37 @@ describe('timelineEntries', () => {
     expect(entries.map((e) => e.label)).toEqual(['Arrivée', 'Bob', 'appel']);
     expect(entries[0]).toMatchObject({ context: 'Bob', elementId: 'b', precision: 'day' });
     expect(entries[2]).toMatchObject({ context: 'Alice — Bob', elementId: 'a', precision: 'minute' });
+    // An event opens its element on it
+    expect(entries[0].eventId).toBe('ev');
+  });
+});
+
+describe('timeline jump strip', () => {
+  const dated = (...dates: Date[]) =>
+    timelineEntries(dates.map((d, i) => el(`e${i}`, `E${i}`, { dateRange: { start: d, end: null } })), [], '');
+
+  it('cuts a short span into months, gaps included', () => {
+    const entries = dated(new Date(2026, 0, 5), new Date(2026, 0, 20), new Date(2026, 3, 1));
+    expect(scaleOf(entries)).toBe('month');
+    expect(buckets(entries, 'month').map((b) => [b.key, b.count])).toEqual([
+      ['2026-01', 2], ['2026-02', 0], ['2026-03', 0], ['2026-04', 1],
+    ]);
+  });
+
+  it('cuts two years and more into years', () => {
+    const entries = dated(new Date(2020, 5, 1), new Date(2023, 1, 1));
+    expect(scaleOf(entries)).toBe('year');
+    expect(buckets(entries, 'year').map((b) => b.key)).toEqual(['2020', '2021', '2022', '2023']);
+  });
+
+  it('finds the entry to show for a day, in either order', () => {
+    const entries = dated(new Date(2026, 0, 5), new Date(2026, 0, 20, 15), new Date(2026, 3, 1));
+    expect(entryIndexFor(entries, new Date(2026, 0, 10), false)).toBe(1);
+    expect(entryIndexFor(entries, new Date(2026, 0, 20), false)).toBe(1);
+    expect(entryIndexFor(entries, new Date(2027, 0, 1), false)).toBe(2);
+    const newest = [...entries].reverse();
+    expect(entryIndexFor(newest, new Date(2026, 0, 20), true)).toBe(1);
+    expect(entryIndexFor(newest, new Date(2026, 1, 1), true)).toBe(1);
   });
 });
 
@@ -173,5 +208,89 @@ describe('companionPathOf', () => {
     expect(companionPathOf('hello')).toBeNull();
     expect(companionPathOf(`${origin}/dossier/abc`)).toBeNull();
     expect(companionPathOf(`${origin}/join/room#id=u`)).toBeNull();
+  });
+});
+
+describe('dossier vocabulary', () => {
+  it('offers the tags used in the dossier, most used first', () => {
+    const elements = [
+      el('a', 'A', { tags: ['Personne', 'Suspect'] }),
+      el('b', 'B', { tags: ['Personne'] }),
+      el('c', 'C', { tags: ['Adresse', 'Personne'] }),
+    ];
+    expect(dossierTags(elements)).toEqual(['Personne', 'Adresse', 'Suspect']);
+  });
+
+  it('offers property keys with their most frequent type, locations left out', () => {
+    const elements = [
+      el('a', 'A', { properties: [{ key: 'Naissance', type: 'date', value: null }, { key: 'Lieu', type: 'geo', value: null }] }),
+      el('b', 'B', { properties: [{ key: 'Naissance', type: 'date', value: null }, { key: 'Pseudo', value: 'x' }] }),
+      el('c', 'C', { properties: [{ key: 'Naissance', type: 'text', value: 'vers 1980' }] }),
+    ];
+    const keys = dossierPropertyKeys(elements);
+    expect(keys).toEqual([{ key: 'Naissance', type: 'date' }, { key: 'Pseudo', type: 'text' }]);
+    expect(findKey(keys, ' naissance ')).toEqual({ key: 'Naissance', type: 'date' });
+    expect(findKey(keys, 'Téléphone')).toBeUndefined();
+  });
+});
+
+describe('activity of the others', () => {
+  it('marks who is on which element, the phone and stale presence left out', () => {
+    const now = 100_000;
+    const states = new Map<number, unknown>([
+      [1, { name: 'Moi', color: '#111', selection: ['a'], lastSeen: now }],
+      [2, { name: 'Alice', color: '#e00', selection: ['a', 'b'], editing: 'b', dragging: [], lastSeen: now - 1000 }],
+      [3, { name: 'Bob', color: '#00e', selection: [], dragging: ['a'], lastSeen: now }],
+      [4, { name: 'Fantôme', color: '#0e0', selection: ['a'], lastSeen: now - 60_000 }],
+    ]);
+    const marks = peerMarks(states, 1, now);
+    expect(marks.get('a')).toEqual([
+      { name: 'Alice', color: '#e00', active: false },
+      { name: 'Bob', color: '#00e', active: true },
+    ]);
+    expect(marks.get('b')).toEqual([{ name: 'Alice', color: '#e00', active: true }]);
+  });
+
+  it('notices elements changed from another device, not its own writes nor a catch-up', () => {
+    const desktop = new Y.Doc();
+    const phone = new Y.Doc();
+    Y.applyUpdate(phone, Y.encodeStateAsUpdate(desktop));
+    const seen: string[][] = [];
+    getYMaps(phone).elements.observeDeep((events, tr) => seen.push(remoteTouchedIds(events, tr)));
+    const sync = () => Y.applyUpdate(phone, Y.encodeStateAsUpdate(desktop, Y.encodeStateVector(phone)));
+
+    const el = new Y.Map<unknown>();
+    getYMaps(desktop).elements.set('e1', el);
+    sync();
+    el.set('label', 'Renamed');
+    sync();
+    // Written on the phone itself: not a change from elsewhere
+    (getYMaps(phone).elements.get('e1') as Y.Map<unknown>).set('notes', 'mine');
+    // Many at once: a sync catching up
+    desktop.transact(() => { for (let i = 0; i < 20; i++) getYMaps(desktop).elements.set(`x${i}`, new Y.Map()); });
+    sync();
+    expect(seen).toEqual([['e1'], ['e1'], [], []]);
+  });
+});
+
+describe('element list order', () => {
+  const at = (d: number) => new Date(2026, 0, d);
+  const elements = [
+    el('a', 'élément 10', { updatedAt: at(1) }),
+    el('b', 'Zoé', { updatedAt: at(3) }),
+    el('c', 'element 9', { updatedAt: at(2) }),
+    el('d', '', { updatedAt: at(4) }),
+  ];
+  const links = [link('l1', 'a', 'b'), link('l2', 'a', 'c'), link('l3', 'b', 'a'), link('l4', 'c', 'c')];
+  const counts = linkCounts(links);
+
+  it('counts the links of each element, a loop once', () => {
+    expect(Object.fromEntries(counts)).toEqual({ a: 3, b: 2, c: 2 });
+  });
+
+  it('orders by last change, by name (accents and numbers aside, unnamed last) or by links', () => {
+    expect(sortElements(elements, 'recent', counts, 'fr').map((e) => e.id)).toEqual(['d', 'b', 'c', 'a']);
+    expect(sortElements(elements, 'name', counts, 'fr').map((e) => e.id)).toEqual(['c', 'a', 'b', 'd']);
+    expect(sortElements(elements, 'links', counts, 'fr').map((e) => e.id)).toEqual(['a', 'c', 'b', 'd']);
   });
 });

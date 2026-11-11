@@ -13,7 +13,9 @@
     "paste": "Einfügen",
     "scan": "Scannen",
     "invalidLink": "Link nicht erkannt",
-    "cameraUnavailable": "Kamera nicht verfügbar"
+    "cameraUnavailable": "Kamera nicht verfügbar",
+    "erasePending_one": "Kopie eines vergessenen Dossiers noch auf diesem Handy",
+    "erasePending_other": "Kopien von {{count}} vergessenen Dossiers noch auf diesem Handy"
   },
   "join": {
     "title": "Geteiltes Dossier",
@@ -28,7 +30,7 @@
     "map": "Karte",
     "timeline": "Zeitachse",
     "comments": "Kommentare",
-    "capture": "Erfassen",
+    "capture": "Neu",
     "settings": "Einstellungen"
   },
   "status": {
@@ -53,7 +55,9 @@
     "clear": "Suche löschen",
     "results_one": "{{count}} Ergebnis",
     "results_other": "{{count}} Ergebnisse",
-    "searchHint": "Suchen, oder # für ein Schlagwort"
+    "searchHint": "Suchen, oder # für einen Tag",
+    "openFailed": "Öffnen nicht möglich",
+    "retry": "Erneut versuchen"
   },
   "element": {
     "untitled": "Ohne Titel",
@@ -87,7 +91,6 @@
     "label": "Titel",
     "notes": "Notiz",
     "photo": "Foto aufnehmen",
-    "removePhoto": "Foto entfernen",
     "position": "Meinen Standort hinzufügen",
     "locating": "Ortung…",
     "positionFailed": "Standort nicht verfügbar",
@@ -95,18 +98,21 @@
     "save": "Zum Dossier hinzufügen",
     "saving": "Wird hinzugefügt…",
     "defaultLabel": "Erfassung {{time}}",
-    "tooLarge": "Foto zu groß",
+    "tooLarge": "Datei zu groß: {{name}}",
     "failed": "Hinzufügen fehlgeschlagen",
-    "source": "Quelle"
+    "source": "Quelle",
+    "addFile": "Datei hinzufügen",
+    "removeFile": "{{name}} entfernen",
+    "unsupported": "Nicht unterstützter Typ: {{name}}"
   },
   "settings": {
     "identity": "Ihr Name",
-    "connection": "Verbindung",
-    "thisPhone": "Dieses Handy",
     "forget": "Dossier vergessen",
     "forgetConfirm": "Löschen",
     "forgetPending_one": "{{count}} nicht gesendete Änderung geht verloren.",
-    "forgetPending_other": "{{count}} nicht gesendete Änderungen gehen verloren."
+    "forgetPending_other": "{{count}} nicht gesendete Änderungen gehen verloren.",
+    "dossier": "Dieses Dossier",
+    "app": "App"
   },
   "graph": {
     "label": "Nachbarschaftsgraph",
@@ -119,13 +125,35 @@
     "empty": "Keine verorteten Elemente"
   },
   "timeline": {
-    "empty": "Keine datierten Elemente"
+    "empty": "Keine datierten Elemente",
+    "newestFirst": "Neueste zuerst",
+    "goTo": "Zu einem Datum",
+    "period_one": "{{period}}, {{count}} Eintrag",
+    "period_other": "{{period}}, {{count}} Einträge"
   },
   "edit": {
     "save": "Speichern",
     "notes": "Notiz bearbeiten",
     "addNote": "Notiz hinzufügen",
-    "invalid": "Ungültiger Wert"
+    "invalid": "Ungültiger Wert",
+    "addProperty": "Eigenschaft",
+    "propertyKey": "Name der Eigenschaft",
+    "keyTaken": "Bereits vorhanden",
+    "next": "Weiter",
+    "deleteProperty": "Löschen",
+    "deletePropertyConfirm": "Löschen bestätigen",
+    "type": "Typ",
+    "types": {
+      "text": "Text",
+      "number": "Zahl",
+      "date": "Datum",
+      "datetime": "Datum und Uhrzeit",
+      "boolean": "Ja/Nein",
+      "country": "Land",
+      "choice": "Auswahl",
+      "link": "Link",
+      "geo": "Position"
+    }
   },
   "links": {
     "add": "Verbinden",
@@ -165,7 +193,40 @@
     "delete": "„{{name}}“ löschen"
   },
   "tags": {
-    "remove": "Schlagwort {{tag}} entfernen",
-    "none": "Keine Schlagwörter"
+    "remove": "Tag {{tag}} entfernen",
+    "none": "Keine Tags",
+    "title": "Tags",
+    "filter": "Filtern",
+    "noneInDossier": "Keine Tags in diesem Dossier",
+    "done": "Fertig",
+    "edit": "Tags bearbeiten",
+    "add": "Tag"
+  },
+  "about": {
+    "title": "Über",
+    "version": "Version {{version}}",
+    "license": "MIT-Lizenz",
+    "docs": "Dokumentation",
+    "github": "Quellcode",
+    "kofi": "Auf Ko-fi unterstützen",
+    "thirdParty": "Lizenzen Dritter"
+  },
+  "preferences": {
+    "title": "Anzeige",
+    "theme": "Design",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System",
+    "language": "Sprache"
+  },
+  "peers": {
+    "editing": "{{name}} bearbeitet",
+    "viewing": "{{name}} sieht an"
+  },
+  "sort": {
+    "title": "Sortieren",
+    "recent": "Neueste",
+    "name": "Name",
+    "links": "Verknüpfungen"
   }
 }

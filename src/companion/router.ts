@@ -4,6 +4,8 @@ import { appPath } from '../utils/basePath';
 
 export type Route =
   | { kind: 'home' }
+  /** Settings of the companion itself */
+  | { kind: 'app' }
   | { kind: 'join'; roomId: string }
   | { kind: 'dossier'; dossierId: string };
 
@@ -18,15 +20,16 @@ function companionSubPath(): string {
 export function currentRoute(): Route {
   const sub = companionSubPath();
   if (!sub) return { kind: 'home' };
+  if (sub === 'app') return { kind: 'app' };
   const parts = sub.split('/');
   if (parts[0] === 'd' && parts[1]) return { kind: 'dossier', dossierId: decodeURIComponent(parts[1]) };
   return { kind: 'join', roomId: decodeURIComponent(parts[0]) };
 }
 
-export function navigate(sub: string, replace = false): void {
+export function navigate(sub: string, replace = false, state: Record<string, unknown> | null = null): void {
   const url = appPath(`m/${sub}`);
-  if (replace) window.history.replaceState(null, '', url);
-  else window.history.pushState(null, '', url);
+  if (replace) window.history.replaceState(state, '', url);
+  else window.history.pushState(state, '', url);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 

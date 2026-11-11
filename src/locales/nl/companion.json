@@ -13,7 +13,9 @@
     "paste": "Plakken",
     "scan": "Scannen",
     "invalidLink": "Link niet herkend",
-    "cameraUnavailable": "Camera niet beschikbaar"
+    "cameraUnavailable": "Camera niet beschikbaar",
+    "erasePending_one": "Kopie van een vergeten dossier staat nog op deze telefoon",
+    "erasePending_other": "Kopieën van {{count}} vergeten dossiers staan nog op deze telefoon"
   },
   "join": {
     "title": "Gedeeld dossier",
@@ -28,7 +30,7 @@
     "map": "Kaart",
     "timeline": "Tijdlijn",
     "comments": "Opmerkingen",
-    "capture": "Vastleggen",
+    "capture": "Nieuw",
     "settings": "Instellingen"
   },
   "status": {
@@ -53,7 +55,9 @@
     "clear": "Zoekopdracht wissen",
     "results_one": "{{count}} resultaat",
     "results_other": "{{count}} resultaten",
-    "searchHint": "Zoeken, of # voor een label"
+    "searchHint": "Zoeken, of # voor een tag",
+    "openFailed": "Openen mislukt",
+    "retry": "Opnieuw proberen"
   },
   "element": {
     "untitled": "Zonder titel",
@@ -87,7 +91,6 @@
     "label": "Titel",
     "notes": "Notitie",
     "photo": "Foto maken",
-    "removePhoto": "Foto verwijderen",
     "position": "Mijn locatie toevoegen",
     "locating": "Lokaliseren…",
     "positionFailed": "Locatie niet beschikbaar",
@@ -95,18 +98,21 @@
     "save": "Toevoegen aan dossier",
     "saving": "Toevoegen…",
     "defaultLabel": "Vastlegging {{time}}",
-    "tooLarge": "Foto te groot",
+    "tooLarge": "Bestand te groot: {{name}}",
     "failed": "Toevoegen mislukt",
-    "source": "Bron"
+    "source": "Bron",
+    "addFile": "Bestand toevoegen",
+    "removeFile": "{{name}} verwijderen",
+    "unsupported": "Niet-ondersteund type: {{name}}"
   },
   "settings": {
     "identity": "Uw naam",
-    "connection": "Verbinding",
-    "thisPhone": "Deze telefoon",
     "forget": "Dit dossier vergeten",
     "forgetConfirm": "Wissen",
     "forgetPending_one": "{{count}} niet-verzonden wijziging gaat verloren.",
-    "forgetPending_other": "{{count}} niet-verzonden wijzigingen gaan verloren."
+    "forgetPending_other": "{{count}} niet-verzonden wijzigingen gaan verloren.",
+    "dossier": "Dit dossier",
+    "app": "App"
   },
   "graph": {
     "label": "Buurtgraaf",
@@ -119,13 +125,35 @@
     "empty": "Geen gelokaliseerde elementen"
   },
   "timeline": {
-    "empty": "Geen gedateerde elementen"
+    "empty": "Geen gedateerde elementen",
+    "newestFirst": "Nieuwste eerst",
+    "goTo": "Naar een datum",
+    "period_one": "{{period}}, {{count}} item",
+    "period_other": "{{period}}, {{count}} items"
   },
   "edit": {
     "save": "Opslaan",
     "notes": "Notitie bewerken",
     "addNote": "Notitie toevoegen",
-    "invalid": "Ongeldige waarde"
+    "invalid": "Ongeldige waarde",
+    "addProperty": "Eigenschap",
+    "propertyKey": "Naam van de eigenschap",
+    "keyTaken": "Al aanwezig",
+    "next": "Volgende",
+    "deleteProperty": "Verwijderen",
+    "deletePropertyConfirm": "Verwijderen bevestigen",
+    "type": "Type",
+    "types": {
+      "text": "Tekst",
+      "number": "Getal",
+      "date": "Datum",
+      "datetime": "Datum en tijd",
+      "boolean": "Ja/nee",
+      "country": "Land",
+      "choice": "Keuze",
+      "link": "Link",
+      "geo": "Locatie"
+    }
   },
   "links": {
     "add": "Verbinden",
@@ -165,7 +193,40 @@
     "delete": "\"{{name}}\" verwijderen"
   },
   "tags": {
-    "remove": "Label {{tag}} verwijderen",
-    "none": "Geen labels"
+    "remove": "Tag {{tag}} verwijderen",
+    "none": "Geen tags",
+    "title": "Tags",
+    "filter": "Filteren",
+    "noneInDossier": "Geen tags in dit dossier",
+    "done": "Klaar",
+    "edit": "Tags bewerken",
+    "add": "Tag"
+  },
+  "about": {
+    "title": "Over",
+    "version": "Versie {{version}}",
+    "license": "MIT-licentie",
+    "docs": "Documentatie",
+    "github": "Broncode",
+    "kofi": "Steunen via Ko-fi",
+    "thirdParty": "Licenties van derden"
+  },
+  "preferences": {
+    "title": "Weergave",
+    "theme": "Thema",
+    "light": "Licht",
+    "dark": "Donker",
+    "system": "Systeem",
+    "language": "Taal"
+  },
+  "peers": {
+    "editing": "{{name}} bewerkt",
+    "viewing": "{{name}} bekijkt"
+  },
+  "sort": {
+    "title": "Sorteren",
+    "recent": "Recent",
+    "name": "Naam",
+    "links": "Koppelingen"
   }
 }

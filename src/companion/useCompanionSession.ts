@@ -28,15 +28,37 @@ const SETTLE_MS = 2000;
  * Every open and close goes through this chain.
  */
 let lifecycle: Promise<unknown> = Promise.resolve();
+
+/** A step that never answers (an IndexedDB open left blocked) must not freeze every later open and close */
+const STEP_TIMEOUT_MS = 20_000;
+
+export class StepTimeoutError extends Error {}
+
+function withTimeout<T>(run: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new StepTimeoutError(`no answer after ${ms} ms`)), ms);
+    run.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err: unknown) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 function serialized<T>(step: () => Promise<T>): Promise<T> {
-  const next = lifecycle.then(step, step);
-  lifecycle = next.catch(() => undefined);
+  const run = () => withTimeout(step(), STEP_TIMEOUT_MS);
+  const next = lifecycle.then(run, run);
+  lifecycle = next.catch((err: unknown) => {
+    if (err instanceof StepTimeoutError) console.warn('[Companion] sync step abandoned:', err.message);
+  });
   return next;
 }
 
 export function closeCompanionSession(): Promise<void> {
   return serialized(() => syncService.close());
 }
+
+/** Opening the dossier: past this, the phone says it could not and offers to retry */
+const OPEN_TIMEOUT_MS = 15_000;
 
 export interface AssetEntry extends AssetMeta {
   complete: boolean;
@@ -95,6 +117,8 @@ function readData(ydoc: Y.Doc, dossierId: string): CompanionData {
 export function useCompanionSession(session: CompanionSession) {
   const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** The local copy could not be opened (error, or no answer): retry offered */
+  const [openFailed, setOpenFailed] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>(DEFAULT_SYNC_STATE);
   const [data, setData] = useState<CompanionData>(EMPTY_DATA);
   const [pending, setPending] = useState(() => pendingCount(session.dossierId));
@@ -114,12 +138,19 @@ export function useCompanionSession(session: CompanionSession) {
     })
       .then((doc) => {
         if (!doc) return;
+        setOpenFailed(false);
         if (cancelled) return;
         setYdoc(doc);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (cancelled) return;
+        console.warn('[Companion] open failed:', err);
+        setError(err instanceof Error ? err.message : String(err));
+        setOpenFailed(true);
       });
+    const openTimer = setTimeout(() => {
+      if (!cancelled && !syncService.getYDocFor(session.dossierId)) setOpenFailed(true);
+    }, OPEN_TIMEOUT_MS);
     const unsubscribe = syncService.onStateChange((state) => {
       setSyncState(state);
       if (state.connected && !stopPresence) stopPresence = startPresence();
@@ -130,6 +161,7 @@ export function useCompanionSession(session: CompanionSession) {
     });
     return () => {
       cancelled = true;
+      clearTimeout(openTimer);
       unsubscribe();
       stopPresence?.();
       void closeCompanionSession();
@@ -211,5 +243,5 @@ export function useCompanionSession(session: CompanionSession) {
     }
   }, [dossierId, settle]);
 
-  return { dossierId, ydoc, error, syncState, data, pending, track };
+  return { dossierId, ydoc, error, openFailed, syncState, data, pending, track };
 }

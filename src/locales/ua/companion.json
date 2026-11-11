@@ -13,7 +13,11 @@
     "paste": "Вставити",
     "scan": "Сканувати",
     "invalidLink": "Посилання не розпізнано",
-    "cameraUnavailable": "Камера недоступна"
+    "cameraUnavailable": "Камера недоступна",
+    "erasePending_one": "Копія забутої справи досі на цьому телефоні",
+    "erasePending_few": "Копії {{count}} забутих справ досі на цьому телефоні",
+    "erasePending_many": "Копії {{count}} забутих справ досі на цьому телефоні",
+    "erasePending_other": "Копії {{count}} забутих справ досі на цьому телефоні"
   },
   "join": {
     "title": "Спільна справа",
@@ -28,7 +32,7 @@
     "map": "Мапа",
     "timeline": "Хронологія",
     "comments": "Коментарі",
-    "capture": "Зафіксувати",
+    "capture": "Новий",
     "settings": "Налаштування"
   },
   "status": {
@@ -59,7 +63,9 @@
     "results_few": "{{count}} результати",
     "results_many": "{{count}} результатів",
     "results_other": "{{count}} результату",
-    "searchHint": "Пошук або # для мітки"
+    "searchHint": "Пошук або # для тегу",
+    "openFailed": "Не вдалося відкрити",
+    "retry": "Повторити"
   },
   "element": {
     "untitled": "Без назви",
@@ -99,7 +105,6 @@
     "label": "Назва",
     "notes": "Нотатка",
     "photo": "Зробити фото",
-    "removePhoto": "Прибрати фото",
     "position": "Додати моє розташування",
     "locating": "Визначення…",
     "positionFailed": "Розташування недоступне",
@@ -107,20 +112,23 @@
     "save": "Додати до справи",
     "saving": "Додавання…",
     "defaultLabel": "Фіксація {{time}}",
-    "tooLarge": "Фото завелике",
+    "tooLarge": "Файл завеликий: {{name}}",
     "failed": "Не вдалося додати",
-    "source": "Джерело"
+    "source": "Джерело",
+    "addFile": "Додати файл",
+    "removeFile": "Прибрати {{name}}",
+    "unsupported": "Непідтримуваний тип: {{name}}"
   },
   "settings": {
     "identity": "Ваше ім'я",
-    "connection": "Підключення",
-    "thisPhone": "Цей телефон",
     "forget": "Забути цю справу",
     "forgetConfirm": "Видалити",
     "forgetPending_one": "{{count}} ненадіслану зміну буде втрачено.",
     "forgetPending_few": "{{count}} ненадіслані зміни буде втрачено.",
     "forgetPending_many": "{{count}} ненадісланих змін буде втрачено.",
-    "forgetPending_other": "{{count}} ненадісланої зміни буде втрачено."
+    "forgetPending_other": "{{count}} ненадісланої зміни буде втрачено.",
+    "dossier": "Ця справа",
+    "app": "Застосунок"
   },
   "graph": {
     "label": "Граф сусідства",
@@ -135,13 +143,37 @@
     "empty": "Немає елементів із розташуванням"
   },
   "timeline": {
-    "empty": "Немає датованих елементів"
+    "empty": "Немає датованих елементів",
+    "newestFirst": "Спершу новіші",
+    "goTo": "Перейти до дати",
+    "period_one": "{{period}}, {{count}} запис",
+    "period_other": "{{period}}, {{count}} записів",
+    "period_few": "{{period}}, {{count}} записи",
+    "period_many": "{{period}}, {{count}} записів"
   },
   "edit": {
     "save": "Зберегти",
     "notes": "Редагувати нотатку",
     "addNote": "Додати нотатку",
-    "invalid": "Неприпустиме значення"
+    "invalid": "Неприпустиме значення",
+    "addProperty": "Властивість",
+    "propertyKey": "Назва властивості",
+    "keyTaken": "Уже є",
+    "next": "Далі",
+    "deleteProperty": "Видалити",
+    "deletePropertyConfirm": "Підтвердити видалення",
+    "type": "Тип",
+    "types": {
+      "text": "Текст",
+      "number": "Число",
+      "date": "Дата",
+      "datetime": "Дата й час",
+      "boolean": "Так/ні",
+      "country": "Країна",
+      "choice": "Вибір",
+      "link": "Посилання",
+      "geo": "Розташування"
+    }
   },
   "links": {
     "add": "Звʼязати",
@@ -183,7 +215,40 @@
     "delete": "Видалити «{{name}}»"
   },
   "tags": {
-    "remove": "Прибрати мітку {{tag}}",
-    "none": "Немає міток"
+    "remove": "Прибрати тег {{tag}}",
+    "none": "Немає тегів",
+    "title": "Теги",
+    "filter": "Фільтр",
+    "noneInDossier": "У цій справі немає тегів",
+    "done": "Готово",
+    "edit": "Змінити теги",
+    "add": "Тег"
+  },
+  "about": {
+    "title": "Про програму",
+    "version": "Версія {{version}}",
+    "license": "Ліцензія MIT",
+    "docs": "Документація",
+    "github": "Вихідний код",
+    "kofi": "Підтримати на Ko-fi",
+    "thirdParty": "Ліцензії третіх сторін"
+  },
+  "preferences": {
+    "title": "Вигляд",
+    "theme": "Тема",
+    "light": "Світла",
+    "dark": "Темна",
+    "system": "Системна",
+    "language": "Мова"
+  },
+  "peers": {
+    "editing": "{{name}} редагує",
+    "viewing": "{{name}} переглядає"
+  },
+  "sort": {
+    "title": "Сортувати",
+    "recent": "Останні",
+    "name": "Назва",
+    "links": "Зв'язки"
   }
 }

@@ -12,15 +12,17 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, QrCode } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Settings } from 'lucide-react';
 import { isValidKeyString } from '../services/cryptoService';
 import { parseJoinLink } from '../utils/joinUrl';
-import { getSession, listSessions, saveSession, type CompanionSession } from './sessions';
+import { getSession, listSessions, pendingDeletions, saveSession, type CompanionSession } from './sessions';
+import { eraseLocalCopy } from './erase';
 import { getLocalUser, hasChosenName, setLocalUserName } from './presence';
 import { DossierView } from './DossierView';
 import { LinkEntry } from './LinkEntry';
+import { AppSettings } from './AppSettings';
 import { currentRoute, navigate, type Route } from './router';
-import { primaryButton, inputClass } from './ui';
+import { primaryButton, inputClass, secondaryButton } from './ui';
 
 export default function CompanionApp() {
   const [route, setRoute] = useState<Route>(currentRoute);
@@ -32,6 +34,7 @@ export default function CompanionApp() {
   }, []);
 
   if (route.kind === 'join') return <JoinScreen roomId={route.roomId} />;
+  if (route.kind === 'app') return <AppSettingsScreen />;
   if (route.kind === 'dossier') {
     const session = getSession(route.dossierId);
     if (session) return <DossierView key={session.dossierId} session={session} />;
@@ -39,29 +42,81 @@ export default function CompanionApp() {
   return <HomeScreen />;
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, title, onBack, onSettings }: {
+  children: React.ReactNode;
+  title?: string;
+  onBack?: () => void;
+  onSettings?: () => void;
+}) {
+  const { t } = useTranslation('companion');
   return (
     <div className="min-h-dvh bg-bg-primary text-text-primary flex flex-col">
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-border-default">
-        <span className="text-sm font-semibold">ZeroNeurone</span>
+      <header className={`flex items-center gap-1 border-b border-border-default ${onBack || onSettings ? 'px-2 py-1.5' : 'px-4 py-3'}`}>
+        {onBack && (
+          <button type="button" className="w-10 h-10 flex items-center justify-center rounded text-text-secondary active:bg-bg-secondary" onClick={onBack} aria-label={t('back')}>
+            <ArrowLeft size={20} />
+          </button>
+        )}
+        <span className={`flex-1 text-sm font-semibold ${onBack ? '' : onSettings ? 'px-2' : ''}`}>{title ?? 'ZeroNeurone'}</span>
+        {onSettings && (
+          <button type="button" className="w-10 h-10 flex items-center justify-center rounded text-text-secondary active:bg-bg-secondary" onClick={onSettings} aria-label={t('tabs.settings')} title={t('tabs.settings')}>
+            <Settings size={20} />
+          </button>
+        )}
       </header>
       <main className="flex-1 px-4 py-4">{children}</main>
     </div>
   );
 }
 
+function AppSettingsScreen() {
+  const { t } = useTranslation('companion');
+  // Back to the home page they were opened from, or to it when opened directly
+  const back = () => ((window.history.state as { fromHome?: boolean } | null)?.fromHome ? window.history.back() : navigate('', true));
+  return (
+    <Shell title={t('tabs.settings')} onBack={back}>
+      <AppSettings />
+    </Shell>
+  );
+}
+
 function HomeScreen() {
   const { t } = useTranslation('companion');
   const sessions = listSessions();
+  const [toErase, setToErase] = useState(() => pendingDeletions());
+  // Erasing from the start when copies are pending: retried at each visit
+  const [erasing, setErasing] = useState(() => pendingDeletions().length > 0);
+  const runErase = useCallback(async () => {
+    for (const id of pendingDeletions()) await eraseLocalCopy(id);
+    setToErase(pendingDeletions());
+    setErasing(false);
+  }, []);
+  const retryErase = () => {
+    setErasing(true);
+    void runErase();
+  };
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      for (const id of pendingDeletions()) await eraseLocalCopy(id);
+      if (cancelled) return;
+      setToErase(pendingDeletions());
+      setErasing(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   return (
-    <Shell>
+    <Shell onSettings={() => navigate('app', false, { fromHome: true })}>
       <div className="space-y-6">
-        {sessions.length === 0 ? (
-          <div className="flex flex-col items-center text-center gap-3 pt-8 text-text-secondary">
-            <QrCode size={32} className="text-text-tertiary" />
-            <p className="text-sm">{t('home.empty')}</p>
+        {toErase.length > 0 && (
+          <div className="flex items-center gap-3 p-3 rounded border border-warning bg-bg-secondary text-sm">
+            <span className="flex-1">{t('home.erasePending', { count: toErase.length })}</span>
+            <button type="button" className={secondaryButton} onClick={retryErase} disabled={erasing}>
+              {t('elements.retry')}
+            </button>
           </div>
-        ) : (
+        )}
+        {sessions.length > 0 && (
           <section>
             <h1 className="text-xs text-text-secondary font-medium uppercase tracking-wider mb-2">{t('home.title')}</h1>
             <ul className="divide-y divide-border-default border border-border-default rounded">
@@ -84,7 +139,7 @@ function HomeScreen() {
           {sessions.length > 0 && (
             <h2 className="text-xs text-text-secondary font-medium uppercase tracking-wider mb-2">{t('home.add')}</h2>
           )}
-          <LinkEntry />
+          <LinkEntry empty={sessions.length === 0} />
         </section>
       </div>
     </Shell>

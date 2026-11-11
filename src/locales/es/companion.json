@@ -13,7 +13,9 @@
     "paste": "Pegar",
     "scan": "Escanear",
     "invalidLink": "Enlace no reconocido",
-    "cameraUnavailable": "Cámara no disponible"
+    "cameraUnavailable": "Cámara no disponible",
+    "erasePending_one": "Copia de un expediente olvidado aún en este teléfono",
+    "erasePending_other": "Copias de {{count}} expedientes olvidados aún en este teléfono"
   },
   "join": {
     "title": "Expediente compartido",
@@ -28,7 +30,7 @@
     "map": "Mapa",
     "timeline": "Cronología",
     "comments": "Comentarios",
-    "capture": "Capturar",
+    "capture": "Nuevo",
     "settings": "Ajustes"
   },
   "status": {
@@ -53,7 +55,9 @@
     "clear": "Borrar la búsqueda",
     "results_one": "{{count}} resultado",
     "results_other": "{{count}} resultados",
-    "searchHint": "Buscar, o # para una etiqueta"
+    "searchHint": "Buscar, o # para un tag",
+    "openFailed": "No se puede abrir",
+    "retry": "Reintentar"
   },
   "element": {
     "untitled": "Sin título",
@@ -87,7 +91,6 @@
     "label": "Título",
     "notes": "Nota",
     "photo": "Hacer una foto",
-    "removePhoto": "Quitar la foto",
     "position": "Añadir mi ubicación",
     "locating": "Localizando…",
     "positionFailed": "Ubicación no disponible",
@@ -95,18 +98,21 @@
     "save": "Añadir al expediente",
     "saving": "Añadiendo…",
     "defaultLabel": "Captura del {{time}}",
-    "tooLarge": "Foto demasiado pesada",
+    "tooLarge": "Archivo demasiado pesado: {{name}}",
     "failed": "Error al añadir",
-    "source": "Fuente"
+    "source": "Fuente",
+    "addFile": "Añadir un archivo",
+    "removeFile": "Quitar {{name}}",
+    "unsupported": "Tipo no admitido: {{name}}"
   },
   "settings": {
     "identity": "Su nombre",
-    "connection": "Conexión",
-    "thisPhone": "Este teléfono",
     "forget": "Olvidar este expediente",
     "forgetConfirm": "Borrar",
     "forgetPending_one": "{{count}} cambio no enviado se perderá.",
-    "forgetPending_other": "{{count}} cambios no enviados se perderán."
+    "forgetPending_other": "{{count}} cambios no enviados se perderán.",
+    "dossier": "Este expediente",
+    "app": "Aplicación"
   },
   "graph": {
     "label": "Grafo de vecindad",
@@ -119,13 +125,35 @@
     "empty": "Ningún elemento localizado"
   },
   "timeline": {
-    "empty": "Ningún elemento fechado"
+    "empty": "Ningún elemento fechado",
+    "newestFirst": "Más reciente primero",
+    "goTo": "Ir a una fecha",
+    "period_one": "{{period}}, {{count}} entrada",
+    "period_other": "{{period}}, {{count}} entradas"
   },
   "edit": {
     "save": "Guardar",
     "notes": "Editar la nota",
     "addNote": "Añadir una nota",
-    "invalid": "Valor no válido"
+    "invalid": "Valor no válido",
+    "addProperty": "Propiedad",
+    "propertyKey": "Nombre de la propiedad",
+    "keyTaken": "Ya existe",
+    "next": "Siguiente",
+    "deleteProperty": "Eliminar",
+    "deletePropertyConfirm": "Confirmar eliminación",
+    "type": "Tipo",
+    "types": {
+      "text": "Texto",
+      "number": "Número",
+      "date": "Fecha",
+      "datetime": "Fecha y hora",
+      "boolean": "Sí/no",
+      "country": "País",
+      "choice": "Opción",
+      "link": "Enlace",
+      "geo": "Posición"
+    }
   },
   "links": {
     "add": "Vincular",
@@ -165,7 +193,40 @@
     "delete": "Eliminar «{{name}}»"
   },
   "tags": {
-    "remove": "Quitar la etiqueta {{tag}}",
-    "none": "Ninguna etiqueta"
+    "remove": "Quitar el tag {{tag}}",
+    "none": "Ningún tag",
+    "title": "Tags",
+    "filter": "Filtrar",
+    "noneInDossier": "Ningún tag en este expediente",
+    "done": "Hecho",
+    "edit": "Editar tags",
+    "add": "Tag"
+  },
+  "about": {
+    "title": "Acerca de",
+    "version": "Versión {{version}}",
+    "license": "Licencia MIT",
+    "docs": "Documentación",
+    "github": "Código fuente",
+    "kofi": "Apoyar en Ko-fi",
+    "thirdParty": "Licencias de terceros"
+  },
+  "preferences": {
+    "title": "Visualización",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "language": "Idioma"
+  },
+  "peers": {
+    "editing": "{{name}} edita",
+    "viewing": "{{name}} consulta"
+  },
+  "sort": {
+    "title": "Ordenar",
+    "recent": "Recientes",
+    "name": "Nombre",
+    "links": "Vínculos"
   }
 }

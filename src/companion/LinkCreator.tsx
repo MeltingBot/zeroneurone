@@ -62,7 +62,7 @@ export function LinkCreator({ from, s, tabId, onClose }: {
     setBusy(true);
     try {
       const id = await s.track(() => createCapture(ydoc, s.dossierId, {
-        label: query.trim(), notes: '', photo: null, geo: null, source, tabId,
+        label: query.trim(), notes: '', files: [], geo: null, source, tabId,
       }, s.syncState.connected));
       setTarget({ id, label: query.trim(), createdHere: true });
     } finally {

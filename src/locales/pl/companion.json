@@ -13,7 +13,11 @@
     "paste": "Wklej",
     "scan": "Skanuj",
     "invalidLink": "Nierozpoznany link",
-    "cameraUnavailable": "Aparat niedostępny"
+    "cameraUnavailable": "Aparat niedostępny",
+    "erasePending_one": "Kopia zapomnianej sprawy wciąż na tym telefonie",
+    "erasePending_few": "Kopie {{count}} zapomnianych spraw wciąż na tym telefonie",
+    "erasePending_many": "Kopie {{count}} zapomnianych spraw wciąż na tym telefonie",
+    "erasePending_other": "Kopie {{count}} zapomnianych spraw wciąż na tym telefonie"
   },
   "join": {
     "title": "Udostępniona sprawa",
@@ -28,7 +32,7 @@
     "map": "Mapa",
     "timeline": "Oś czasu",
     "comments": "Komentarze",
-    "capture": "Zapisz",
+    "capture": "Nowy",
     "settings": "Ustawienia"
   },
   "status": {
@@ -59,7 +63,9 @@
     "results_few": "{{count}} wyniki",
     "results_many": "{{count}} wyników",
     "results_other": "{{count}} wyniku",
-    "searchHint": "Szukaj lub # dla tagu"
+    "searchHint": "Szukaj lub # dla tagu",
+    "openFailed": "Nie można otworzyć",
+    "retry": "Spróbuj ponownie"
   },
   "element": {
     "untitled": "Bez tytułu",
@@ -99,7 +105,6 @@
     "label": "Tytuł",
     "notes": "Notatka",
     "photo": "Zrób zdjęcie",
-    "removePhoto": "Usuń zdjęcie",
     "position": "Dodaj moją lokalizację",
     "locating": "Lokalizowanie…",
     "positionFailed": "Lokalizacja niedostępna",
@@ -107,20 +112,23 @@
     "save": "Dodaj do sprawy",
     "saving": "Dodawanie…",
     "defaultLabel": "Zapis z {{time}}",
-    "tooLarge": "Zdjęcie jest za duże",
+    "tooLarge": "Plik jest za duży: {{name}}",
     "failed": "Nie udało się dodać",
-    "source": "Źródło"
+    "source": "Źródło",
+    "addFile": "Dodaj plik",
+    "removeFile": "Usuń {{name}}",
+    "unsupported": "Nieobsługiwany typ: {{name}}"
   },
   "settings": {
     "identity": "Twoje imię",
-    "connection": "Połączenie",
-    "thisPhone": "Ten telefon",
     "forget": "Zapomnij tę sprawę",
     "forgetConfirm": "Usuń",
     "forgetPending_one": "{{count}} niewysłana zmiana zostanie utracona.",
     "forgetPending_few": "{{count}} niewysłane zmiany zostaną utracone.",
     "forgetPending_many": "{{count}} niewysłanych zmian zostanie utraconych.",
-    "forgetPending_other": "{{count}} niewysłanej zmiany zostanie utracone."
+    "forgetPending_other": "{{count}} niewysłanej zmiany zostanie utracone.",
+    "dossier": "Ta sprawa",
+    "app": "Aplikacja"
   },
   "graph": {
     "label": "Graf sąsiedztwa",
@@ -135,13 +143,37 @@
     "empty": "Brak zlokalizowanych elementów"
   },
   "timeline": {
-    "empty": "Brak elementów z datą"
+    "empty": "Brak elementów z datą",
+    "newestFirst": "Najnowsze najpierw",
+    "goTo": "Przejdź do daty",
+    "period_one": "{{period}}, {{count}} wpis",
+    "period_other": "{{period}}, {{count}} wpisów",
+    "period_few": "{{period}}, {{count}} wpisy",
+    "period_many": "{{period}}, {{count}} wpisów"
   },
   "edit": {
     "save": "Zapisz",
     "notes": "Edytuj notatkę",
     "addNote": "Dodaj notatkę",
-    "invalid": "Nieprawidłowa wartość"
+    "invalid": "Nieprawidłowa wartość",
+    "addProperty": "Właściwość",
+    "propertyKey": "Nazwa właściwości",
+    "keyTaken": "Już istnieje",
+    "next": "Dalej",
+    "deleteProperty": "Usuń",
+    "deletePropertyConfirm": "Potwierdź usunięcie",
+    "type": "Typ",
+    "types": {
+      "text": "Tekst",
+      "number": "Liczba",
+      "date": "Data",
+      "datetime": "Data i godzina",
+      "boolean": "Tak/nie",
+      "country": "Kraj",
+      "choice": "Wybór",
+      "link": "Link",
+      "geo": "Położenie"
+    }
   },
   "links": {
     "add": "Połącz",
@@ -184,6 +216,39 @@
   },
   "tags": {
     "remove": "Usuń tag {{tag}}",
-    "none": "Brak tagów"
+    "none": "Brak tagów",
+    "title": "Tagi",
+    "filter": "Filtruj",
+    "noneInDossier": "Brak tagów w tej sprawie",
+    "done": "Gotowe",
+    "edit": "Edytuj tagi",
+    "add": "Tag"
+  },
+  "about": {
+    "title": "O programie",
+    "version": "Wersja {{version}}",
+    "license": "Licencja MIT",
+    "docs": "Dokumentacja",
+    "github": "Kod źródłowy",
+    "kofi": "Wesprzyj na Ko-fi",
+    "thirdParty": "Licencje zewnętrzne"
+  },
+  "preferences": {
+    "title": "Wygląd",
+    "theme": "Motyw",
+    "light": "Jasny",
+    "dark": "Ciemny",
+    "system": "Systemowy",
+    "language": "Język"
+  },
+  "peers": {
+    "editing": "{{name}} edytuje",
+    "viewing": "{{name}} przegląda"
+  },
+  "sort": {
+    "title": "Sortuj",
+    "recent": "Ostatnie",
+    "name": "Nazwa",
+    "links": "Powiązania"
   }
 }

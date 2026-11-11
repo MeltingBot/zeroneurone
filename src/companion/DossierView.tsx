@@ -7,22 +7,32 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 import {
-  ArrowLeft, Camera, Check, ChevronRight, Clock, Link2, List, Loader2, Plus, Tag, Trash2, Map as MapIcon, MapPin, MessageSquare, RotateCcw, Search, Settings, X,
+  ArrowDownAZ, ArrowLeft, Camera, Check, ChevronRight, Clock, FileText, Link2, List, Loader2, Paperclip, Plus, Tag, Trash2, Map as MapIcon, MapPin, MessageSquare, RotateCcw, Search, Send, Settings, Waypoints, X,
 } from 'lucide-react';
 import type { Comment, Element, Link } from '../types';
 import { getYMaps } from '../types/yjs';
 import { assembleChunks } from '../services/assetSync';
-import { deleteYDocDatabase } from '../services/yjs/ydocName';
+import { eraseLocalCopy } from './erase';
 import { safeDataImageUrl } from '../utils/escapeHtml';
 import type { CompanionSession } from './sessions';
 import { removeSession } from './sessions';
 import { clearPending } from './pending';
-import { getLocalUser, setLocalUserName } from './presence';
 import { closeCompanionSession, useCompanionSession, type AssetEntry } from './useCompanionSession';
-import { addComment, createCapture, deleteElement, deleteLink, PhotoTooLargeError, setCommentResolved } from './actions';
+import { addComment, createCapture, deleteElement, deleteLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
+import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes';
 import { navigate } from './router';
+import { AppSettings } from './AppSettings';
+import { IconAction } from './IconAction';
+import { usePeerMarks, useRemoteTouches, type PeerMark } from './activity';
+import { linkCounts, readSort, saveSort, sortElements, type ElementSort } from './sorting';
+
+const SORTS = [
+  { id: 'recent', Icon: Clock },
+  { id: 'name', Icon: ArrowDownAZ },
+  { id: 'links', Icon: Waypoints },
+] as const;
 import { NeighborhoodGraph } from './NeighborhoodGraph';
-import { NotesSection, PropertyRows } from './ElementEditors';
+import { AddProperty, ElementTags, NotesSection, PropertyRows } from './ElementEditors';
 import { LinkCreator } from './LinkCreator';
 import { TabMembership, TabsBar, TabsManager } from './Tabs';
 import type { CompanionData } from './useCompanionSession';
@@ -31,7 +41,7 @@ import { CompanionTimeline } from './CompanionTimeline';
 import { formatPreciseDate } from '../utils/dates';
 
 const CompanionMap = lazy(() => import('./CompanionMap'));
-import { inputClass, primaryButton, secondaryButton, sectionTitle } from './ui';
+import { choiceButton, inputClass, primaryButton, dangerButton, secondaryButton, sectionTitle } from './ui';
 
 type Tab = 'elements' | 'map' | 'timeline' | 'comments' | 'capture' | 'settings';
 
@@ -126,7 +136,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
     { id: 'map', icon: MapIcon, label: t('tabs.map') },
     { id: 'timeline', icon: Clock, label: t('tabs.timeline') },
     { id: 'comments', icon: MessageSquare, label: t('tabs.comments'), badge: openComments },
-    { id: 'capture', icon: Camera, label: t('tabs.capture') },
+    { id: 'capture', icon: Plus, label: t('tabs.capture') },
   ];
 
   const searchFor = (q: string) => {
@@ -200,7 +210,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
 
       <main ref={mainRef} className={`flex-1 min-h-0 overscroll-contain ${tab === 'map' && !element ? 'relative overflow-hidden' : 'overflow-y-auto'}`}>
         {element ? (
-          <ElementDetail element={element} s={s} onOpen={open} onDeleted={closeDetail} tabId={shownTab?.id ?? null} focusedEventId={focusedEvent} onTag={filterByTag} />
+          <ElementDetail key={element.id} element={element} s={s} onOpen={open} onDeleted={closeDetail} tabId={shownTab?.id ?? null} focusedEventId={focusedEvent} onTag={filterByTag} />
         ) : tab === 'elements' ? (
           <>
             <InstallHint />
@@ -211,7 +221,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
             <CompanionMap elements={view.elements} links={view.links} assets={s.data.assets} onOpen={open} />
           </Suspense>
         ) : tab === 'timeline' ? (
-          <CompanionTimeline elements={view.elements} links={view.links} onOpen={open} />
+          <CompanionTimeline elements={view.elements} links={view.links} onOpen={open} scroller={mainRef} />
         ) : tab === 'comments' ? (
           <CommentsTab s={s} onOpen={open} />
         ) : tab === 'capture' ? (
@@ -322,7 +332,9 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
   onOpen: (id: string, eventId?: string) => void;
   onTag: (tag: string) => void;
 }) {
-  const { t } = useTranslation('companion');
+  const { t, i18n } = useTranslation('companion');
+  const peers = usePeerMarks(s.ydoc, s.syncState.connected);
+  const touched = useRemoteTouches(s.ydoc);
   // "#…" looks for a tag, not for text
   const tagQuery = query.startsWith('#') ? query.slice(1).trim().toLowerCase() : null;
   const hits = useCompanionSearch(data, tagQuery === null ? query : '', t('element.untitled'));
@@ -331,11 +343,27 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
     for (const e of data.elements) for (const tag of e.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
     return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [data.elements]);
+  const [sort, setSort] = useState<ElementSort>(readSort);
+  // Links counted over the whole dossier, whatever tab is shown
+  const counts = useMemo(() => linkCounts(s.data.links), [s.data.links]);
   const recent = useMemo(
-    () => data.elements.filter((e) => !e.isAnnotation).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()),
-    [data.elements],
+    () => sortElements(data.elements.filter((e) => !e.isAnnotation), sort, counts, i18n.language),
+    [data.elements, sort, counts, i18n.language],
   );
+  const pickSort = (next: ElementSort) => {
+    setSort(next);
+    saveSort(next);
+  };
   const byId = useMemo(() => new Map(data.elements.map((e) => [e.id, e])), [data.elements]);
+
+  if (s.data.elements.length === 0 && s.openFailed && !s.ydoc) {
+    return (
+      <div className="flex flex-col items-center gap-3 px-8 pt-16 text-center text-text-secondary">
+        <p className="text-sm">{t('elements.openFailed')}</p>
+        <IconAction icon={RotateCcw} label={t('elements.retry')} onClick={() => window.location.reload()} />
+      </div>
+    );
+  }
 
   if (s.data.elements.length === 0) {
     const fetching = !s.ydoc || (s.syncState.connected && s.syncState.syncing);
@@ -373,6 +401,23 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
   return (
     <div>
       {hits && <p className="px-4 pt-2 pb-1 text-xs text-text-tertiary">{t('elements.results', { count: hits.length })}</p>}
+      {!hits && recent.length > 1 && (
+        <div className="flex justify-end gap-1 px-2 pt-1" role="group" aria-label={t('sort.title')}>
+          {SORTS.map(({ id, Icon }) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={sort === id}
+              aria-label={t(`sort.${id}`)}
+              title={t(`sort.${id}`)}
+              onClick={() => pickSort(id)}
+              className={`w-9 h-9 flex items-center justify-center rounded ${sort === id ? 'text-accent bg-accent-light' : 'text-text-tertiary'}`}
+            >
+              <Icon size={17} />
+            </button>
+          ))}
+        </div>
+      )}
       {!hits && data.elements.length === 0 && (
         <p className="text-sm text-text-tertiary text-center pt-8">{t('elements.noMatch')}</p>
       )}
@@ -392,6 +437,8 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
                     excerpt={hit.excerpt}
                     thumb={!hit.isLink && el ? firstThumbnail(el, data.assets) : null}
                     isLink={hit.isLink}
+                    peers={hit.isLink ? undefined : peers.get(hit.elementId)}
+                    touched={!hit.isLink && touched.has(hit.elementId)}
                     onClick={() => onOpen(hit.elementId, hit.eventId)}
                   />
                 );
@@ -404,6 +451,9 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
                   excerpt={null}
                   thumb={firstThumbnail(e, data.assets)}
                   isLink={false}
+                  peers={peers.get(e.id)}
+                  touched={touched.has(e.id)}
+                  linkCount={sort === 'links' ? counts.get(e.id) ?? 0 : undefined}
                   onClick={() => onOpen(e.id)}
                 />
               ))}
@@ -469,16 +519,22 @@ function SearchBar({ query, onQuery, tags, onRemoveTag }: {
   );
 }
 
-function ResultRow({ title, subtitle, excerpt, thumb, isLink, onClick }: {
+function ResultRow({ title, subtitle, excerpt, thumb, isLink, peers, touched, linkCount, onClick }: {
   title: string;
   subtitle: string | null;
   excerpt: Excerpt | null;
   thumb: string | null;
   isLink: boolean;
+  /** Who is on this element elsewhere */
+  peers?: PeerMark[];
+  /** Just changed from another device */
+  touched?: boolean;
+  /** Shown when the list is ordered by links */
+  linkCount?: number;
   onClick: () => void;
 }) {
   return (
-    <li>
+    <li className={`transition-colors duration-700 ${touched ? 'bg-accent-light' : ''}`} data-touched={touched ? 'true' : undefined}>
       <button type="button" className="w-full min-h-14 flex items-center gap-3 px-4 py-2 text-left active:bg-bg-secondary" onClick={onClick}>
         {thumb && <img src={thumb} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0 border border-border-default" />}
         {isLink && <Link2 size={16} className="text-text-tertiary flex-shrink-0" />}
@@ -492,9 +548,37 @@ function ResultRow({ title, subtitle, excerpt, thumb, isLink, onClick }: {
             <span className="block text-xs text-text-tertiary truncate">{subtitle}</span>
           ) : null}
         </span>
+        {peers && peers.length > 0 && <PeerBadges peers={peers} />}
+        {linkCount !== undefined && (
+          <span className="flex items-center gap-1 text-xs text-text-tertiary tabular-nums flex-shrink-0">
+            <Link2 size={13} />
+            {linkCount}
+          </span>
+        )}
         <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
       </button>
     </li>
+  );
+}
+
+/** Who is on an element: the first name, filled when they move or edit it */
+function PeerBadges({ peers }: { peers: PeerMark[] }) {
+  const { t } = useTranslation('companion');
+  const label = peers.map((p) => t(p.active ? 'peers.editing' : 'peers.viewing', { name: p.name })).join(', ');
+  // The one editing first
+  const shown = [...peers].sort((a, b) => Number(b.active) - Number(a.active))[0];
+  return (
+    <span className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[45%]" role="img" aria-label={label} title={label}>
+      <span
+        className="h-6 px-2 rounded-full border text-xs font-medium truncate leading-[22px]"
+        style={shown.active
+          ? { backgroundColor: shown.color, borderColor: shown.color, color: '#fff' }
+          : { backgroundColor: 'var(--color-bg-primary)', borderColor: shown.color, color: shown.color }}
+      >
+        {shown.name}
+      </span>
+      {peers.length > 1 && <span className="text-xs text-text-tertiary">+{peers.length - 1}</span>}
+    </span>
   );
 }
 
@@ -527,6 +611,7 @@ function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, o
 }) {
   const { t, i18n } = useTranslation('companion');
   const [linking, setLinking] = useState(false);
+  const [addingProperty, setAddingProperty] = useState(false);
   const byId = useMemo(() => new Map(s.data.elements.map((e) => [e.id, e])), [s.data.elements]);
   const links = s.data.links.filter((l) => l.fromId === element.id || l.toId === element.id);
   const comments = s.data.comments
@@ -538,20 +623,7 @@ function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, o
 
   return (
     <div className="p-4 space-y-5">
-      {element.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {element.tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => onTag(tag)}
-              className="h-8 px-2.5 inline-flex items-center rounded-full border border-border-default text-sm text-text-secondary active:bg-bg-secondary"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
+      <ElementTags element={element} s={s} writable={!s.data.closed} onTag={onTag} />
 
       <NotesSection element={element} s={s} writable={!s.data.closed} />
 
@@ -563,9 +635,22 @@ function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, o
         </div>
       )}
 
-      {(element.properties.length > 0 || collected || period || element.source || geo) && (
+      {(element.properties.length > 0 || collected || period || element.source || geo || !s.data.closed) && (
         <section className="space-y-1.5">
-          <h2 className={sectionTitle}>{t('element.details')}</h2>
+          <div className="flex items-center">
+            <h2 className={`${sectionTitle} flex-1`}>{t('element.details')}</h2>
+            {!s.data.closed && !addingProperty && (
+              <button
+                type="button"
+                className="-my-2 w-10 h-10 inline-flex items-center justify-center text-accent"
+                onClick={() => setAddingProperty(true)}
+                aria-label={t('edit.addProperty')}
+                title={t('edit.addProperty')}
+              >
+                <Plus size={20} />
+              </button>
+            )}
+          </div>
           <div className="text-sm divide-y divide-border-default">
             {period && <Row label={t('element.period')} value={period} />}
             {collected && <Row label={t('element.date')} value={collected} />}
@@ -586,6 +671,9 @@ function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, o
               />
             )}
             <PropertyRows element={element} s={s} writable={!s.data.closed} />
+            {addingProperty && !s.data.closed && (
+              <AddProperty element={element} s={s} onClose={() => setAddingProperty(false)} />
+            )}
           </div>
         </section>
       )}
@@ -603,11 +691,12 @@ function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, o
             {!s.data.closed && (
               <button
                 type="button"
-                className="-my-2 h-9 px-2 inline-flex items-center gap-1 text-sm text-accent"
+                className="-my-2 w-10 h-10 inline-flex items-center justify-center text-accent"
                 onClick={() => setLinking(true)}
+                aria-label={t('links.add')}
+                title={t('links.add')}
               >
-                <Plus size={16} />
-                {t('links.add')}
+                <Plus size={20} />
               </button>
             )}
           </div>
@@ -695,13 +784,13 @@ function DeleteElement({ element, linkCount, s, onDeleted }: {
         <div className="space-y-2">
           <p className="text-sm">{t('delete.confirmElement', { label: element.label || t('element.untitled') })}</p>
           {linkCount > 0 && <p className="text-xs text-text-tertiary">{t('delete.linksToo', { count: linkCount })}</p>}
-          <div className="flex gap-2">
-            <button type="button" className={`${secondaryButton} flex-1`} onClick={() => setConfirming(false)}>{t('cancel')}</button>
-            <button type="button" className={`${secondaryButton} flex-1 text-error`} onClick={remove}>{t('delete.confirm')}</button>
+          <div className="flex justify-end gap-2">
+            <IconAction icon={X} label={t('cancel')} onClick={() => setConfirming(false)} />
+            <IconAction icon={Trash2} label={t('delete.confirm')} onClick={remove} variant="confirm" />
           </div>
         </div>
       ) : (
-        <button type="button" className={`${secondaryButton} w-full text-error`} onClick={() => setConfirming(true)}>
+        <button type="button" className={`${dangerButton} w-full`} onClick={() => setConfirming(true)}>
           <Trash2 size={16} />
           {t('delete.element')}
         </button>
@@ -741,8 +830,8 @@ function LinkRow({ link, self, other, onOpen, s }: {
     return (
       <li className="flex items-center gap-2 px-3 py-2 bg-bg-secondary">
         <span className="flex-1 min-w-0 text-sm">{t('delete.confirmLink')}</span>
-        <button type="button" className={secondaryButton} onClick={() => setConfirming(false)}>{t('cancel')}</button>
-        <button type="button" className={`${secondaryButton} text-error`} onClick={remove}>{t('delete.confirm')}</button>
+        <IconAction icon={X} label={t('cancel')} onClick={() => setConfirming(false)} />
+        <IconAction icon={Trash2} label={t('delete.confirm')} onClick={remove} variant="confirm" />
       </li>
     );
   }
@@ -888,9 +977,7 @@ function CommentForm({ s, targetId, targetType }: { s: Session; targetId: string
       />
       {text.trim() && (
         <div className="flex justify-end">
-          <button type="button" className={secondaryButton} onClick={send}>
-            {t('comments.send')}
-          </button>
+          <IconAction icon={Send} label={t('comments.send')} onClick={send} variant="primary" />
         </div>
       )}
     </div>
@@ -954,15 +1041,19 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
   const [label, setLabel] = useState('');
   const [notes, setNotes] = useState('');
   const [source, setSource] = useState('');
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  /** Photos and files picked, with a preview URL for images */
+  const [files, setFiles] = useState<{ key: string; file: File; url: string | null }[]>([]);
   const [geo, setGeo] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const mediaRef = useRef<HTMLInputElement>(null);
+  const filesRef = useRef(files);
+  useEffect(() => { filesRef.current = files; }, [files]);
 
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  // Preview URLs released with the form
+  useEffect(() => () => { filesRef.current.forEach((f) => f.url && URL.revokeObjectURL(f.url)); }, []);
 
   const locate = () => {
     if (!('geolocation' in navigator)) {
@@ -980,12 +1071,33 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
     );
   };
 
-  const pickPhoto = (file: File | null) => {
-    setPhoto(file);
-    setPreview(file ? URL.createObjectURL(file) : null);
+  const addFiles = (list: FileList | null, input: HTMLInputElement | null) => {
+    const picked = [...(list ?? [])];
+    if (input) input.value = '';
+    // A type the desktop refuses is turned down now; images are checked once
+    // re-encoded (an iPhone HEIC becomes a JPEG)
+    const refused = picked.find((f) => !f.type.startsWith('image/') && !isAllowedAttachment(f.name, f.type));
+    setError(refused ? t('capture.unsupported', { name: refused.name }) : null);
+    const accepted = picked.filter((f) => f !== refused && (f.type.startsWith('image/') || isAllowedAttachment(f.name, f.type)));
+    setFiles((current) => [
+      ...current,
+      ...accepted.map((file) => ({
+        key: crypto.randomUUID(),
+        file,
+        url: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+      })),
+    ]);
   };
 
-  const canSave = !s.data.closed && !!s.ydoc && !saving && (label.trim() || notes.trim() || photo);
+  const removeFile = (key: string) => {
+    setFiles((current) => {
+      const gone = current.find((f) => f.key === key);
+      if (gone?.url) URL.revokeObjectURL(gone.url);
+      return current.filter((f) => f.key !== key);
+    });
+  };
+
+  const canSave = !s.data.closed && !!s.ydoc && !saving && (label.trim() || notes.trim() || files.length > 0);
 
   const save = async () => {
     const dossierId = s.dossierId;
@@ -1000,7 +1112,7 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
       const id = await s.track(() => createCapture(ydoc, dossierId, {
         label: label.trim() || fallbackLabel,
         notes,
-        photo,
+        files: files.map((f) => f.file),
         geo: geo ? { lat: geo.lat, lng: geo.lng } : null,
         source,
         tabId,
@@ -1008,12 +1120,16 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
       setLabel('');
       setNotes('');
       setSource('');
-      pickPhoto(null);
+      files.forEach((f) => f.url && URL.revokeObjectURL(f.url));
+      setFiles([]);
       setGeo(null);
-      if (fileRef.current) fileRef.current.value = '';
       onCreated(id);
     } catch (err) {
-      setError(err instanceof PhotoTooLargeError ? t('capture.tooLarge') : t('capture.failed'));
+      setError(
+        err instanceof FileTooLargeError ? t('capture.tooLarge', { name: err.fileName })
+          : err instanceof UnsupportedFileError ? t('capture.unsupported', { name: err.fileName })
+            : t('capture.failed'),
+      );
     } finally {
       setSaving(false);
     }
@@ -1040,48 +1156,74 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
 
       <div className="space-y-2">
         <input
-          ref={fileRef}
+          ref={cameraRef}
           type="file"
           accept="image/*"
           capture="environment"
           className="hidden"
-          onChange={(e) => pickPhoto(e.target.files?.[0] ?? null)}
+          aria-hidden="true"
+          tabIndex={-1}
+          onChange={(e) => addFiles(e.target.files, e.currentTarget)}
         />
-        {preview ? (
-          <div className="relative">
-            <img src={preview} alt="" className="w-full max-h-48 object-contain rounded border border-border-default bg-bg-secondary" />
-            <button
-              type="button"
-              className="absolute top-2 right-2 p-1.5 rounded bg-bg-primary border border-border-default text-text-secondary"
-              onClick={() => { pickPhoto(null); if (fileRef.current) fileRef.current.value = ''; }}
-              aria-label={t('capture.removePhoto')}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ) : (
-          <button type="button" className={`${secondaryButton} w-full`} onClick={() => fileRef.current?.click()}>
-            <Camera size={16} />
-            {t('capture.photo')}
-          </button>
+        <input
+          ref={mediaRef}
+          type="file"
+          accept={`image/*,video/*,audio/*,${ATTACHMENT_ACCEPT}`}
+          multiple
+          className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+          data-testid="capture-files"
+          onChange={(e) => addFiles(e.target.files, e.currentTarget)}
+        />
+        {files.length > 0 && (
+          <ul className="grid grid-cols-3 gap-2">
+            {files.map((f) => (
+              <li key={f.key} className="relative aspect-square rounded border border-border-default bg-bg-secondary overflow-hidden">
+                {f.url ? (
+                  <img src={f.url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-1 text-text-secondary">
+                    <FileText size={20} />
+                    <span className="text-[11px] leading-tight text-center break-all line-clamp-2">{f.file.name}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded bg-bg-primary/90 border border-border-default text-text-secondary"
+                  onClick={() => removeFile(f.key)}
+                  aria-label={t('capture.removeFile', { name: f.file.name })}
+                >
+                  <X size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
+        <div className="grid grid-cols-3 gap-2">
+          <IconAction icon={Camera} label={t('capture.photo')} onClick={() => cameraRef.current?.click()} wide />
+          <IconAction icon={Paperclip} label={t('capture.addFile')} onClick={() => mediaRef.current?.click()} wide />
+          <IconAction
+            icon={geoStatus === 'locating' ? Loader2 : MapPin}
+            label={geoStatus === 'locating' ? t('capture.locating') : t('capture.position')}
+            onClick={locate}
+            disabled={geoStatus === 'locating' || !!geo}
+            wide
+            className={geoStatus === 'locating' ? '[&>svg]:animate-spin' : ''}
+          />
+        </div>
 
-        {geo ? (
+        {geo && (
           <div className="flex items-center gap-2 text-sm">
             <MapPin size={16} className="text-text-secondary" />
             <span className="flex-1">
               {geo.lat.toFixed(5)}, {geo.lng.toFixed(5)}
               <span className="text-xs text-text-tertiary"> ±{Math.round(geo.accuracy)} m</span>
             </span>
-            <button type="button" className="p-1 text-text-secondary" onClick={() => setGeo(null)} aria-label={t('capture.removePosition')}>
-              <X size={14} />
+            <button type="button" className="w-9 h-9 flex items-center justify-center text-text-secondary" onClick={() => setGeo(null)} aria-label={t('capture.removePosition')}>
+              <X size={16} />
             </button>
           </div>
-        ) : (
-          <button type="button" className={`${secondaryButton} w-full`} onClick={locate} disabled={geoStatus === 'locating'}>
-            <MapPin size={16} />
-            {geoStatus === 'locating' ? t('capture.locating') : t('capture.position')}
-          </button>
         )}
         {geoStatus === 'error' && <p className="text-xs text-error">{t('capture.positionFailed')}</p>}
       </div>
@@ -1100,21 +1242,22 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
 
 function SettingsTab({ s, session }: { s: Session; session: CompanionSession }) {
   const { t } = useTranslation('companion');
-  const [name, setName] = useState(() => getLocalUser().name);
+  const [part, setPart] = useState<'dossier' | 'app'>('dossier');
   const [confirmForget, setConfirmForget] = useState(false);
   const [forgetting, setForgetting] = useState(false);
   const { connected, reconnecting, peerCount } = s.syncState;
 
-  const saveName = () => {
-    const trimmed = name.trim();
-    if (trimmed) setLocalUserName(trimmed);
-  };
-
   const forget = async () => {
     setForgetting(true);
     try {
-      await closeCompanionSession();
-      await deleteYDocDatabase(session.dossierId).catch(() => undefined);
+      // Never held up by an open that does not answer: the session is
+      // forgotten whatever happens to the local copy
+      await Promise.race([
+        closeCompanionSession().catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+      // Not erased (database held): retried and shown on the home page
+      await eraseLocalCopy(session.dossierId);
     } finally {
       clearPending(session.dossierId);
       removeSession(session.dossierId);
@@ -1124,48 +1267,53 @@ function SettingsTab({ s, session }: { s: Session; session: CompanionSession }) 
 
   return (
     <div className="p-4 space-y-6">
-      <section className="space-y-2">
-        <h2 className={sectionTitle}>{t('settings.identity')}</h2>
-        <div className="flex gap-2">
-          <input
-            className={inputClass}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={saveName}
-            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            enterKeyHint="done"
-            autoComplete="nickname"
-            aria-label={t('settings.identity')}
-          />
-        </div>
-      </section>
-
-      <section className="space-y-1 text-sm">
-        <h2 className={`${sectionTitle} mb-2`}>{t('settings.connection')}</h2>
-        <p>{connected ? t('status.connected', { count: peerCount }) : reconnecting ? t('status.reconnecting') : t('status.offline')}</p>
-        <p className="text-text-secondary">{t('status.pending', { count: s.pending })}</p>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className={sectionTitle}>{t('settings.thisPhone')}</h2>
-        {confirmForget ? (
-          <div className="space-y-2">
-            {s.pending > 0 && <p className="text-sm text-error">{t('settings.forgetPending', { count: s.pending })}</p>}
-            <div className="flex gap-2">
-              <button type="button" className={`${secondaryButton} flex-1`} onClick={() => setConfirmForget(false)} disabled={forgetting}>
-                {t('cancel')}
-              </button>
-              <button type="button" className={`${secondaryButton} flex-1 text-error`} onClick={forget} disabled={forgetting}>
-                {t('settings.forgetConfirm')}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button type="button" className={`${secondaryButton} w-full text-error`} onClick={() => setConfirmForget(true)}>
-            {t('settings.forget')}
+      <div className="grid grid-cols-2 gap-2" role="tablist">
+        {(['dossier', 'app'] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={part === id}
+            className={choiceButton(part === id)}
+            onClick={() => setPart(id)}
+          >
+            {t(`settings.${id}`)}
           </button>
-        )}
-      </section>
+        ))}
+      </div>
+
+      {part === 'app' ? (
+        <AppSettings />
+      ) : (
+        <div className="space-y-6">
+          <div className="space-y-1 text-sm">
+            <p className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${connected ? 'bg-success' : reconnecting ? 'bg-warning' : 'bg-text-tertiary'}`} />
+              {connected ? t('status.connected', { count: peerCount }) : reconnecting ? t('status.reconnecting') : t('status.offline')}
+            </p>
+            {s.pending > 0 && <p className="text-warning">{t('status.pending', { count: s.pending })}</p>}
+          </div>
+
+          {confirmForget ? (
+            <div className="space-y-2">
+              {s.pending > 0 && <p className="text-sm text-error">{t('settings.forgetPending', { count: s.pending })}</p>}
+              <div className="flex gap-2">
+                <button type="button" className={`${secondaryButton} flex-1`} onClick={() => setConfirmForget(false)} disabled={forgetting}>
+                  {t('cancel')}
+                </button>
+                <button type="button" className={`${dangerButton} flex-1`} onClick={forget} disabled={forgetting}>
+                  {t('settings.forgetConfirm')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className={`${dangerButton} w-full`} onClick={() => setConfirmForget(true)}>
+              <Trash2 size={16} />
+              {t('settings.forget')}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -13,7 +13,9 @@
     "paste": "Itsatsi",
     "scan": "Eskaneatu",
     "invalidLink": "Esteka ez da ezagutu",
-    "cameraUnavailable": "Kamera ez dago erabilgarri"
+    "cameraUnavailable": "Kamera ez dago erabilgarri",
+    "erasePending_one": "Ahaztutako espediente baten kopia telefono honetan dago oraindik",
+    "erasePending_other": "Ahaztutako {{count}} espedienteren kopiak telefono honetan daude oraindik"
   },
   "join": {
     "title": "Partekatutako espedientea",
@@ -28,7 +30,7 @@
     "map": "Mapa",
     "timeline": "Kronologia",
     "comments": "Iruzkinak",
-    "capture": "Jaso",
+    "capture": "Berria",
     "settings": "Ezarpenak"
   },
   "status": {
@@ -53,7 +55,9 @@
     "clear": "Garbitu bilaketa",
     "results_one": "{{count}} emaitza",
     "results_other": "{{count}} emaitza",
-    "searchHint": "Bilatu, edo # etiketa baterako"
+    "searchHint": "Bilatu, edo # etiketa baterako",
+    "openFailed": "Ezin da ireki",
+    "retry": "Saiatu berriro"
   },
   "element": {
     "untitled": "Izenbururik gabe",
@@ -87,7 +91,6 @@
     "label": "Izenburua",
     "notes": "Oharra",
     "photo": "Atera argazki bat",
-    "removePhoto": "Kendu argazkia",
     "position": "Gehitu nire kokapena",
     "locating": "Kokatzen…",
     "positionFailed": "Kokapena ez dago erabilgarri",
@@ -95,18 +98,21 @@
     "save": "Gehitu espedientera",
     "saving": "Gehitzen…",
     "defaultLabel": "Jasotzea {{time}}",
-    "tooLarge": "Argazkia astunegia da",
+    "tooLarge": "Fitxategia astunegia: {{name}}",
     "failed": "Ezin izan da gehitu",
-    "source": "Iturria"
+    "source": "Iturria",
+    "addFile": "Gehitu fitxategi bat",
+    "removeFile": "Kendu {{name}}",
+    "unsupported": "Mota ez onartua: {{name}}"
   },
   "settings": {
     "identity": "Zure izena",
-    "connection": "Konexioa",
-    "thisPhone": "Telefono hau",
     "forget": "Ahaztu espediente hau",
     "forgetConfirm": "Ezabatu",
     "forgetPending_one": "Bidali gabeko {{count}} aldaketa galduko da.",
-    "forgetPending_other": "Bidali gabeko {{count}} aldaketa galduko dira."
+    "forgetPending_other": "Bidali gabeko {{count}} aldaketa galduko dira.",
+    "dossier": "Espediente hau",
+    "app": "Aplikazioa"
   },
   "graph": {
     "label": "Auzotasun grafoa",
@@ -119,13 +125,35 @@
     "empty": "Ez dago kokatutako elementurik"
   },
   "timeline": {
-    "empty": "Ez dago datatutako elementurik"
+    "empty": "Ez dago datatutako elementurik",
+    "newestFirst": "Berrienak lehenik",
+    "goTo": "Joan data batera",
+    "period_one": "{{period}}, sarrera {{count}}",
+    "period_other": "{{period}}, {{count}} sarrera"
   },
   "edit": {
     "save": "Gorde",
     "notes": "Editatu oharra",
     "addNote": "Gehitu ohar bat",
-    "invalid": "Balio baliogabea"
+    "invalid": "Balio baliogabea",
+    "addProperty": "Propietatea",
+    "propertyKey": "Propietatearen izena",
+    "keyTaken": "Badago dagoeneko",
+    "next": "Hurrengoa",
+    "deleteProperty": "Ezabatu",
+    "deletePropertyConfirm": "Berretsi ezabatzea",
+    "type": "Mota",
+    "types": {
+      "text": "Testua",
+      "number": "Zenbakia",
+      "date": "Data",
+      "datetime": "Data eta ordua",
+      "boolean": "Bai/ez",
+      "country": "Herrialdea",
+      "choice": "Aukera",
+      "link": "Esteka",
+      "geo": "Kokapena"
+    }
   },
   "links": {
     "add": "Lotu",
@@ -166,6 +194,39 @@
   },
   "tags": {
     "remove": "Kendu {{tag}} etiketa",
-    "none": "Etiketarik ez"
+    "none": "Etiketarik ez",
+    "title": "Etiketak",
+    "filter": "Iragazi",
+    "noneInDossier": "Ez dago etiketarik espediente honetan",
+    "done": "Eginda",
+    "edit": "Editatu etiketak",
+    "add": "Etiketa"
+  },
+  "about": {
+    "title": "Honi buruz",
+    "version": "{{version}} bertsioa",
+    "license": "MIT lizentzia",
+    "docs": "Dokumentazioa",
+    "github": "Iturburu-kodea",
+    "kofi": "Ko-fi-n lagundu",
+    "thirdParty": "Hirugarrenen lizentziak"
+  },
+  "preferences": {
+    "title": "Bistaratzea",
+    "theme": "Gaia",
+    "light": "Argia",
+    "dark": "Iluna",
+    "system": "Sistema",
+    "language": "Hizkuntza"
+  },
+  "peers": {
+    "editing": "{{name}} editatzen ari da",
+    "viewing": "{{name}} begiratzen ari da"
+  },
+  "sort": {
+    "title": "Ordenatu",
+    "recent": "Azkenak",
+    "name": "Izena",
+    "links": "Loturak"
   }
 }
