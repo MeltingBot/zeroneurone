@@ -27,7 +27,7 @@ import { accessOf, readerMayRelay } from './access.js';
 loadEnvFile();
 const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
 
-const VERSION = '2.93.2';
+const VERSION = '2.94.0';
 const startedAt = Date.now();
 
 // ============================================================================

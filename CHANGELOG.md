@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.94.0
+
+### Partage en lecture seule
+
+- **Lien + code d'écriture** — un dossier partagé donne un seul lien,
+  qui ouvre en lecture seule, et un code à 6 chiffres qui permet de
+  modifier, saisi en rejoignant (poste ou téléphone). Le QR code « Ouvrir
+  sur mobile » garde l'écriture directe.
+- **Lecteur** — bandeau « Lecture seule », toute modification refusée,
+  œil sur son avatar pour les autres participants. Le relais ne transmet
+  aucune modification d'un lecteur, et chaque poste vérifie ce qu'il
+  reçoit.
+- **Garde-fou, pas protection** — le code évite une modification de
+  l'original par erreur ; le lecteur voit tout le dossier.
+- **Relais et postes à mettre à jour** (2.94.0) : sans relais à jour, le
+  partage reste comme avant (un lien qui modifie). Un dossier déjà
+  partagé doit être repartagé pour avoir un code ; un poste plus ancien
+  ne peut pas rejoindre un partage avec code.
+- **Horloge** — la preuve d'écriture se cale sur l'heure du relais.
+
+### Compagnon mobile
+
+- Empreinte vérifiée des fichiers reçus d'un poste.
+
 ## 2.93.2
 
 ### Compagnon mobile
