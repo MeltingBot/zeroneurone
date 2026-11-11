@@ -59,6 +59,8 @@ Les images sont réduites à 2048 pixels de côté avant l'envoi (une photo HEIC
 
 Une fois le compagnon installé sur l'écran d'accueil, **ZeroNeurone** apparaît dans le menu **Partager** d'Android (galerie, navigateur, messagerie…). Le partage ouvre le formulaire **Nouveau** rempli avec le titre, le texte, le lien (en source) et les fichiers ; vous choisissez le dossier s'il y en a plusieurs, puis **Ajouter au dossier**. Un partage abandonné est effacé au retour, ou au plus tard un jour après. iPhone : Safari ne permet pas à une page web de recevoir un partage.
 
+ZeroNeurone n'apparaît dans le menu **Partager** que si le compagnon a été installé depuis une de ses pages (`/m/`), pas depuis la version poste. Sur un compagnon installé avant cette fonction, Android ne s'en aperçoit qu'à une de ses mises à jour périodiques ; s'il n'apparaît pas, désinstallez le compagnon puis réinstallez-le depuis `/m/`.
+
 ### Hors réseau
 
 Sans réseau, la capture est enregistrée sur le téléphone et l'en-tête affiche **N en attente**. Elle part à la reconnexion ; le compteur revient alors à zéro. **Gardez la page ouverte jusqu'à ce que le compteur soit à zéro.**

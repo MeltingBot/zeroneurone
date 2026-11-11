@@ -59,6 +59,8 @@ Images are reduced to 2048 pixels on their longest side before sending (an iPhon
 
 Once the companion is installed on the home screen, **ZeroNeurone** appears in Android's **Share** menu (gallery, browser, messaging…). Sharing opens the **New** form filled with the title, text, link (as source) and files; pick the dossier if there are several, then **Add to dossier**. An abandoned share is erased when going back, or a day later at most. iPhone: Safari does not let a web page receive a share.
 
+ZeroNeurone only appears in the **Share** menu when the companion was installed from one of its pages (`/m/`), not from the desktop version. On a companion installed before this feature, Android only notices it at one of its periodic updates; if it does not appear, uninstall the companion and install it again from `/m/`.
+
 ### Offline
 
 Without a network, the capture is stored on the phone and the header shows **N pending**. It is sent on reconnection, and the counter returns to zero. **Keep the page open until the counter is back to zero.**
