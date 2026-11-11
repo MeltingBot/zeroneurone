@@ -27,11 +27,22 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { randomBytes } from 'crypto';
 // Shared with the relay image (Dockerfile.combined copies it alongside)
 import { createAsyncBuffer, clientTagOf } from '../relay/asyncBuffer.js';
+import { loadEnvFile, relayConfig } from '../relay/config.js';
+import { forward } from '../relay/forward.js';
+
+// Settings from the environment or a .env file (relay/config.js, every one
+// listed in relay/.env.example); this server keeps its own defaults
+loadEnvFile();
+const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig({
+  PORT: 3000,
+  MAX_CONNECTIONS_PER_IP: 10,
+  BUFFER_MAX_MSGS: 10_000,
+  BUFFER_AGE_HOURS: 7 * 24,
+});
 
 // Optional Redis support
 let redis = null;
 let redisClient = null;
-const REDIS_URL = process.env.REDIS_URL;
 
 if (REDIS_URL) {
   try {
@@ -53,43 +64,8 @@ import { fileURLToPath } from 'url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DIST_DIR = join(__dirname, '..', 'dist');
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
-// Set to "1" only when a reverse proxy in front of this server sets
+// TRUST_PROXY: "1" only when a reverse proxy in front of this server sets
 // X-Forwarded-For. Off by default: see getClientIP.
-const TRUST_PROXY = process.env.TRUST_PROXY === '1';
-
-// ============================================================================
-// SECURITY LIMITS (DoS Protection)
-// ============================================================================
-const LIMITS = {
-  // Message limits
-  MAX_MESSAGE_SIZE: 100 * 1024 * 1024,   // 100 MB max per message (for large media in base64)
-
-  // Rate limiting (relaxed for media sync)
-  RATE_WINDOW_MS: 1000,                  // 1 second window
-  MAX_MESSAGES_PER_WINDOW: 1500,         // Max messages per window per client
-
-  // Connection limits
-  MAX_CONNECTIONS_PER_IP: 10,            // Max concurrent connections per IP
-  MAX_CLIENTS_PER_ROOM: 50,              // Max clients in a room
-  MAX_ROOMS: 1000,                       // Max concurrent rooms
-
-  // Room ID validation
-  MAX_ROOM_ID_LENGTH: 128,               // Max room ID length
-  ROOM_ID_PATTERN: /^[a-zA-Z0-9._-]+$/,  // Allowed characters (includes . for domains)
-};
-
-// ============================================================================
-// BUFFER LIMITS (Async mode)
-// ============================================================================
-const BUFFER_LIMITS = {
-  MAX_BUFFER_SIZE_PER_ROOM: 50 * 1024 * 1024,  // 50 MB per room
-  MAX_MESSAGES_PER_ROOM: 10000,                 // Max messages in buffer
-  MAX_MESSAGE_AGE_MS: 7 * 24 * 60 * 60 * 1000,  // 7 days
-  MAX_ROOMS_WITH_BUFFER: 1000,                  // Max rooms with active buffer
-  MAX_TOTAL_BUFFER_SIZE: 10 * 1024 * 1024 * 1024, // 10 GB total (prod server)
-};
 
 // ============================================================================
 // STATE
@@ -402,8 +378,8 @@ function setupWebSocketRelay(wss) {
       let relayed = 0;
       currentRoom.forEach((client) => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(data);
-          relayed++;
+          // Backpressure: a client too far behind is disconnected, never left without the message
+          if (forward(client, data, LIMITS.MAX_BUFFERED_AMOUNT)) relayed++;
         }
       });
 
@@ -451,7 +427,6 @@ function setupWebSocketRelay(wss) {
 // ============================================================================
 
 // Create HTTP server
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const server = createServer((req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -508,7 +483,7 @@ server.listen(PORT, HOST, () => {
   console.log('║  Limits:                                                   ║');
   console.log(`║  • Max message:  ${(LIMITS.MAX_MESSAGE_SIZE / 1024 / 1024).toFixed(0)} MB`.padEnd(63) + '║');
   console.log(`║  • Rate limit:   ${LIMITS.MAX_MESSAGES_PER_WINDOW}/sec`.padEnd(63) + '║');
-  console.log(`║  • Buffer/room:  ${(BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM / 1024 / 1024).toFixed(0)} MB, ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} msgs, 7 days`.padEnd(63) + '║');
+  console.log(`║  • Buffer/room:  ${(BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM / 1024 / 1024).toFixed(0)} MB, ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} msgs, ${Math.round(BUFFER_LIMITS.MAX_MESSAGE_AGE_MS / 3600000)} h`.padEnd(63) + '║');
   console.log(`║  • Storage:      ${redisClient ? 'Redis (persistent)' : 'Memory (ephemeral)'}`.padEnd(63) + '║');
   console.log('╚════════════════════════════════════════════════════════════╝');
   console.log('');

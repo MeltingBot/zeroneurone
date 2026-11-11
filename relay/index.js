@@ -7,24 +7,8 @@
  *
  * Usage: node index.js
  *
- * Environment variables:
- * - PORT:                   WebSocket + health port (default: 4444)
- * - HOST:                   Bind address (default: 0.0.0.0)
- * - REDIS_URL:              Redis connection URL (optional, default: in-memory)
- * - TRUST_PROXY:            Set to "1" to trust X-Forwarded-For header
- * - MAX_MESSAGE_SIZE_MB:    Max message size in MB (default: 100)
- * - RATE_LIMIT:             Max messages per second per client (default: 500)
- * - MAX_CONNECTIONS_PER_IP: Max WS connections per IP (default: 50)
- * - MAX_CLIENTS_PER_ROOM:   Max clients per room (default: 50)
- * - MAX_ROOMS:              Max concurrent rooms (default: 1000)
- * - PING_INTERVAL_S:        Keepalive ping interval in seconds (default: 30)
- * - BUFFER_SIZE_MB:         Max buffer size per room in MB (default: 50)
- * - BUFFER_MAX_MSGS:        Max buffered messages per room (default: 100000)
- * - BUFFER_AGE_HOURS:       Max buffer message age in hours (default: 48)
- * - BUFFER_TOTAL_GB:        Max total buffer size in GB (default: 10)
- * - RATE_WINDOW_MS:         Rate limit window in ms (default: 1000)
- * - MAX_ROOM_ID_LENGTH:     Max room ID length (default: 128)
- * - PONG_TIMEOUT_MS:        Pong timeout in ms (default: 10000)
+ * Settings: environment variables, or a .env file (relay/config.js). Every
+ * one, with its default, is listed in relay/.env.example.
  *
  * URL parameters:
  * - async=1:   Enable async buffering (messages stored when alone in room)
@@ -36,17 +20,20 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createHash, randomBytes } from 'crypto';
 import { createAsyncBuffer, clientTagOf } from './asyncBuffer.js';
+import { loadEnvFile, relayConfig } from './config.js';
+import { forward } from './forward.js';
+
+loadEnvFile();
+const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
 
 const VERSION = '4';
 const startedAt = Date.now();
-const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 
 // ============================================================================
 // REDIS (optional)
 // ============================================================================
 
 let redisClient = null;
-const REDIS_URL = process.env.REDIS_URL;
 
 if (REDIS_URL) {
   try {
@@ -61,46 +48,6 @@ if (REDIS_URL) {
   }
 }
 
-const PORT = process.env.PORT || 4444;
-const HOST = process.env.HOST || '0.0.0.0';
-
-// ============================================================================
-// CONFIGURATION (env vars override defaults)
-// ============================================================================
-
-const env = (key, fallback) => {
-  const v = process.env[key];
-  return v !== undefined ? Number(v) : fallback;
-};
-
-// ============================================================================
-// SECURITY LIMITS (DoS Protection)
-// ============================================================================
-const LIMITS = {
-  MAX_MESSAGE_SIZE: env('MAX_MESSAGE_SIZE_MB', 100) * 1024 * 1024,
-  RATE_WINDOW_MS: env('RATE_WINDOW_MS', 1000),
-  MAX_MESSAGES_PER_WINDOW: env('RATE_LIMIT', 1500),
-  MAX_CONNECTIONS_PER_IP: env('MAX_CONNECTIONS_PER_IP', 50),
-  MAX_CLIENTS_PER_ROOM: env('MAX_CLIENTS_PER_ROOM', 50),
-  MAX_ROOMS: env('MAX_ROOMS', 1000),
-  MAX_ROOM_ID_LENGTH: env('MAX_ROOM_ID_LENGTH', 128),
-  ROOM_ID_PATTERN: /^[a-zA-Z0-9._-]+$/,
-  PING_INTERVAL_MS: env('PING_INTERVAL_S', 30) * 1000,
-  PONG_TIMEOUT_MS: env('PONG_TIMEOUT_MS', 10_000),
-  MAX_BUFFERED_AMOUNT: 4 * 1024 * 1024, // 4 MB backpressure threshold per client
-};
-
-// ============================================================================
-// BUFFER LIMITS (Async mode)
-// ============================================================================
-const BUFFER_LIMITS = {
-  MAX_BUFFER_SIZE_PER_ROOM: env('BUFFER_SIZE_MB', 50) * 1024 * 1024,
-  MAX_MESSAGES_PER_ROOM: env('BUFFER_MAX_MSGS', 100_000),
-  MAX_MESSAGE_AGE_MS: env('BUFFER_AGE_HOURS', 48) * 60 * 60 * 1000,
-  MAX_ROOMS_WITH_BUFFER: env('MAX_ROOMS', 1000),
-  MAX_TOTAL_BUFFER_SIZE: env('BUFFER_TOTAL_GB', 10) * 1024 * 1024 * 1024,
-  ORPHAN_MAX_AGE_MS: 24 * 60 * 60 * 1000, // 24 hours
-};
 
 // ============================================================================
 // STATE
@@ -197,7 +144,6 @@ const cleanupInterval = setInterval(cleanupBuffers, 60 * 60 * 1000);
 // HTTP SERVER (health + metrics endpoint)
 // ============================================================================
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -374,10 +320,8 @@ wss.on('connection', (ws, req) => {
     let relayed = 0;
     currentRoom.forEach((client) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
-        // Backpressure: skip clients with full send buffer
-        if (client.bufferedAmount > LIMITS.MAX_BUFFERED_AMOUNT) return;
-        client.send(data);
-        relayed++;
+        // Backpressure: a client too far behind is disconnected, never left without the message
+        if (forward(client, data, LIMITS.MAX_BUFFERED_AMOUNT)) relayed++;
       }
     });
 
