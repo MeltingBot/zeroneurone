@@ -140,7 +140,7 @@ Safari may erase the data of a site not opened for 7 days, pending captures incl
 
 ## Limits
 
-- Opening a dossier on the phone downloads its content and the attachments' thumbnails. Files added from a computer are downloaded only when opened, and only if a computer of the dossier is online; files shared before this feature and the phone's captures stay in the copy
+- Opening a dossier on the phone downloads its content and the attachments' thumbnails. Files added from a computer are downloaded only when opened, and only if a computer of the dossier is online; files shared before 2.93.2 and the phone's captures stay in the copy
 - From the phone, an existing element is edited through its label, note, tags, properties, tabs and links
 - The phone does not create tags: it offers those already set on the dossier's elements. Tag sets stay on each computer: a tag never used in the dossier is not offered, and a tag added from the phone does not change the element's appearance
 - A note, tags or properties edited offline replace the whole version on reconnection: if the computer edited the same note, or the same element's tags or properties, meanwhile, only one of the two versions stays. Avoid editing the same element on both sides while the phone is offline

@@ -26,7 +26,7 @@ import { forward, forwardToTarget, RELAY_FEATURES, targetOf } from './forward.js
 loadEnvFile();
 const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
 
-const VERSION = '5';
+const VERSION = '2.93.2';
 const startedAt = Date.now();
 
 // ============================================================================

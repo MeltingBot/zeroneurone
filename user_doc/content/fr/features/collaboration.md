@@ -106,7 +106,7 @@ Quand des fichiers sont en cours de transfert :
 - Taille transférée
 - Nom du fichier en cours
 
-Les fichiers ajoutés à un dossier partagé passent par un canal à part, chiffré avec la même clé. Chaque poste les reçoit tous, mode asynchrone compris ; le [compagnon mobile]({{< relref "mobile-companion" >}}) ne télécharge un fichier que lorsqu'on l'ouvre, auprès d'un poste en ligne. Un poste resté sur une version antérieure ne voit pas ces fichiers : mettez tous les postes à jour.
+Les fichiers ajoutés à un dossier partagé passent par un canal à part, chiffré avec la même clé. Chaque poste les reçoit tous, mode asynchrone compris ; le [compagnon mobile]({{< relref "mobile-companion" >}}) ne télécharge un fichier que lorsqu'on l'ouvre, auprès d'un poste en ligne. Un poste resté sur une version antérieure à la 2.93.2 ne voit pas ces fichiers : mettez tous les postes à jour.
 
 
 ---
@@ -273,7 +273,7 @@ Pour utiliser votre propre serveur, même démarche : entrez son URL complète d
 
 Le serveur de signalisation est basé sur `y-websocket`. Consultez la documentation technique pour l'hébergement.
 
-Le relais ne stocke aucun fichier sur disque. Il transmet les messages chiffrés et, en mode asynchrone, les garde en mémoire le temps du tampon. Un fichier envoyé à un téléphone qui l'a demandé est remis à ce seul téléphone, sans passer par le tampon. Avec un relais plus ancien, ces fichiers sont diffusés à tous les participants connectés (toujours chiffrés) : cela fonctionne, mais charge davantage le réseau. Mettez le relais à jour en même temps que l'application.
+Le relais ne stocke aucun fichier sur disque. Il transmet les messages chiffrés et, en mode asynchrone, les garde en mémoire le temps du tampon. Un fichier envoyé à un téléphone qui l'a demandé est remis à ce seul téléphone, sans passer par le tampon. Avec un relais plus ancien, ces fichiers sont diffusés à tous les participants connectés (toujours chiffrés) : cela fonctionne, mais charge davantage le réseau. Mettez le relais à jour en même temps que l'application (2.93.2 ou plus récent).
 
 ---
 

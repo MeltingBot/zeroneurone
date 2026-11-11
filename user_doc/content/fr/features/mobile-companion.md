@@ -140,7 +140,7 @@ Safari peut effacer les données d'un site non ouvert depuis 7 jours, captures e
 
 ## Limites
 
-- Ouvrir un dossier sur le téléphone télécharge son contenu et les miniatures des pièces jointes. Les fichiers ajoutés depuis un poste ne sont téléchargés qu'à leur ouverture, et seulement si un poste du dossier est en ligne ; les fichiers partagés avant cette fonction et les captures du téléphone restent dans la copie
+- Ouvrir un dossier sur le téléphone télécharge son contenu et les miniatures des pièces jointes. Les fichiers ajoutés depuis un poste ne sont téléchargés qu'à leur ouverture, et seulement si un poste du dossier est en ligne ; les fichiers partagés avant la 2.93.2 et les captures du téléphone restent dans la copie
 - Depuis le téléphone, un élément existant se modifie par son libellé, sa note, ses tags, ses propriétés, ses onglets et ses liens
 - Le téléphone ne crée pas de tag : il propose ceux déjà posés sur des éléments du dossier. Les jeux de tags restent sur chaque poste : un tag jamais utilisé dans le dossier n'est pas proposé, et un tag ajouté depuis le téléphone ne change pas l'apparence de l'élément
 - Une note, des tags ou des propriétés modifiées hors ligne remplacent, à la reconnexion, la version entière : si le poste a modifié la même note, les tags ou les propriétés du même élément entre-temps, une seule des deux versions reste. Évitez de modifier le même élément des deux côtés pendant que le téléphone est hors ligne

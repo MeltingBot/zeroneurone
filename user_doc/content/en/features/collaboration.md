@@ -106,7 +106,7 @@ When files are being transferred:
 - Size transferred
 - Current file name
 
-Files added to a shared dossier travel on a separate channel, encrypted with the same key. Every computer receives them all, async mode included; the [mobile companion]({{< relref "mobile-companion" >}}) downloads a file only when it is opened, from a computer online. A computer left on an earlier version does not see these files: update every computer.
+Files added to a shared dossier travel on a separate channel, encrypted with the same key. Every computer receives them all, async mode included; the [mobile companion]({{< relref "mobile-companion" >}}) downloads a file only when it is opened, from a computer online. A computer left on a version before 2.93.2 does not see these files: update every computer.
 
 
 ---
@@ -273,7 +273,7 @@ To use your own server, same steps: enter its full URL in the **Sync server** se
 
 The signaling server is based on `y-websocket`. See technical documentation for hosting.
 
-The relay stores no file on disk. It passes encrypted messages on and, in async mode, keeps them in memory for the buffer's duration. A file sent to a phone that asked for it goes to that phone alone, without going through the buffer. With an older relay, these files are broadcast to every connected participant (still encrypted): it works, but loads the network more. Update the relay along with the app.
+The relay stores no file on disk. It passes encrypted messages on and, in async mode, keeps them in memory for the buffer's duration. A file sent to a phone that asked for it goes to that phone alone, without going through the buffer. With an older relay, these files are broadcast to every connected participant (still encrypted): it works, but loads the network more. Update the relay along with the app (2.93.2 or later).
 
 ---
 

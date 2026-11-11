@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.93.2
+
+### Compagnon mobile
+
+- **Pièces jointes à la demande** — le téléphone ne reçoit plus que la
+  miniature des fichiers ajoutés depuis un poste ; il demande un fichier
+  à un poste en ligne quand on l'ouvre, puis le garde 5 jours après sa
+  dernière ouverture (200 Mo au plus). Ouvrir un dossier de 200 photos
+  prend quelques secondes au lieu de plusieurs minutes, sans saturer la
+  mémoire du téléphone. Les postes reçoivent toujours tous les fichiers,
+  mode asynchrone compris, par un canal à part. Les fichiers déjà
+  partagés ne changent pas. **Tous les postes et le relais sont à mettre
+  à jour** : un poste plus ancien ne voit pas les nouveaux fichiers.
+- **Verrouillage** — Face ID, empreinte ou code du téléphone (passkey) :
+  la copie des dossiers, leur liste et les partages en attente sont
+  chiffrés ; délai de verrouillage réglable. Proposé sur les téléphones
+  dont la passkey le permet (Chrome Android, Safari iOS 18).
+- **Partager vers ZeroNeurone** (Android, compagnon installé) — un texte,
+  un lien ou des fichiers partagés depuis une autre application
+  remplissent une nouvelle capture.
+- **Édition terrain** — libellé d'un élément, libellé et sens d'un lien,
+  tags du dossier, propriétés (texte, nombre, date ; ajout et
+  suppression), événements datés, position choisie en touchant la carte.
+- **Navigation** — chronologie avec frise de saut, sens et « Aller à » ;
+  tri des éléments par nom ou nombre de liens ; collaborateurs en train
+  de consulter ou modifier un élément signalés dans la liste.
+- **Grands dossiers** — liste et chronologie affichées par lots : 5 000
+  éléments s'ouvrent en moins d'une seconde.
+- **Réglages** — séparés entre « Ce dossier » et « Application » ; thème,
+  langue, à propos.
+- **Copies locales séparées** de celles du poste dans un même navigateur.
+
+### Corrections
+
+- **Scan sur iPhone** — Safari n'a pas de lecteur de QR code intégré : le
+  scan passe par un lecteur embarqué ; le grand QR code de l'accueil
+  lance aussi le scan.
+- **Bandes vides en haut et en bas** sur Android, et défilement vide sous
+  les réglages.
+- **Relais : messages perdus** — au-delà de 4 Mo en attente pour un
+  client lent, le relais jetait des messages sans le dire (photos
+  manquantes) ; il déconnecte maintenant ce client, qui se resynchronise.
+  Tous les réglages du relais se font par variables d'environnement ou
+  `.env`. **Relais à redéployer.**
+
 ## 2.93.1
 
 ### Corrections
