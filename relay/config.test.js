@@ -16,7 +16,7 @@ afterEach(() => {
 describe('relay config', () => {
   it('uses the defaults, then the caller own ones, then the environment', () => {
     for (const k of KEYS) delete process.env[k];
-    expect(relayConfig().LIMITS.MAX_BUFFERED_AMOUNT).toBe(256 * 1024 * 1024);
+    expect(relayConfig().LIMITS.MAX_BUFFERED_AMOUNT).toBe(32 * 1024 * 1024);
     expect(relayConfig({ BUFFER_AGE_HOURS: 168 }).BUFFER_LIMITS.MAX_MESSAGE_AGE_MS).toBe(168 * 3600 * 1000);
     process.env.BACKPRESSURE_MB = '64';
     process.env.BUFFER_AGE_HOURS = '12';

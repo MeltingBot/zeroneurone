@@ -32,9 +32,11 @@ export const RELAY_DEFAULTS = {
   MAX_ROOM_ID_LENGTH: 128,
   PING_INTERVAL_S: 30,
   PONG_TIMEOUT_MS: 10_000,
-  // Above the largest message (MAX_MESSAGE_SIZE_MB) plus a room's async
-  // buffer, so that joining a large dossier does not trip it
-  BACKPRESSURE_MB: 256,
+  // Past it a slow client is disconnected and resyncs (relay/forward.js).
+  // Checked before each send, so a larger message still goes through; a
+  // phone joining 90 MB of photos got them all with 4, 32 or 256 (2 or 3
+  // reconnections below 256): 32 bounds the relay's memory per client.
+  BACKPRESSURE_MB: 32,
   BUFFER_SIZE_MB: 50,
   BUFFER_MAX_MSGS: 100_000,
   BUFFER_AGE_HOURS: 48,
