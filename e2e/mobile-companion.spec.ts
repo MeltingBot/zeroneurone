@@ -547,7 +547,7 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   await phone.getByPlaceholder('Coller le lien de partage').press('Enter');
   await expect(phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' })).toBeVisible();
   const leftovers = await phone.evaluate(async () =>
-    (await indexedDB.databases()).filter((d) => d.name?.startsWith('zeroneurone-ydoc-')).length);
+    (await indexedDB.databases()).filter((d) => /^zeroneurone-(companion-)?ydoc-/.test(d.name ?? '')).length);
   expect(leftovers).toBe(0);
 });
 
@@ -597,6 +597,51 @@ test('a capture made while every computer is off reaches the desktop later', asy
   await back.bringToFront();
   await expect.poll(async () => (await readDesktop(back)).labels.length, { timeout: 60_000 }).toBeGreaterThan(0);
   await expect.poll(async () => (await readDesktop(back)).labels, { timeout: 30_000 }).toContain('Capture sans poste');
+});
+
+test('in the browser holding the desktop copy, the companion keeps its own and forgets only it', async ({ browser }) => {
+  test.setTimeout(3 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'same-browser.json');
+  writeFileSync(file, buildLargeDossierJson(5));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  await desktop.waitForTimeout(1500);
+  const { mobileUrl, dossierId } = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Même navigateur', true);
+    const id = syncService.getDossierId()!;
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Même navigateur', true, 'm'), dossierId: id };
+  });
+  const desktopCopy = `zeroneurone-ydoc-${dossierId}`;
+  const companionCopy = `zeroneurone-companion-ydoc-${dossierId}`;
+  const databases = (page: Page) => page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
+
+  // The companion opened in the same browser as the desktop (in its language: English)
+  const companion = await desktop.context().newPage();
+  phonePage = companion;
+  await companion.goto(mobileUrl);
+  await companion.getByRole('button', { name: 'Open on this phone' }).click();
+  await expect(companion.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+  expect(await databases(companion)).toEqual(expect.arrayContaining([desktopCopy, companionCopy]));
+
+  await companion.getByRole('button', { name: /^Settings/ }).click();
+  await companion.getByRole('button', { name: 'Forget this dossier' }).click();
+  await companion.getByRole('button', { name: 'Erase', exact: true }).click();
+  await expect(companion).toHaveURL(/\/m\/?$/, { timeout: 15_000 });
+
+  // Only the companion's copy is gone: the desktop's is intact
+  await expect.poll(async () => databases(companion), { timeout: 15_000 }).not.toContain(companionCopy);
+  expect(await databases(companion)).toContain(desktopCopy);
+  await companion.close();
+  phonePage = null;
+  await desktop.bringToFront();
+  await desktop.reload();
+  await desktop.goto(`/dossier/${dossierId}`);
+  await expect(desktop.locator('.react-flow__node').first()).toBeVisible({ timeout: 30_000 });
+  expect((await readDesktop(desktop)).labels).toContain('Jean Dupont 0');
 });
 
 test('a phone relaunched (app closed, reopened) syncs again both ways', async ({ browser }) => {
@@ -707,7 +752,7 @@ test('a local copy that cannot be opened says so, and the dossier can still be f
       indexedDB.deleteDatabase(name);
       resolve();
     };
-  }), `zeroneurone-ydoc-${dossierId}`);
+  }), `zeroneurone-companion-ydoc-${dossierId}`);
 
   const again = await context.newPage();
   phonePage = again;
@@ -727,6 +772,6 @@ test('a local copy that cannot be opened says so, and the dossier can still be f
   await holder.evaluate(() => (window as unknown as { held: IDBDatabase }).held.close());
   // The erasure retried on arrival goes through once the database is free
   await expect(again.getByText("Copie d'un dossier oublié encore sur ce téléphone")).toBeHidden({ timeout: 20_000 });
-  const left = await again.evaluate(async (name) => (await indexedDB.databases()).some((d) => d.name === name), `zeroneurone-ydoc-${dossierId}`);
+  const left = await again.evaluate(async (name) => (await indexedDB.databases()).some((d) => d.name === name), `zeroneurone-companion-ydoc-${dossierId}`);
   expect(left).toBe(false);
 });

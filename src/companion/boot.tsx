@@ -4,6 +4,8 @@ import CompanionApp from './CompanionApp'
 import './companion.css'
 import { appPath } from '../utils/basePath'
 import { applyTheme, watchSystemTheme } from './theme'
+import { syncService } from '../services/syncService'
+import { companionYdocDatabaseName } from '../services/yjs/ydocName'
 
 /**
  * Page setup the desktop does not need: the companion's own theme, content
@@ -47,6 +49,8 @@ function setupPage(): void {
 
 export async function bootCompanion(i18nReady: Promise<unknown>): Promise<void> {
   setupPage()
+  // The companion's copies, apart from the desktop's in the same browser
+  syncService.setLocalStoreName(companionYdocDatabaseName)
   await i18nReady
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

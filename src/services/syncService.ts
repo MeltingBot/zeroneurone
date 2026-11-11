@@ -19,7 +19,7 @@ import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWe
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
 import { toBase64Url } from '../utils/base64url';
-import { ydocDatabaseName, deleteYDocDatabase } from './yjs/ydocName';
+import { ydocDatabaseName, deleteIdbDatabase } from './yjs/ydocName';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
@@ -247,6 +247,17 @@ class SyncService {
     this.atRestDek = dek;
   }
 
+  /** Name of a dossier's local Y.js database: the desktop's by default */
+  private localStoreName: (dossierId: string) => string = ydocDatabaseName;
+
+  /**
+   * Sets where dossiers are kept locally. The mobile companion keeps its own
+   * copies, apart from the desktop's in the same browser.
+   */
+  setLocalStoreName(name: (dossierId: string) => string): void {
+    this.localStoreName = name;
+  }
+
   /**
    * Open a dossier in local mode (no sync)
    * Creates/loads Y.Doc with IndexedDB persistence (encrypted when a DEK is available)
@@ -258,7 +269,7 @@ class SyncService {
     this.ydoc = new Y.Doc();
 
     // Set up IndexedDB persistence (encrypted or not, depending on the DEK)
-    const dbName = ydocDatabaseName(dossierId);
+    const dbName = this.localStoreName(dossierId);
     this.indexeddbProvider = new EncryptedIndexeddbPersistence(
       dbName, this.ydoc, this.atRestDek || undefined
     );
@@ -313,7 +324,7 @@ class SyncService {
 
     // Set up IndexedDB persistence (for offline support, encrypted when a DEK is available)
     // Uses dossierId (UUID) for local storage
-    const dbName = ydocDatabaseName(dossierId);
+    const dbName = this.localStoreName(dossierId);
     this.indexeddbProvider = new EncryptedIndexeddbPersistence(
       dbName, this.ydoc, this.atRestDek || undefined
     );
@@ -815,7 +826,7 @@ class SyncService {
    */
   async deleteLocalData(dossierId: string): Promise<void> {
     if (this.dossierId === dossierId) await this.close();
-    await deleteYDocDatabase(dossierId);
+    await deleteIdbDatabase(this.localStoreName(dossierId));
   }
 }
 

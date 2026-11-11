@@ -17,6 +17,7 @@ import { isAssetComplete, readAssetMeta, type AssetMeta } from '../services/asse
 import type { CompanionSession } from './sessions';
 import { renameSession } from './sessions';
 import { startPresence } from './presence';
+import { adoptLegacyCopy } from './localCopy';
 import { clearPending, markDisconnected, pendingCount, updateToResend } from './pending';
 
 /** Connected this long after a send: what was sent is considered delivered */
@@ -134,7 +135,10 @@ export function useCompanionSession(session: CompanionSession) {
     serialized(() => {
       if (cancelled) return Promise.resolve(null);
       syncService.setServerUrl(session.server);
-      return syncService.openShared(session.dossierId, session.encryptionKey, session.roomId, true);
+      // A copy kept under the desktop's name by an earlier version, brought over
+      return adoptLegacyCopy(session.dossierId)
+        .catch((err: unknown) => { console.warn('[Companion] older copy not brought over:', err); })
+        .then(() => syncService.openShared(session.dossierId, session.encryptionKey, session.roomId, true));
     })
       .then((doc) => {
         if (!doc) return;
