@@ -50,6 +50,7 @@ When the dossier is first opened on the phone, a computer that has it open must 
 | Camera | Opens the camera; the photo becomes an attachment of the element |
 | Paper clip | Photos, videos, sounds or documents from the phone (several at once), same types as on the computer |
 | Pin | The phone's GPS position (the browser asks for permission); the element appears on the map |
+| Pin on map | Position picked by tapping the map (drag the pin to adjust it) |
 
 The element gets the **collection date** (the moment of capture). It lands on the computer **below the existing elements**, aligned left: successive captures form a column. When a tab is shown, it goes into it. No tag is added automatically. The element's page then opens: tags and properties are added there.
 
@@ -91,11 +92,12 @@ The search bar stays at the top of every screen. Search works as on the computer
 Tags, note, photos (tap to enlarge), details, links, comments.
 
 - **Label**: the pencil beside the name, at the top, edits it
+- **Position**: the pin icon beside **Details** places the element by tapping the map; the pencil on the Position row moves or removes it. The dossier's located elements show as grey dots to find one's way
 - **Note**: shown formatted (Markdown); the pencil opens editing, the check mark sends it, the cross cancels
 - **Tags**: tap a tag to show the elements carrying it; the dotted button (pencil or +) adds or removes tags already used in the dossier
 - **Properties**: tap a value to edit it, with the input suited to its type (text, number, date, yes/no, country from a list), or to delete it (bin, tapped twice); a location can only be deleted
 - **+** right of **Details**: pick a name already used in the dossier (its type is kept) or type a new one, then the type (text, number or date) and the value
-- **Events**: listed by date; the **+** adds one (label, date and time, filled with now, description, source, the phone's position), the pencil on an event edits or deletes it. They feed the timeline, and the map when they have a position. An event date left as it is keeps its precision (year, month)
+- **Events**: listed by date; the **+** adds one (label, date and time, filled with now, description, source, the phone's position or one picked on the map), the pencil on an event edits or deletes it. They feed the timeline, and the map when they have a position. An event date left as it is keeps its precision (year, month)
 - **Tabs**: tap a tab to put the element in it or take it out
 - **+** right of **Links**: pick the other element (search, or create it on the spot, with the collection date), the direction, the label and the source
 - **Edit a link**: the pencil on a link row changes its label and its direction, as seen from the element shown, or deletes it (bin, tapped twice)

@@ -248,5 +248,12 @@
     "date": "Datum",
     "time": "Tijd",
     "description": "Beschrijving"
+  },
+  "position": {
+    "pick": "Kiezen op de kaart",
+    "place": "Op de kaart plaatsen",
+    "edit": "Positie bewerken",
+    "remove": "Positie verwijderen",
+    "tap": "Tik op de kaart"
   }
 }

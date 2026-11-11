@@ -272,5 +272,12 @@
     "date": "Data",
     "time": "Godzina",
     "description": "Opis"
+  },
+  "position": {
+    "pick": "Wybierz na mapie",
+    "place": "Umieść na mapie",
+    "edit": "Edytuj położenie",
+    "remove": "Usuń położenie",
+    "tap": "Dotknij mapy"
   }
 }

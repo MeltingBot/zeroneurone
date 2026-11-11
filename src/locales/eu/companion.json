@@ -248,5 +248,12 @@
     "date": "Data",
     "time": "Ordua",
     "description": "Deskribapena"
+  },
+  "position": {
+    "pick": "Aukeratu mapan",
+    "place": "Kokatu mapan",
+    "edit": "Editatu kokapena",
+    "remove": "Kendu kokapena",
+    "tap": "Ukitu mapa"
   }
 }

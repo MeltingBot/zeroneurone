@@ -248,5 +248,12 @@
     "date": "Date",
     "time": "Time",
     "description": "Description"
+  },
+  "position": {
+    "pick": "Pick on the map",
+    "place": "Place on the map",
+    "edit": "Edit position",
+    "remove": "Remove position",
+    "tap": "Tap the map"
   }
 }

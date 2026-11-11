@@ -7,9 +7,9 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 import {
-  ArrowDownAZ, ArrowLeft, Camera, Check, ChevronRight, Clock, FileText, Link2, List, Loader2, Paperclip, Plus, Tag, Trash2, Map as MapIcon, MapPin, MessageSquare, Pencil, RotateCcw, Search, Send, Settings, Waypoints, X,
+  ArrowDownAZ, ArrowLeft, Camera, Check, ChevronRight, Clock, FileText, Link2, List, Loader2, Paperclip, Plus, Tag, Trash2, Map as MapIcon, MapPin, MapPinned, MapPinPlus, MessageSquare, Pencil, RotateCcw, Search, Send, Settings, Waypoints, X,
 } from 'lucide-react';
-import type { Comment, Element, Link, LinkDirection } from '../types';
+import type { Comment, Element, GeoData, Link, LinkDirection } from '../types';
 import { getYMaps } from '../types/yjs';
 import { assembleChunks } from '../services/assetSync';
 import { eraseLocalCopy } from './erase';
@@ -18,14 +18,15 @@ import type { CompanionSession } from './sessions';
 import { removeSession } from './sessions';
 import { clearPending } from './pending';
 import { closeCompanionSession, useCompanionSession, type AssetEntry } from './useCompanionSession';
-import { addComment, createCapture, deleteElement, deleteLink, updateLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
+import { addComment, createCapture, deleteElement, deleteLink, updateElementFields, updateLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
 import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes';
 import { navigate } from './router';
 import { AppSettings } from './AppSettings';
 import { IconAction } from './IconAction';
 import { useRevealed } from './reveal';
 import { EventsSection } from './Events';
-import { locateOnce } from './geolocate';
+import { dossierPoints, locateOnce } from './geolocate';
+import { PositionPicker } from './PositionPicker';
 import { captureFromShare, deleteShare, readShare } from './shareInbox';
 import { usePeerMarks, useRemoteTouches, type PeerMark } from './activity';
 import { linkCounts, readSort, saveSort, sortElements, type ElementSort } from './sorting';
@@ -655,6 +656,16 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
   const { t, i18n } = useTranslation('companion');
   const [linking, setLinking] = useState(false);
   const [addingProperty, setAddingProperty] = useState(false);
+  /** The position being placed on the map */
+  const [placing, setPlacing] = useState(false);
+  const writable = !s.data.closed;
+  // A polygon is drawn on a computer: only a point is placed from here
+  const placeable = writable && (!element.geo || element.geo.type === 'point');
+  const around = useMemo(() => dossierPoints(s.data.elements, element.id), [s.data.elements, element.id]);
+  const setPosition = (next: GeoData | null) => {
+    const ydoc = s.ydoc;
+    if (ydoc) void s.track(() => updateElementFields(ydoc, s.dossierId, element.id, { geo: next }, s.syncState.connected));
+  };
   const byId = useMemo(() => new Map(s.data.elements.map((e) => [e.id, e])), [s.data.elements]);
   const links = s.data.links.filter((l) => l.fromId === element.id || l.toId === element.id);
   const comments = s.data.comments
@@ -684,6 +695,17 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
         <section className="space-y-1.5">
           <div className="flex items-center">
             <h2 className={`${sectionTitle} flex-1`}>{t('element.details')}</h2>
+            {placeable && !geo && (
+              <button
+                type="button"
+                className="-my-2 w-10 h-10 inline-flex items-center justify-center text-accent"
+                onClick={() => setPlacing(true)}
+                aria-label={t('position.place')}
+                title={t('position.place')}
+              >
+                <MapPinPlus size={19} />
+              </button>
+            )}
             {!s.data.closed && !addingProperty && (
               <button
                 type="button"
@@ -713,6 +735,17 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
                     {geo.lat.toFixed(5)}, {geo.lng.toFixed(5)}
                   </a>
                 }
+                action={placeable ? (
+                  <button
+                    type="button"
+                    className="-my-1.5 w-9 h-9 flex items-center justify-center text-text-tertiary flex-shrink-0"
+                    onClick={() => setPlacing(true)}
+                    aria-label={t('position.edit')}
+                    title={t('position.edit')}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                ) : null}
               />
             )}
             <PropertyRows element={element} s={s} writable={!s.data.closed} />
@@ -724,6 +757,16 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
       )}
 
       <EventsSection element={element} s={s} writable={!s.data.closed} focusedEventId={focusedEventId} />
+
+      {placing && (
+        <PositionPicker
+          initial={geo}
+          around={around}
+          onPick={(p) => setPosition({ type: 'point', lat: p.lat, lng: p.lng })}
+          onRemove={geo ? () => setPosition(null) : undefined}
+          onClose={() => setPlacing(false)}
+        />
+      )}
 
       <TabMembership element={element} s={s} writable={!s.data.closed} />
 
@@ -806,11 +849,12 @@ function DeleteElement({ element, linkCount, s, onDeleted }: {
   );
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function Row({ label, value, action }: { label: string; value: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="flex gap-3 py-1.5">
+    <div className="flex items-start gap-3 py-1.5">
       <span className="w-1/3 flex-shrink-0 text-text-secondary text-xs pt-0.5 break-words">{label}</span>
       <span className="flex-1 min-w-0 break-words">{value}</span>
+      {action}
     </div>
   );
 }
@@ -1121,6 +1165,9 @@ function CaptureTab({ s, tabId, shareId, onCreated }: {
   const [files, setFiles] = useState<{ key: string; file: File; url: string | null }[]>([]);
   const [geo, setGeo] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
+  /** Placing the position on the map */
+  const [picking, setPicking] = useState(false);
+  const around = useMemo(() => dossierPoints(s.data.elements), [s.data.elements]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -1286,25 +1333,35 @@ function CaptureTab({ s, tabId, shareId, onCreated }: {
             ))}
           </ul>
         )}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <IconAction icon={Camera} label={t('capture.photo')} onClick={() => cameraRef.current?.click()} wide />
           <IconAction icon={Paperclip} label={t('capture.addFile')} onClick={() => mediaRef.current?.click()} wide />
           <IconAction
             icon={geoStatus === 'locating' ? Loader2 : MapPin}
             label={geoStatus === 'locating' ? t('capture.locating') : t('capture.position')}
             onClick={locate}
-            disabled={geoStatus === 'locating' || !!geo}
+            disabled={geoStatus === 'locating'}
             wide
             className={geoStatus === 'locating' ? '[&>svg]:animate-spin' : ''}
           />
+          <IconAction icon={MapPinned} label={t('position.pick')} onClick={() => setPicking(true)} wide />
         </div>
+        {picking && (
+          <PositionPicker
+            initial={geo}
+            around={around}
+            onPick={(p) => { setGeo({ lat: p.lat, lng: p.lng, accuracy: 0 }); setGeoStatus('idle'); }}
+            onRemove={geo ? () => setGeo(null) : undefined}
+            onClose={() => setPicking(false)}
+          />
+        )}
 
         {geo && (
           <div className="flex items-center gap-2 text-sm">
             <MapPin size={16} className="text-text-secondary" />
             <span className="flex-1">
               {geo.lat.toFixed(5)}, {geo.lng.toFixed(5)}
-              <span className="text-xs text-text-tertiary"> ±{Math.round(geo.accuracy)} m</span>
+              {geo.accuracy > 0 && <span className="text-xs text-text-tertiary"> ±{Math.round(geo.accuracy)} m</span>}
             </span>
             <button type="button" className="w-9 h-9 flex items-center justify-center text-text-secondary" onClick={() => setGeo(null)} aria-label={t('capture.removePosition')}>
               <X size={16} />

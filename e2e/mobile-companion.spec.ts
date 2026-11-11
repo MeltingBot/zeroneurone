@@ -543,6 +543,22 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   await phone.getByRole('button', { name: 'Supprimer', exact: true }).click();
   await expect.poll(async () => (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide')?.events.length, { timeout: 30_000 }).toBe(0);
 
+  // A position placed by touching the map, then removed
+  await phone.getByRole('button', { name: 'Placer sur la carte' }).click();
+  const picker = phone.getByRole('dialog', { name: 'Choisir sur la carte' });
+  await expect(picker.getByText('Touchez la carte')).toBeVisible({ timeout: 20_000 });
+  await phone.waitForTimeout(1000);
+  await picker.getByTestId('map-picker').click({ position: { x: 150, y: 200 } });
+  await expect(picker.getByText(/^-?\d+\.\d{5}, -?\d+\.\d{5}$/)).toBeVisible();
+  await shot(phone, '07h-map-picker');
+  await picker.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect.poll(async () => (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide')?.geo?.type, { timeout: 30_000 })
+    .toBe('point');
+  await phone.getByRole('button', { name: 'Modifier la position' }).click();
+  await phone.getByRole('dialog', { name: 'Choisir sur la carte' }).getByRole('button', { name: 'Retirer la position' }).click();
+  await expect.poll(async () => (await desktopState(desktop)).elements.find((e) => e.label === 'Note rapide')?.geo ?? null, { timeout: 30_000 })
+    .toBeNull();
+
   // ── Offline capture: pending, then delivered on reconnection ─────────────
   await phone.context().setOffline(true);
   await phone.evaluate(() => window.dispatchEvent(new Event('offline')));

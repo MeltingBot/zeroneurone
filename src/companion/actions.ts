@@ -5,7 +5,7 @@
  */
 
 import * as Y from 'yjs';
-import type { Asset, CanvasTab, CommentTargetType, DossierId, ElementEvent, ElementId, GeoPoint, LinkDirection, LinkId, Property } from '../types';
+import type { Asset, CanvasTab, CommentTargetType, DossierId, ElementEvent, ElementId, GeoData, GeoPoint, LinkDirection, LinkId, Property } from '../types';
 import { getYMaps } from '../types/yjs';
 import { elementToYMap, updateElementYMap, yMapToElement } from '../services/yjs/elementMapper';
 import { commentToYMap, updateCommentYMap } from '../services/yjs/commentMapper';
@@ -146,12 +146,12 @@ export async function createCapture(
   return element.id;
 }
 
-/** Edits an existing element's label, notes, properties, source, tags or events */
+/** Edits an existing element's label, notes, properties, source, tags, events or position */
 export function updateElementFields(
   ydoc: Y.Doc,
   dossierId: DossierId,
   elementId: ElementId,
-  changes: { label?: string; notes?: string; properties?: Property[]; source?: string; tags?: string[]; events?: ElementEvent[] },
+  changes: { label?: string; notes?: string; properties?: Property[]; source?: string; tags?: string[]; events?: ElementEvent[]; geo?: GeoData | null },
   connected: boolean,
 ): boolean {
   const ymap = getYMaps(ydoc).elements.get(elementId) as Y.Map<unknown> | undefined;

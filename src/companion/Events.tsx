@@ -6,11 +6,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Loader2, MapPin, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, Loader2, MapPin, MapPinned, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { Element, ElementEvent, GeoData } from '../types';
 import { dateFromInputKeys, dateInputKeys, effectivePrecision, formatPreciseDate } from '../utils/dates';
 import { updateElementFields } from './actions';
-import { locateOnce } from './geolocate';
+import { dossierPoints, locateOnce } from './geolocate';
+import { PositionPicker } from './PositionPicker';
 import { IconAction } from './IconAction';
 import type { useCompanionSession } from './useCompanionSession';
 import { inputClass, sectionTitle } from './ui';
@@ -136,6 +137,8 @@ function EventEditor({ element, s, event, onDone }: {
   const [locating, setLocating] = useState(false);
   const [geoFailed, setGeoFailed] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const around = useMemo(() => dossierPoints(s.data.elements), [s.data.elements]);
   const point = pointOf(geo);
 
   const locate = () => {
@@ -222,12 +225,24 @@ function EventEditor({ element, s, event, onDone }: {
           </button>
         </div>
       ) : (
-        <IconAction
-          icon={locating ? Loader2 : MapPin}
-          label={locating ? t('capture.locating') : t('capture.position')}
-          onClick={locate}
-          disabled={locating}
-          className={locating ? '[&>svg]:animate-spin' : ''}
+        <div className="flex gap-2">
+          <IconAction
+            icon={locating ? Loader2 : MapPin}
+            label={locating ? t('capture.locating') : t('capture.position')}
+            onClick={locate}
+            disabled={locating}
+            className={locating ? '[&>svg]:animate-spin' : ''}
+          />
+          <IconAction icon={MapPinned} label={t('position.pick')} onClick={() => setPicking(true)} />
+        </div>
+      )}
+      {picking && (
+        <PositionPicker
+          initial={point}
+          around={around}
+          onPick={(p) => setGeo({ type: 'point', lat: p.lat, lng: p.lng })}
+          onRemove={point ? () => setGeo(undefined) : undefined}
+          onClose={() => setPicking(false)}
         />
       )}
       {geoFailed && <p className="text-xs text-error">{t('capture.positionFailed')}</p>}

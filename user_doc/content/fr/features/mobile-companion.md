@@ -50,6 +50,7 @@ Onglet **Nouveau** : seul un titre ou une note suffit ; photos, fichiers et posi
 | Appareil photo | Ouvre l'appareil photo ; la photo devient une pièce jointe de l'élément |
 | Trombone | Photos, vidéos, sons ou documents du téléphone (plusieurs à la fois), mêmes types que sur le poste |
 | Repère | Position GPS du téléphone (autorisation demandée par le navigateur) ; l'élément apparaît sur la carte |
+| Repère sur carte | Position choisie en touchant la carte (le repère se déplace en le faisant glisser) |
 
 L'élément reçoit la **date de collecte** (l'instant de la capture). Il arrive sur le poste **sous les éléments existants**, aligné à gauche : les captures successives forment une colonne. Si un onglet est affiché, il y est rangé. Aucun tag n'est ajouté automatiquement. La fiche de l'élément s'ouvre ensuite : tags et propriétés s'y ajoutent.
 
@@ -91,11 +92,12 @@ La barre de recherche reste en haut de tous les écrans. La recherche est celle 
 Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 
 - **Libellé** : le crayon à côté du nom, en haut, le modifie
+- **Position** : l'icône de repère à côté de **Informations** place l'élément en touchant la carte ; le crayon de la ligne Position la déplace ou la retire. Les éléments déjà localisés du dossier apparaissent en points gris pour se repérer
 - **Note** : affichée mise en forme (Markdown) ; le crayon ouvre l'édition, la coche l'envoie, la croix annule
 - **Tags** : toucher un tag affiche les éléments qui le portent ; le bouton en pointillés (crayon ou +) permet d'ajouter ou retirer les tags déjà utilisés dans le dossier
 - **Propriétés** : toucher une valeur pour la modifier, avec la saisie adaptée à son type (texte, nombre, date, oui/non, pays dans une liste), ou la supprimer (corbeille, à toucher deux fois) ; une position ne peut qu'être supprimée
 - **+** à droite d'**Informations** : choisir un nom déjà utilisé dans le dossier (son type est repris) ou en saisir un nouveau, puis le type (texte, nombre ou date) et la valeur
-- **Événements** : listés par date ; le **+** en ajoute un (libellé, date et heure, pré-remplies à maintenant, description, source, position du téléphone), le crayon d'un événement le modifie ou le supprime. Ils alimentent la chronologie, et la carte s'ils ont une position. Une date d'événement laissée telle quelle garde sa précision (année, mois)
+- **Événements** : listés par date ; le **+** en ajoute un (libellé, date et heure, pré-remplies à maintenant, description, source, position du téléphone ou choisie sur la carte), le crayon d'un événement le modifie ou le supprime. Ils alimentent la chronologie, et la carte s'ils ont une position. Une date d'événement laissée telle quelle garde sa précision (année, mois)
 - **Onglets** : toucher un onglet range l'élément dedans ou l'en retire
 - **+** à droite des **Liens** : choisir l'autre élément (recherche, ou création sur place, qui reçoit la date de collecte), le sens, le libellé et la source
 - **Modifier un lien** : le crayon d'une ligne de lien change son libellé et son sens, vu depuis l'élément affiché, ou le supprime (corbeille, deux appuis)
