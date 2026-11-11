@@ -93,11 +93,12 @@ COPY --from=builder /app/dist ./dist
 # Copy production server
 COPY server/index.js ./server/index.js
 # Async buffer, shared with the relay image (imported as ../relay/asyncBuffer.js)
-COPY relay/asyncBuffer.js relay/config.js relay/forward.js ./relay/
+COPY relay/asyncBuffer.js relay/config.js relay/forward.js relay/blobStore.js ./relay/
 
-# Create non-root user for security
+# Create non-root user for security (and the attachment deposit, BLOB_DIR)
 RUN addgroup -g 1001 -S zeroneurone && \
     adduser -S zeroneurone -u 1001 -G zeroneurone && \
+    mkdir -p /app/blobs && \
     chown -R zeroneurone:zeroneurone /app
 
 USER zeroneurone
@@ -106,6 +107,7 @@ USER zeroneurone
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
+ENV BLOB_DIR=/app/blobs
 
 # Expose the single port
 EXPOSE 3000

@@ -29,11 +29,12 @@ import { randomBytes } from 'crypto';
 import { createAsyncBuffer, clientTagOf } from '../relay/asyncBuffer.js';
 import { loadEnvFile, relayConfig } from '../relay/config.js';
 import { forward } from '../relay/forward.js';
+import { BLOB_CORS, createBlobStore, handleBlobRequest } from '../relay/blobStore.js';
 
 // Settings from the environment or a .env file (relay/config.js, every one
 // listed in relay/.env.example); this server keeps its own defaults
 loadEnvFile();
-const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig({
+const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS, BLOB_DIR, BLOB_LIMITS } = relayConfig({
   PORT: 3000,
   MAX_CONNECTIONS_PER_IP: 10,
   BUFFER_MAX_MSGS: 10_000,
@@ -427,11 +428,15 @@ function setupWebSocketRelay(wss) {
 // ============================================================================
 
 // Create HTTP server
-const server = createServer((req, res) => {
+// Encrypted attachments fetched on demand (relay/blobStore.js)
+const blobStore = createBlobStore({ dir: BLOB_DIR, limits: BLOB_LIMITS });
+await blobStore.init();
+setInterval(() => { blobStore.cleanup().catch((err) => console.warn('[Blob] cleanup failed:', err.message)); }, 3600 * 1000);
+
+const server = createServer(async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  for (const [name, value] of Object.entries(BLOB_CORS)) res.setHeader(name, value);
 
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -450,6 +455,8 @@ const server = createServer((req, res) => {
     res.end('ok');
     return;
   }
+
+  if (await handleBlobRequest(req, res, blobStore)) return;
 
   // Serve static files
   serveStatic(req, res);

@@ -71,6 +71,10 @@ services:
       - PORT=4444
       - HOST=0.0.0.0
       - REDIS_URL=${REDIS_URL:-}
+    # Encrypted attachments deposited for 10 days (BLOB_TTL_DAYS): kept
+    # across restarts of the relay
+    volumes:
+      - relay-blobs:/app/blobs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4444/health"]
       interval: 30s
@@ -106,6 +110,9 @@ services:
   #     interval: 30s
   #     timeout: 3s
   #     retries: 3
+
+volumes:
+  relay-blobs:
 
 networks:
   traefik-net:
