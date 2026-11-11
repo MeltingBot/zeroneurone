@@ -1,6 +1,6 @@
 import { db } from '../db/database';
 import type { DossierId } from '../types';
-import { ydocDatabaseName, deleteYDocDatabase } from './yjs/ydocName';
+import { ydocDatabaseName, deleteYDocDatabase, filesDatabaseName } from './yjs/ydocName';
 
 /**
  * Removal of every trace of a dossier from this browser, and the check that
@@ -125,8 +125,8 @@ async function checkYDoc(dossierId: string): Promise<PurgeCheck> {
     return { store, remaining: null, error: 'indexedDB.databases() unsupported' };
   }
   try {
-    const name = ydocDatabaseName(dossierId);
-    const found = (await indexedDB.databases()).filter((d) => d.name === name).length;
+    const names = [ydocDatabaseName(dossierId), filesDatabaseName(dossierId)];
+    const found = (await indexedDB.databases()).filter((d) => names.includes(d.name ?? '')).length;
     return { store, remaining: found };
   } catch (error) {
     return { store, remaining: null, error: String(error) };

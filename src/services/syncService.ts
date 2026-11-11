@@ -19,7 +19,9 @@ import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWe
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
 import { toBase64Url } from '../utils/base64url';
-import { ydocDatabaseName, deleteIdbDatabase } from './yjs/ydocName';
+import { ydocDatabaseName, deleteIdbDatabase, filesDatabaseName } from './yjs/ydocName';
+import { filesRoomId, openFilesSync, type FilesSync } from './filesSync';
+import type * as decoding from 'lib0/decoding';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
@@ -247,6 +249,124 @@ class SyncService {
     this.atRestDek = dek;
   }
 
+  /** Custom message types of the dossier's room (assetRequests.ts) */
+  private messageHandlers = new Map<number, (decoder: decoding.Decoder) => void>();
+  /** This device's relay client tag in the room: messages for it alone carry it */
+  private clientTag: string | null = null;
+  private targetSupport = new Map<string, Promise<boolean>>();
+
+  /** Handles a custom message type of the dossier's room (read after the type) */
+  setMessageHandler(type: number, handle: (decoder: decoding.Decoder) => void): void {
+    this.messageHandlers.set(type, handle);
+    if (this.websocketProvider) {
+      this.websocketProvider.messageHandlers[type] = (_encoder, decoder) => {
+        try { handle(decoder); } catch (err) { console.warn('[SyncService] message not handled:', err); }
+      };
+    }
+  }
+
+  /** This device's tag in the room, for answers meant for it alone */
+  getClientTag(): string | null {
+    return this.clientTag;
+  }
+
+  /** Sends a message to everyone in the room (encrypted). False when not connected. */
+  sendToRoom(message: Uint8Array): boolean {
+    const ws = this.websocketProvider?.ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+    ws.send(message);
+    return true;
+  }
+
+  /**
+   * Sends a message to one client of the room, by its tag; to everyone when
+   * the relay cannot address one (an older relay). False when not connected.
+   */
+  async sendToClient(tag: string, message: Uint8Array): Promise<boolean> {
+    const ws = this.websocketProvider?.ws as (WebSocket & { sendTo?: (t: string, d: Uint8Array) => void }) | null | undefined;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+    if (ws.sendTo && await this.relaySupportsTargets()) ws.sendTo(tag, message);
+    else ws.send(message);
+    return true;
+  }
+
+  /** Bytes waiting in the room's socket: large sends wait for it to drain */
+  sendQueueBytes(): number {
+    return this.websocketProvider?.ws?.bufferedAmount ?? 0;
+  }
+
+  /** Whether the relay delivers messages to one client (X-Relay-Features), asked once per relay */
+  relaySupportsTargets(): Promise<boolean> {
+    const server = this.serverUrl;
+    let known = this.targetSupport.get(server);
+    if (!known) {
+      const http = server.replace(/^ws(s?):\/\//, 'http$1://').replace(/\/+$/, '');
+      known = fetch(`${http}/health`, { cache: 'no-store' })
+        .then((res) => (res.headers.get('X-Relay-Features') ?? '').split(/[ ,]+/).includes('targeted'))
+        .catch(() => false);
+      this.targetSupport.set(server, known);
+    }
+    return known;
+  }
+
+  /** The files document of the open shared dossier (filesSync.ts) */
+  private files: FilesSync | null = null;
+  /** Whether shared dossiers open their files document: the phone does not */
+  private filesSyncEnabled = true;
+
+  setFilesSync(enabled: boolean): void {
+    this.filesSyncEnabled = enabled;
+  }
+
+  /** The files document of the open shared dossier, or null */
+  getFilesDoc(): Y.Doc | null {
+    return this.files?.doc ?? null;
+  }
+
+  /** Opens the files document next to the dossier's room (computers only) */
+  private async openFiles(roomId: string, encryptionKey: string): Promise<void> {
+    await this.closeFiles();
+    if (!this.filesSyncEnabled || !this.dossierId) return;
+    const dossierId = this.dossierId;
+    const files = await openFilesSync({
+      serverUrl: this.serverUrl,
+      dossierId,
+      roomId,
+      encryptionKey,
+      asyncEnabled: this.asyncMode,
+      dek: this.atRestDek,
+      clientTag: await relayClientTag(filesRoomId(roomId)),
+    });
+    // Another dossier opened meanwhile: this one is not wanted any more
+    if (this.dossierId !== dossierId) {
+      await files.close();
+      return;
+    }
+    this.files = files;
+    this.emitFilesChange();
+  }
+
+  private async closeFiles(): Promise<void> {
+    const files = this.files;
+    this.files = null;
+    if (files) {
+      this.emitFilesChange();
+      await files.close().catch((err) => console.warn('[SyncService] files document not closed:', err));
+    }
+  }
+
+  private filesListeners = new Set<() => void>();
+
+  /** Called when the files document opens or closes */
+  onFilesChange(listener: () => void): () => void {
+    this.filesListeners.add(listener);
+    return () => this.filesListeners.delete(listener);
+  }
+
+  private emitFilesChange(): void {
+    for (const listener of this.filesListeners) listener();
+  }
+
   /** Name of a dossier's local Y.js database: the desktop's by default */
   private localStoreName: (dossierId: string) => string = ydocDatabaseName;
 
@@ -346,6 +466,7 @@ class SyncService {
       token: accessToken,
       clientTag: await relayClientTag(effectiveRoomId),
     });
+    if (encryptionKey && roomId) await this.openFiles(roomId, encryptionKey);
 
     return this.ydoc;
   }
@@ -391,6 +512,7 @@ class SyncService {
       token: accessToken,
       clientTag: await relayClientTag(hashedRoomId),
     });
+    await this.openFiles(hashedRoomId, newKey);
 
     return newKey;
   }
@@ -442,6 +564,9 @@ class SyncService {
       this.websocketProvider.destroy();
       this.websocketProvider = null;
     }
+
+    // The dossier is local again: its files are in OPFS, the files document goes
+    await this.closeFiles();
 
     // Clear encryption key when stopping sharing
     this.encryptionKey = null;
@@ -556,6 +681,14 @@ class SyncService {
         resyncInterval: -1,
       }
     );
+
+    // Custom message types (assetRequests.ts) on every new connection
+    for (const [type, handle] of this.messageHandlers) {
+      this.websocketProvider.messageHandlers[type] = (_encoder, decoder) => {
+        try { handle(decoder); } catch (err) { console.warn('[SyncService] message not handled:', err); }
+      };
+    }
+    this.clientTag = options?.clientTag ?? null;
 
     // Track connection lifecycle
     let wasConnected = false;
@@ -717,6 +850,7 @@ class SyncService {
   async close(): Promise<void> {
     // Suppress event handlers during teardown
     this.isClosing = true;
+    await this.closeFiles();
 
     // Disconnect and destroy WebSocket provider
     if (this.websocketProvider) {
@@ -827,6 +961,7 @@ class SyncService {
   async deleteLocalData(dossierId: string): Promise<void> {
     if (this.dossierId === dossierId) await this.close();
     await deleteIdbDatabase(this.localStoreName(dossierId));
+    await deleteIdbDatabase(filesDatabaseName(dossierId));
   }
 }
 

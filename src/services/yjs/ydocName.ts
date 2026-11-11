@@ -13,6 +13,12 @@ const COMPANION_YDOC_DB_PREFIX = 'zeroneurone-companion-ydoc-';
 
 export const companionYdocDatabaseName = (dossierId: string) => `${COMPANION_YDOC_DB_PREFIX}${dossierId}`;
 
+/**
+ * A shared dossier's files document on a computer (filesSync.ts): the bytes
+ * of its attachments, apart from the main document.
+ */
+export const filesDatabaseName = (dossierId: string) => `zeroneurone-files-${dossierId}`;
+
 export const isYdocDatabaseName = (name: string | undefined): name is string => !!name?.startsWith(YDOC_DB_PREFIX);
 
 export const dossierIdOfYdocDatabase = (name: string) => name.slice(YDOC_DB_PREFIX.length);

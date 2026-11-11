@@ -14,6 +14,10 @@ const ydoc = new Y.Doc();
 
 vi.mock('../services/syncService', () => ({
   syncService: {
+    // Files document of a shared dossier (filesSync.ts), absent here
+    getFilesDoc: () => null,
+    onFilesChange: () => () => {},
+    setMessageHandler: () => {},
     getYDoc: () => ydoc,
     getDossierId: () => 'd1',
     isConnected: () => false,

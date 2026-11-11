@@ -19,6 +19,10 @@ const ydoc = new Y.Doc();
 
 vi.mock('../services/syncService', () => ({
   syncService: {
+    // Files document of a shared dossier (filesSync.ts), absent here
+    getFilesDoc: () => null,
+    onFilesChange: () => () => {},
+    setMessageHandler: () => {},
     getYDoc: () => ydoc,
     // The store only writes into the shown dossier's Y.Doc (getYDocFor)
     getYDocFor: (id: string | null | undefined) => (id ? ydoc : null),

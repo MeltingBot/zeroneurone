@@ -1,11 +1,14 @@
 import type { Page } from '@playwright/test';
 
-/** Count and total size of the stored updates of every dossier Y.js database. */
-export async function ydocStorage(page: Page) {
-  return page.evaluate(async () => {
+/**
+ * Count and total size of the stored updates of every dossier Y.js database
+ * (`zeroneurone-ydoc-`), or of every files document (`zeroneurone-files-`).
+ */
+export async function ydocStorage(page: Page, prefix = 'zeroneurone-ydoc-') {
+  return page.evaluate(async (prefix) => {
     const result: { count: number; bytes: number }[] = [];
     for (const { name } of await indexedDB.databases()) {
-      if (!name?.startsWith('zeroneurone-ydoc-')) continue;
+      if (!name?.startsWith(prefix)) continue;
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const req = indexedDB.open(name);
         req.onsuccess = () => resolve(req.result);
@@ -19,5 +22,5 @@ export async function ydocStorage(page: Page) {
       result.push({ count: all.length, bytes: all.reduce((s, u) => s + u.byteLength, 0) });
     }
     return result;
-  });
+  }, prefix);
 }

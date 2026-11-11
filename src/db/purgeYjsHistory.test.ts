@@ -6,7 +6,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as Y from 'yjs';
 
 vi.mock('../services/syncService', () => ({
-  syncService: { getDossierId: () => null, isOpen: () => false, close: vi.fn() },
+  syncService: {
+    getDossierId: () => null, isOpen: () => false, close: vi.fn(),
+    getFilesDoc: () => null, onFilesChange: () => () => {}, setMessageHandler: () => {},
+  },
 }));
 
 // OPFS is out of reach here: files are served from this map, by asset id

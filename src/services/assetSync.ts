@@ -115,6 +115,34 @@ export function assembleChunks(map: Y.Map<unknown>): Uint8Array {
  * @param onChunkSent  Called after each chunk push with cumulative bytes sent.
  *                     Use it to drive the source-side progress UI.
  */
+/**
+ * An attachment's metadata and thumbnail, without its bytes: in the main
+ * document of a dossier whose files document carries them (filesSync.ts).
+ * Peers that read only the main document (the phone) see it and ask a
+ * computer for the bytes on demand (assetRequests.ts).
+ */
+export function pushAssetMeta(ydoc: Y.Doc, assetsMap: Y.Map<Y.Map<unknown>>, asset: Asset): void {
+  const assetYMap = new Y.Map<unknown>();
+  ydoc.transact(() => {
+    assetYMap.set('id', asset.id);
+    assetYMap.set('dossierId', asset.dossierId);
+    assetYMap.set('filename', asset.filename);
+    assetYMap.set('mimeType', asset.mimeType);
+    assetYMap.set('size', asset.size);
+    assetYMap.set('hash', asset.hash);
+    assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
+    assetYMap.set('extractedText', asset.extractedText);
+    assetYMap.set('createdAt', asset.createdAt.toISOString());
+    assetYMap.set('onDemand', true);
+    assetsMap.set(asset.id, assetYMap);
+  });
+}
+
+/** Whether the main document holds only this attachment's metadata (bytes on demand) */
+export function isOnDemand(map: Y.Map<unknown>): boolean {
+  return map.get('onDemand') === true && !getChunksArray(map);
+}
+
 export async function pushAssetChunked(
   ydoc: Y.Doc,
   assetsMap: Y.Map<Y.Map<unknown>>,

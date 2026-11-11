@@ -12,6 +12,10 @@ import type { Dossier, Element, Link } from '../types';
 
 vi.mock('../services/syncService', () => ({
   syncService: {
+    // Files document of a shared dossier (filesSync.ts), absent here
+    getFilesDoc: () => null,
+    onFilesChange: () => () => {},
+    setMessageHandler: () => {},
     getYDoc: () => null,
     isConnected: () => false,
     getProvider: () => null,

@@ -52,6 +52,8 @@ export async function bootCompanion(i18nReady: Promise<unknown>): Promise<void> 
   setupPage()
   // The companion's copies, apart from the desktop's in the same browser
   syncService.setLocalStoreName(companionYdocDatabaseName)
+  // The phone does not sync the files document: it asks for a file when opened
+  syncService.setFilesSync(false)
   // Shares from other apps left unused are not kept past a day
   void dropOldShares().catch(() => undefined)
   await i18nReady

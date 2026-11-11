@@ -101,7 +101,13 @@ async function countUndecryptableData(
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './opfsEncryption';
 import { syncService } from '../syncService';
 import { runBeforeDisableHooks } from '../../plugins/pluginAPI';
-import { ydocDatabaseName } from '../yjs/ydocName';
+import { filesDatabaseName, ydocDatabaseName } from '../yjs/ydocName';
+
+/** Whether a database exists (migrating a missing one would create it) */
+async function databaseExists(name: string): Promise<boolean> {
+  if (typeof indexedDB.databases !== 'function') return false;
+  return (await indexedDB.databases()).some((d) => d.name === name);
+}
 
 export interface MigrationProgress {
   phase: string;
@@ -285,6 +291,8 @@ export async function enableEncryption(
     });
     try {
       await migrateToEncrypted(ydocDatabaseName(inv.id), dek);
+      // The files document of a shared dossier, when there is one
+      if (await databaseExists(filesDatabaseName(inv.id))) await migrateToEncrypted(filesDatabaseName(inv.id), dek);
     } catch (err) {
       console.warn(`[migrationService] Erreur y-indexeddb ${inv.id}:`, err);
       failures.push(`dossier ${inv.id}`);
@@ -420,6 +428,7 @@ export async function disableEncryption(
     });
     try {
       await migrateToPlaintext(ydocDatabaseName(inv.id), dek);
+      if (await databaseExists(filesDatabaseName(inv.id))) await migrateToPlaintext(filesDatabaseName(inv.id), dek);
     } catch (err) {
       console.warn(`[migrationService] Erreur y-indexeddb ${inv.id}:`, err);
       failures.push(`dossier ${inv.id}`);

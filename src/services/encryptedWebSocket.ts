@@ -11,6 +11,19 @@ import { encrypt, decrypt, importEncryptionKey } from './cryptoService';
 // Message type prefix to identify encrypted messages
 const ENCRYPTED_PREFIX = new Uint8Array([0xE2, 0xE2]); // "EE" marker
 
+/** The relay's "for one client" header (relay/forward.js): `ZNT`, tag length, tag */
+const TARGET_MAGIC = [0xff, 0x5a, 0x4e, 0x54];
+
+function withTarget(tag: string, payload: Uint8Array): ArrayBuffer {
+  const tagBytes = new TextEncoder().encode(tag);
+  const out = new Uint8Array(TARGET_MAGIC.length + 1 + tagBytes.length + payload.length);
+  out.set(TARGET_MAGIC, 0);
+  out[TARGET_MAGIC.length] = tagBytes.length;
+  out.set(tagBytes, TARGET_MAGIC.length + 1);
+  out.set(payload, TARGET_MAGIC.length + 1 + tagBytes.length);
+  return out.buffer;
+}
+
 export class EncryptedWebSocket {
   private ws: WebSocket;
   private key: CryptoKey | null = null;
@@ -170,10 +183,10 @@ export class EncryptedWebSocket {
   /**
    * Send data with encryption
    */
-  private async sendEncrypted(data: ArrayBuffer): Promise<void> {
+  private async sendEncrypted(data: ArrayBuffer, target?: string): Promise<void> {
     if (!this.key) {
       // No encryption, send as-is
-      this.ws.send(data);
+      this.ws.send(target ? withTarget(target, new Uint8Array(data)) : data);
       return;
     }
 
@@ -187,7 +200,7 @@ export class EncryptedWebSocket {
       withPrefix.set(ENCRYPTED_PREFIX, 0);
       withPrefix.set(encrypted, ENCRYPTED_PREFIX.length);
 
-      this.ws.send(withPrefix.buffer);
+      this.ws.send(target ? withTarget(target, withPrefix) : withPrefix.buffer);
       const elapsed = performance.now() - t0;
       if (elapsed > 500) {
         console.warn(`[EncryptedWS] send SLOW: ${elapsed.toFixed(0)}ms (${data.byteLength}B)`);
@@ -225,6 +238,18 @@ export class EncryptedWebSocket {
 
     // Chain onto send queue — ensures ordering despite async encryption
     this.sendChain = this.sendChain.then(() => this.sendEncrypted(buffer));
+  }
+
+  /**
+   * Sends to one client of the room (its relay client tag): encrypted as any
+   * message, with the relay's "for one client" header in front (relay/
+   * forward.js). Only to a relay announcing it (syncService.relaySupportsTargets);
+   * dropped when not connected.
+   */
+  sendTo(target: string, data: Uint8Array): void {
+    if (this.keyFailed || !this.keyReady || this.ws.readyState !== WebSocket.OPEN) return;
+    const buffer = (data.buffer as ArrayBuffer).slice(data.byteOffset, data.byteOffset + data.byteLength);
+    this.sendChain = this.sendChain.then(() => this.sendEncrypted(buffer, target));
   }
 
   /**

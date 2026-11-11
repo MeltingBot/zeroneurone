@@ -80,7 +80,11 @@ import { db } from '../db/database';
 import { emit as emitPluginEvent, setCurrentDossierIdGetter } from '../plugins/pluginEventBus';
 import {
   MAX_SHARED_ASSET_SIZE,
+  ASSET_CHUNK_SIZE,
+  ASSET_CHUNK_SEND_DELAY_MS,
   pushAssetChunked,
+  pushAssetMeta,
+  isOnDemand,
   readAssetMeta,
   getChunksArray,
   getReceivedBytes,
@@ -88,6 +92,9 @@ import {
   assembleChunks,
   type AssetMeta,
 } from '../services/assetSync';
+import {
+  MSG_ASSET_REQUEST, decodeRequest, encodeChunk, encodeMissing, isFresh, type AssetRequest,
+} from '../services/assetRequests';
 
 /**
  * State captured before a merge, so the operation can be undone.
@@ -283,10 +290,42 @@ async function saveAssembledAsset(map: Y.Map<unknown>, meta: AssetMeta): Promise
  * there doubles the file's footprint on disk. A local dossier keeps its files
  * in OPFS alone; sharing it calls this to send them.
  */
+/**
+ * An attachment shared with the dossier's peers. With a files document
+ * (shared dossier, filesSync.ts): bytes there, metadata and thumbnail in the
+ * main document (the phone reads only that one and asks for the bytes on
+ * demand). Otherwise, as before: everything in the main document.
+ */
+async function pushSharedAsset(
+  ydoc: Y.Doc,
+  asset: Asset,
+  arrayBuffer: ArrayBuffer,
+  onChunkSent?: (bytesSent: number) => void,
+): Promise<void> {
+  const { assets: mainAssets } = getYMaps(ydoc);
+  const files = syncService.getFilesDoc();
+  if (!files) {
+    await pushAssetChunked(ydoc, mainAssets, asset, arrayBuffer, onChunkSent);
+    return;
+  }
+  if (!mainAssets.has(asset.id)) pushAssetMeta(ydoc, mainAssets, asset);
+  const filesAssets = getYMaps(files).assets;
+  if (!filesAssets.has(asset.id)) await pushAssetChunked(files, filesAssets, asset, arrayBuffer, onChunkSent);
+}
+
+/** Whether a local attachment is missing from what peers can fetch */
+function needsUpload(ydoc: Y.Doc, asset: Asset): boolean {
+  const main = getYMaps(ydoc).assets.get(asset.id) as Y.Map<unknown> | undefined;
+  if (!main) return true;
+  // Bytes in the main document (attachments shared before the files document)
+  if (!isOnDemand(main)) return false;
+  const files = syncService.getFilesDoc();
+  return !!files && !getYMaps(files).assets.has(asset.id);
+}
+
 async function uploadMissingAssets(ydoc: Y.Doc, assets: Asset[]): Promise<void> {
-  const { assets: assetsMap } = getYMaps(ydoc);
   const syncStore = useSyncStore.getState();
-  const toUpload = assets.filter((a) => !assetsMap.has(a.id) && a.size <= MAX_SHARED_ASSET_SIZE);
+  const toUpload = assets.filter((a) => needsUpload(ydoc, a) && a.size <= MAX_SHARED_ASSET_SIZE);
   // Register them all first, so the badge shows the total upfront instead of
   // growing one by one.
   for (const a of toUpload) {
@@ -295,13 +334,12 @@ async function uploadMissingAssets(ydoc: Y.Doc, assets: Asset[]): Promise<void> 
 
   for (const asset of toUpload) {
     // Removed meanwhile, or pushed by a concurrent call
-    if (assetsMap.has(asset.id)) continue;
+    if (!needsUpload(ydoc, asset)) continue;
     try {
       const file = await fileService.getAssetFile(asset);
       const arrayBuffer = await file.arrayBuffer();
-      await pushAssetChunked(
+      await pushSharedAsset(
         ydoc,
-        assetsMap,
         asset,
         arrayBuffer,
         (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
@@ -2599,15 +2637,13 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // then (uploadMissingAssets). Skip when over the shared-mode hard cap —
     // the file stays local but other peers won't see it.
     if (ydoc && isShared && !exceedsSharedCap) {
-      const { assets: assetsMap } = getYMaps(ydoc);
       const syncStore = useSyncStore.getState();
       // Pre-register so the progress badge appears immediately
       syncStore.registerMediaAsset(asset.id, asset.filename, asset.size);
       file.arrayBuffer().then(async (arrayBuffer) => {
         try {
-          await pushAssetChunked(
+          await pushSharedAsset(
             ydoc,
-            assetsMap,
             asset,
             arrayBuffer,
             (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
@@ -2646,6 +2682,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
 
       assetsMap.delete(assetId);
+      // Its bytes in the files document too
+      const files = syncService.getFilesDoc();
+      if (files) files.transact(() => getYMaps(files).assets.delete(assetId));
     }
 
     // Also update Dexie
@@ -3532,3 +3571,83 @@ useDossierStore.subscribe((state) => setOpenDossierLock(lockReasonOf(state)));
 
 // Events emitted outside this store (exports…) are attached to the open dossier
 setCurrentDossierIdGetter(() => useDossierStore.getState().currentDossier?.id ?? null);
+
+// ============================================================================
+// FILES DOCUMENT AND REQUESTS FROM THE PHONE (filesSync.ts, assetRequests.ts)
+// ============================================================================
+
+function addSavedAsset(saved: Asset): void {
+  useDossierStore.setState((state) => ({
+    assets: state.assets.some((a) => a.id === saved.id) ? state.assets : [...state.assets, saved],
+  }));
+}
+
+let unwatchFiles: (() => void) | null = null;
+
+/**
+ * Files reach this computer through the files document as they did through
+ * the main one: each entry is saved to OPFS once all its chunks are there.
+ */
+function watchFilesDocument(): void {
+  unwatchFiles?.();
+  unwatchFiles = null;
+  const files = syncService.getFilesDoc();
+  if (!files) return;
+  const assetsMap = getYMaps(files).assets;
+  const take = (map: Y.Map<unknown> | undefined) => {
+    const dossier = useDossierStore.getState().currentDossier;
+    const id = map?.get('id');
+    if (!map || !dossier || typeof id !== 'string') return;
+    if (useDossierStore.getState().assets.some((a) => a.id === id)) return;
+    processAssetMap(map, dossier.id, addSavedAsset)
+      .then((saved) => { if (saved) addSavedAsset(saved); })
+      .catch((err) => onPersistFailure(err, 'asset.process'));
+  };
+  assetsMap.forEach((map) => take(map as Y.Map<unknown>));
+  const observer = (event: Y.YMapEvent<Y.Map<unknown>>) => {
+    for (const key of event.keysChanged) take(assetsMap.get(key) as Y.Map<unknown> | undefined);
+  };
+  assetsMap.observe(observer);
+  unwatchFiles = () => assetsMap.unobserve(observer);
+}
+syncService.onFilesChange(watchFilesDocument);
+// The files document can open before the dossier is in the store: watched again once it is
+useDossierStore.subscribe((state, previous) => {
+  if (state.currentDossier?.id !== previous.currentDossier?.id) watchFilesDocument();
+});
+
+/** Requests being answered, so a repeated one is not sent twice at once */
+const answering = new Set<string>();
+/** Data waiting in the socket past which sending pauses */
+const ANSWER_QUEUE_LIMIT = 4 * 1024 * 1024;
+
+/** Sends an attachment's bytes to the phone that asked, in chunks, paced */
+async function answerAssetRequest(request: AssetRequest): Promise<void> {
+  const key = `${request.replyTo}:${request.assetId}`;
+  if (answering.has(key)) return;
+  answering.add(key);
+  try {
+    const asset = useDossierStore.getState().assets.find((a) => a.id === request.assetId);
+    if (!asset) {
+      await syncService.sendToClient(request.replyTo, encodeMissing(request.assetId));
+      return;
+    }
+    const bytes = new Uint8Array(await (await fileService.getAssetFile(asset)).arrayBuffer());
+    const total = Math.max(1, Math.ceil(bytes.length / ASSET_CHUNK_SIZE));
+    for (let index = 0; index < total; index++) {
+      while (syncService.sendQueueBytes() > ANSWER_QUEUE_LIMIT) await new Promise((r) => setTimeout(r, 50));
+      const chunk = bytes.subarray(index * ASSET_CHUNK_SIZE, (index + 1) * ASSET_CHUNK_SIZE);
+      if (!(await syncService.sendToClient(request.replyTo, encodeChunk({ assetId: asset.id, index, total, bytes: chunk })))) return;
+      await new Promise((r) => setTimeout(r, ASSET_CHUNK_SEND_DELAY_MS));
+    }
+  } catch (err) {
+    console.warn('[Sync] attachment not sent to the phone:', err);
+  } finally {
+    answering.delete(key);
+  }
+}
+
+syncService.setMessageHandler(MSG_ASSET_REQUEST, (decoder) => {
+  const request = decodeRequest(decoder);
+  if (isFresh(request)) void answerAssetRequest(request);
+});
