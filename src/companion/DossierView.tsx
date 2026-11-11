@@ -20,7 +20,7 @@ import type { CompanionSession } from './sessions';
 import { removeSession } from './sessions';
 import { clearPending } from './pending';
 import { closeCompanionSession, useCompanionSession, type AssetEntry } from './useCompanionSession';
-import { addComment, createCapture, deleteElement, deleteLink, updateElementFields, updateLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
+import { addComment, createCapture, deleteComment, deleteElement, deleteLink, updateElementFields, updateLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
 import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes';
 import { navigate } from './router';
 import { AppSettings } from './AppSettings';
@@ -1077,6 +1077,13 @@ function CommentItem({ comment, s, onOpen, context }: { comment: Comment; s: Ses
     const ydoc = s.ydoc;
     void s.track(() => setCommentResolved(ydoc, dossierId, comment.id, !comment.resolved, s.syncState.connected));
   };
+  const [confirming, setConfirming] = useState(false);
+  const remove = () => {
+    const dossierId = s.dossierId;
+    if (!s.ydoc || !dossierId) return;
+    const ydoc = s.ydoc;
+    void s.track(() => deleteComment(ydoc, dossierId, comment.id, s.syncState.connected));
+  };
   return (
     <div className={`border border-border-default rounded px-3 py-2 space-y-1 ${comment.resolved ? 'opacity-60' : ''}`}>
       <div className="flex items-center gap-2 text-xs">
@@ -1094,6 +1101,20 @@ function CommentItem({ comment, s, onOpen, context }: { comment: Comment; s: Ses
             {comment.resolved ? <RotateCcw size={14} /> : <Check size={14} />}
           </button>
         )}
+        {!s.data.locked && (confirming ? (
+          <>
+            <button type="button" className="p-1 text-error" onClick={remove} aria-label={t('delete.confirm')} title={t('delete.confirm')}>
+              <Trash2 size={14} />
+            </button>
+            <button type="button" className="p-1 text-text-secondary" onClick={() => setConfirming(false)} aria-label={t('cancel')} title={t('cancel')}>
+              <X size={14} />
+            </button>
+          </>
+        ) : (
+          <button type="button" className="p-1 text-text-secondary" onClick={() => setConfirming(true)} aria-label={t('comments.delete')} title={t('comments.delete')}>
+            <Trash2 size={14} />
+          </button>
+        ))}
       </div>
       {context && (
         <button type="button" className="text-xs text-accent truncate max-w-full" onClick={onOpen}>{context}</button>

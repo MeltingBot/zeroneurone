@@ -669,7 +669,8 @@
     "filesProgress": "{{completed}}/{{total}} Dateien",
     "filesFailed": "{{count}} Datei(en) fehlgeschlagen",
     "yourName": "Ihr Name",
-    "clickToEditName": "Sie: {{name}} (klicken zum Bearbeiten)"
+    "clickToEditName": "Sie: {{name}} (klicken zum Bearbeiten)",
+    "companion": "Mobil"
   },
   "report": {
     "noDossier": "Keine Akte geladen",

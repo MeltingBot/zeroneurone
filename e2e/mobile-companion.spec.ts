@@ -466,6 +466,12 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   });
   await phone.bringToFront();
   await expect(phone.getByText('Bien reçu, plaque ?')).toBeVisible({ timeout: 20_000 });
+  // Deleted from the phone, after a confirmation: gone on the desktop
+  await phone.getByRole('button', { name: 'Supprimer le commentaire' }).click();
+  await phone.getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await expect(phone.getByText('Bien reçu, plaque ?')).toHaveCount(0);
+  await expect.poll(async () => (await desktopState(desktop)).comments.map((c) => c.content), { timeout: 20_000 })
+    .not.toContain('Bien reçu, plaque ?');
 
   // ── Text only, then tags and properties from the dossier ─────────────────
   await desktop.evaluate(async () => {
@@ -1133,9 +1139,9 @@ test('a phone with a read link sees the dossier and changes nothing', async ({ b
   await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
   await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(phone.getByText('Lecture seule', { exact: true })).toBeVisible();
-  // The desktop sees the phone, marked as a reader
+  // The desktop sees the phone, marked as a reader and as a phone
   await desktop.bringToFront();
-  await expect(desktop.locator('[data-reader="true"]')).toHaveCount(1, { timeout: 30_000 });
+  await expect(desktop.locator('[data-reader="true"][data-companion="true"]')).toHaveCount(1, { timeout: 30_000 });
 
   // The desktop's changes arrive
   await desktop.bringToFront();

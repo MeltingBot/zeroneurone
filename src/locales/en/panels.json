@@ -669,7 +669,8 @@
     "filesProgress": "{{completed}}/{{total}} files",
     "filesFailed": "{{count}} file(s) failed",
     "yourName": "Your name",
-    "clickToEditName": "You: {{name}} (click to edit)"
+    "clickToEditName": "You: {{name}} (click to edit)",
+    "companion": "mobile"
   },
   "report": {
     "noDossier": "No dossier loaded",

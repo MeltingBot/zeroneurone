@@ -67,6 +67,7 @@ export function startPresence(): () => void {
       viewMode: 'canvas',
       lastSeen: Date.now(),
       reader: syncService.isReadOnly(),
+      companion: true,
     });
   };
   publish();

@@ -669,7 +669,8 @@
     "filesProgress": "{{completed}}/{{total}} fitxategi",
     "filesFailed": "{{count}} fitxategi huts egin du(te)",
     "yourName": "Zure izena",
-    "clickToEditName": "Zu: {{name}} (klikatu editatzeko)"
+    "clickToEditName": "Zu: {{name}} (klikatu editatzeko)",
+    "companion": "mugikorra"
   },
   "report": {
     "noDossier": "Ez dago espedienterik kargatuta",

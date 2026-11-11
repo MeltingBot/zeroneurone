@@ -669,7 +669,8 @@
     "filesProgress": "{{completed}}/{{total}} bestanden",
     "filesFailed": "{{count}} bestand(en) mislukt",
     "yourName": "Uw naam",
-    "clickToEditName": "U: {{name}} (klik om te bewerken)"
+    "clickToEditName": "U: {{name}} (klik om te bewerken)",
+    "companion": "mobiel"
   },
   "report": {
     "noDossier": "Geen dossier geladen",

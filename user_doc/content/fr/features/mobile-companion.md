@@ -20,6 +20,8 @@ Le compagnon passe par la [collaboration]({{< relref "collaboration" >}}) : le d
 
 Le dossier est ensuite listé à l'adresse `/m/` : plus besoin du QR code pour le rouvrir.
 
+Sur le poste, le téléphone apparaît dans les avatars de présence, marqué d'une icône téléphone.
+
 Le QR code donne le même accès que le poste qui l'affiche, sans code à saisir. Un lien de partage reçu, ouvert ou collé sur le téléphone, demande le **code d'écriture** ; laissé vide, le dossier s'affiche marqué **Lecture seule**, reçoit les modifications, et ne propose ni capture, ni modification, ni commentaire. Voir [Lecture seule]({{< relref "collaboration#lecture-seule" >}}).
 
 Un lien de partage desktop (`/join/…`) ouvert sur un téléphone mène aussi au compagnon. Sur cette page, vous pouvez aussi **coller le lien de partage** (le lien desktop `/join/…` convient) ou le **scanner** avec le lecteur intégré (Android et iPhone) : sans dossier sur le téléphone, touchez le grand QR code de l'accueil.
@@ -77,7 +79,7 @@ Sans réseau, la capture est enregistrée sur le téléphone et l'en-tête affic
 | **Éléments** | Liste et recherche. Les icônes au-dessus de la liste la trient : plus récents, nom, ou nombre de liens (affiché sur chaque ligne). Une étiquette au nom d'un collaborateur signale l'élément sur lequel il travaille (pleine s'il le modifie) ; une ligne modifiée depuis un autre appareil s'éclaire brièvement |
 | **Carte** | Éléments localisés, regroupés quand ils sont proches, et liens entre eux ; toucher un lien affiche ses extrémités ; bouton de position ; fond satellite |
 | **Chronologie** | Périodes et événements des éléments, liens datés, groupés par jour (la date de collecte n'y figure pas, comme sur le poste). En haut, une frise des années (ou des mois) avec le nombre d'entrées de chacune : la toucher saute à la période. Les boutons à droite inversent l'ordre (plus récent d'abord) et sautent à une date. Toucher un événement ouvre la fiche sur cet événement |
-| **Commentaires** | Commentaires ouverts du dossier (résolus sur demande) |
+| **Commentaires** | Commentaires ouverts du dossier (résolus sur demande) ; résoudre, rouvrir, supprimer (après confirmation) |
 
 ### Onglets et tags
 

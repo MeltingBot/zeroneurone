@@ -141,6 +141,8 @@ export interface UserPresence {
   lastSeen?: number;
   /** Joined with a read link (declared by the reader itself: a marker, not a control) */
   reader?: boolean;
+  /** Connected from the mobile companion (declared by itself: a marker) */
+  companion?: boolean;
 }
 
 export const USER_COLORS = [

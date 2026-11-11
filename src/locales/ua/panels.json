@@ -671,7 +671,8 @@
     "filesProgress": "{{completed}}/{{total}} файлів",
     "filesFailed": "{{count}} файл(ів) не вдалося",
     "yourName": "Ваше ім'я",
-    "clickToEditName": "Ви: {{name}} (клацніть для редагування)"
+    "clickToEditName": "Ви: {{name}} (клацніть для редагування)",
+    "companion": "мобільний"
   },
   "report": {
     "noDossier": "Справа не завантажено",

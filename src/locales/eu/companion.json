@@ -91,7 +91,8 @@
     "send": "Bidali",
     "showResolved": "Erakutsi ebatzitakoak",
     "empty": "Ez dago iruzkin irekirik.",
-    "deletedTarget": "Ezabatutako elementua"
+    "deletedTarget": "Ezabatutako elementua",
+    "delete": "Ezabatu iruzkina"
   },
   "capture": {
     "label": "Izenburua",

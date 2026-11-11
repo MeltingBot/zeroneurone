@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.94.1
+
+### Compagnon mobile
+
+- **Supprimer un commentaire** depuis le téléphone, après confirmation.
+- **Téléphone repéré** — sur le poste, l'avatar d'un compagnon porte une
+  icône téléphone.
+
 ## 2.94.0
 
 ### Partage en lecture seule

@@ -105,7 +105,8 @@
     "send": "Wyślij",
     "showResolved": "Pokaż rozwiązane",
     "empty": "Brak otwartych komentarzy.",
-    "deletedTarget": "Usunięty element"
+    "deletedTarget": "Usunięty element",
+    "delete": "Usuń komentarz"
   },
   "capture": {
     "label": "Tytuł",

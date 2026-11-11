@@ -91,7 +91,8 @@
     "send": "Verzenden",
     "showResolved": "Afgehandelde tonen",
     "empty": "Geen open opmerkingen.",
-    "deletedTarget": "Verwijderd element"
+    "deletedTarget": "Verwijderd element",
+    "delete": "Opmerking verwijderen"
   },
   "capture": {
     "label": "Titel",

@@ -669,7 +669,8 @@
     "filesProgress": "{{completed}}/{{total}} fitxers",
     "filesFailed": "{{count}} fitxer(s) fallat(s)",
     "yourName": "El vostre nom",
-    "clickToEditName": "Vós: {{name}} (feu clic per editar)"
+    "clickToEditName": "Vós: {{name}} (feu clic per editar)",
+    "companion": "mòbil"
   },
   "report": {
     "noDossier": "Cap expedient carregada",

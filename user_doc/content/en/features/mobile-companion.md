@@ -20,6 +20,8 @@ The companion relies on [collaboration]({{< relref "collaboration" >}}): the dos
 
 The dossier is then listed at the `/m/` address: no QR code needed to reopen it.
 
+On the computer, the phone shows up in the presence avatars, marked with a phone icon.
+
 The QR code grants the same access as the computer showing it, with no code to enter. A share link received, opened or pasted on the phone, asks for the **write code**; left empty, the dossier shows as **Read-only**, receives changes, and offers no capture, editing or comment. See [Read only]({{< relref "collaboration#read-only" >}}).
 
 A desktop share link (`/join/…`) opened on a phone leads to the companion too. On that page you can also **paste the share link** (the desktop `/join/…` link works) or **scan** it with the built-in scanner (Android and iPhone): with no dossier on the phone yet, tap the large QR code on the home page.
@@ -77,7 +79,7 @@ Without a network, the capture is stored on the phone and the header shows **N p
 | **Elements** | List and search. The icons above the list sort it: most recent, name, or number of links (shown on each row). A label with a collaborator's name marks the element they are working on (filled while they edit it); a row changed from another device lights up briefly |
 | **Map** | Located elements, grouped when close, and the links between them; tap a link to see its ends; location button; satellite basemap |
 | **Timeline** | Element periods and events, dated links, grouped by day (the collection date is left out, as on the computer). At the top, a strip of years (or months) with how many entries each holds: tap one to jump to it. The buttons on the right reverse the order (newest first) and jump to a date. Tapping an event opens the element on it |
-| **Comments** | Open comments of the dossier (resolved ones on request) |
+| **Comments** | Open comments of the dossier (resolved ones on request); resolve, reopen, delete (after a confirmation) |
 
 ### Tabs and tags
 

@@ -353,6 +353,14 @@ export function setCommentResolved(
   );
 }
 
+export function deleteComment(ydoc: Y.Doc, dossierId: DossierId, commentId: string, connected: boolean): void {
+  if (!getYMaps(ydoc).comments.has(commentId)) return;
+  beginWrite(dossierId, ydoc, commentId, connected);
+  ydoc.transact(() => {
+    getYMaps(ydoc).comments.delete(commentId);
+  });
+}
+
 /** For tests and the element list: the elements of the Y.Doc, skipping broken entries */
 export function readElements(ydoc: Y.Doc) {
   const out: ReturnType<typeof yMapToElement>[] = [];

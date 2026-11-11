@@ -299,6 +299,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
                 viewMode: state.viewMode || 'canvas',
                 lastSeen,
                 reader: state.reader === true,
+                companion: state.companion === true,
               });
             }
           }

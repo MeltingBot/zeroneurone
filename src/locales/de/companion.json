@@ -91,7 +91,8 @@
     "send": "Senden",
     "showResolved": "Erledigte anzeigen",
     "empty": "Keine offenen Kommentare.",
-    "deletedTarget": "Gelöschtes Element"
+    "deletedTarget": "Gelöschtes Element",
+    "delete": "Kommentar löschen"
   },
   "capture": {
     "label": "Titel",

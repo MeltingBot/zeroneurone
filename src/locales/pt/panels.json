@@ -669,7 +669,8 @@
     "filesProgress": "{{completed}}/{{total}} ficheiros",
     "filesFailed": "{{count}} ficheiro(s) falhado(s)",
     "yourName": "O seu nome",
-    "clickToEditName": "Você: {{name}} (clique para editar)"
+    "clickToEditName": "Você: {{name}} (clique para editar)",
+    "companion": "telemóvel"
   },
   "report": {
     "noDossier": "Nenhum dossiê carregada",

@@ -671,7 +671,8 @@
     "filesProgress": "{{completed}}/{{total}} plików",
     "filesFailed": "{{count}} plik(ów) nie powiodło się",
     "yourName": "Twoje imię",
-    "clickToEditName": "Ty: {{name}} (kliknij, aby edytować)"
+    "clickToEditName": "Ty: {{name}} (kliknij, aby edytować)",
+    "companion": "telefon"
   },
   "report": {
     "noDossier": "Nie załadowano teczki",

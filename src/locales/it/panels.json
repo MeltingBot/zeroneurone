@@ -670,7 +670,8 @@
     "filesProgress": "{{completed}}/{{total}} file",
     "filesFailed": "{{count}} file fallito/i",
     "yourName": "Il tuo nome",
-    "clickToEditName": "Tu: {{name}} (clicca per modificare)"
+    "clickToEditName": "Tu: {{name}} (clicca per modificare)",
+    "companion": "mobile"
   },
   "report": {
     "noDossier": "Nessun fascicolo caricata",

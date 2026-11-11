@@ -670,7 +670,8 @@
     "filesProgress": "{{completed}}/{{total}} fichiers",
     "filesFailed": "{{count}} fichier(s) en erreur",
     "yourName": "Votre nom",
-    "clickToEditName": "Vous : {{name}} (cliquer pour modifier)"
+    "clickToEditName": "Vous : {{name}} (cliquer pour modifier)",
+    "companion": "mobile"
   },
   "report": {
     "noDossier": "Aucun dossier chargé",

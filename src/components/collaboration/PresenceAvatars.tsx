@@ -3,7 +3,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { Eye } from 'lucide-react';
+import { Eye, Smartphone } from 'lucide-react';
 import { useDossierStore, useSyncStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -12,11 +12,13 @@ interface AvatarProps {
   color: string;
   isLocal?: boolean;
   reader?: boolean;
+  companion?: boolean;
   youLabel: string;
   readerLabel: string;
+  companionLabel: string;
 }
 
-function Avatar({ name, color, isLocal, reader, youLabel, readerLabel }: AvatarProps) {
+function Avatar({ name, color, isLocal, reader, companion, youLabel, readerLabel, companionLabel }: AvatarProps) {
   // Get initials (first letter of first two words)
   const initials = name
     .split(' ')
@@ -33,13 +35,19 @@ function Avatar({ name, color, isLocal, reader, youLabel, readerLabel }: AvatarP
         ${isLocal ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg-primary' : ''}
       `}
       style={{ backgroundColor: color }}
-      title={[name, isLocal ? `(${youLabel})` : null, reader ? `(${readerLabel})` : null].filter(Boolean).join(' ')}
+      title={[name, isLocal ? `(${youLabel})` : null, reader ? `(${readerLabel})` : null, companion ? `(${companionLabel})` : null].filter(Boolean).join(' ')}
       data-reader={reader ? 'true' : undefined}
+      data-companion={companion ? 'true' : undefined}
     >
       <span className="text-white drop-shadow-sm">{initials}</span>
       {reader && (
         <span className="absolute -bottom-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-bg-primary text-text-secondary border border-border-default">
           <Eye size={9} />
+        </span>
+      )}
+      {companion && (
+        <span className="absolute -bottom-1 -left-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-bg-primary text-text-secondary border border-border-default">
+          <Smartphone size={9} />
         </span>
       )}
     </div>
@@ -58,7 +66,7 @@ export function PresenceAvatars() {
 
   const allUsers = [
     { ...localUser, isLocal: true, reader: isReader },
-    ...remoteUsers.map(u => ({ id: u.odUserId, name: u.name, color: u.color, isLocal: false, reader: !!u.reader })),
+    ...remoteUsers.map(u => ({ id: u.odUserId, name: u.name, color: u.color, isLocal: false, reader: !!u.reader, companion: !!u.companion })),
   ];
 
   // Limit display to 5 users, show +N for overflow
@@ -68,6 +76,7 @@ export function PresenceAvatars() {
   const youLabel = t('collaboration.you');
   const othersLabel = t('collaboration.others');
   const readerLabel = t('collaboration.reader');
+  const companionLabel = t('collaboration.companion');
 
   return (
     <div className="flex items-center -space-x-2">
@@ -78,8 +87,10 @@ export function PresenceAvatars() {
           color={user.color}
           isLocal={user.isLocal}
           reader={user.reader}
+          companion={'companion' in user ? user.companion : false}
           youLabel={youLabel}
           readerLabel={readerLabel}
+          companionLabel={companionLabel}
         />
       ))}
       {overflowCount > 0 && (

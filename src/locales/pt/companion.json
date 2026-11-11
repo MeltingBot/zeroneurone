@@ -91,7 +91,8 @@
     "send": "Enviar",
     "showResolved": "Mostrar resolvidos",
     "empty": "Nenhum comentário aberto.",
-    "deletedTarget": "Elemento eliminado"
+    "deletedTarget": "Elemento eliminado",
+    "delete": "Eliminar comentário"
   },
   "capture": {
     "label": "Título",
