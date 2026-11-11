@@ -153,7 +153,8 @@
       "choice": "Keuze",
       "link": "Link",
       "geo": "Locatie"
-    }
+    },
+    "label": "Hernoemen"
   },
   "links": {
     "add": "Verbinden",
@@ -168,7 +169,8 @@
     "dirForward": "Naar",
     "dirBackward": "Van",
     "dirBoth": "Beide richtingen",
-    "source": "Bron"
+    "source": "Bron",
+    "edit": "Koppeling bewerken"
   },
   "delete": {
     "element": "Element verwijderen",

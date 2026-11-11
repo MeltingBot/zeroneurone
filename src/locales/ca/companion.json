@@ -153,7 +153,8 @@
       "choice": "Opció",
       "link": "Enllaç",
       "geo": "Posició"
-    }
+    },
+    "label": "Canvia el nom"
   },
   "links": {
     "add": "Enllaça",
@@ -168,7 +169,8 @@
     "dirForward": "Cap a",
     "dirBackward": "Des de",
     "dirBoth": "En tots dos sentits",
-    "source": "Font"
+    "source": "Font",
+    "edit": "Modifica l'enllaç"
   },
   "delete": {
     "element": "Suprimeix l'element",

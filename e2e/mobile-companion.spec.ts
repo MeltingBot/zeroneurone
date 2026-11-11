@@ -279,19 +279,35 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
     pays: 'DE',
   });
 
-  // Deletion, confirmed: the link to Garage Martin, then Garage Martin itself
+  // A link edited from the phone: label and direction
   const garageRow = phone.getByRole('listitem').filter({ hasText: 'Garage Martin' });
+  await garageRow.getByRole('button', { name: 'Modifier le lien' }).click();
+  await garageRow.getByLabel('Libellé').fill('propriétaire de');
+  await garageRow.getByRole('radio', { name: 'Vers' }).click();
+  await shot(phone, '04f-link-edit');
+  await garageRow.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect.poll(async () => (await readLinks(desktop)).filter((l) => l.to === 'Garage Martin').map((l) => `${l.label}|${l.direction}`), { timeout: 20_000 })
+    .toEqual(['propriétaire de|forward']);
+
+  // Deletion, confirmed: the link to Garage Martin, then Garage Martin itself
+  await garageRow.getByRole('button', { name: 'Modifier le lien' }).click();
   await garageRow.getByRole('button', { name: 'Supprimer le lien' }).click();
-  await phone.getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await garageRow.getByRole('button', { name: 'Supprimer', exact: true }).click();
   await expect(garageRow).toHaveCount(0);
   await expect.poll(async () => (await readLinks(desktop)).some((l) => l.to === 'Garage Martin'), { timeout: 20_000 }).toBe(false);
   await phone.getByPlaceholder('Rechercher').fill('Garage Martin');
   await phone.getByRole('button', { name: /^Garage Martin/ }).first().click();
+  // Renamed from the pencil beside its name
+  await phone.getByRole('button', { name: 'Renommer' }).click();
+  await phone.getByLabel('Renommer').fill('Garage Martin SARL');
+  await phone.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(phone.locator('header span.truncate')).toHaveText('Garage Martin SARL');
+  await expect.poll(async () => (await desktopState(desktop)).labels, { timeout: 20_000 }).toContain('Garage Martin SARL');
   await phone.getByRole('button', { name: "Supprimer l'élément" }).click();
-  await expect(phone.getByText('Supprimer « Garage Martin » ?')).toBeVisible();
+  await expect(phone.getByText('Supprimer « Garage Martin SARL » ?')).toBeVisible();
   await shot(phone, '04g-delete-confirm');
   await phone.getByRole('button', { name: 'Supprimer', exact: true }).click();
-  await expect.poll(async () => (await desktopState(desktop)).labels, { timeout: 20_000 }).not.toContain('Garage Martin');
+  await expect.poll(async () => (await desktopState(desktop)).labels, { timeout: 20_000 }).not.toContain('Garage Martin SARL');
   // Canvas tabs: create one, put the element in it, show that tab only
   await phone.getByRole('button', { name: 'Gérer les onglets' }).click();
   await phone.getByLabel("Nom de l'onglet").fill('Repérages');

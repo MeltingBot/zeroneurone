@@ -88,6 +88,7 @@ La barre de recherche reste en haut de tous les écrans. La recherche est celle 
 
 Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 
+- **Libellé** : le crayon à côté du nom, en haut, le modifie
 - **Note** : affichée mise en forme (Markdown) ; le crayon ouvre l'édition, la coche l'envoie, la croix annule
 - **Tags** : toucher un tag affiche les éléments qui le portent ; le bouton en pointillés (crayon ou +) permet d'ajouter ou retirer les tags déjà utilisés dans le dossier
 - **Propriétés** : toucher une valeur pour la modifier, avec la saisie adaptée à son type (texte, nombre, date, oui/non, pays dans une liste), ou la supprimer (corbeille, à toucher deux fois) ; une position ne peut qu'être supprimée
@@ -95,7 +96,8 @@ Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 - **Événements** : listés par date
 - **Onglets** : toucher un onglet range l'élément dedans ou l'en retire
 - **+** à droite des **Liens** : choisir l'autre élément (recherche, ou création sur place, qui reçoit la date de collecte), le sens, le libellé et la source
-- **Supprimer** : la corbeille d'une ligne de lien supprime le lien ; **Supprimer l'élément**, en bas de la fiche, le supprime avec ses liens. Les deux demandent confirmation (corbeille rouge)
+- **Modifier un lien** : le crayon d'une ligne de lien change son libellé et son sens, vu depuis l'élément affiché, ou le supprime (corbeille, deux appuis)
+- **Supprimer** : **Supprimer l'élément**, en bas de la fiche, le supprime avec ses liens, après confirmation
  Le **graphe du voisinage** montre l'élément au centre et ses voisins ; **1** / **2** règle le nombre de niveaux, pincer pour zoomer, toucher un voisin pour ouvrir sa fiche. Le bouton retour du téléphone revient à l'élément précédent.
 
 ---
@@ -118,7 +120,7 @@ Safari peut effacer les données d'un site non ouvert depuis 7 jours, captures e
 ## Limites
 
 - Ouvrir un dossier sur le téléphone télécharge tout son contenu, pièces jointes comprises
-- Depuis le téléphone, un élément existant se modifie par sa note, ses tags, ses propriétés, ses onglets et ses liens (pas son libellé)
+- Depuis le téléphone, un élément existant se modifie par son libellé, sa note, ses tags, ses propriétés, ses onglets et ses liens
 - Le téléphone ne crée pas de tag : il propose ceux déjà posés sur des éléments du dossier. Les jeux de tags restent sur chaque poste : un tag jamais utilisé dans le dossier n'est pas proposé, et un tag ajouté depuis le téléphone ne change pas l'apparence de l'élément
 - Une note, des tags ou des propriétés modifiées hors ligne remplacent, à la reconnexion, la version entière : si le poste a modifié la même note, les tags ou les propriétés du même élément entre-temps, une seule des deux versions reste. Évitez de modifier le même élément des deux côtés pendant que le téléphone est hors ligne
 - Un dossier clôturé est en lecture seule ; la rétention, propre à chaque poste, ne s'applique pas au téléphone

@@ -153,7 +153,8 @@
       "choice": "Escolha",
       "link": "Ligação",
       "geo": "Posição"
-    }
+    },
+    "label": "Mudar o nome"
   },
   "links": {
     "add": "Ligar",
@@ -168,7 +169,8 @@
     "dirForward": "Para",
     "dirBackward": "De",
     "dirBoth": "Nos dois sentidos",
-    "source": "Fonte"
+    "source": "Fonte",
+    "edit": "Editar ligação"
   },
   "delete": {
     "element": "Eliminar o elemento",

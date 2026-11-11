@@ -153,7 +153,8 @@
       "choice": "Scelta",
       "link": "Link",
       "geo": "Posizione"
-    }
+    },
+    "label": "Rinomina"
   },
   "links": {
     "add": "Collega",
@@ -168,7 +169,8 @@
     "dirForward": "Verso",
     "dirBackward": "Da",
     "dirBoth": "In entrambi i versi",
-    "source": "Fonte"
+    "source": "Fonte",
+    "edit": "Modifica collegamento"
   },
   "delete": {
     "element": "Elimina l'elemento",

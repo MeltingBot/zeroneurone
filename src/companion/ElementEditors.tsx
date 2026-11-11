@@ -22,7 +22,7 @@ type Session = ReturnType<typeof useCompanionSession>;
 const MarkdownPreview = lazy(() =>
   import('../components/common/MarkdownEditor').then((m) => ({ default: m.MarkdownPreview })));
 
-function save(s: Session, elementId: string, changes: { notes?: string; properties?: Property[]; source?: string; tags?: string[] }) {
+function save(s: Session, elementId: string, changes: { label?: string; notes?: string; properties?: Property[]; source?: string; tags?: string[] }) {
   const ydoc = s.ydoc;
   if (!ydoc) return;
   void s.track(() => updateElementFields(ydoc, s.dossierId, elementId, changes, s.syncState.connected));
@@ -43,6 +43,36 @@ function EditActions({ onCancel, onSave, disabled, onDelete }: {
       <IconAction icon={X} label={t('cancel')} onClick={onCancel} />
       {onSave && <IconAction icon={Check} label={t('edit.save')} onClick={onSave} disabled={disabled} variant="primary" />}
     </div>
+  );
+}
+
+// ============================================================================
+// LABEL
+// ============================================================================
+
+/** Renaming the element, opened from the pencil beside its name in the header */
+export function LabelEditor({ element, s, onDone }: { element: Element; s: Session; onDone: () => void }) {
+  const { t } = useTranslation('companion');
+  const [draft, setDraft] = useState(element.label);
+  const commit = () => {
+    const label = draft.trim();
+    if (!label) return;
+    if (label !== element.label) save(s, element.id, { label });
+    onDone();
+  };
+  return (
+    <section className="space-y-2">
+      <input
+        className={inputClass}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
+        enterKeyHint="done"
+        aria-label={t('edit.label')}
+        autoFocus
+      />
+      <EditActions onCancel={onDone} onSave={commit} disabled={!draft.trim()} />
+    </section>
   );
 }
 

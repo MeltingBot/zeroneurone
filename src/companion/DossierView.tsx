@@ -7,9 +7,9 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 import {
-  ArrowDownAZ, ArrowLeft, Camera, Check, ChevronRight, Clock, FileText, Link2, List, Loader2, Paperclip, Plus, Tag, Trash2, Map as MapIcon, MapPin, MessageSquare, RotateCcw, Search, Send, Settings, Waypoints, X,
+  ArrowDownAZ, ArrowLeft, Camera, Check, ChevronRight, Clock, FileText, Link2, List, Loader2, Paperclip, Plus, Tag, Trash2, Map as MapIcon, MapPin, MessageSquare, Pencil, RotateCcw, Search, Send, Settings, Waypoints, X,
 } from 'lucide-react';
-import type { Comment, Element, Link } from '../types';
+import type { Comment, Element, Link, LinkDirection } from '../types';
 import { getYMaps } from '../types/yjs';
 import { assembleChunks } from '../services/assetSync';
 import { eraseLocalCopy } from './erase';
@@ -18,7 +18,7 @@ import type { CompanionSession } from './sessions';
 import { removeSession } from './sessions';
 import { clearPending } from './pending';
 import { closeCompanionSession, useCompanionSession, type AssetEntry } from './useCompanionSession';
-import { addComment, createCapture, deleteElement, deleteLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
+import { addComment, createCapture, deleteElement, deleteLink, updateLink, FileTooLargeError, setCommentResolved, UnsupportedFileError } from './actions';
 import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes';
 import { navigate } from './router';
 import { AppSettings } from './AppSettings';
@@ -33,8 +33,9 @@ const SORTS = [
   { id: 'links', Icon: Waypoints },
 ] as const;
 import { NeighborhoodGraph } from './NeighborhoodGraph';
-import { AddProperty, ElementTags, NotesSection, PropertyRows } from './ElementEditors';
-import { LinkCreator } from './LinkCreator';
+import { AddProperty, ElementTags, LabelEditor, NotesSection, PropertyRows } from './ElementEditors';
+import { DirectionIcon, LinkCreator } from './LinkCreator';
+import { DIRECTIONS } from './linkDirections';
 import { TabMembership, TabsBar, TabsManager } from './Tabs';
 import type { CompanionData } from './useCompanionSession';
 import { useCompanionSearch, useSearchIndex, type Excerpt } from './search';
@@ -59,6 +60,8 @@ export function DossierView({ session }: { session: CompanionSession }) {
   // The open element lives in the history entry, so the phone's back gesture
   // or button closes it instead of leaving the dossier
   const [selected, setSelected] = useState<string | null>(() => readSelected());
+  /** The open element's name being edited */
+  const [renaming, setRenaming] = useState(false);
   /** Event to bring into view on the open element (a search hit in its events) */
   const [focusedEvent, setFocusedEvent] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -124,6 +127,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
     if (!readSelected()) listScroll.current = mainRef.current?.scrollTop ?? 0;
     window.history.pushState({ ...(window.history.state ?? {}), companionElement: id, companionEvent: eventId ?? null }, '');
     setSelected(id);
+    setRenaming(false);
     setFocusedEvent(eventId ?? null);
     mainRef.current?.scrollTo(0, 0);
   };
@@ -177,6 +181,17 @@ export function DossierView({ session }: { session: CompanionSession }) {
         <span className="flex-1 min-w-0 text-base font-semibold truncate">
           {element ? element.label || t('element.untitled') : title}
         </span>
+        {element && !s.data.closed && !renaming && (
+          <button
+            type="button"
+            className="w-9 h-10 flex items-center justify-center text-text-tertiary flex-shrink-0"
+            onClick={() => setRenaming(true)}
+            aria-label={t('edit.label')}
+            title={t('edit.label')}
+          >
+            <Pencil size={15} />
+          </button>
+        )}
         {s.pending > 0 && (
           <button
             type="button"
@@ -215,7 +230,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
 
       <main ref={mainRef} className={`flex-1 min-h-0 overscroll-contain ${tab === 'map' && !element ? 'relative overflow-hidden' : 'overflow-y-auto'}`}>
         {element ? (
-          <ElementDetail key={element.id} element={element} s={s} onOpen={open} onDeleted={closeDetail} tabId={shownTab?.id ?? null} focusedEventId={focusedEvent} onTag={filterByTag} />
+          <ElementDetail key={element.id} element={element} s={s} renaming={renaming} onRenamed={() => setRenaming(false)} onOpen={open} onDeleted={closeDetail} tabId={shownTab?.id ?? null} focusedEventId={focusedEvent} onTag={filterByTag} />
         ) : tab === 'elements' ? (
           <>
             <InstallHint />
@@ -614,9 +629,12 @@ function formatPeriod(element: Element, language: string): string | null {
   return `${fmt(r.start)} – ${fmt(r.end)}`;
 }
 
-function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, onTag }: {
+function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tabId, focusedEventId, onTag }: {
   element: Element;
   s: Session;
+  /** The name is being edited (pencil in the header) */
+  renaming: boolean;
+  onRenamed: () => void;
   onOpen: (id: string) => void;
   onDeleted: () => void;
   /** Shown canvas tab: an element created from here goes into it */
@@ -640,6 +658,8 @@ function ElementDetail({ element, s, onOpen, onDeleted, tabId, focusedEventId, o
 
   return (
     <div className="p-4 space-y-5">
+      {renaming && <LabelEditor element={element} s={s} onDone={onRenamed} />}
+
       <ElementTags element={element} s={s} writable={!s.data.closed} onTag={onTag} />
 
       <NotesSection element={element} s={s} writable={!s.data.closed} />
@@ -833,25 +853,12 @@ function LinkRow({ link, self, other, onOpen, s }: {
   s: Session;
 }) {
   const { t } = useTranslation('companion');
-  const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
   const outgoing = link.fromId === self;
   const arrow = link.direction === 'none' ? '—'
     : link.direction === 'both' ? '↔'
       : (link.direction === 'forward') === outgoing ? '→' : '←';
-  const remove = () => {
-    const ydoc = s.ydoc;
-    if (!ydoc) return;
-    void s.track(() => deleteLink(ydoc, s.dossierId, link.id, s.syncState.connected));
-  };
-  if (confirming) {
-    return (
-      <li className="flex items-center gap-2 px-3 py-2 bg-bg-secondary">
-        <span className="flex-1 min-w-0 text-sm">{t('delete.confirmLink')}</span>
-        <IconAction icon={X} label={t('cancel')} onClick={() => setConfirming(false)} />
-        <IconAction icon={Trash2} label={t('delete.confirm')} onClick={remove} variant="confirm" />
-      </li>
-    );
-  }
+  if (editing) return <LinkEditor link={link} outgoing={outgoing} other={other} s={s} onDone={() => setEditing(false)} />;
   return (
     <li className="flex items-center">
       <button
@@ -871,13 +878,89 @@ function LinkRow({ link, self, other, onOpen, s }: {
         <button
           type="button"
           className="w-11 h-12 flex items-center justify-center text-text-tertiary flex-shrink-0"
-          onClick={() => setConfirming(true)}
-          aria-label={t('delete.link')}
-          title={t('delete.link')}
+          onClick={() => setEditing(true)}
+          aria-label={t('links.edit')}
+          title={t('links.edit')}
         >
-          <Trash2 size={16} />
+          <Pencil size={16} />
         </button>
       )}
+    </li>
+  );
+}
+
+/** Swaps the two ends' roles: a direction seen from the other end */
+const flip = (d: LinkDirection): LinkDirection => (d === 'forward' ? 'backward' : d === 'backward' ? 'forward' : d);
+
+/**
+ * Editing a link from one of its ends: its label, its direction as seen from
+ * the element shown (as when creating it), or deleting it (second tap).
+ */
+function LinkEditor({ link, outgoing, other, s, onDone }: {
+  link: Link;
+  /** The element shown is the link's start */
+  outgoing: boolean;
+  other: Element | undefined;
+  s: Session;
+  onDone: () => void;
+}) {
+  const { t } = useTranslation('companion');
+  const [label, setLabel] = useState(link.label);
+  const seen = outgoing ? link.direction : flip(link.direction);
+  const [direction, setDirection] = useState<LinkDirection>(seen);
+  const [confirming, setConfirming] = useState(false);
+  const write = (run: (ydoc: Y.Doc) => void) => {
+    const ydoc = s.ydoc;
+    if (ydoc) void s.track(() => run(ydoc));
+  };
+  const commit = () => {
+    const changes: { label?: string; direction?: LinkDirection } = {};
+    if (label.trim() !== link.label) changes.label = label.trim();
+    if (direction !== seen) changes.direction = outgoing ? direction : flip(direction);
+    if (Object.keys(changes).length > 0) write((ydoc) => updateLink(ydoc, s.dossierId, link.id, changes, s.syncState.connected));
+    onDone();
+  };
+  return (
+    <li className="px-3 py-3 space-y-3 bg-bg-secondary">
+      <p className="text-sm truncate">{other?.label || t('element.untitled')}</p>
+      <input
+        className={inputClass}
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        placeholder={t('links.label')}
+        aria-label={t('links.label')}
+      />
+      <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={t('links.direction')}>
+        {DIRECTIONS.map((d) => (
+          <button
+            key={d.value}
+            type="button"
+            role="radio"
+            aria-checked={direction === d.value}
+            aria-label={t(d.key)}
+            title={t(d.key)}
+            onClick={() => setDirection(d.value)}
+            className={choiceButton(direction === d.value)}
+          >
+            <DirectionIcon direction={d.value} size={22} />
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <IconAction
+          icon={Trash2}
+          label={confirming ? t('delete.confirm') : t('delete.link')}
+          variant={confirming ? 'confirm' : 'danger'}
+          onClick={() => {
+            if (!confirming) { setConfirming(true); return; }
+            write((ydoc) => deleteLink(ydoc, s.dossierId, link.id, s.syncState.connected));
+            onDone();
+          }}
+        />
+        <span className="flex-1" />
+        <IconAction icon={X} label={t('cancel')} onClick={onDone} />
+        <IconAction icon={Check} label={t('edit.save')} onClick={commit} variant="primary" />
+      </div>
     </li>
   );
 }

@@ -153,7 +153,8 @@
       "choice": "Opción",
       "link": "Enlace",
       "geo": "Posición"
-    }
+    },
+    "label": "Renombrar"
   },
   "links": {
     "add": "Vincular",
@@ -168,7 +169,8 @@
     "dirForward": "Hacia",
     "dirBackward": "Desde",
     "dirBoth": "En ambos sentidos",
-    "source": "Fuente"
+    "source": "Fuente",
+    "edit": "Editar vínculo"
   },
   "delete": {
     "element": "Eliminar el elemento",

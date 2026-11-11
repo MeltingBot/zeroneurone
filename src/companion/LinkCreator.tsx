@@ -12,17 +12,12 @@ import { createCapture, createLink, updateElementFields } from './actions';
 import { useCompanionSearch } from './search';
 import type { useCompanionSession } from './useCompanionSession';
 import { choiceButton, inputClass, primaryButton, sectionTitle } from './ui';
+import { DIRECTIONS } from './linkDirections';
 
 type Session = ReturnType<typeof useCompanionSession>;
 
-const DIRECTIONS: { value: LinkDirection; key: string }[] = [
-  { value: 'none', key: 'links.dirNone' },
-  { value: 'forward', key: 'links.dirForward' },
-  { value: 'backward', key: 'links.dirBackward' },
-  { value: 'both', key: 'links.dirBoth' },
-];
 
-function DirectionIcon({ direction, size }: { direction: LinkDirection; size: number }) {
+export function DirectionIcon({ direction, size }: { direction: LinkDirection; size: number }) {
   if (direction === 'forward') return <ArrowRight size={size} />;
   if (direction === 'backward') return <ArrowRight size={size} className="rotate-180" />;
   if (direction === 'both') return <ArrowLeftRight size={size} />;

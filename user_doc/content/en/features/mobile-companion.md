@@ -88,6 +88,7 @@ The search bar stays at the top of every screen. Search works as on the computer
 
 Tags, note, photos (tap to enlarge), details, links, comments.
 
+- **Label**: the pencil beside the name, at the top, edits it
 - **Note**: shown formatted (Markdown); the pencil opens editing, the check mark sends it, the cross cancels
 - **Tags**: tap a tag to show the elements carrying it; the dotted button (pencil or +) adds or removes tags already used in the dossier
 - **Properties**: tap a value to edit it, with the input suited to its type (text, number, date, yes/no, country from a list), or to delete it (bin, tapped twice); a location can only be deleted
@@ -95,7 +96,8 @@ Tags, note, photos (tap to enlarge), details, links, comments.
 - **Events**: listed by date
 - **Tabs**: tap a tab to put the element in it or take it out
 - **+** right of **Links**: pick the other element (search, or create it on the spot, with the collection date), the direction, the label and the source
-- **Delete**: the bin on a link row deletes the link; **Delete element**, at the bottom of the page, deletes it with its links. Both ask for confirmation (red bin)
+- **Edit a link**: the pencil on a link row changes its label and its direction, as seen from the element shown, or deletes it (bin, tapped twice)
+- **Delete**: **Delete element**, at the bottom of the page, deletes it with its links, after confirmation
  The **neighbourhood graph** shows the element in the centre with its neighbours; **1** / **2** sets the number of levels, pinch to zoom, tap a neighbour to open it. The phone's back button returns to the previous element.
 
 ---
@@ -118,7 +120,7 @@ Safari may erase the data of a site not opened for 7 days, pending captures incl
 ## Limits
 
 - Opening a dossier on the phone downloads all of its content, attachments included
-- From the phone, an existing element is edited through its note, tags, properties, tabs and links (not its label)
+- From the phone, an existing element is edited through its label, note, tags, properties, tabs and links
 - The phone does not create tags: it offers those already set on the dossier's elements. Tag sets stay on each computer: a tag never used in the dossier is not offered, and a tag added from the phone does not change the element's appearance
 - A note, tags or properties edited offline replace the whole version on reconnection: if the computer edited the same note, or the same element's tags or properties, meanwhile, only one of the two versions stays. Avoid editing the same element on both sides while the phone is offline
 - A closed dossier is read only; retention, set per computer, does not apply to the phone

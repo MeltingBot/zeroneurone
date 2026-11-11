@@ -153,7 +153,8 @@
       "choice": "Choice",
       "link": "Link",
       "geo": "Location"
-    }
+    },
+    "label": "Rename"
   },
   "links": {
     "add": "Link",
@@ -168,7 +169,8 @@
     "dirForward": "To",
     "dirBackward": "From",
     "dirBoth": "Both ways",
-    "source": "Source"
+    "source": "Source",
+    "edit": "Edit link"
   },
   "delete": {
     "element": "Delete element",

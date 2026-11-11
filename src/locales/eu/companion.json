@@ -153,7 +153,8 @@
       "choice": "Aukera",
       "link": "Esteka",
       "geo": "Kokapena"
-    }
+    },
+    "label": "Aldatu izena"
   },
   "links": {
     "add": "Lotu",
@@ -168,7 +169,8 @@
     "dirForward": "Nora",
     "dirBackward": "Nondik",
     "dirBoth": "Bi norabideetan",
-    "source": "Iturria"
+    "source": "Iturria",
+    "edit": "Editatu lotura"
   },
   "delete": {
     "element": "Ezabatu elementua",

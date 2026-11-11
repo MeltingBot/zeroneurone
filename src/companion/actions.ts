@@ -10,7 +10,7 @@ import { getYMaps } from '../types/yjs';
 import { elementToYMap, updateElementYMap, yMapToElement } from '../services/yjs/elementMapper';
 import { commentToYMap, updateCommentYMap } from '../services/yjs/commentMapper';
 import { buildComment, buildNewElement, buildNewLink } from '../services/yjs/factories';
-import { linkToYMap } from '../services/yjs/linkMapper';
+import { linkToYMap, updateLinkYMap } from '../services/yjs/linkMapper';
 import { tabToYMap } from '../services/yjs/tabMapper';
 import { MAX_SHARED_ASSET_SIZE, pushAssetChunked } from '../services/assetSync';
 import { downscaleImage, generateImageThumbnail } from '../utils/imageThumbnail';
@@ -146,12 +146,12 @@ export async function createCapture(
   return element.id;
 }
 
-/** Edits an existing element's notes, properties, source or tags */
+/** Edits an existing element's label, notes, properties, source or tags */
 export function updateElementFields(
   ydoc: Y.Doc,
   dossierId: DossierId,
   elementId: ElementId,
-  changes: { notes?: string; properties?: Property[]; source?: string; tags?: string[] },
+  changes: { label?: string; notes?: string; properties?: Property[]; source?: string; tags?: string[] },
   connected: boolean,
 ): boolean {
   const ymap = getYMaps(ydoc).elements.get(elementId) as Y.Map<unknown> | undefined;
@@ -215,6 +215,24 @@ export function deleteElement(ydoc: Y.Doc, dossierId: DossierId, elementId: Elem
       }
     });
   });
+}
+
+/** Edits an existing link's label or direction (directed follows the direction, as on creation) */
+export function updateLink(
+  ydoc: Y.Doc,
+  dossierId: DossierId,
+  linkId: LinkId,
+  changes: { label?: string; direction?: LinkDirection },
+  connected: boolean,
+): boolean {
+  const ymap = getYMaps(ydoc).links.get(linkId) as Y.Map<unknown> | undefined;
+  if (!ymap) return false;
+  beginWrite(dossierId, ydoc, linkId, connected);
+  updateLinkYMap(ymap, {
+    ...(changes.label !== undefined ? { label: changes.label } : {}),
+    ...(changes.direction !== undefined ? { direction: changes.direction, directed: changes.direction !== 'none' } : {}),
+  }, ydoc);
+  return true;
 }
 
 export function deleteLink(ydoc: Y.Doc, dossierId: DossierId, linkId: LinkId, connected: boolean): void {
