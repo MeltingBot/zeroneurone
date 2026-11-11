@@ -29,13 +29,15 @@
  * URL parameters:
  * - async=1:   Enable async buffering (messages stored when alone in room)
  * - token=xxx: Access token for room (HMAC-based, prevents random access)
+ * - client=xxx: Opaque client tag, per room (async buffer: what it already got)
  */
 
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
+import { createAsyncBuffer, clientTagOf } from './asyncBuffer.js';
 
-const VERSION = '3';
+const VERSION = '4';
 const startedAt = Date.now();
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 
@@ -108,11 +110,7 @@ const rooms = new Map();
 const asyncRooms = new Set();
 const roomTokens = new Map();            // roomId → hashed token
 const roomLastActivity = new Map();      // roomId → timestamp (for orphan cleanup)
-const buffers = new Map();
-const bufferStats = new Map();
-const bufferQuotaWarned = new Set();
 const roomReconnects = new Map();        // roomId → { count, lastLog }
-let totalBufferSize = 0;
 let totalMessagesRelayed = 0;
 let totalConnectionsServed = 0;
 
@@ -155,168 +153,30 @@ function createRateLimiter() {
 }
 
 // ============================================================================
-// BUFFER STORAGE (Memory or Redis)
+// BUFFER STORAGE (Memory or Redis, see asyncBuffer.js)
 // ============================================================================
 
-function canAddToBufferMemory(roomId, messageSize) {
-  const stats = bufferStats.get(roomId) || { size: 0, count: 0 };
-  if (stats.size + messageSize > BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM) return false;
-  if (stats.count >= BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM) return false;
-  if (totalBufferSize + messageSize > BUFFER_LIMITS.MAX_TOTAL_BUFFER_SIZE) return false;
-  if (!bufferStats.has(roomId) && bufferStats.size >= BUFFER_LIMITS.MAX_ROOMS_WITH_BUFFER) return false;
-  return true;
-}
-
-async function addToBuffer(roomId, data) {
-  const messageSize = data.length;
-  const roomIdShort = roomId.slice(0, 8) + '...';
-
-  if (redisClient) {
-    try {
-      const key = `buffer:${roomId}`;
-      // Store as raw Buffer (no base64 overhead)
-      await redisClient.rPush(key, data);
-      await redisClient.expire(key, Math.floor(BUFFER_LIMITS.MAX_MESSAGE_AGE_MS / 1000));
-      const len = await redisClient.lLen(key);
-      if (len > BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM) {
-        await redisClient.lTrim(key, -BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM, -1);
-        console.log(`[Buffer/Redis] Trimmed room "${roomIdShort}" to ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} messages`);
-      }
-      return true;
-    } catch (err) {
-      console.error(`[Buffer/Redis] Error adding to buffer:`, err.message);
-      return false;
-    }
-  }
-
-  if (!canAddToBufferMemory(roomId, messageSize)) {
-    if (!bufferQuotaWarned.has(roomId)) {
-      const stats = bufferStats.get(roomId) || { size: 0, count: 0 };
-      console.log(`[Buffer] Quota exceeded for room "${roomIdShort}" (${(stats.size / 1024 / 1024).toFixed(1)} MB, ${stats.count} msgs) — further drops silenced`);
-      bufferQuotaWarned.add(roomId);
-    }
-    return false;
-  }
-
-  if (!buffers.has(roomId)) buffers.set(roomId, []);
-  buffers.get(roomId).push({ data, timestamp: Date.now() });
-
-  const stats = bufferStats.get(roomId) || { size: 0, count: 0 };
-  stats.size += messageSize;
-  stats.count += 1;
-  bufferStats.set(roomId, stats);
-  totalBufferSize += messageSize;
-  return true;
-}
-
-async function flushBuffer(roomId, ws) {
-  if (redisClient) {
-    try {
-      const key = `buffer:${roomId}`;
-      // Use lRangeBuffer to get raw Buffers (no base64 decode needed)
-      const messages = await redisClient.lRange(key, 0, -1);
-      if (!messages || messages.length === 0) return 0;
-
-      let sent = 0;
-      for (const buf of messages) {
-        if (ws.readyState !== WebSocket.OPEN) break;
-        ws.send(Buffer.isBuffer(buf) ? buf : Buffer.from(buf));
-        sent++;
-      }
-
-      // Only clear what was actually sent
-      if (sent === messages.length) {
-        await redisClient.del(key);
-      } else if (sent > 0) {
-        await redisClient.lTrim(key, sent, -1);
-      }
-      return sent;
-    } catch (err) {
-      console.error(`[Buffer/Redis] Error flushing buffer:`, err.message);
-      return 0;
-    }
-  }
-
-  const buffer = buffers.get(roomId);
-  if (!buffer || buffer.length === 0) return 0;
-
-  let sent = 0;
-  for (const msg of buffer) {
-    if (ws.readyState !== WebSocket.OPEN) break;
-    ws.send(msg.data);
-    sent++;
-  }
-
-  if (sent === buffer.length) {
-    // All sent — clear completely
-    const stats = bufferStats.get(roomId);
-    if (stats) totalBufferSize -= stats.size;
-    buffers.delete(roomId);
-    bufferStats.delete(roomId);
-    bufferQuotaWarned.delete(roomId);
-  } else if (sent > 0) {
-    // Partial send — keep unsent messages
-    const remaining = buffer.slice(sent);
-    buffers.set(roomId, remaining);
-    const sentSize = buffer.slice(0, sent).reduce((s, m) => s + m.data.length, 0);
-    const stats = bufferStats.get(roomId);
-    if (stats) {
-      stats.size -= sentSize;
-      stats.count -= sent;
-      totalBufferSize -= sentSize;
-    }
-  }
-  return sent;
-}
-
-async function hasBuffer(roomId) {
-  if (redisClient) {
-    try {
-      return (await redisClient.lLen(`buffer:${roomId}`)) > 0;
-    } catch {
-      return false;
-    }
-  }
-  return buffers.has(roomId) && buffers.get(roomId).length > 0;
-}
+const asyncBuffer = createAsyncBuffer({ limits: BUFFER_LIMITS, redis: redisClient });
 
 async function cleanupBuffers() {
   if (redisClient) return; // Redis handles TTL
 
   const now = Date.now();
-  let cleanedRooms = 0;
-  let cleanedMessages = 0;
   let cleanedOrphans = 0;
 
-  // Clean old messages from memory buffers
-  for (const [roomId, messages] of buffers.entries()) {
-    const before = messages.length;
-    const filtered = messages.filter(m => now - m.timestamp < BUFFER_LIMITS.MAX_MESSAGE_AGE_MS);
-
-    if (filtered.length === 0) {
-      const stats = bufferStats.get(roomId);
-      if (stats) totalBufferSize -= stats.size;
-      buffers.delete(roomId);
-      bufferStats.delete(roomId);
-      bufferQuotaWarned.delete(roomId);
-      asyncRooms.delete(roomId);
-      roomTokens.delete(roomId);
-      roomLastActivity.delete(roomId);
-      cleanedRooms++;
-    } else if (filtered.length < before) {
-      buffers.set(roomId, filtered);
-      const newSize = filtered.reduce((sum, m) => sum + m.data.length, 0);
-      const oldStats = bufferStats.get(roomId);
-      if (oldStats) totalBufferSize -= oldStats.size - newSize;
-      bufferStats.set(roomId, { size: newSize, count: filtered.length });
-      cleanedMessages += before - filtered.length;
-    }
+  // Messages past their age; rooms left without any
+  const { emptied, dropped } = asyncBuffer.cleanup(now);
+  for (const roomId of emptied) {
+    if (rooms.has(roomId)) continue;
+    asyncRooms.delete(roomId);
+    roomTokens.delete(roomId);
+    roomLastActivity.delete(roomId);
   }
 
   // Clean orphaned rooms: no connections, no buffer, stale activity
   for (const [roomId, lastActivity] of roomLastActivity.entries()) {
     if (rooms.has(roomId)) continue;
-    if (buffers.has(roomId) && buffers.get(roomId).length > 0) continue;
+    if (asyncBuffer.holds(roomId)) continue;
     if (now - lastActivity < BUFFER_LIMITS.ORPHAN_MAX_AGE_MS) continue;
 
     asyncRooms.delete(roomId);
@@ -326,8 +186,8 @@ async function cleanupBuffers() {
     cleanedOrphans++;
   }
 
-  if (cleanedRooms > 0 || cleanedMessages > 0 || cleanedOrphans > 0) {
-    console.log(`[Cleanup] Removed ${cleanedRooms} buffered rooms, ${cleanedMessages} messages, ${cleanedOrphans} orphaned rooms`);
+  if (emptied.length > 0 || dropped > 0 || cleanedOrphans > 0) {
+    console.log(`[Cleanup] Removed ${emptied.length} buffered rooms, ${dropped} messages, ${cleanedOrphans} orphaned rooms`);
   }
 }
 
@@ -361,11 +221,7 @@ const server = createServer((req, res) => {
       uniqueIPs: connectionsPerIP.size,
       messagesRelayed: totalMessagesRelayed,
       connectionsServed: totalConnectionsServed,
-      buffer: {
-        rooms: bufferStats.size,
-        totalSizeMB: +(totalBufferSize / 1024 / 1024).toFixed(2),
-        totalMessages: Array.from(bufferStats.values()).reduce((s, st) => s + st.count, 0),
-      },
+      buffer: asyncBuffer.stats(),
       storage: redisClient ? 'redis' : 'memory',
     };
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -412,6 +268,7 @@ wss.on('connection', (ws, req) => {
   const url = new URL(req.url, 'http://localhost');
   const asyncEnabled = url.searchParams.get('async') === '1';
   const token = url.searchParams.get('token');
+  const clientTag = clientTagOf(url.searchParams, () => randomBytes(9).toString('base64url'));
 
   let urlPath = url.pathname.slice(1) || 'default';
   if (urlPath.startsWith('ws/')) urlPath = urlPath.slice(3);
@@ -456,16 +313,18 @@ wss.on('connection', (ws, req) => {
   room.add(ws);
   roomLastActivity.set(roomId, Date.now());
 
-  // Send buffered messages only when a 2nd client joins (avoids echo loop
-  // when a solo client reconnects and re-receives its own buffered messages)
-  if (asyncRooms.has(roomId) && room.size >= 2) {
+  // Hand the client, even alone, the buffered messages it has not received
+  // (its own left out). Delayed so the client is set up first (key, sync).
+  if (asyncRooms.has(roomId)) {
     setTimeout(async () => {
       if (ws.readyState !== WebSocket.OPEN) return;
-      if (await hasBuffer(roomId)) {
-        const sent = await flushBuffer(roomId, ws);
-        if (sent > 0) {
-          console.log(`[Buffer] Sent ${sent} buffered messages to new client in room "${roomId.slice(0, 8)}..."`);
-        }
+      const sent = await asyncBuffer.replay(roomId, clientTag, (data) => {
+        if (ws.readyState !== WebSocket.OPEN) return false;
+        ws.send(data);
+        return true;
+      });
+      if (sent > 0) {
+        console.log(`[Buffer] Sent ${sent} buffered messages to a client in room "${roomId.slice(0, 8)}..."`);
       }
     }, 1500);
   }
@@ -536,7 +395,7 @@ wss.on('connection', (ws, req) => {
       }
       // Buffer for async rooms
       if (asyncRooms.has(roomId)) {
-        addToBuffer(roomId, data).catch(err => {
+        asyncBuffer.add(roomId, clientTag, data).catch(err => {
           console.error(`[Buffer] Error adding message:`, err.message);
         });
       }
@@ -653,9 +512,7 @@ async function gracefulShutdown(signal) {
 
   rooms.clear();
   connectionsPerIP.clear();
-  buffers.clear();
-  bufferStats.clear();
-  bufferQuotaWarned.clear();
+  asyncBuffer.clear();
   roomReconnects.clear();
   asyncRooms.clear();
   roomTokens.clear();

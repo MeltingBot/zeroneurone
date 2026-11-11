@@ -20,7 +20,7 @@ Le compagnon passe par la [collaboration]({{< relref "collaboration" >}}) : le d
 
 Le dossier est ensuite listé à l'adresse `/m/` : plus besoin du QR code pour le rouvrir.
 
-Sur cette page, vous pouvez aussi **coller le lien de partage** (le lien desktop `/join/…` convient) ou le **scanner** avec le lecteur intégré (Chrome sur Android).
+Un lien de partage desktop (`/join/…`) ouvert sur un téléphone mène aussi au compagnon. Sur cette page, vous pouvez aussi **coller le lien de partage** (le lien desktop `/join/…` convient) ou le **scanner** avec le lecteur intégré (Chrome sur Android).
 
 {{< hint warning >}}
 **Le QR code donne accès au dossier.** Il contient la clé de chiffrement, comme le lien de partage : ne l'affichez pas devant des tiers et ne le photographiez pas ailleurs que sur le téléphone concerné. Arrêter le partage invalide tous les liens et QR codes.
@@ -28,7 +28,11 @@ Sur cette page, vous pouvez aussi **coller le lien de partage** (le lien desktop
 
 ### Pourquoi le mode asynchrone
 
-Le serveur relais ne conserve pas le dossier : il transmet les modifications entre participants connectés. En mode asynchrone, il garde aussi les modifications **48 heures** (réglage par défaut du relais) pour qui se connecte plus tard. Sans ce mode, une capture faite pendant que le poste est éteint ne lui parviendrait que lorsque les deux sont en ligne en même temps.
+Le serveur relais ne conserve pas le dossier : il transmet les modifications entre participants connectés. En mode asynchrone, il garde aussi les modifications **48 heures** (réglage par défaut du relais) pour qui se connecte plus tard. Chaque appareil reçoit, à sa connexion, ce qu'il n'a pas encore reçu, même s'il est seul en ligne : une capture faite pendant que le poste est éteint lui parvient quand il se reconnecte. Sans ce mode, elle ne lui parviendrait que lorsque les deux sont en ligne en même temps.
+
+{{< hint info >}}
+Relais auto-hébergé : cette remise à un appareil seul demande le relais de la version 2.93.1 ou plus récente.
+{{< /hint >}}
 
 À la première ouverture sur le téléphone, un poste ayant le dossier ouvert doit être en ligne : c'est lui qui envoie le contenu.
 

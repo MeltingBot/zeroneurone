@@ -22,6 +22,10 @@ const SHOTS = process.env.COMPANION_SHOTS;
 
 let relay: ChildProcess;
 
+// One relay for the file (beforeAll): its tests must not run side by side,
+// or the first to end stops the relay under the other
+test.describe.configure({ mode: 'serial' });
+
 // Mobile emulation (isMobile, touch) is Chromium only
 test.skip(({ browserName }) => browserName !== 'chromium', 'mobile emulation needs Chromium');
 
@@ -152,7 +156,9 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
   // ── Phone joins ──────────────────────────────────────────────────────────
   const phone = await newPhone(browser);
   phonePage = phone;
-  await phone.goto(mobileUrl);
+  // The desktop link works too: on a phone screen it goes to the companion
+  await phone.goto(mobileUrl.replace('/m/', '/join/'));
+  await expect(phone).toHaveURL(/\/m\/[^/]+\?/);
   await expect(phone.getByRole('heading', { name: 'Terrain' })).toBeVisible();
   await shot(phone, '01-join');
   await phone.getByLabel('Votre nom').fill('Agent terrain');
@@ -411,11 +417,8 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
 });
 
 test('a capture made while every computer is off reaches the desktop later', async ({ browser }) => {
-  // Known limit of the relay: it replays its async buffer only when a second
-  // client joins someone already there (relay/index.js, on connection), and
-  // to that newcomer. A computer that comes back alone gets nothing. Kept as
-  // an expected failure until the relay replays to any joining client.
-  test.fail(true, 'relay replays its async buffer only to a second client present at the same time');
+  // The relay hands a client coming back alone what was buffered while it
+  // was away (relay/asyncBuffer.js): nothing else can deliver this capture.
   test.setTimeout(3 * 60 * 1000);
 
   // Desktop shares (async), the phone joins while it is online

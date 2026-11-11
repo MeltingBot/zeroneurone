@@ -20,7 +20,7 @@ The companion relies on [collaboration]({{< relref "collaboration" >}}): the dos
 
 The dossier is then listed at the `/m/` address: no QR code needed to reopen it.
 
-On that page you can also **paste the share link** (the desktop `/join/…` link works) or **scan** it with the built-in scanner (Chrome on Android).
+A desktop share link (`/join/…`) opened on a phone leads to the companion too. On that page you can also **paste the share link** (the desktop `/join/…` link works) or **scan** it with the built-in scanner (Chrome on Android).
 
 {{< hint warning >}}
 **The QR code grants access to the dossier.** Like the share link, it holds the encryption key: do not show it to others and do not photograph it with any device but the phone it is meant for. Stopping the share invalidates every link and QR code.
@@ -28,7 +28,11 @@ On that page you can also **paste the share link** (the desktop `/join/…` link
 
 ### Why async mode
 
-The relay server keeps no copy of the dossier: it passes changes between connected participants. In async mode it also keeps changes for **48 hours** (the relay's default) for whoever connects later. Without it, a capture made while the computer is off would only reach it when both are online together.
+The relay server keeps no copy of the dossier: it passes changes between connected participants. In async mode it also keeps changes for **48 hours** (the relay's default) for whoever connects later. Each device receives, when it connects, what it has not received yet, even when alone online: a capture made while the computer is off reaches it when it reconnects. Without async mode, it would only reach it when both are online together.
+
+{{< hint info >}}
+Self-hosted relay: this delivery to a device alone needs the relay from version 2.93.1 or later.
+{{< /hint >}}
 
 When the dossier is first opened on the phone, a computer that has it open must be online: it sends the content.
 

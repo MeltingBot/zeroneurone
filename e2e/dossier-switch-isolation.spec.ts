@@ -21,6 +21,9 @@ const RELAY_PORT = Number(process.env.SWITCH_RELAY_PORT ?? 4462);
 const SERVER = `ws://localhost:${RELAY_PORT}`;
 let relay: ChildProcess;
 
+// One relay for the file: its tests must not run side by side
+test.describe.configure({ mode: 'serial' });
+
 test.beforeAll(async () => {
   relay = spawn('node', ['relay/index.js'], { stdio: 'ignore', env: { ...process.env, PORT: String(RELAY_PORT) } });
   const deadline = Date.now() + 10_000;

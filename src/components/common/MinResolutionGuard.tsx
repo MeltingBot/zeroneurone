@@ -101,6 +101,15 @@ export function MinResolutionGuard({ children }: MinResolutionGuardProps) {
             </ul>
           </div>
 
+          {/* On a phone: the companion is made for it */}
+          <a
+            href={appPath('m/')}
+            className="flex w-full items-center justify-center gap-1.5 bg-accent text-white hover:bg-accent-hover px-3 py-2.5 text-sm font-medium rounded sketchy-border"
+          >
+            <Smartphone size={16} />
+            {t('resolution.openCompanion')}
+          </a>
+
           <button
             onClick={handleDismiss}
             className="text-sm text-accent hover:underline"

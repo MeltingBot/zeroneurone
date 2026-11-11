@@ -198,7 +198,8 @@
     "suggestions": "Suggerimenti:",
     "suggestLarger": "Usa uno schermo più grande o un tablet",
     "suggestMaximize": "Massimizza la finestra del browser",
-    "suggestZoom": "Riduci il livello di zoom del browser (Ctrl + -)"
+    "suggestZoom": "Riduci il livello di zoom del browser (Ctrl + -)",
+    "openCompanion": "Apri il compagno mobile"
   },
   "evaluation": {
     "label": "Valutazione",

@@ -199,7 +199,7 @@ export default defineConfig({
     // DOM. Suites that need one opt in with `// @vitest-environment jsdom`
     // (jsdom, not happy-dom: DOMPurify misbehaves under happy-dom).
     environment: 'node',
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'relay/**/*.test.js'],
     // Benchmarks are opt-in (npm run bench): they run for minutes.
     exclude: ['**/node_modules/**', '**/__benchmarks__/**'],
     coverage: {

@@ -25,7 +25,7 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 # Copy relay server
-COPY index.js ./
+COPY index.js asyncBuffer.js ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S zeroneurone && \

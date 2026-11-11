@@ -18,6 +18,7 @@ import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
+import { toBase64Url } from '../utils/base64url';
 import { ydocDatabaseName, deleteYDocDatabase } from './yjs/ydocName';
 
 // Y.js sync protocol message types (from y-protocols/sync)
@@ -29,6 +30,33 @@ const messageYjsUpdate = 2;
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
 type StateListener = (state: SyncState) => void;
+
+const RELAY_SECRET_KEY = 'zeroneurone-relay-secret';
+
+/**
+ * Tag the relay keys its async buffer by: which buffered messages this
+ * device already received, and which are its own (never sent back to it).
+ * HMAC of the room id with a secret kept on this device: stable for a room,
+ * different from one room to the next, so the relay cannot link the rooms of
+ * one device. Undefined when it cannot be computed (the relay then treats
+ * every connection as a new client).
+ */
+async function relayClientTag(roomId: string): Promise<string | undefined> {
+  try {
+    let secret = localStorage.getItem(RELAY_SECRET_KEY);
+    if (!secret) {
+      secret = toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+      localStorage.setItem(RELAY_SECRET_KEY, secret);
+    }
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+    );
+    const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(roomId));
+    return toBase64Url(mac).slice(0, 32);
+  } catch {
+    return undefined;
+  }
+}
 
 class SyncService {
   private ydoc: Y.Doc | null = null;
@@ -305,6 +333,7 @@ class SyncService {
     this.connectWebSocket(effectiveRoomId, encryptionKey, {
       async: asyncEnabled,
       token: accessToken,
+      clientTag: await relayClientTag(effectiveRoomId),
     });
 
     return this.ydoc;
@@ -349,6 +378,7 @@ class SyncService {
     this.connectWebSocket(hashedRoomId, newKey, {
       async: asyncEnabled,
       token: accessToken,
+      clientTag: await relayClientTag(hashedRoomId),
     });
 
     return newKey;
@@ -452,7 +482,7 @@ class SyncService {
   private connectWebSocket(
     roomId: string,
     encryptionKey?: string,
-    options?: { async?: boolean; token?: string }
+    options?: { async?: boolean; token?: string; clientTag?: string }
   ): void {
     if (!this.ydoc) {
       throw new Error('No Y.Doc available');
@@ -489,6 +519,9 @@ class SyncService {
     }
     if (options?.token) {
       urlParams.push(`token=${encodeURIComponent(options.token)}`);
+    }
+    if (options?.clientTag) {
+      urlParams.push(`client=${encodeURIComponent(options.clientTag)}`);
     }
 
     // Create WebSocket provider with reconnection options

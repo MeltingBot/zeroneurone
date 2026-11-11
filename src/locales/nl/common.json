@@ -198,7 +198,8 @@
     "suggestions": "Suggesties:",
     "suggestLarger": "Gebruik een groter scherm of tablet",
     "suggestMaximize": "Maximaliseer uw browservenster",
-    "suggestZoom": "Verlaag het zoomniveau van de browser (Ctrl + -)"
+    "suggestZoom": "Verlaag het zoomniveau van de browser (Ctrl + -)",
+    "openCompanion": "Mobiele companion openen"
   },
   "evaluation": {
     "label": "Waardering",

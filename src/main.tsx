@@ -24,9 +24,20 @@ function installedCompanion(): boolean {
   }
 }
 
-const i18nReady = initI18n()
+// A desktop share link opened on a phone: same link, companion side (the
+// desktop app cannot be used on a phone screen)
+function phoneJoinRedirect(): string | null {
+  const joinRoot = appPath('join/')
+  if (!path.startsWith(joinRoot) || !window.matchMedia('(max-width: 767px)').matches) return null
+  return `${appPath('m/')}${path.slice(joinRoot.length)}${window.location.search}${window.location.hash}`
+}
 
-if (!isCompanion && path === appPath('') && installedCompanion()) {
+const i18nReady = initI18n()
+const joinRedirect = isCompanion ? null : phoneJoinRedirect()
+
+if (joinRedirect) {
+  window.location.replace(joinRedirect)
+} else if (!isCompanion && path === appPath('') && installedCompanion()) {
   window.location.replace(appPath('m/'))
 } else if (isCompanion) {
   void import('./companion/boot').then(({ bootCompanion }) => bootCompanion(i18nReady))

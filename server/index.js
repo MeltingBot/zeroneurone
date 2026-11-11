@@ -24,6 +24,9 @@
 
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
+import { randomBytes } from 'crypto';
+// Shared with the relay image (Dockerfile.combined copies it alongside)
+import { createAsyncBuffer, clientTagOf } from '../relay/asyncBuffer.js';
 
 // Optional Redis support
 let redis = null;
@@ -95,9 +98,6 @@ const connectionsPerIP = new Map();      // IP -> count
 const rooms = new Map();                 // roomId -> Set<WebSocket>
 const asyncRooms = new Set();            // Rooms with async enabled
 const roomTokens = new Map();            // roomId -> token (first client sets it)
-const buffers = new Map();               // roomId -> Array<{data, timestamp}>
-const bufferStats = new Map();           // roomId -> { size, count }
-let totalBufferSize = 0;
 
 // MIME types for static files
 const MIME_TYPES = {
@@ -239,198 +239,25 @@ function createRateLimiter() {
 }
 
 // ============================================================================
-// BUFFER STORAGE (Memory or Redis)
+// BUFFER STORAGE (Memory or Redis, see relay/asyncBuffer.js)
 // ============================================================================
 
-/**
- * Check if we can add a message to the buffer (memory mode only)
- */
-function canAddToBufferMemory(roomId, messageSize) {
-  const stats = bufferStats.get(roomId) || { size: 0, count: 0 };
-
-  if (stats.size + messageSize > BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM) {
-    return false;
-  }
-  if (stats.count >= BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM) {
-    return false;
-  }
-  if (totalBufferSize + messageSize > BUFFER_LIMITS.MAX_TOTAL_BUFFER_SIZE) {
-    return false;
-  }
-  if (!bufferStats.has(roomId) && bufferStats.size >= BUFFER_LIMITS.MAX_ROOMS_WITH_BUFFER) {
-    return false;
-  }
-  return true;
-}
-
-/**
- * Add message to buffer
- */
-async function addToBuffer(roomId, data) {
-  const messageSize = data.length;
-  const roomIdShort = roomId.slice(0, 8) + '...';
-
-  if (redisClient) {
-    // Redis mode: store as base64 in a list with TTL
-    try {
-      const key = `buffer:${roomId}`;
-      const message = JSON.stringify({
-        data: Buffer.from(data).toString('base64'),
-        timestamp: Date.now()
-      });
-      await redisClient.rPush(key, message);
-      // Set TTL on the key (7 days)
-      await redisClient.expire(key, Math.floor(BUFFER_LIMITS.MAX_MESSAGE_AGE_MS / 1000));
-
-      // Check list length and trim if needed
-      const len = await redisClient.lLen(key);
-      if (len > BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM) {
-        await redisClient.lTrim(key, -BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM, -1);
-        console.log(`[Buffer/Redis] Trimmed room "${roomIdShort}" to ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} messages`);
-      }
-      return true;
-    } catch (err) {
-      console.error(`[Buffer/Redis] Error adding to buffer:`, err.message);
-      return false;
-    }
-  } else {
-    // Memory mode
-    if (!canAddToBufferMemory(roomId, messageSize)) {
-      console.log(`[Buffer] Quota exceeded for room "${roomIdShort}"`);
-      return false;
-    }
-
-    if (!buffers.has(roomId)) {
-      buffers.set(roomId, []);
-    }
-    buffers.get(roomId).push({ data, timestamp: Date.now() });
-
-    // Update stats
-    const stats = bufferStats.get(roomId) || { size: 0, count: 0 };
-    stats.size += messageSize;
-    stats.count += 1;
-    bufferStats.set(roomId, stats);
-    totalBufferSize += messageSize;
-
-    return true;
-  }
-}
-
-/**
- * Send buffer to client and clear it
- */
-async function flushBuffer(roomId, ws) {
-  if (redisClient) {
-    // Redis mode
-    try {
-      const key = `buffer:${roomId}`;
-      const messages = await redisClient.lRange(key, 0, -1);
-
-      if (!messages || messages.length === 0) return 0;
-
-      let sent = 0;
-      for (const msgStr of messages) {
-        if (ws.readyState === WebSocket.OPEN) {
-          try {
-            const msg = JSON.parse(msgStr);
-            const data = Buffer.from(msg.data, 'base64');
-            ws.send(data);
-            sent++;
-          } catch (e) {
-            console.error(`[Buffer/Redis] Error parsing message:`, e.message);
-          }
-        }
-      }
-
-      // Clear the buffer after sending
-      await redisClient.del(key);
-      return sent;
-    } catch (err) {
-      console.error(`[Buffer/Redis] Error flushing buffer:`, err.message);
-      return 0;
-    }
-  } else {
-    // Memory mode
-    const buffer = buffers.get(roomId);
-    if (!buffer || buffer.length === 0) return 0;
-
-    let sent = 0;
-    for (const msg of buffer) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(msg.data);
-        sent++;
-      }
-    }
-
-    // Clear buffer and stats
-    const stats = bufferStats.get(roomId);
-    if (stats) {
-      totalBufferSize -= stats.size;
-    }
-    buffers.delete(roomId);
-    bufferStats.delete(roomId);
-
-    return sent;
-  }
-}
-
-/**
- * Check if buffer exists for a room
- */
-async function hasBuffer(roomId) {
-  if (redisClient) {
-    try {
-      const len = await redisClient.lLen(`buffer:${roomId}`);
-      return len > 0;
-    } catch {
-      return false;
-    }
-  } else {
-    return buffers.has(roomId) && buffers.get(roomId).length > 0;
-  }
-}
+const asyncBuffer = createAsyncBuffer({ limits: BUFFER_LIMITS, redis: redisClient });
 
 /**
  * Cleanup old messages from buffers (memory mode only, Redis uses TTL)
  */
 async function cleanupBuffers() {
-  if (redisClient) {
-    // Redis handles TTL automatically
-    console.log(`[Cleanup/Redis] Redis handles TTL automatically`);
-    return;
+  if (redisClient) return; // Redis handles TTL
+
+  const { emptied, dropped } = asyncBuffer.cleanup(Date.now());
+  for (const roomId of emptied) {
+    if (rooms.has(roomId)) continue;
+    asyncRooms.delete(roomId);
+    roomTokens.delete(roomId);
   }
-
-  const now = Date.now();
-  let cleanedRooms = 0;
-  let cleanedMessages = 0;
-
-  for (const [roomId, messages] of buffers.entries()) {
-    const before = messages.length;
-    const filtered = messages.filter(m =>
-      now - m.timestamp < BUFFER_LIMITS.MAX_MESSAGE_AGE_MS
-    );
-
-    if (filtered.length === 0) {
-      const stats = bufferStats.get(roomId);
-      if (stats) totalBufferSize -= stats.size;
-      buffers.delete(roomId);
-      bufferStats.delete(roomId);
-      asyncRooms.delete(roomId);
-      roomTokens.delete(roomId);
-      cleanedRooms++;
-    } else if (filtered.length < before) {
-      buffers.set(roomId, filtered);
-      // Recalculate stats
-      const newSize = filtered.reduce((sum, m) => sum + m.data.length, 0);
-      const oldStats = bufferStats.get(roomId);
-      if (oldStats) totalBufferSize -= oldStats.size - newSize;
-      bufferStats.set(roomId, { size: newSize, count: filtered.length });
-      cleanedMessages += before - filtered.length;
-    }
-  }
-
-  if (cleanedRooms > 0 || cleanedMessages > 0) {
-    console.log(`[Cleanup] Removed ${cleanedRooms} rooms, ${cleanedMessages} messages`);
+  if (emptied.length > 0 || dropped > 0) {
+    console.log(`[Cleanup] Removed ${emptied.length} rooms, ${dropped} messages`);
   }
 }
 
@@ -466,6 +293,7 @@ function setupWebSocketRelay(wss) {
     const url = new URL(req.url, 'http://localhost');
     const asyncEnabled = url.searchParams.get('async') === '1';
     const token = url.searchParams.get('token');
+    const clientTag = clientTagOf(url.searchParams, () => randomBytes(9).toString('base64url'));
 
     // Extract room ID from path
     let urlPath = url.pathname.slice(1) || 'default';
@@ -534,11 +362,14 @@ function setupWebSocketRelay(wss) {
         // Check if client is still connected before flushing
         if (ws.readyState !== WebSocket.OPEN) return;
 
-        if (await hasBuffer(roomId)) {
-          const sent = await flushBuffer(roomId, ws);
-          if (sent > 0) {
-            console.log(`[Buffer] Sent ${sent} buffered messages to new client in room "${roomId.slice(0, 8)}..."`);
-          }
+        // What it has not received yet, its own messages left out
+        const sent = await asyncBuffer.replay(roomId, clientTag, (data) => {
+          if (ws.readyState !== WebSocket.OPEN) return false;
+          ws.send(data);
+          return true;
+        });
+        if (sent > 0) {
+          console.log(`[Buffer] Sent ${sent} buffered messages to a client in room "${roomId.slice(0, 8)}..."`);
         }
       }, 1500); // 1500ms delay for full client initialization (navigation + observers)
     }
@@ -580,7 +411,7 @@ function setupWebSocketRelay(wss) {
       // This avoids storing intermediate states during real-time collaboration
       // which can cause sync conflicts when replayed
       if (relayed === 0 && asyncRooms.has(roomId)) {
-        addToBuffer(roomId, data).catch(err => {
+        asyncBuffer.add(roomId, clientTag, data).catch(err => {
           console.error(`[Buffer] Error adding message:`, err.message);
         });
       }
@@ -695,8 +526,7 @@ process.on('SIGTERM', () => {
   });
   rooms.clear();
   connectionsPerIP.clear();
-  buffers.clear();
-  bufferStats.clear();
+  asyncBuffer.clear();
   asyncRooms.clear();
   roomTokens.clear();
 

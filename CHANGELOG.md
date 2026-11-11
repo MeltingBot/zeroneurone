@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.93.1
+
+### Corrections
+
+- **Captures faites pendant que tous les postes sont éteints** — le relais
+  ne rejouait les modifications gardées en mode asynchrone qu'à l'arrivée
+  d'un deuxième participant, puis les effaçait : un poste revenu seul ne
+  recevait rien, et un téléphone qui se reconnectait seul effaçait ses
+  propres captures. Chaque appareil reçoit maintenant, à sa connexion, ce
+  qu'il n'a pas encore reçu, sauf ses propres envois ; un tampon plein
+  libère d'abord ce qui a déjà été remis. **Relais à redéployer.**
+- **Scanner du compagnon mobile** — bloqué en production par l'en-tête
+  `Permissions-Policy` du serveur web (caméra interdite) ; la caméra est
+  désormais permise à la page ZN elle-même.
+- **Lien de partage ouvert sur un téléphone** — il menait à l'application
+  desktop, bloquée par l'écran « résolution insuffisante » ; il ouvre
+  maintenant le compagnon mobile. Cet écran propose aussi **Ouvrir le
+  compagnon mobile**.
+
 ## 2.93.0
 
 ### Corrections

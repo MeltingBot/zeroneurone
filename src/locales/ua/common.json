@@ -198,7 +198,8 @@
     "suggestions": "Пропозиції:",
     "suggestLarger": "Використовуйте більший екран або планшет",
     "suggestMaximize": "Розгорніть вікно браузера",
-    "suggestZoom": "Зменшіть масштаб браузера (Ctrl + -)"
+    "suggestZoom": "Зменшіть масштаб браузера (Ctrl + -)",
+    "openCompanion": "Відкрити мобільного компаньйона"
   },
   "evaluation": {
     "label": "Оцінка",

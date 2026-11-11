@@ -198,7 +198,8 @@
     "suggestions": "Suggeriments:",
     "suggestLarger": "Utilitzeu una pantalla més gran o una tauleta",
     "suggestMaximize": "Maximitzeu la finestra del navegador",
-    "suggestZoom": "Reduïu el nivell de zoom del navegador (Ctrl + -)"
+    "suggestZoom": "Reduïu el nivell de zoom del navegador (Ctrl + -)",
+    "openCompanion": "Obre el company mòbil"
   },
   "evaluation": {
     "label": "Valoració",

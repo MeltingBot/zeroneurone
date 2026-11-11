@@ -198,7 +198,8 @@
     "suggestions": "Iradokizunak:",
     "suggestLarger": "Erabili pantaila handiagoa edo tableta",
     "suggestMaximize": "Maximizatu nabigatzailearen leihoa",
-    "suggestZoom": "Murriztu nabigatzailearen zoom maila (Ctrl + -)"
+    "suggestZoom": "Murriztu nabigatzailearen zoom maila (Ctrl + -)",
+    "openCompanion": "Ireki lagun mugikorra"
   },
   "evaluation": {
     "label": "Kalifikazioa",
