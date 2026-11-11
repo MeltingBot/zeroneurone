@@ -91,6 +91,8 @@ La barre de recherche reste en haut de tous les écrans. La recherche est celle 
 
 Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 
+- **Pièces jointes** : la miniature est toujours là. Un fichier ajouté depuis un poste est demandé à un poste en ligne quand vous le touchez (une barre montre la réception), puis gardé sur le téléphone. Sans poste en ligne : **Disponible quand un poste est en ligne**
+
 - **Libellé** : le crayon à côté du nom, en haut, le modifie
 - **Position** : l'icône de repère à côté de **Informations** place l'élément en touchant la carte ; le crayon de la ligne Position la déplace ou la retire. Les éléments déjà localisés du dossier apparaissent en points gris pour se repérer
 - **Note** : affichée mise en forme (Markdown) ; le crayon ouvre l'édition, la coche l'envoie, la croix annule
@@ -126,6 +128,10 @@ Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 - **Réglages** (roue dentée en haut à droite) : **Ce dossier** montre la connexion et les modifications en attente ; **Application** règle votre nom, le thème (clair, sombre ou celui du téléphone) et la langue, et donne l'à propos. Les réglages de l'application s'ouvrent aussi par la roue dentée de l'accueil
 - **Oublier ce dossier** efface la copie et le lien du téléphone ; les modifications non envoyées sont perdues
 
+### Fichiers ouverts
+
+Un fichier reçu d'un poste reste sur le téléphone **5 jours après sa dernière ouverture**, 200 Mo au plus (les moins récemment ouverts partent d'abord) ; ensuite il est redemandé à un poste. Il est chiffré si le verrouillage est actif. **Oublier ce dossier**, **Effacer les dossiers ZeroNeurone** et l'activation ou la désactivation du verrouillage les effacent.
+
 ### iPhone : ajouter à l'écran d'accueil
 
 Safari peut effacer les données d'un site non ouvert depuis 7 jours, captures en attente comprises. Ajoutez le compagnon à l'écran d'accueil (bouton **Partager** de Safari → **Sur l'écran d'accueil**) pour éviter cet effacement.
@@ -134,7 +140,7 @@ Safari peut effacer les données d'un site non ouvert depuis 7 jours, captures e
 
 ## Limites
 
-- Ouvrir un dossier sur le téléphone télécharge tout son contenu, pièces jointes comprises
+- Ouvrir un dossier sur le téléphone télécharge son contenu et les miniatures des pièces jointes. Les fichiers ajoutés depuis un poste ne sont téléchargés qu'à leur ouverture, et seulement si un poste du dossier est en ligne ; les fichiers partagés avant cette fonction et les captures du téléphone restent dans la copie
 - Depuis le téléphone, un élément existant se modifie par son libellé, sa note, ses tags, ses propriétés, ses onglets et ses liens
 - Le téléphone ne crée pas de tag : il propose ceux déjà posés sur des éléments du dossier. Les jeux de tags restent sur chaque poste : un tag jamais utilisé dans le dossier n'est pas proposé, et un tag ajouté depuis le téléphone ne change pas l'apparence de l'élément
 - Une note, des tags ou des propriétés modifiées hors ligne remplacent, à la reconnexion, la version entière : si le poste a modifié la même note, les tags ou les propriétés du même élément entre-temps, une seule des deux versions reste. Évitez de modifier le même élément des deux côtés pendant que le téléphone est hors ligne

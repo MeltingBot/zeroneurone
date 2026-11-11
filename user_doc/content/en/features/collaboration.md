@@ -106,6 +106,8 @@ When files are being transferred:
 - Size transferred
 - Current file name
 
+Files added to a shared dossier travel on a separate channel, encrypted with the same key. Every computer receives them all, async mode included; the [mobile companion]({{< relref "mobile-companion" >}}) downloads a file only when it is opened, from a computer online. A computer left on an earlier version does not see these files: update every computer.
+
 
 ---
 
@@ -150,7 +152,7 @@ When someone is editing an element:
 |------|--------------|
 | Elements | ✅ Position, metadata, appearance |
 | Links | ✅ All properties |
-| Attached files | ✅ Metadata + binaries |
+| Attached files | ✅ Metadata + binaries (on the phone: when opened) |
 | Canvas tabs | ✅ Names, members, order (viewport local) |
 | Saved views | ✅ |
 | Comments | ✅ |
@@ -207,7 +209,7 @@ ZeroNeurone supports asynchronous collaboration, allowing collaborators to work 
 ### How It Works
 
 1. **Enable async mode** when starting to share (checkbox "Asynchronous collaboration")
-2. Changes are stored on the server for **7 days**
+2. Encrypted changes, files included, are kept in memory by the relay for **48 hours** (relay default)
 3. Collaborators can join when they want and receive accumulated changes
 
 To open the dossier on a phone, see [Mobile companion]({{< relref "mobile-companion" >}}).
@@ -270,6 +272,8 @@ To use your own server, same steps: enter its full URL in the **Sync server** se
 ### Host a Server
 
 The signaling server is based on `y-websocket`. See technical documentation for hosting.
+
+The relay stores no file on disk. It passes encrypted messages on and, in async mode, keeps them in memory for the buffer's duration. A file sent to a phone that asked for it goes to that phone alone, without going through the buffer. With an older relay, these files are broadcast to every connected participant (still encrypted): it works, but loads the network more. Update the relay along with the app.
 
 ---
 

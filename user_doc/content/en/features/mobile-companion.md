@@ -91,6 +91,8 @@ The search bar stays at the top of every screen. Search works as on the computer
 
 Tags, note, photos (tap to enlarge), details, links, comments.
 
+- **Attachments**: the thumbnail is always there. A file added from a computer is asked from a computer online when you tap it (a bar shows it arriving), then kept on the phone. With no computer online: **Available when a computer is online**
+
 - **Label**: the pencil beside the name, at the top, edits it
 - **Position**: the pin icon beside **Details** places the element by tapping the map; the pencil on the Position row moves or removes it. The dossier's located elements show as grey dots to find one's way
 - **Note**: shown formatted (Markdown); the pencil opens editing, the check mark sends it, the cross cancels
@@ -126,6 +128,10 @@ Tags, note, photos (tap to enlarge), details, links, comments.
 - **Settings** (gear at the top right): **This dossier** shows the connection and pending changes; **App** sets your name, the theme (light, dark or the phone's) and the language, and holds the about section. The app settings also open from the gear on the home page
 - **Forget this dossier** erases the copy and the link from the phone; unsent changes are lost
 
+### Opened files
+
+A file received from a computer stays on the phone for **5 days after it was last opened**, 200 MB at most (the least recently opened go first); after that it is asked from a computer again. It is encrypted when the lock is on. **Forget this dossier**, **Erase ZeroNeurone dossiers** and turning the lock on or off erase them.
+
 ### iPhone: add to home screen
 
 Safari may erase the data of a site not opened for 7 days, pending captures included. Add the companion to the home screen (Safari's **Share** button → **Add to Home Screen**) to prevent this.
@@ -134,7 +140,7 @@ Safari may erase the data of a site not opened for 7 days, pending captures incl
 
 ## Limits
 
-- Opening a dossier on the phone downloads all of its content, attachments included
+- Opening a dossier on the phone downloads its content and the attachments' thumbnails. Files added from a computer are downloaded only when opened, and only if a computer of the dossier is online; files shared before this feature and the phone's captures stay in the copy
 - From the phone, an existing element is edited through its label, note, tags, properties, tabs and links
 - The phone does not create tags: it offers those already set on the dossier's elements. Tag sets stay on each computer: a tag never used in the dossier is not offered, and a tag added from the phone does not change the element's appearance
 - A note, tags or properties edited offline replace the whole version on reconnection: if the computer edited the same note, or the same element's tags or properties, meanwhile, only one of the two versions stays. Avoid editing the same element on both sides while the phone is offline
