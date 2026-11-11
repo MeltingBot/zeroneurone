@@ -3,17 +3,20 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { useSyncStore } from '../../stores';
+import { Eye } from 'lucide-react';
+import { useDossierStore, useSyncStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 
 interface AvatarProps {
   name: string;
   color: string;
   isLocal?: boolean;
+  reader?: boolean;
   youLabel: string;
+  readerLabel: string;
 }
 
-function Avatar({ name, color, isLocal, youLabel }: AvatarProps) {
+function Avatar({ name, color, isLocal, reader, youLabel, readerLabel }: AvatarProps) {
   // Get initials (first letter of first two words)
   const initials = name
     .split(' ')
@@ -30,9 +33,15 @@ function Avatar({ name, color, isLocal, youLabel }: AvatarProps) {
         ${isLocal ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg-primary' : ''}
       `}
       style={{ backgroundColor: color }}
-      title={isLocal ? `${name} (${youLabel})` : name}
+      title={[name, isLocal ? `(${youLabel})` : null, reader ? `(${readerLabel})` : null].filter(Boolean).join(' ')}
+      data-reader={reader ? 'true' : undefined}
     >
       <span className="text-white drop-shadow-sm">{initials}</span>
+      {reader && (
+        <span className="absolute -bottom-1 -right-1 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-bg-primary text-text-secondary border border-border-default">
+          <Eye size={9} />
+        </span>
+      )}
     </div>
   );
 }
@@ -40,6 +49,7 @@ function Avatar({ name, color, isLocal, youLabel }: AvatarProps) {
 export function PresenceAvatars() {
   const { t } = useTranslation('panels');
   const { mode, localUser, remoteUsers } = useSyncStore(useShallow((s) => ({ mode: s.mode, localUser: s.localUser, remoteUsers: s.remoteUsers })));
+  const isReader = useDossierStore((s) => s.isShareReadOnly);
 
   // Don't show in local mode
   if (mode === 'local') {
@@ -47,8 +57,8 @@ export function PresenceAvatars() {
   }
 
   const allUsers = [
-    { ...localUser, isLocal: true },
-    ...remoteUsers.map(u => ({ id: u.odUserId, name: u.name, color: u.color, isLocal: false })),
+    { ...localUser, isLocal: true, reader: isReader },
+    ...remoteUsers.map(u => ({ id: u.odUserId, name: u.name, color: u.color, isLocal: false, reader: !!u.reader })),
   ];
 
   // Limit display to 5 users, show +N for overflow
@@ -57,6 +67,7 @@ export function PresenceAvatars() {
 
   const youLabel = t('collaboration.you');
   const othersLabel = t('collaboration.others');
+  const readerLabel = t('collaboration.reader');
 
   return (
     <div className="flex items-center -space-x-2">
@@ -66,7 +77,9 @@ export function PresenceAvatars() {
           name={user.name}
           color={user.color}
           isLocal={user.isLocal}
+          reader={user.reader}
           youLabel={youLabel}
+          readerLabel={readerLabel}
         />
       ))}
       {overflowCount > 0 && (

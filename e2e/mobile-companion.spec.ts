@@ -1133,6 +1133,9 @@ test('a phone with a read link sees the dossier and changes nothing', async ({ b
   await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
   await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(phone.getByText('Lecture seule', { exact: true })).toBeVisible();
+  // The desktop sees the phone, marked as a reader
+  await desktop.bringToFront();
+  await expect(desktop.locator('[data-reader="true"]')).toHaveCount(1, { timeout: 30_000 });
 
   // The desktop's changes arrive
   await desktop.bringToFront();

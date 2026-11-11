@@ -97,6 +97,10 @@ test('a read link sees everything and changes nothing; edit links write both way
   await expect.poll(() => labels(reader), { timeout: 30_000 }).toEqual(initial);
   await expect(reader.getByTestId('read-only-link-banner')).toBeVisible();
   await expect(writer.getByTestId('read-only-link-banner')).toHaveCount(0);
+  // The reader shows up, marked as such, for the others and for itself
+  await owner.bringToFront();
+  await expect(owner.locator('[data-reader="true"]')).toHaveCount(1, { timeout: 30_000 });
+  await expect(reader.locator('[data-reader="true"]')).toHaveCount(1);
 
   // Edit links write both ways
   expect(await create(owner, 'Par l\'auteur')).toBe('created');

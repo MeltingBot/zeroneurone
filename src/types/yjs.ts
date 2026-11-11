@@ -139,6 +139,8 @@ export interface UserPresence {
   viewMode: 'canvas' | 'map' | 'timeline';
   /** Last heartbeat received (ms since epoch) */
   lastSeen?: number;
+  /** Joined with a read link (declared by the reader itself: a marker, not a control) */
+  reader?: boolean;
 }
 
 export const USER_COLORS = [

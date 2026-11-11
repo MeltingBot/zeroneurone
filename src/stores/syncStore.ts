@@ -245,6 +245,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       editingReportSection: null,
       viewMode: 'canvas',
       lastSeen: Date.now(),
+      reader: syncService.isReadOnly(),
     });
 
     // Start heartbeat to update lastSeen periodically
@@ -297,6 +298,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
                 editingReportSection: state.editingReportSection || null,
                 viewMode: state.viewMode || 'canvas',
                 lastSeen,
+                reader: state.reader === true,
               });
             }
           }
