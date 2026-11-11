@@ -40,7 +40,8 @@
     "connected_other": "Verbunden, {{count}} Rechner online",
     "reconnecting": "Verbinde neu…",
     "offline": "Offline",
-    "closed": "Dossier abgeschlossen"
+    "closed": "Dossier abgeschlossen",
+    "readOnly": "Schreibgeschützt"
   },
   "install": {
     "hint": "Zum Startbildschirm hinzufügen",

@@ -338,7 +338,8 @@
     "dotCopied": "Selecció copiada com a DOT",
     "closedBanner": "Tancat el {{date}} — només lectura",
     "undecryptableUpdates": "Canvis il·legibles: {{count}}. Es conserven; vegeu Emmagatzematge > Manteniment.",
-    "popupBlocked": "Finestra bloquejada pel navegador"
+    "popupBlocked": "Finestra bloquejada pel navegador",
+    "readOnlyLinkBanner": "Només lectura (enllaç compartit)"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

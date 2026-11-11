@@ -40,7 +40,8 @@
     "connected_other": "Connectat, {{count}} ordinadors en línia",
     "reconnecting": "Reconnectant…",
     "offline": "Fora de línia",
-    "closed": "Expedient tancat"
+    "closed": "Expedient tancat",
+    "readOnly": "Només lectura"
   },
   "install": {
     "hint": "Afegeix a la pantalla d'inici",

@@ -40,7 +40,8 @@
     "connected_other": "Konektatuta, {{count}} ordenagailu linean",
     "reconnecting": "Berriro konektatzen…",
     "offline": "Lineaz kanpo",
-    "closed": "Espedientea itxita"
+    "closed": "Espedientea itxita",
+    "readOnly": "Irakurtzeko soilik"
   },
   "install": {
     "hint": "Gehitu hasierako pantailara",

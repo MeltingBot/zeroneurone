@@ -40,7 +40,8 @@
     "connected_other": "Ligado, {{count}} computadores online",
     "reconnecting": "A religar…",
     "offline": "Offline",
-    "closed": "Processo encerrado"
+    "closed": "Processo encerrado",
+    "readOnly": "Só de leitura"
   },
   "install": {
     "hint": "Adicionar ao ecrã principal",

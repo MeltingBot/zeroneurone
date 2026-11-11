@@ -367,9 +367,12 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       // Persist key + async flag on the dossier (Dexie-local only) so the
       // user can reopen `/dossier/{uuid}` in shared mode without re-clicking
       // the share link. NEVER written to the Y.Doc metaMap.
+      const access = syncService.getWriteAccess();
       await dossierRepository.update(dossierId, {
         lastSharedKey: encryptionKey,
         lastSharedAsync: asyncEnabled,
+        lastSharedWriteKey: access?.publicKey,
+        lastSharedWriteSeed: access?.seed,
       }).catch((err) => {
         console.warn('[syncStore.share] Failed to persist share config:', err);
       });
@@ -403,6 +406,8 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         await dossierRepository.update(dossierId, {
           lastSharedKey: undefined,
           lastSharedAsync: undefined,
+          lastSharedWriteKey: undefined,
+          lastSharedWriteSeed: undefined,
         }).catch((err) => {
           console.warn('[syncStore.unshare] Failed to clear share config:', err);
         });

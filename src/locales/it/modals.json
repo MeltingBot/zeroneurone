@@ -630,7 +630,10 @@
       "scan": "Scansiona con la fotocamera del telefono.",
       "qrLabel": "Codice QR del compagno mobile",
       "asyncRequired": "Il compagno mobile richiede una condivisione in modalità asincrona. Interrompi la condivisione e condividi di nuovo con questa modalità."
-    }
+    },
+    "editLink": "Link di modifica",
+    "readLink": "Link di lettura",
+    "readLinkHelp": "Solo consultazione: nessuna modifica possibile."
   },
   "dossierTags": {
     "title": "Tag delil fascicolo",

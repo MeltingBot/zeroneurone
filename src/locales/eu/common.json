@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Espedientea itxita: irakurtzeko soilik.",
     "retention": "Espedientea irakurtzeko soilik: atxikipena iraungita.",
-    "plugin": "Aldaketak etenda: {{reason}}"
+    "plugin": "Aldaketak etenda: {{reason}}",
+    "readOnlyLink": "Espedientea irakurtzeko soilik: ezin da aldatu."
   },
   "requiredPlugins": {
     "title": "Derrigorrezko luzapena ez dago erabilgarri",

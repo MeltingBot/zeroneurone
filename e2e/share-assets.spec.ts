@@ -49,7 +49,7 @@ test.describe('Sharing a dossier with files', () => {
     await owner.getByRole('button', { name: /^(share|partager)$/i }).first().click();
     const dialog = owner.getByRole('dialog');
     await dialog.getByRole('button', { name: /^(share|partager)$/i }).click();
-    const urlInput = dialog.locator('input[readonly]');
+    const urlInput = dialog.locator('input[readonly]').first();
     await expect(urlInput).toHaveValue(/\/join\//, { timeout: 20_000 });
     const shareUrl = await urlInput.inputValue();
     await expect.poll(async () => (await ydocStorage(owner, 'zeroneurone-files-'))[0]?.bytes ?? 0, { timeout: 30_000 })
@@ -97,7 +97,7 @@ test.describe('Sharing a dossier with files', () => {
     const dialog = owner.getByRole('dialog');
     await dialog.getByRole('checkbox').first().check();
     await dialog.getByRole('button', { name: /^(share|partager)$/i }).click();
-    const urlInput = dialog.locator('input[readonly]');
+    const urlInput = dialog.locator('input[readonly]').first();
     await expect(urlInput).toHaveValue(/async=1/, { timeout: 20_000 });
     const shareUrl = await urlInput.inputValue();
     const dossierId = new URLSearchParams(new URL(shareUrl).hash.slice(1)).get('id');

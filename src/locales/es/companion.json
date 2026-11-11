@@ -40,7 +40,8 @@
     "connected_other": "Conectado, {{count}} equipos en línea",
     "reconnecting": "Reconectando…",
     "offline": "Sin conexión",
-    "closed": "Expediente cerrado"
+    "closed": "Expediente cerrado",
+    "readOnly": "Solo lectura"
   },
   "install": {
     "hint": "Añadir a la pantalla de inicio",

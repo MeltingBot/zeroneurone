@@ -338,7 +338,8 @@
     "dotCopied": "Selection copied as DOT",
     "closedBanner": "Closed on {{date}} — read-only",
     "undecryptableUpdates": "Unreadable changes: {{count}}. They are kept; see Storage > Maintenance.",
-    "popupBlocked": "Popup blocked by the browser"
+    "popupBlocked": "Popup blocked by the browser",
+    "readOnlyLinkBanner": "Read-only (share link)"
   },
   "map": {
     "noGeoElements": "No geolocated elements",

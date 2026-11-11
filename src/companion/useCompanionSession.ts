@@ -4,6 +4,7 @@
  * dossier's data read live from the Y.Doc.
  */
 
+import { isReadOnly } from '../services/writeAccess';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Y from 'yjs';
 import type { CanvasTab, Comment, Element, Link } from '../types';
@@ -70,6 +71,10 @@ export interface AssetEntry extends AssetMeta {
 export interface CompanionData {
   name: string;
   closed: boolean;
+  /** Joined with a read link (read-only sharing) */
+  readOnly: boolean;
+  /** Nothing can be changed: closed or read only */
+  locked: boolean;
   elements: Element[];
   links: Link[];
   comments: Comment[];
@@ -78,9 +83,9 @@ export interface CompanionData {
   tabs: CanvasTab[];
 }
 
-const EMPTY_DATA: CompanionData = { name: '', closed: false, elements: [], links: [], comments: [], assets: new Map(), tabs: [] };
+const EMPTY_DATA: CompanionData = { name: '', closed: false, readOnly: false, locked: false, elements: [], links: [], comments: [], assets: new Map(), tabs: [] };
 
-function readData(ydoc: Y.Doc, dossierId: string): CompanionData {
+function readData(ydoc: Y.Doc, dossierId: string, readOnly: boolean): CompanionData {
   const maps = getYMaps(ydoc);
   const elements: Element[] = [];
   maps.elements.forEach((m) => {
@@ -109,6 +114,8 @@ function readData(ydoc: Y.Doc, dossierId: string): CompanionData {
   return {
     name: (maps.meta.get('name') as string | undefined) ?? '',
     closed: !!maps.meta.get('closedAt'),
+    readOnly,
+    locked: readOnly || !!maps.meta.get('closedAt'),
     elements,
     links,
     comments,
@@ -124,6 +131,9 @@ export function useCompanionSession(session: CompanionSession) {
   const [openFailed, setOpenFailed] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>(DEFAULT_SYNC_STATE);
   const [data, setData] = useState<CompanionData>(EMPTY_DATA);
+  const readOnly = isReadOnly(session.access);
+  const accessKey = session.access?.publicKey;
+  const accessSeed = session.access?.seed;
   const [pending, setPending] = useState(() => pendingCount(session.dossierId));
   /** Writes still streaming (photo chunks): delivery is not settled before they end */
   const busyRef = useRef(0);
@@ -140,7 +150,7 @@ export function useCompanionSession(session: CompanionSession) {
       // A copy kept under the desktop's name by an earlier version, brought over
       return adoptLegacyCopy(session.dossierId)
         .catch((err: unknown) => { console.warn('[Companion] older copy not brought over:', err); })
-        .then(() => syncService.openShared(session.dossierId, session.encryptionKey, session.roomId, true));
+        .then(() => syncService.openShared(session.dossierId, session.encryptionKey, session.roomId, true, accessKey ? { publicKey: accessKey, seed: accessSeed } : null));
     })
       .then((doc) => {
         if (!doc) return;
@@ -172,7 +182,7 @@ export function useCompanionSession(session: CompanionSession) {
       stopPresence?.();
       void closeCompanionSession();
     };
-  }, [session.dossierId, session.encryptionKey, session.roomId, session.server]);
+  }, [session.dossierId, session.encryptionKey, session.roomId, session.server, accessKey, accessSeed]);
 
   // Read the dossier live
   useEffect(() => {
@@ -181,7 +191,7 @@ export function useCompanionSession(session: CompanionSession) {
     const refresh = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const next = readData(ydoc, dossierId);
+        const next = readData(ydoc, dossierId, readOnly);
         setData(next);
         if (next.name) renameSession(dossierId, next.name);
       });
@@ -192,7 +202,7 @@ export function useCompanionSession(session: CompanionSession) {
       cancelAnimationFrame(frame);
       ydoc.off('update', refresh);
     };
-  }, [ydoc, dossierId]);
+  }, [ydoc, dossierId, readOnly]);
 
   // Deliver what was written offline, then forget it once settled
   const settle = useMemo(() => () => {

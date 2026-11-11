@@ -630,7 +630,10 @@
       "scan": "Scan with the phone's camera.",
       "qrLabel": "Mobile companion QR code",
       "asyncRequired": "The mobile companion needs a share in async mode. Stop sharing, then share again with that mode."
-    }
+    },
+    "editLink": "Edit link",
+    "readLink": "Read link",
+    "readLinkHelp": "View only: no change possible."
   },
   "dossierTags": {
     "title": "Dossier tags",

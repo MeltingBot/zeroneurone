@@ -319,6 +319,13 @@ export interface Dossier {
   /** Async buffering flag for the last shared session (paired with lastSharedKey). */
   lastSharedAsync?: boolean;
   /**
+   * Write key of the last shared session when its room is signed (read-only
+   * sharing, writeAccess.ts): public key, and the private key's seed unless
+   * the dossier was joined with a read link. Local only, like lastSharedKey.
+   */
+  lastSharedWriteKey?: string;
+  lastSharedWriteSeed?: string;
+  /**
    * Evaluation model of the dossier (absent = 'zeroneurone'). Shared through
    * the Y.Doc meta map, so every collaborator works with the same model.
    */

@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Dossier closed: read-only.",
     "retention": "Dossier read-only: retention expired.",
-    "plugin": "Changes suspended: {{reason}}"
+    "plugin": "Changes suspended: {{reason}}",
+    "readOnlyLink": "Dossier joined read-only: changes are not possible."
   },
   "requiredPlugins": {
     "title": "Required extension unavailable",

@@ -108,6 +108,7 @@ export function DossierPage() {
   const setActiveTab = useTabStore((state) => state.setActiveTab);
 
   const setReadOnly = useDossierStore((s) => s.setReadOnly);
+  const isShareReadOnly = useDossierStore((s) => s.isShareReadOnly);
   const deleteDossier = useDossierStore((s) => s.deleteDossier);
   const updateElement = useDossierStore((s) => s.updateElement);
   const updateLink = useDossierStore((s) => s.updateLink);
@@ -785,6 +786,13 @@ export function DossierPage() {
       </header>
 
       <WriteLockBanner />
+
+      {isShareReadOnly && (
+        <div className="flex items-center gap-1.5 px-3 py-1 text-xs text-text-secondary bg-bg-tertiary border-b border-border-default" data-testid="read-only-link-banner">
+          <Lock size={12} />
+          {t('dossier.readOnlyLinkBanner')}
+        </div>
+      )}
 
       {currentDossier.closedAt && (
         <div className="flex items-center gap-1.5 px-3 py-1 text-xs text-text-secondary bg-bg-tertiary border-b border-border-default">

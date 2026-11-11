@@ -42,8 +42,18 @@ describe('parseJoinLink', () => {
     const link = parseJoinLink('room', '?server=wss%3A%2F%2Fr.example&async=1', '#key=K&id=uuid&name=Terrain');
     expect(link).toEqual({
       roomId: 'room', dossierId: 'uuid', encryptionKey: 'K', name: 'Terrain',
-      server: 'wss://r.example', asyncEnabled: true, isLegacyFormat: false,
+      server: 'wss://r.example', asyncEnabled: true, isLegacyFormat: false, access: null,
     });
+  });
+
+  it('reads the write key of a signed room: with its seed (edit link) or without (read link)', () => {
+    const pub = 'A'.repeat(43);
+    const seed = 'B'.repeat(43);
+    expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}&wseed=${seed}`).access).toEqual({ publicKey: pub, seed });
+    expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}`).access).toEqual({ publicKey: pub });
+    // Malformed: ignored
+    expect(parseJoinLink('w1-room', '', '#key=K&id=uuid&wpub=short').access).toBeNull();
+    expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}&wseed=bad`).access).toEqual({ publicKey: pub });
   });
 
   it('reads legacy links (UUID in the path, name in the query)', () => {

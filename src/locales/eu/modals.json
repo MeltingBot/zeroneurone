@@ -630,7 +630,10 @@
       "scan": "Eskaneatu telefonoaren kamerarekin.",
       "qrLabel": "Lagun mugikorraren QR kodea",
       "asyncRequired": "Lagun mugikorrak modu asinkronoan partekatzea behar du. Gelditu partekatzea eta partekatu berriro modu horrekin."
-    }
+    },
+    "editLink": "Edizio-esteka",
+    "readLink": "Irakurketa-esteka",
+    "readLinkHelp": "Kontsulta soilik: ezin da ezer aldatu."
   },
   "dossierTags": {
     "title": "Espedienteren etiketak",

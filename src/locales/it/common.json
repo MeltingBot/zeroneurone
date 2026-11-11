@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Fascicolo chiuso: sola lettura.",
     "retention": "Fascicolo in sola lettura: conservazione scaduta.",
-    "plugin": "Modifiche sospese: {{reason}}"
+    "plugin": "Modifiche sospese: {{reason}}",
+    "readOnlyLink": "Fascicolo aperto in sola lettura: modifiche non possibili."
   },
   "requiredPlugins": {
     "title": "Estensione obbligatoria non disponibile",

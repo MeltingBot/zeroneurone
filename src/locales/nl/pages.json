@@ -338,7 +338,8 @@
     "dotCopied": "Selectie gekopieerd als DOT",
     "closedBanner": "Afgesloten op {{date}} — alleen-lezen",
     "undecryptableUpdates": "Onleesbare wijzigingen: {{count}}. Ze blijven bewaard; zie Opslag > Onderhoud.",
-    "popupBlocked": "Pop-up geblokkeerd door de browser"
+    "popupBlocked": "Pop-up geblokkeerd door de browser",
+    "readOnlyLinkBanner": "Alleen-lezen (deellink)"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

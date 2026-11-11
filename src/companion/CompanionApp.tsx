@@ -286,6 +286,7 @@ function JoinScreen({ roomId }: { roomId: string }) {
       server,
       name: link.name ?? known?.name ?? '',
       joinedAt: new Date().toISOString(),
+      ...(link.access ? { access: link.access } : {}),
     };
     saveSession(session);
     // Replace: the key leaves the address bar and the history

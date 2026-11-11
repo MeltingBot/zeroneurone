@@ -40,7 +40,8 @@
     "connected_other": "Verbonden, {{count}} computers online",
     "reconnecting": "Opnieuw verbinden…",
     "offline": "Offline",
-    "closed": "Dossier afgesloten"
+    "closed": "Dossier afgesloten",
+    "readOnly": "Alleen-lezen"
   },
   "install": {
     "hint": "Toevoegen aan beginscherm",

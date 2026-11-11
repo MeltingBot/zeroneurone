@@ -630,7 +630,10 @@
       "scan": "Mit der Kamera des Handys scannen.",
       "qrLabel": "QR-Code des mobilen Begleiters",
       "asyncRequired": "Der mobile Begleiter erfordert eine Freigabe im asynchronen Modus. Freigabe beenden und mit diesem Modus erneut freigeben."
-    }
+    },
+    "editLink": "Bearbeitungslink",
+    "readLink": "Leselink",
+    "readLinkHelp": "Nur Ansicht: keine Änderung möglich."
   },
   "dossierTags": {
     "title": "Akten-Tags",

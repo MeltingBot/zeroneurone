@@ -42,7 +42,7 @@ import { syncService } from '../services/syncService';
 import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
 import { assertNoPluginLock, refuseWrite, retentionExpiresAt, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
 import { flattenSourceLines } from '../utils/sourceLinks';
-import { deriveRoomId } from '../services/cryptoService';
+import { shareRoomId } from '../services/syncService';
 import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
 import { isDossierOptions } from '../utils/dossierOptions';
@@ -139,6 +139,8 @@ interface DossierState {
 
   // Retention
   isReadOnly: boolean;
+  /** Joined with a read link (read-only sharing): no change goes out */
+  isShareReadOnly: boolean;
   setReadOnly: (readOnly: boolean) => void;
 
   // Loading states
@@ -679,7 +681,8 @@ function assertWritable(get: () => DossierState) {
   if (reason) refuseWrite(reason);
 }
 
-function lockReasonOf(state: Pick<DossierState, 'currentDossier' | 'isReadOnly'>): DossierLockReason | null {
+function lockReasonOf(state: Pick<DossierState, 'currentDossier' | 'isReadOnly' | 'isShareReadOnly'>): DossierLockReason | null {
+  if (state.isShareReadOnly) return 'readOnlyLink';
   if (state.currentDossier?.closedAt) return 'closed';
   return state.isReadOnly ? 'retention' : null;
 }
@@ -871,6 +874,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   assets: [],
   dossiers: [],
   isReadOnly: false,
+  isShareReadOnly: false,
   setReadOnly: (readOnly: boolean) => set({ isReadOnly: readOnly }),
   isLoading: false,
   loadingPhase: '',
@@ -950,12 +954,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           syncService.isServerConfigured();
         if (canAutoResume) {
           try {
-            const roomId = await deriveRoomId(id, dossier.lastSharedKey!);
+            const access = dossier.lastSharedWriteKey
+              ? { publicKey: dossier.lastSharedWriteKey, seed: dossier.lastSharedWriteSeed }
+              : null;
+            const roomId = await shareRoomId(id, dossier.lastSharedKey!, access);
             ydoc = await syncService.openShared(
               id,
               dossier.lastSharedKey!,
               roomId,
               dossier.lastSharedAsync ?? false,
+              access,
             );
           } catch (err) {
             console.warn(
@@ -969,6 +977,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           ydoc = await syncService.openLocal(id);
         }
       }
+
+      // Joined with a read link: locked before anything below could write
+      set({ isShareReadOnly: syncService.getDossierId() === id && syncService.isReadOnly() });
 
       // Kept rather than compacted away (see EncryptedIndexeddbPersistence):
       // the user decides in Storage > Maintenance
@@ -1535,6 +1546,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       comments: [],
       assets: [],
       isReadOnly: false,
+      isShareReadOnly: false,
     });
 
     if (closingId) emitPluginEvent('dossier:closed', closingId);

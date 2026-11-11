@@ -26,6 +26,18 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore(useShallow((s) => ({ mode: s.mode, share: s.share, unshare: s.unshare, localUser: s.localUser, updateLocalUserName: s.updateLocalUserName })));
   const currentDossier = useDossierStore((state) => state.currentDossier);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  /** Read link of a signed room, next to the write link (read-only sharing) */
+  const [readUrl, setReadUrl] = useState<string | null>(null);
+  const access = mode === 'shared' ? syncService.getWriteAccess() : null;
+  const readOnly = !!access && !access.seed;
+
+  useEffect(() => {
+    if (!isOpen || !shareUrl || !currentDossier || !access?.seed || readUrl) return;
+    const encryptionKey = syncService.getEncryptionKey();
+    if (!encryptionKey) return;
+    void syncService.buildShareUrl(currentDossier.id, encryptionKey, currentDossier.name, syncService.isAsync(), 'join', { publicKey: access.publicKey })
+      .then(setReadUrl);
+  }, [isOpen, shareUrl, currentDossier, access, readUrl]);
 
   // Rebuild share URL when modal opens if already sharing/connected
   // Works for both host and client (gets key from syncService)
@@ -47,7 +59,6 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     buildUrl();
   }, [isOpen, mode, currentDossier, shareUrl]);
   const [isLoading, setIsLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(localUser.name);
 
@@ -80,6 +91,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     setIsLoading(true);
     try {
       const result = await share(currentDossier?.name, asyncEnabled);
+      setReadUrl(null);
       setShareUrl(result.shareUrl);
     } catch (error) {
       console.error('Failed to share:', error);
@@ -93,21 +105,11 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     try {
       await unshare();
       setShareUrl(null);
+      setReadUrl(null);
     } catch (error) {
       console.error('Failed to unshare:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (!shareUrl) return;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
     }
   };
 
@@ -281,32 +283,19 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Share URL */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-text-secondary">
-                  {t('collaboration.shareLink')}
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    value={shareUrl || ''}
-                    readOnly
-                    className="flex-1 text-xs font-mono"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleCopy}
-                    title={t('collaboration.copyLink')}
-                    disabled={!shareUrl}
-                  >
-                    {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
-                  </Button>
-                </div>
-                <p className="text-xs text-text-tertiary flex items-center gap-1">
-                  {shareUrl && <Lock size={12} className="text-success" />}
-                  {t('collaboration.shareLinkHelp')}
-                </p>
-              </div>
+              {/* Share links: write and read for a signed room, one link otherwise */}
+              {readUrl ? (
+                <>
+                  <ShareLinkRow label={t('collaboration.editLink')} url={shareUrl} help={t('collaboration.shareLinkHelp')} />
+                  <ShareLinkRow label={t('collaboration.readLink')} url={readUrl} help={t('collaboration.readLinkHelp')} />
+                </>
+              ) : (
+                <ShareLinkRow
+                  label={t(readOnly ? 'collaboration.readLink' : 'collaboration.shareLink')}
+                  url={shareUrl}
+                  help={t(readOnly ? 'collaboration.readLinkHelp' : 'collaboration.shareLinkHelp')}
+                />
+              )}
 
               {/* Mobile companion */}
               {currentDossier && syncService.getEncryptionKey() && (
@@ -334,5 +323,35 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
         </div>
       </div>
     </Modal>
+  );
+}
+
+function ShareLinkRow({ label, url, help }: { label: string; url: string | null; help: string }) {
+  const { t } = useTranslation('modals');
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-text-secondary">{label}</label>
+      <div className="flex gap-2">
+        <Input value={url || ''} readOnly aria-label={label} className="flex-1 text-xs font-mono" />
+        <Button variant="secondary" size="sm" onClick={copy} title={t('collaboration.copyLink')} disabled={!url}>
+          {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
+        </Button>
+      </div>
+      <p className="text-xs text-text-tertiary flex items-center gap-1">
+        {url && <Lock size={12} className="text-success" />}
+        {help}
+      </p>
+    </div>
   );
 }

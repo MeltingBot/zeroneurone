@@ -40,7 +40,8 @@
     "connected_other": "Connesso, {{count}} postazioni online",
     "reconnecting": "Riconnessione…",
     "offline": "Offline",
-    "closed": "Fascicolo chiuso"
+    "closed": "Fascicolo chiuso",
+    "readOnly": "Sola lettura"
   },
   "install": {
     "hint": "Aggiungi alla schermata Home",

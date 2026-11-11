@@ -338,7 +338,8 @@
     "dotCopied": "Sélection copiée en DOT",
     "closedBanner": "Clôturé le {{date}} — lecture seule",
     "undecryptableUpdates": "Modifications illisibles : {{count}}. Elles sont conservées ; voir Stockage > Maintenance.",
-    "popupBlocked": "Fenêtre bloquée par le navigateur"
+    "popupBlocked": "Fenêtre bloquée par le navigateur",
+    "readOnlyLinkBanner": "Lecture seule (lien de partage)"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

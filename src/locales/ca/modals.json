@@ -630,7 +630,10 @@
       "scan": "Escanegeu amb la càmera del telèfon.",
       "qrLabel": "Codi QR del company mòbil",
       "asyncRequired": "El company mòbil requereix compartir en mode asíncron. Atureu la compartició i torneu a compartir amb aquest mode."
-    }
+    },
+    "editLink": "Enllaç d'edició",
+    "readLink": "Enllaç de lectura",
+    "readLinkHelp": "Només consulta: cap modificació possible."
   },
   "dossierTags": {
     "title": "Etiquetes de l'expedient",

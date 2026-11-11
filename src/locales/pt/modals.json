@@ -630,7 +630,10 @@
       "scan": "Digitalize com a câmara do telefone.",
       "qrLabel": "Código QR do companheiro móvel",
       "asyncRequired": "O companheiro móvel requer uma partilha em modo assíncrono. Pare a partilha e partilhe de novo com esse modo."
-    }
+    },
+    "editLink": "Ligação de edição",
+    "readLink": "Ligação de leitura",
+    "readLinkHelp": "Apenas consulta: nenhuma alteração possível."
   },
   "dossierTags": {
     "title": "Tags do dossiê",

@@ -40,7 +40,8 @@
     "connected_other": "Connecté, {{count}} postes en ligne",
     "reconnecting": "Reconnexion…",
     "offline": "Hors ligne",
-    "closed": "Dossier clôturé"
+    "closed": "Dossier clôturé",
+    "readOnly": "Lecture seule"
   },
   "install": {
     "hint": "Ajouter à l'écran d'accueil",

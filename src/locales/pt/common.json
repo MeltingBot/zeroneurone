@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Dossiê encerrado: só de leitura.",
     "retention": "Dossiê só de leitura: retenção expirada.",
-    "plugin": "Alterações suspensas: {{reason}}"
+    "plugin": "Alterações suspensas: {{reason}}",
+    "readOnlyLink": "Dossiê aberto só de leitura: alterações impossíveis."
   },
   "requiredPlugins": {
     "title": "Extensão obrigatória indisponível",

@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Dossier clôturé : lecture seule.",
     "retention": "Dossier en lecture seule : rétention expirée.",
-    "plugin": "Modifications suspendues : {{reason}}"
+    "plugin": "Modifications suspendues : {{reason}}",
+    "readOnlyLink": "Dossier rejoint en lecture seule : modification impossible."
   },
   "requiredPlugins": {
     "title": "Extension obligatoire indisponible",

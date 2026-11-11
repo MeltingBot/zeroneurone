@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Dossier afgesloten: alleen-lezen.",
     "retention": "Dossier alleen-lezen: bewaartermijn verlopen.",
-    "plugin": "Wijzigingen opgeschort: {{reason}}"
+    "plugin": "Wijzigingen opgeschort: {{reason}}",
+    "readOnlyLink": "Dossier alleen-lezen geopend: wijzigen niet mogelijk."
   },
   "requiredPlugins": {
     "title": "Verplichte extensie niet beschikbaar",

@@ -1107,3 +1107,47 @@ test('a file added on a computer opens on the phone on demand, then from its cac
   await phone.getByRole('button', { name: 'rapport.pdf' }).click();
   await expect(phone.getByText('Disponible quand un poste est en ligne')).toBeVisible({ timeout: 10_000 });
 });
+
+test('a phone with a read link sees the dossier and changes nothing', async ({ browser }) => {
+  test.setTimeout(3 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'small.json');
+  writeFileSync(file, buildLargeDossierJson(5));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  await desktop.waitForTimeout(1500);
+  const readUrl = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Consultation', true);
+    const access = syncService.getWriteAccess()!;
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Consultation', true, 'm', { publicKey: access.publicKey });
+  });
+  expect(readUrl).toContain('wpub=');
+  expect(readUrl).not.toContain('wseed=');
+
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  await phone.goto(readUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(phone.getByText('Lecture seule', { exact: true })).toBeVisible();
+
+  // The desktop's changes arrive
+  await desktop.bringToFront();
+  await desktop.evaluate(async () => {
+    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    await useDossierStore.getState().createElement('Ajout du poste', { x: 0, y: 0 });
+  });
+  await phone.bringToFront();
+  await expect(phone.getByText('Ajout du poste', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  // Nothing to change: no capture, no editing, no comment
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
+  await expect(phone.getByRole('button', { name: 'Ajouter au dossier' })).toHaveCount(0);
+  await phone.getByRole('button', { name: 'Éléments', exact: true }).click();
+  await phone.getByText('Jean Dupont 0', { exact: true }).click();
+  await expect(phone.getByRole('button', { name: 'Supprimer l\'élément' })).toHaveCount(0);
+  await expect(phone.getByPlaceholder('Commentaire')).toHaveCount(0);
+});

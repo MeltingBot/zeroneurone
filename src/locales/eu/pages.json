@@ -338,7 +338,8 @@
     "dotCopied": "Hautapena DOT gisa kopiatu da",
     "closedBanner": "{{date}}(e)an itxita — irakurtzeko soilik",
     "undecryptableUpdates": "Aldaketa irakurtezinak: {{count}}. Gorde egin dira; ikus Biltegiratzea > Mantentzea.",
-    "popupBlocked": "Nabigatzaileak leihoa blokeatu du"
+    "popupBlocked": "Nabigatzaileak leihoa blokeatu du",
+    "readOnlyLinkBanner": "Irakurtzeko soilik (partekatze-esteka)"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

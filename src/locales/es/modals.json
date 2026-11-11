@@ -630,7 +630,10 @@
       "scan": "Escanee con la cámara del teléfono.",
       "qrLabel": "Código QR del acompañante móvil",
       "asyncRequired": "El acompañante móvil requiere compartir en modo asíncrono. Deje de compartir y vuelva a compartir con ese modo."
-    }
+    },
+    "editLink": "Enlace de edición",
+    "readLink": "Enlace de lectura",
+    "readLinkHelp": "Solo consulta: ninguna modificación posible."
   },
   "dossierTags": {
     "title": "Tags de expediente",

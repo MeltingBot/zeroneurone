@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Dossier abgeschlossen: schreibgeschützt.",
     "retention": "Dossier schreibgeschützt: Aufbewahrungsfrist abgelaufen.",
-    "plugin": "Änderungen ausgesetzt: {{reason}}"
+    "plugin": "Änderungen ausgesetzt: {{reason}}",
+    "readOnlyLink": "Dossier schreibgeschützt beigetreten: Änderungen nicht möglich."
   },
   "requiredPlugins": {
     "title": "Erforderliche Erweiterung nicht verfügbar",

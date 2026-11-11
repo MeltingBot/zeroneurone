@@ -40,7 +40,8 @@
     "connected_other": "Connected, {{count}} computers online",
     "reconnecting": "Reconnecting…",
     "offline": "Offline",
-    "closed": "Dossier closed"
+    "closed": "Dossier closed",
+    "readOnly": "Read-only"
   },
   "install": {
     "hint": "Add to home screen",

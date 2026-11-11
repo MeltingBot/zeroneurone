@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Expediente cerrado: solo lectura.",
     "retention": "Expediente en solo lectura: retención vencida.",
-    "plugin": "Modificaciones suspendidas: {{reason}}"
+    "plugin": "Modificaciones suspendidas: {{reason}}",
+    "readOnlyLink": "Expediente unido en solo lectura: no se puede modificar."
   },
   "requiredPlugins": {
     "title": "Extensión obligatoria no disponible",

@@ -11,7 +11,7 @@ import type { Dossier } from '../types';
  * Kept outside the stores so that each of them can check it without importing
  * dossierStore (which imports several of them).
  */
-export type DossierLockReason = 'closed' | 'retention' | 'plugin';
+export type DossierLockReason = 'closed' | 'retention' | 'plugin' | 'readOnlyLink';
 
 let openLock: DossierLockReason | null = null;
 let lastNoticeAt = 0;
@@ -21,6 +21,7 @@ export class DossierLockedError extends Error {
   constructor(reason: DossierLockReason) {
     super(reason === 'closed' ? 'Dossier is closed (read-only)'
       : reason === 'plugin' ? 'Writes suspended by a plugin'
+      : reason === 'readOnlyLink' ? 'Dossier joined with a read link'
       : 'Dossier is read-only (retention expired)');
     this.name = 'DossierLockedError';
     this.reason = reason;
@@ -72,7 +73,9 @@ export function refuseWrite(reason: DossierLockReason): never {
     lastNoticeAt = now;
     toast.warning(reason === 'plugin'
       ? i18next.t('common:dossierLock.plugin', { reason: getPluginWriteLock() ?? '' })
-      : i18next.t(reason === 'closed' ? 'common:dossierLock.closed' : 'common:dossierLock.retention'));
+      : i18next.t(reason === 'closed' ? 'common:dossierLock.closed'
+        : reason === 'readOnlyLink' ? 'common:dossierLock.readOnlyLink'
+        : 'common:dossierLock.retention'));
   }
   throw new DossierLockedError(reason);
 }

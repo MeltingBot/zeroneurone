@@ -46,7 +46,8 @@
     "connected_other": "Połączono, {{count}} komputera online",
     "reconnecting": "Ponowne łączenie…",
     "offline": "Offline",
-    "closed": "Sprawa zamknięta"
+    "closed": "Sprawa zamknięta",
+    "readOnly": "Tylko do odczytu"
   },
   "install": {
     "hint": "Dodaj do ekranu głównego",

@@ -17,6 +17,7 @@
  * 5. Redirect to dossier page
  */
 
+import type { WriteAccess } from '../services/writeAccess';
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -62,6 +63,7 @@ export function JoinPage() {
     roomId: string;
     isLegacyFormat: boolean;
     asyncEnabled: boolean;
+    access: WriteAccess | null;
   } | null>(null);
 
   if (!urlParams.current && pathSegment) {
@@ -73,6 +75,7 @@ export function JoinPage() {
       roomId: link.roomId,
       isLegacyFormat: link.isLegacyFormat,
       asyncEnabled: link.asyncEnabled,
+      access: link.access,
     };
   }
 
@@ -203,6 +206,8 @@ export function JoinPage() {
         const updates: Partial<Dossier> = {
           lastSharedKey: encryptionKeyFromUrl,
           lastSharedAsync: urlParams.current?.asyncEnabled ?? false,
+          lastSharedWriteKey: urlParams.current?.access?.publicKey,
+          lastSharedWriteSeed: urlParams.current?.access?.seed,
         };
         if (existingDossier.origin === undefined) {
           updates.origin = 'joined';
@@ -224,7 +229,8 @@ export function JoinPage() {
         dossierId!,
         encryptionKeyFromUrl || undefined,
         roomId,  // Pass separate roomId for WebSocket
-        urlParams.current?.asyncEnabled || false
+        urlParams.current?.asyncEnabled || false,
+        urlParams.current?.access ?? null,
       );
       emitPluginEvent('dossier:joined', dossierId!);
 

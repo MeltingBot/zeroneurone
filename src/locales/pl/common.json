@@ -310,7 +310,8 @@
   "dossierLock": {
     "closed": "Sprawa zamknięta: tylko do odczytu.",
     "retention": "Sprawa tylko do odczytu: okres przechowywania minął.",
-    "plugin": "Zmiany wstrzymane: {{reason}}"
+    "plugin": "Zmiany wstrzymane: {{reason}}",
+    "readOnlyLink": "Dołączono do sprawy tylko do odczytu: zmiany niemożliwe."
   },
   "requiredPlugins": {
     "title": "Wymagane rozszerzenie niedostępne",

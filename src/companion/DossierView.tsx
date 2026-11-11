@@ -187,7 +187,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
         <span className="flex-1 min-w-0 text-base font-semibold truncate">
           {element ? element.label || t('element.untitled') : title}
         </span>
-        {element && !s.data.closed && !renaming && (
+        {element && !s.data.locked && !renaming && (
           <button
             type="button"
             className="w-9 h-10 flex items-center justify-center text-text-tertiary flex-shrink-0"
@@ -222,7 +222,7 @@ export function DossierView({ session }: { session: CompanionSession }) {
         active={shownTab?.id ?? null}
         onSelect={(id) => { selectTab(id); if (element) closeDetail(); }}
         onManage={() => setManagingTabs(true)}
-        writable={!s.data.closed}
+        writable={!s.data.locked}
       />
       {managingTabs && <TabsManager s={s} onClose={() => setManagingTabs(false)} />}
 
@@ -230,8 +230,8 @@ export function DossierView({ session }: { session: CompanionSession }) {
       {s.syncState.error && !s.error && (
         <p className="px-4 py-2 text-xs text-error border-b border-border-default">{s.syncState.error}</p>
       )}
-      {s.data.closed && (
-        <p className="px-4 py-2 text-xs text-text-secondary bg-bg-secondary border-b border-border-default">{t('status.closed')}</p>
+      {s.data.locked && (
+        <p className="px-4 py-2 text-xs text-text-secondary bg-bg-secondary border-b border-border-default">{t(s.data.closed ? 'status.closed' : 'status.readOnly')}</p>
       )}
 
       <main ref={mainRef} className={`flex-1 min-h-0 overscroll-contain ${tab === 'map' && !element ? 'relative overflow-hidden' : 'overflow-y-auto'}`}>
@@ -660,7 +660,7 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
   const [addingProperty, setAddingProperty] = useState(false);
   /** The position being placed on the map */
   const [placing, setPlacing] = useState(false);
-  const writable = !s.data.closed;
+  const writable = !s.data.locked;
   // A polygon is drawn on a computer: only a point is placed from here
   const placeable = writable && (!element.geo || element.geo.type === 'point');
   const around = useMemo(() => dossierPoints(s.data.elements, element.id), [s.data.elements, element.id]);
@@ -681,9 +681,9 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
     <div className="p-4 space-y-5">
       {renaming && <LabelEditor element={element} s={s} onDone={onRenamed} />}
 
-      <ElementTags element={element} s={s} writable={!s.data.closed} onTag={onTag} />
+      <ElementTags element={element} s={s} writable={!s.data.locked} onTag={onTag} />
 
-      <NotesSection element={element} s={s} writable={!s.data.closed} />
+      <NotesSection element={element} s={s} writable={!s.data.locked} />
 
       {element.assetIds.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
@@ -693,7 +693,7 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
         </div>
       )}
 
-      {(element.properties.length > 0 || collected || period || element.source || geo || !s.data.closed) && (
+      {(element.properties.length > 0 || collected || period || element.source || geo || !s.data.locked) && (
         <section className="space-y-1.5">
           <div className="flex items-center">
             <h2 className={`${sectionTitle} flex-1`}>{t('element.details')}</h2>
@@ -708,7 +708,7 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
                 <MapPinPlus size={19} />
               </button>
             )}
-            {!s.data.closed && !addingProperty && (
+            {!s.data.locked && !addingProperty && (
               <button
                 type="button"
                 className="-my-2 w-10 h-10 inline-flex items-center justify-center text-accent"
@@ -750,15 +750,15 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
                 ) : null}
               />
             )}
-            <PropertyRows element={element} s={s} writable={!s.data.closed} />
-            {addingProperty && !s.data.closed && (
+            <PropertyRows element={element} s={s} writable={!s.data.locked} />
+            {addingProperty && !s.data.locked && (
               <AddProperty element={element} s={s} onClose={() => setAddingProperty(false)} />
             )}
           </div>
         </section>
       )}
 
-      <EventsSection element={element} s={s} writable={!s.data.closed} focusedEventId={focusedEventId} />
+      <EventsSection element={element} s={s} writable={!s.data.locked} focusedEventId={focusedEventId} />
 
       {placing && (
         <PositionPicker
@@ -770,15 +770,15 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
         />
       )}
 
-      <TabMembership element={element} s={s} writable={!s.data.closed} />
+      <TabMembership element={element} s={s} writable={!s.data.locked} />
 
-      {(links.length > 0 || !s.data.closed) && (
+      {(links.length > 0 || !s.data.locked) && (
         <section className="space-y-2">
           <div className="flex items-center">
             <h2 className={`${sectionTitle} flex-1`}>
               {links.length > 0 ? t('element.links', { count: links.length }) : t('links.none')}
             </h2>
-            {!s.data.closed && (
+            {!s.data.locked && (
               <button
                 type="button"
                 className="-my-2 w-10 h-10 inline-flex items-center justify-center text-accent"
@@ -807,10 +807,10 @@ function ElementDetail({ element, s, renaming, onRenamed, onOpen, onDeleted, tab
       <section className="space-y-2">
         <h2 className={sectionTitle}>{t('tabs.comments')}</h2>
         {comments.map((c) => <CommentItem key={c.id} comment={c} s={s} />)}
-        {!s.data.closed && <CommentForm s={s} targetId={element.id} targetType="element" />}
+        {!s.data.locked && <CommentForm s={s} targetId={element.id} targetType="element" />}
       </section>
 
-      {!s.data.closed && <DeleteElement element={element} linkCount={links.length} s={s} onDeleted={onDeleted} />}
+      {!s.data.locked && <DeleteElement element={element} linkCount={links.length} s={s} onDeleted={onDeleted} />}
     </div>
   );
 }
@@ -890,7 +890,7 @@ function LinkRow({ link, self, other, onOpen, s }: {
         </span>
         {other && <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />}
       </button>
-      {!s.data.closed && (
+      {!s.data.locked && (
         <button
           type="button"
           className="w-11 h-12 flex items-center justify-center text-text-tertiary flex-shrink-0"
@@ -1083,7 +1083,7 @@ function CommentItem({ comment, s, onOpen, context }: { comment: Comment; s: Ses
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: comment.authorColor }} />
         <span className="font-medium truncate">{comment.authorName}</span>
         <span className="text-text-tertiary whitespace-nowrap">{comment.createdAt.toLocaleString()}</span>
-        {!s.data.closed && (
+        {!s.data.locked && (
           <button
             type="button"
             className="ml-auto p-1 text-text-secondary"
@@ -1266,7 +1266,7 @@ function CaptureTab({ s, tabId, shareId, onCreated }: {
     });
   };
 
-  const canSave = !s.data.closed && !!s.ydoc && !saving && (label.trim() || notes.trim() || files.length > 0);
+  const canSave = !s.data.locked && !!s.ydoc && !saving && (label.trim() || notes.trim() || files.length > 0);
 
   const save = async () => {
     const dossierId = s.dossierId;
@@ -1304,8 +1304,8 @@ function CaptureTab({ s, tabId, shareId, onCreated }: {
     }
   };
 
-  if (s.data.closed) {
-    return <p className="p-4 text-sm text-text-secondary">{t('status.closed')}</p>;
+  if (s.data.locked) {
+    return <p className="p-4 text-sm text-text-secondary">{t(s.data.closed ? 'status.closed' : 'status.readOnly')}</p>;
   }
 
   return (

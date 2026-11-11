@@ -340,7 +340,8 @@
     "dotCopied": "Zaznaczenie skopiowane jako DOT",
     "closedBanner": "Zamknięta {{date}} — tylko do odczytu",
     "undecryptableUpdates": "Nieczytelne zmiany: {{count}}. Zostały zachowane; zobacz Pamięć > Konserwacja.",
-    "popupBlocked": "Okno zablokowane przez przeglądarkę"
+    "popupBlocked": "Okno zablokowane przez przeglądarkę",
+    "readOnlyLinkBanner": "Tylko do odczytu (link udostępniania)"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

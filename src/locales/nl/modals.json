@@ -630,7 +630,10 @@
       "scan": "Scan met de camera van de telefoon.",
       "qrLabel": "QR-code van de mobiele companion",
       "asyncRequired": "De mobiele companion vereist delen in asynchrone modus. Stop met delen en deel opnieuw met die modus."
-    }
+    },
+    "editLink": "Bewerkingslink",
+    "readLink": "Leeslink",
+    "readLinkHelp": "Alleen bekijken: geen wijziging mogelijk."
   },
   "dossierTags": {
     "title": "Dossier-tags",

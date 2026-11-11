@@ -175,6 +175,6 @@ export function toUrl(str: string): string {
  * anyone holding the file could otherwise join that session.
  */
 export function stripLocalOnlyDossierFields(dossier: Dossier): Dossier {
-  const { lastSharedKey: _key, lastSharedAsync: _async, origin: _origin, ...rest } = dossier;
+  const { lastSharedKey: _key, lastSharedAsync: _async, lastSharedWriteKey: _wkey, lastSharedWriteSeed: _wseed, origin: _origin, ...rest } = dossier;
   return rest;
 }

@@ -646,7 +646,10 @@
       "scan": "Zeskanuj aparatem telefonu.",
       "qrLabel": "Kod QR towarzysza mobilnego",
       "asyncRequired": "Towarzysz mobilny wymaga udostępniania w trybie asynchronicznym. Zatrzymaj udostępnianie i udostępnij ponownie w tym trybie."
-    }
+    },
+    "editLink": "Link do edycji",
+    "readLink": "Link do odczytu",
+    "readLinkHelp": "Tylko podgląd: zmiany niemożliwe."
   },
   "dossierTags": {
     "title": "Tagi teczki",

@@ -16,7 +16,7 @@ import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
-import { isReadOnly, setRelayClockOffset, type WriteAccess } from './writeAccess';
+import { generateWriteAccess, isReadOnly, setRelayClockOffset, signedRoomId, type WriteAccess } from './writeAccess';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
 import { toBase64Url } from '../utils/base64url';
@@ -59,6 +59,11 @@ async function relayClientTag(roomId: string): Promise<string | undefined> {
   } catch {
     return undefined;
   }
+}
+
+/** The room of a share: named after its write key when signed, else from the dossier UUID and key */
+export async function shareRoomId(dossierId: string, encryptionKey: string, access: WriteAccess | null): Promise<string> {
+  return access ? signedRoomId(access.publicKey) : deriveRoomId(dossierId, encryptionKey);
 }
 
 class SyncService {
@@ -535,11 +540,15 @@ class SyncService {
     // This invalidates previous share links (security measure)
     const newKey = await generateEncryptionKey();
     this.encryptionKey = newKey;
-    this.writeAccess = null;
+    // A relay that keeps readers from writing: a signed room, so that a read
+    // link can be given (writeAccess.ts); otherwise a room as before
+    const access = (await this.relaySupportsReadOnly()) ? generateWriteAccess() : null;
+    this.writeAccess = access;
+    if (access) await this.syncRelayClock();
 
-    // Derive hashed roomId from dossier UUID + key
+    // Room named after the write key, or derived from dossier UUID + key
     // Server cannot correlate sessions, and re-sharing creates new room
-    const hashedRoomId = await deriveRoomId(this.dossierId, newKey);
+    const hashedRoomId = await shareRoomId(this.dossierId, newKey, access);
 
     // Derive access token for room authentication
     const accessToken = await deriveAccessToken(newKey, hashedRoomId);
@@ -986,6 +995,8 @@ class SyncService {
    * @param dossierName - Optional display name
    * @param asyncEnabled - Whether async buffering is enabled (default: false)
    * @param route - `join` for the desktop app, `m` for the mobile companion
+   * @param access - Write key of a signed room: with its seed for a write
+   *   link, without for a read link (default: the open dossier's)
    */
   async buildShareUrl(
     dossierId: string,
@@ -993,11 +1004,15 @@ class SyncService {
     dossierName?: string,
     asyncEnabled?: boolean,
     route: 'join' | 'm' = 'join',
+    access?: WriteAccess | null,
   ): Promise<string> {
     const base = appUrl('/').replace(/\/$/, '');
+    const writeAccess = access === undefined
+      ? (dossierId === this.dossierId ? this.writeAccess : null)
+      : access;
 
-    // Derive hashed room ID from UUID + key (server cannot correlate)
-    const hashedRoomId = await deriveRoomId(dossierId, encryptionKey);
+    // Room from the write key, or from UUID + key (server cannot correlate)
+    const hashedRoomId = await shareRoomId(dossierId, encryptionKey, writeAccess);
 
     const url = new URL(`${base}/${route}/${hashedRoomId}`);
 
@@ -1014,6 +1029,10 @@ class SyncService {
     const fragmentParams = new URLSearchParams();
     fragmentParams.set('key', encryptionKey);
     fragmentParams.set('id', dossierId);
+    if (writeAccess) {
+      fragmentParams.set('wpub', writeAccess.publicKey);
+      if (writeAccess.seed) fragmentParams.set('wseed', writeAccess.seed);
+    }
     if (dossierName) {
       fragmentParams.set('name', dossierName);
     }

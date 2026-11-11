@@ -4,6 +4,7 @@
  * lock on, the list is sealed with the data key (lockState.ts).
  */
 
+import type { WriteAccess } from '../services/writeAccess';
 import { lockEnabled, readLock, seal, unlockedKey, unseal, writeLock } from './lockState';
 import { SESSIONS_KEY } from './hasDossiers';
 
@@ -14,6 +15,8 @@ export interface CompanionSession {
   server: string;
   name: string;
   joinedAt: string;
+  /** Write key of a signed room (read-only sharing); without seed: read only */
+  access?: WriteAccess;
 }
 
 const STORAGE_KEY = SESSIONS_KEY;
