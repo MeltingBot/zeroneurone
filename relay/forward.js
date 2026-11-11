@@ -46,7 +46,7 @@ export function forward(client, data, limit, log = console.log) {
  * learned. Announced by /health (X-Relay-Features: targeted): a client never
  * sends one to a relay that does not announce it.
  */
-export const RELAY_FEATURES = 'targeted';
+export const RELAY_FEATURES = 'targeted, readonly';
 const MAGIC = [0xff, 0x5a, 0x4e, 0x54];
 
 /** The target tag and payload of a message for one client, or null */

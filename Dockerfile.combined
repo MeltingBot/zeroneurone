@@ -93,7 +93,7 @@ COPY --from=builder /app/dist ./dist
 # Copy production server
 COPY server/index.js ./server/index.js
 # Async buffer, shared with the relay image (imported as ../relay/asyncBuffer.js)
-COPY relay/asyncBuffer.js relay/config.js relay/forward.js ./relay/
+COPY relay/asyncBuffer.js relay/config.js relay/forward.js relay/access.js ./relay/
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S zeroneurone && \

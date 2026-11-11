@@ -22,6 +22,7 @@ import { createHash, randomBytes } from 'crypto';
 import { createAsyncBuffer, clientTagOf } from './asyncBuffer.js';
 import { loadEnvFile, relayConfig } from './config.js';
 import { forward, forwardToTarget, RELAY_FEATURES, targetOf } from './forward.js';
+import { accessOf, readerMayRelay } from './access.js';
 
 loadEnvFile();
 const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
@@ -233,6 +234,16 @@ wss.on('connection', (ws, req) => {
     return;
   }
 
+  // Read-only sharing (access.js): a signed room tells writers from readers
+  const access = accessOf(roomId, url.searchParams);
+  if (access.refused) {
+    console.log(`[WS] Rejected connection to room "${roomId.slice(0, 8)}...": ${access.refused}`);
+    connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
+    ws.close(1008, 'Write proof refused');
+    return;
+  }
+  ws.reader = !access.writer;
+
   // Token validation (hashed comparison — never stores plain text)
   const tokenHash = token ? hashToken(token) : null;
 
@@ -320,6 +331,15 @@ wss.on('connection', (ws, req) => {
     if (!currentRoom) return;
 
     roomLastActivity.set(roomId, Date.now());
+
+    // A reader sends presence and requests only: its changes go nowhere
+    if (ws.reader && !readerMayRelay(targetOf(data)?.payload ?? data)) {
+      if (!ws.readerDropLogged) {
+        ws.readerDropLogged = true;
+        console.log(`[WS] Dropped a change from a reader in room "${roomIdShort}"`);
+      }
+      return;
+    }
 
     // For one client only: delivered to it, never buffered
     const target = targetOf(data);

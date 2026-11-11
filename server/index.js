@@ -29,6 +29,7 @@ import { randomBytes } from 'crypto';
 import { createAsyncBuffer, clientTagOf } from '../relay/asyncBuffer.js';
 import { loadEnvFile, relayConfig } from '../relay/config.js';
 import { forward, forwardToTarget, RELAY_FEATURES, targetOf } from '../relay/forward.js';
+import { accessOf, readerMayRelay } from '../relay/access.js';
 
 // Settings from the environment or a .env file (relay/config.js, every one
 // listed in relay/.env.example); this server keeps its own defaults
@@ -292,6 +293,16 @@ function setupWebSocketRelay(wss) {
       return;
     }
 
+    // Read-only sharing (access.js): a signed room tells writers from readers
+    const access = accessOf(roomId, url.searchParams);
+    if (access.refused) {
+      console.log(`[WS] Rejected connection to room "${roomId.slice(0, 8)}...": ${access.refused}`);
+      connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
+      ws.close(1008, 'Write proof refused');
+      return;
+    }
+    ws.reader = !access.writer;
+
     // ========== TOKEN VALIDATION ==========
     if (roomTokens.has(roomId)) {
       // Room has a token, client must provide matching token
@@ -375,6 +386,15 @@ function setupWebSocketRelay(wss) {
 
       const currentRoom = rooms.get(roomId);
       if (!currentRoom) return;
+
+      // A reader sends presence and requests only: its changes go nowhere
+      if (ws.reader && !readerMayRelay(targetOf(data)?.payload ?? data)) {
+        if (!ws.readerDropLogged) {
+          ws.readerDropLogged = true;
+          console.log(`[WS] Dropped a change from a reader in room "${roomIdShort}"`);
+        }
+        return;
+      }
 
       // For one client only: delivered to it, never buffered
       const target = targetOf(data);
