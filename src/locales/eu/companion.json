@@ -228,5 +228,13 @@
     "recent": "Azkenak",
     "name": "Izena",
     "links": "Loturak"
+  },
+  "share": {
+    "title": "Partekatzea",
+    "pick": "Gehitu hona",
+    "missing": "Ez da partekatzea aurkitu",
+    "noDossier": "Ez dago espedienterik telefono honetan. Ireki bat eta partekatu berriro.",
+    "files_one": "Fitxategi {{count}}",
+    "files_other": "{{count}} fitxategi"
   }
 }

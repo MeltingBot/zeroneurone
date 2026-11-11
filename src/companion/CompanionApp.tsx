@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronRight, Settings } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Paperclip, Settings } from 'lucide-react';
 import { isValidKeyString } from '../services/cryptoService';
 import { parseJoinLink } from '../utils/joinUrl';
 import { getSession, listSessions, pendingDeletions, saveSession, type CompanionSession } from './sessions';
@@ -21,6 +21,7 @@ import { getLocalUser, hasChosenName, setLocalUserName } from './presence';
 import { DossierView } from './DossierView';
 import { LinkEntry } from './LinkEntry';
 import { AppSettings } from './AppSettings';
+import { captureFromShare, deleteShare, dropOldShares, readShare, type SharedItem } from './shareInbox';
 import { currentRoute, navigate, type Route } from './router';
 import { primaryButton, inputClass, secondaryButton } from './ui';
 
@@ -35,6 +36,7 @@ export default function CompanionApp() {
 
   if (route.kind === 'join') return <JoinScreen roomId={route.roomId} />;
   if (route.kind === 'app') return <AppSettingsScreen />;
+  if (route.kind === 'share') return <ShareScreen shareId={route.shareId} />;
   if (route.kind === 'dossier') {
     const session = getSession(route.dossierId);
     if (session) return <DossierView key={session.dossierId} session={session} />;
@@ -66,6 +68,76 @@ function Shell({ children, title, onBack, onSettings }: {
       </header>
       <main className="flex-1 px-4 py-4">{children}</main>
     </div>
+  );
+}
+
+/** A share from another app: the dossier it goes into, then the capture form */
+function ShareScreen({ shareId }: { shareId: string }) {
+  const { t } = useTranslation('companion');
+  const sessions = listSessions();
+  const [item, setItem] = useState<SharedItem | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    void dropOldShares().catch(() => undefined);
+    readShare(shareId)
+      .then((found) => { if (!cancelled) setItem(found); })
+      .catch(() => { if (!cancelled) setItem(null); });
+    return () => { cancelled = true; };
+  }, [shareId]);
+
+  const pick = useCallback((dossierId: string) => {
+    navigate(`d/${encodeURIComponent(dossierId)}`, true, { shareId });
+  }, [shareId]);
+
+  // A single dossier on the phone: straight to it
+  const only = sessions.length === 1 ? sessions[0].dossierId : null;
+  useEffect(() => {
+    if (item && only) pick(only);
+  }, [item, only, pick]);
+
+  const summary = item ? captureFromShare(item) : null;
+  return (
+    <Shell title={t('share.title')} onBack={() => { void deleteShare(shareId).catch(() => undefined); navigate('', true); }}>
+      {item === undefined ? null : !item || !summary ? (
+        <p className="text-sm text-text-secondary text-center pt-8">{t('share.missing')}</p>
+      ) : (
+        <div className="space-y-6">
+          <div className="p-3 rounded border border-border-default bg-bg-secondary space-y-1 text-sm">
+            {summary.label && <p className="font-medium truncate">{summary.label}</p>}
+            {summary.notes && <p className="text-text-secondary line-clamp-3 break-words">{summary.notes}</p>}
+            {summary.source && <p className="text-xs text-text-tertiary truncate">{summary.source}</p>}
+            {item.files.length > 0 && (
+              <p className="flex items-center gap-1.5 text-xs text-text-secondary">
+                <Paperclip size={13} />
+                {t('share.files', { count: item.files.length })}
+              </p>
+            )}
+          </div>
+          {sessions.length === 0 ? (
+            <p className="text-sm text-text-secondary text-center">{t('share.noDossier')}</p>
+          ) : (
+            <section>
+              <h1 className="text-xs text-text-secondary font-medium uppercase tracking-wider mb-2">{t('share.pick')}</h1>
+              <ul className="divide-y divide-border-default border border-border-default rounded">
+                {sessions.map((s) => (
+                  <li key={s.dossierId}>
+                    <button
+                      type="button"
+                      className="w-full min-h-12 flex items-center gap-2 px-3 py-3 text-left active:bg-bg-secondary"
+                      onClick={() => pick(s.dossierId)}
+                    >
+                      <span className="flex-1 text-sm truncate">{s.name || t('home.untitled')}</span>
+                      <ChevronRight size={16} className="text-text-tertiary" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
+    </Shell>
   );
 }
 

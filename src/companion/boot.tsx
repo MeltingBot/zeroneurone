@@ -6,6 +6,7 @@ import { appPath } from '../utils/basePath'
 import { applyTheme, watchSystemTheme } from './theme'
 import { syncService } from '../services/syncService'
 import { companionYdocDatabaseName } from '../services/yjs/ydocName'
+import { dropOldShares } from './shareInbox'
 
 /**
  * Page setup the desktop does not need: the companion's own theme, content
@@ -51,6 +52,8 @@ export async function bootCompanion(i18nReady: Promise<unknown>): Promise<void> 
   setupPage()
   // The companion's copies, apart from the desktop's in the same browser
   syncService.setLocalStoreName(companionYdocDatabaseName)
+  // Shares from other apps left unused are not kept past a day
+  void dropOldShares().catch(() => undefined)
   await i18nReady
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

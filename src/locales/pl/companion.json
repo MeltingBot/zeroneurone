@@ -250,5 +250,15 @@
     "recent": "Ostatnie",
     "name": "Nazwa",
     "links": "Powiązania"
+  },
+  "share": {
+    "title": "Udostępnianie",
+    "pick": "Dodaj do",
+    "missing": "Nie znaleziono udostępnienia",
+    "noDossier": "Brak spraw na tym telefonie. Otwórz jedną i udostępnij ponownie.",
+    "files_one": "{{count}} plik",
+    "files_other": "{{count}} plików",
+    "files_few": "{{count}} pliki",
+    "files_many": "{{count}} plików"
   }
 }

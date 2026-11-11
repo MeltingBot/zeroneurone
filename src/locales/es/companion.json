@@ -228,5 +228,13 @@
     "recent": "Recientes",
     "name": "Nombre",
     "links": "Vínculos"
+  },
+  "share": {
+    "title": "Compartir",
+    "pick": "Añadir a",
+    "missing": "Contenido compartido no encontrado",
+    "noDossier": "Ningún expediente en este teléfono. Abra uno y vuelva a compartir.",
+    "files_one": "{{count}} archivo",
+    "files_other": "{{count}} archivos"
   }
 }

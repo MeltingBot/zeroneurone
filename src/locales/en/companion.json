@@ -228,5 +228,13 @@
     "recent": "Recent",
     "name": "Name",
     "links": "Links"
+  },
+  "share": {
+    "title": "Share",
+    "pick": "Add to",
+    "missing": "Share not found",
+    "noDossier": "No dossier on this phone. Open one, then share again.",
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} files"
   }
 }

@@ -6,6 +6,8 @@ export type Route =
   | { kind: 'home' }
   /** Settings of the companion itself */
   | { kind: 'app' }
+  /** Something shared from another app (Android), waiting for a dossier */
+  | { kind: 'share'; shareId: string }
   | { kind: 'join'; roomId: string }
   | { kind: 'dossier'; dossierId: string };
 
@@ -21,6 +23,7 @@ export function currentRoute(): Route {
   const sub = companionSubPath();
   if (!sub) return { kind: 'home' };
   if (sub === 'app') return { kind: 'app' };
+  if (sub === 'share') return { kind: 'share', shareId: new URLSearchParams(window.location.search).get('id') ?? '' };
   const parts = sub.split('/');
   if (parts[0] === 'd' && parts[1]) return { kind: 'dossier', dossierId: decodeURIComponent(parts[1]) };
   return { kind: 'join', roomId: decodeURIComponent(parts[0]) };

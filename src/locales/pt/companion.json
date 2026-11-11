@@ -228,5 +228,13 @@
     "recent": "Recentes",
     "name": "Nome",
     "links": "Ligações"
+  },
+  "share": {
+    "title": "Partilha",
+    "pick": "Adicionar a",
+    "missing": "Partilha não encontrada",
+    "noDossier": "Nenhum dossiê neste telefone. Abra um e partilhe de novo.",
+    "files_one": "{{count}} ficheiro",
+    "files_other": "{{count}} ficheiros"
   }
 }

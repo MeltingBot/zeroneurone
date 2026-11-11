@@ -228,5 +228,13 @@
     "recent": "Recent",
     "name": "Naam",
     "links": "Koppelingen"
+  },
+  "share": {
+    "title": "Delen",
+    "pick": "Toevoegen aan",
+    "missing": "Gedeelde inhoud niet gevonden",
+    "noDossier": "Geen dossier op deze telefoon. Open er een en deel opnieuw.",
+    "files_one": "{{count}} bestand",
+    "files_other": "{{count}} bestanden"
   }
 }

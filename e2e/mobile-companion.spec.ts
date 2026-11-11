@@ -644,6 +644,57 @@ test('in the browser holding the desktop copy, the companion keeps its own and f
   expect((await readDesktop(desktop)).labels).toContain('Jean Dupont 0');
 });
 
+test('something shared from another app becomes a capture in the dossier', async ({ browser }) => {
+  test.setTimeout(3 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'share.json');
+  writeFileSync(file, buildLargeDossierJson(5));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  await desktop.waitForTimeout(1500);
+  const mobileUrl = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Partage', true);
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Partage', true, 'm');
+  });
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  await phone.goto(mobileUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  // What the service worker keeps when Android shares to the companion
+  // (public/share-target-sw.js, tested on its own in shareInbox.test.ts)
+  const png = await import('node:fs').then((fs) => fs.readFileSync('public/logo-192.png').toString('base64'));
+  await phone.evaluate(async (data) => {
+    const { keepShare } = await import('/src/companion/shareInbox.ts');
+    const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+    await keepShare({
+      id: 'share-1', title: 'Annonce suspecte', text: 'https://example.org/annonce', url: '',
+      files: [{ name: 'capture.png', type: 'image/png', blob: new Blob([bytes], { type: 'image/png' }) }],
+      createdAt: Date.now(),
+    });
+  }, png);
+  await phone.goto(new URL('/m/share?id=share-1', phone.url()).toString());
+
+  // One dossier on the phone: straight to its capture form, filled
+  await expect(phone.getByLabel('Titre')).toHaveValue('Annonce suspecte', { timeout: 30_000 });
+  await expect(phone.getByLabel('Source', { exact: true })).toHaveValue('https://example.org/annonce');
+  await expect(phone.locator('main ul img')).toHaveCount(1);
+  await shot(phone, '11-shared');
+  await phone.getByRole('button', { name: 'Ajouter au dossier' }).click();
+
+  await expect.poll(async () => {
+    const st = await desktopState(desktop);
+    const el = st.elements.find((e) => e.label === 'Annonce suspecte');
+    return el ? { source: el.source, assets: el.assetIds.length } : null;
+  }, { timeout: 30_000 }).toEqual({ source: 'https://example.org/annonce', assets: 1 });
+  // Used: the share is gone from the phone
+  expect(await phone.evaluate(async () => (await import('/src/companion/shareInbox.ts')).readShare('share-1'))).toBeNull();
+});
+
 test('a phone relaunched (app closed, reopened) syncs again both ways', async ({ browser }) => {
   test.setTimeout(3 * 60 * 1000);
   const desktop = await newDesktop(browser);

@@ -228,5 +228,13 @@
     "recent": "Neueste",
     "name": "Name",
     "links": "Verknüpfungen"
+  },
+  "share": {
+    "title": "Teilen",
+    "pick": "Hinzufügen zu",
+    "missing": "Freigabe nicht gefunden",
+    "noDossier": "Kein Dossier auf diesem Telefon. Öffnen Sie eines und teilen Sie erneut.",
+    "files_one": "{{count}} Datei",
+    "files_other": "{{count}} Dateien"
   }
 }

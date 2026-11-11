@@ -55,6 +55,10 @@ L'élément reçoit la **date de collecte** (l'instant de la capture). Il arrive
 
 Les images sont réduites à 2048 pixels de côté avant l'envoi (une photo HEIC d'iPhone devient un JPEG) : elles restent dans la copie du dossier de chaque participant. Les autres fichiers partent tels quels, 50 Mo au plus chacun.
 
+### Partager depuis une autre application (Android)
+
+Une fois le compagnon installé sur l'écran d'accueil, **ZeroNeurone** apparaît dans le menu **Partager** d'Android (galerie, navigateur, messagerie…). Le partage ouvre le formulaire **Nouveau** rempli avec le titre, le texte, le lien (en source) et les fichiers ; vous choisissez le dossier s'il y en a plusieurs, puis **Ajouter au dossier**. Un partage abandonné est effacé au retour, ou au plus tard un jour après. iPhone : Safari ne permet pas à une page web de recevoir un partage.
+
 ### Hors réseau
 
 Sans réseau, la capture est enregistrée sur le téléphone et l'en-tête affiche **N en attente**. Elle part à la reconnexion ; le compteur revient alors à zéro. **Gardez la page ouverte jusqu'à ce que le compteur soit à zéro.**

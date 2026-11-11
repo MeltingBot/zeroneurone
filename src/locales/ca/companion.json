@@ -228,5 +228,13 @@
     "recent": "Recents",
     "name": "Nom",
     "links": "Enllaços"
+  },
+  "share": {
+    "title": "Compartició",
+    "pick": "Afegeix a",
+    "missing": "Compartició no trobada",
+    "noDossier": "Cap dossier en aquest telèfon. Obriu-ne un i torneu a compartir.",
+    "files_one": "{{count}} fitxer",
+    "files_other": "{{count}} fitxers"
   }
 }

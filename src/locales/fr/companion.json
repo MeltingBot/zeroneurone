@@ -228,5 +228,13 @@
     "recent": "Récents",
     "name": "Nom",
     "links": "Liens"
+  },
+  "share": {
+    "title": "Partage",
+    "pick": "Ajouter à",
+    "missing": "Partage introuvable",
+    "noDossier": "Aucun dossier sur ce téléphone. Ouvrez-en un, puis partagez à nouveau.",
+    "files_one": "{{count}} fichier",
+    "files_other": "{{count}} fichiers"
   }
 }

@@ -228,5 +228,13 @@
     "recent": "Recenti",
     "name": "Nome",
     "links": "Collegamenti"
+  },
+  "share": {
+    "title": "Condivisione",
+    "pick": "Aggiungi a",
+    "missing": "Condivisione non trovata",
+    "noDossier": "Nessun dossier su questo telefono. Aprine uno, poi condividi di nuovo.",
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} file"
   }
 }

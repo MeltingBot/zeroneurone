@@ -55,6 +55,10 @@ The element gets the **collection date** (the moment of capture). It lands on th
 
 Images are reduced to 2048 pixels on their longest side before sending (an iPhone HEIC photo becomes a JPEG): they stay in every participant's copy of the dossier. Other files are sent as they are, 50 MB at most each.
 
+### Sharing from another app (Android)
+
+Once the companion is installed on the home screen, **ZeroNeurone** appears in Android's **Share** menu (gallery, browser, messaging…). Sharing opens the **New** form filled with the title, text, link (as source) and files; pick the dossier if there are several, then **Add to dossier**. An abandoned share is erased when going back, or a day later at most. iPhone: Safari does not let a web page receive a share.
+
 ### Offline
 
 Without a network, the capture is stored on the phone and the header shows **N pending**. It is sent on reconnection, and the counter returns to zero. **Keep the page open until the counter is back to zero.**

@@ -23,6 +23,7 @@ import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes
 import { navigate } from './router';
 import { AppSettings } from './AppSettings';
 import { IconAction } from './IconAction';
+import { captureFromShare, deleteShare, readShare } from './shareInbox';
 import { usePeerMarks, useRemoteTouches, type PeerMark } from './activity';
 import { linkCounts, readSort, saveSort, sortElements, type ElementSort } from './sorting';
 
@@ -50,7 +51,11 @@ type Session = ReturnType<typeof useCompanionSession>;
 export function DossierView({ session }: { session: CompanionSession }) {
   const { t } = useTranslation('companion');
   const s = useCompanionSession(session);
-  const [tab, setTab] = useState<Tab>('elements');
+  /** A share from another app to turn into a capture (Android "Share to") */
+  const [shareId, setShareId] = useState<string | null>(
+    () => (window.history.state as { shareId?: string } | null)?.shareId ?? null,
+  );
+  const [tab, setTab] = useState<Tab>(() => (shareId ? 'capture' : 'elements'));
   // The open element lives in the history entry, so the phone's back gesture
   // or button closes it instead of leaving the dossier
   const [selected, setSelected] = useState<string | null>(() => readSelected());
@@ -225,7 +230,19 @@ export function DossierView({ session }: { session: CompanionSession }) {
         ) : tab === 'comments' ? (
           <CommentsTab s={s} onOpen={open} />
         ) : tab === 'capture' ? (
-          <CaptureTab s={s} tabId={shownTab?.id ?? null} onCreated={(id) => { setTab('elements'); open(id); }} />
+          <CaptureTab
+            s={s}
+            tabId={shownTab?.id ?? null}
+            shareId={shareId}
+            onCreated={(id) => {
+              if (shareId) {
+                void deleteShare(shareId).catch(() => undefined);
+                setShareId(null);
+              }
+              setTab('elements');
+              open(id);
+            }}
+          />
         ) : (
           <SettingsTab s={s} session={session} />
         )}
@@ -1036,7 +1053,13 @@ function CommentsTab({ s, onOpen }: { s: Session; onOpen: (id: string) => void }
 
 type GeoStatus = 'idle' | 'locating' | 'error';
 
-function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null; onCreated: (id: string) => void }) {
+function CaptureTab({ s, tabId, shareId, onCreated }: {
+  s: Session;
+  tabId: string | null;
+  /** Fills the form from this share */
+  shareId: string | null;
+  onCreated: (id: string) => void;
+}) {
   const { t } = useTranslation('companion');
   const [label, setLabel] = useState('');
   const [notes, setNotes] = useState('');
@@ -1054,6 +1077,24 @@ function CaptureTab({ s, tabId, onCreated }: { s: Session; tabId: string | null;
 
   // Preview URLs released with the form
   useEffect(() => () => { filesRef.current.forEach((f) => f.url && URL.revokeObjectURL(f.url)); }, []);
+
+  // Filled from a share: title, text and link, files as picked ones
+  useEffect(() => {
+    if (!shareId) return;
+    let cancelled = false;
+    void readShare(shareId).then((item) => {
+      if (cancelled || !item) return;
+      const fields = captureFromShare(item);
+      setLabel(fields.label);
+      setNotes(fields.notes);
+      setSource(fields.source);
+      setFiles(item.files.map((f) => {
+        const file = new File([f.blob], f.name, { type: f.type });
+        return { key: crypto.randomUUID(), file, url: file.type.startsWith('image/') ? URL.createObjectURL(file) : null };
+      }));
+    }).catch((err: unknown) => console.warn('[Companion] share not read:', err));
+    return () => { cancelled = true; };
+  }, [shareId]);
 
   const locate = () => {
     if (!('geolocation' in navigator)) {

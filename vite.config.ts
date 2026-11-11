@@ -125,6 +125,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}'],
+        // "Share to ZeroNeurone" from Android (companion installed): receives
+        // the share posted to m/share (share_target, companion.webmanifest)
+        importScripts: ['share-target-sw.js'],
         navigateFallbackDenylist: [new RegExp(`^${escapedBase}version\\.json$`), new RegExp(`^${escapedBase}plugins/`)],
         // Exclude version.json and plugins from SW precache (always fetched fresh)
         globIgnores: ['version.json', 'plugins/**'],
