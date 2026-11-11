@@ -23,6 +23,7 @@ import { ATTACHMENT_ACCEPT, isAllowedAttachment } from '../utils/attachmentTypes
 import { navigate } from './router';
 import { AppSettings } from './AppSettings';
 import { IconAction } from './IconAction';
+import { useRevealed } from './reveal';
 import { EventsSection } from './Events';
 import { locateOnce } from './geolocate';
 import { captureFromShare, deleteShare, readShare } from './shareInbox';
@@ -236,14 +237,14 @@ export function DossierView({ session }: { session: CompanionSession }) {
         ) : tab === 'elements' ? (
           <>
             <InstallHint />
-            <ElementsTab s={s} data={view} query={query} onOpen={open} onTag={filterByTag} />
+            <ElementsTab s={s} data={view} query={query} onOpen={open} onTag={filterByTag} viewKey={`${shownTab?.id ?? ''}|${tagFilter.join('|')}`} />
           </>
         ) : tab === 'map' ? (
           <Suspense fallback={<div className="flex justify-center pt-16"><Loader2 size={20} className="animate-spin text-text-tertiary" /></div>}>
             <CompanionMap elements={view.elements} links={view.links} assets={s.data.assets} onOpen={open} />
           </Suspense>
         ) : tab === 'timeline' ? (
-          <CompanionTimeline elements={view.elements} links={view.links} onOpen={open} scroller={mainRef} />
+          <CompanionTimeline elements={view.elements} links={view.links} onOpen={open} scroller={mainRef} viewKey={`${shownTab?.id ?? ''}|${tagFilter.join('|')}`} />
         ) : tab === 'comments' ? (
           <CommentsTab s={s} onOpen={open} />
         ) : tab === 'capture' ? (
@@ -358,13 +359,15 @@ function InstallHint() {
 // ELEMENTS
 // ============================================================================
 
-function ElementsTab({ s, data, query, onOpen, onTag }: {
+function ElementsTab({ s, data, query, onOpen, onTag, viewKey }: {
   s: Session;
   /** The dossier, or the shown tab's part of it */
   data: CompanionData;
   query: string;
   onOpen: (id: string, eventId?: string) => void;
   onTag: (tag: string) => void;
+  /** Which part of the dossier is shown (canvas tab, tags) */
+  viewKey: string;
 }) {
   const { t, i18n } = useTranslation('companion');
   const peers = usePeerMarks(s.ydoc, s.syncState.connected);
@@ -389,6 +392,8 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
     saveSort(next);
   };
   const byId = useMemo(() => new Map(data.elements.map((e) => [e.id, e])), [data.elements]);
+  // Shown in batches: thousands of rows at once took seconds on a phone
+  const { count: shownRows, more: moreRows, sentinel: rowsSentinel } = useRevealed((hits ?? recent).length, `${viewKey}|${sort}|${query}`);
 
   if (s.data.elements.length === 0 && s.openFailed && !s.ydoc) {
     return (
@@ -461,7 +466,7 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
       ) : (
         <ul className="divide-y divide-border-default">
           {hits
-            ? hits.map((hit, i) => {
+            ? hits.slice(0, shownRows).map((hit, i) => {
                 const el = byId.get(hit.elementId);
                 return (
                   <ResultRow
@@ -477,7 +482,7 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
                   />
                 );
               })
-            : recent.map((e) => (
+            : recent.slice(0, shownRows).map((e) => (
                 <ResultRow
                   key={e.id}
                   title={e.label || t('element.untitled')}
@@ -493,6 +498,7 @@ function ElementsTab({ s, data, query, onOpen, onTag }: {
               ))}
         </ul>
       )}
+      {moreRows && <div ref={rowsSentinel} data-rows-limited className="h-px" />}
     </div>
   );
 }

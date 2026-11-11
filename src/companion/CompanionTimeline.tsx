@@ -10,11 +10,12 @@
  * the order (oldest or newest first) and a date picker to jump to a day.
  */
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, CalendarSearch } from 'lucide-react';
 import type { Element, Link } from '../types';
 import { dateLocale, formatPreciseDate } from '../utils/dates';
+import { REVEAL_STEP } from './reveal';
 import { bucketKey, buckets, entryIndexFor, scaleOf, timelineEntries, type Bucket, type Scale, type TimelineEntry } from './timeline';
 
 /** Height of the jump strip; the period headers stick under it */
@@ -44,12 +45,14 @@ function readNewestFirst(): boolean {
   try { return localStorage.getItem(ORDER_KEY) === '1'; } catch { return false; }
 }
 
-export function CompanionTimeline({ elements, links, onOpen, scroller }: {
+export function CompanionTimeline({ elements, links, onOpen, scroller, viewKey }: {
   elements: Element[];
   links: Link[];
   onOpen: (id: string, eventId?: string) => void;
   /** The scrolling area holding the list */
   scroller: RefObject<HTMLElement | null>;
+  /** Which part of the dossier is shown (canvas tab, tags) */
+  viewKey: string;
 }) {
   const { t, i18n } = useTranslation('companion');
   const locale = dateLocale(i18n.language);
@@ -64,16 +67,48 @@ export function CompanionTimeline({ elements, links, onOpen, scroller }: {
   const scale = useMemo(() => scaleOf(sorted), [sorted]);
   const periods = useMemo(() => buckets(sorted, scale), [sorted, scale]);
   const shown = useMemo(() => (newestFirst ? [...sorted].reverse() : sorted), [sorted, newestFirst]);
+  // A window of entries, not all of them: thousands took seconds to show and
+  // to leave on a phone. Scrolling down adds a batch; a jump moves the window
+  // to its period; "earlier" adds the batch before, the view kept in place.
+  const listKey = `${viewKey}|${newestFirst ? 'newest' : 'oldest'}`;
+  const [win, setWin] = useState({ key: listKey, start: 0, end: REVEAL_STEP });
+  const view = win.key === listKey ? win : { key: listKey, start: 0, end: REVEAL_STEP };
+  if (win.key !== listKey) setWin(view);
+  const start = Math.min(view.start, Math.max(0, shown.length - 1));
+  const end = Math.min(view.end, shown.length);
+  const pendingJump = useRef<number | null>(null);
+  /** Distance from the bottom kept while earlier entries are added above */
+  const anchor = useRef<number | null>(null);
+  const laterSentinel = useCallback((node: HTMLElement | null) => {
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setWin((w) => ({ ...w, end: w.end + REVEAL_STEP }));
+    }, { root: node.closest('main'), rootMargin: '800px 0px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const showEarlier = () => {
+    const main = scroller.current;
+    if (main) anchor.current = main.scrollHeight - main.scrollTop;
+    setWin((w) => ({ ...w, start: Math.max(0, w.start - REVEAL_STEP) }));
+  };
+  useLayoutEffect(() => {
+    const main = scroller.current;
+    if (anchor.current === null || !main) return;
+    main.scrollTo({ top: main.scrollHeight - anchor.current });
+    anchor.current = null;
+  }, [start, scroller]);
   const groups = useMemo(() => {
     const result: { key: string; label: string; entries: { entry: TimelineEntry; index: number }[] }[] = [];
-    shown.forEach((entry, index) => {
+    shown.slice(start, end).forEach((entry, i) => {
+      const index = start + i;
       const key = groupKey(entry);
       const last = result[result.length - 1];
       if (last && last.key === key) last.entries.push({ entry, index });
       else result.push({ key, label: groupLabel(entry, locale), entries: [{ entry, index }] });
     });
     return result;
-  }, [shown, locale]);
+  }, [shown, start, end, locale]);
 
   // The period of the first entry under the headers, followed while scrolling
   useEffect(() => {
@@ -123,6 +158,12 @@ export function CompanionTimeline({ elements, links, onOpen, scroller }: {
 
   /** Brings entry `index` (display order) under the strip */
   const scrollToEntry = (index: number) => {
+    if (index < start || index >= end) {
+      // Outside the window: the window moves to it first, then the jump (effect below)
+      pendingJump.current = index;
+      setWin((w) => ({ ...w, start: index, end: index + REVEAL_STEP }));
+      return;
+    }
     const main = scroller.current;
     const li = listRef.current?.querySelector<HTMLElement>(`li[data-index="${index}"]`);
     if (!main || !li) return;
@@ -134,6 +175,14 @@ export function CompanionTimeline({ elements, links, onOpen, scroller }: {
     const offset = STRIP_HEIGHT + (first ? 0 : (section?.querySelector('h2')?.offsetHeight ?? 0));
     main.scrollBy({ top: target.getBoundingClientRect().top - main.getBoundingClientRect().top - offset });
   };
+
+  // A jump waiting for its rows: done once they are there
+  useEffect(() => {
+    const index = pendingJump.current;
+    if (index === null || index < start || index >= end) return;
+    pendingJump.current = null;
+    requestAnimationFrame(() => scrollToEntry(index));
+  });
 
   const jumpToPeriod = (period: Bucket) => {
     const end = new Date(period.start);
@@ -208,6 +257,11 @@ export function CompanionTimeline({ elements, links, onOpen, scroller }: {
         </div>
       </div>
 
+      {start > 0 && (
+        <button type="button" className="w-full min-h-11 text-sm text-accent" onClick={showEarlier}>
+          {t(newestFirst ? 'timeline.later' : 'timeline.earlier')}
+        </button>
+      )}
       <div ref={listRef}>
         {groups.map((g) => (
           <section key={g.key}>
@@ -251,6 +305,7 @@ export function CompanionTimeline({ elements, links, onOpen, scroller }: {
           </section>
         ))}
       </div>
+      {end < shown.length && <div ref={laterSentinel} className="h-px" />}
     </div>
   );
 }
