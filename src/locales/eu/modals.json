@@ -452,6 +452,30 @@
       "confirm": "Dosier GUZTIAK eta haien datuak ezabatu?\n\nEkintza hau atzeraezina da.",
       "confirmAgain": "Azken berrespena: datu guztiak galduko dira. Jarraitu?",
       "error": "Errorea ezabatzean"
+    },
+    "integrity": {
+      "title": "Espedienteen osotasuna",
+      "check": "Egiaztatu",
+      "checking": "Egiaztatzen…",
+      "none": "Ez da nahasketarik aurkitu",
+      "error": "Ezin izan da egiaztatu",
+      "from": "«{{name}}» espedientetik",
+      "unknownDossier": "espediente ezezaguna {{id}}",
+      "nameFrom": "Izena «{{name}}» espedientetik hartua",
+      "undecryptable_one": "{{count}} eguneratze irakurtezin, egiaztatu gabe",
+      "undecryptable_other": "{{count}} eguneratze irakurtezin, egiaztatu gabe",
+      "kinds": {
+        "elements_one": "{{count}} elementu",
+        "elements_other": "{{count}} elementu",
+        "links_one": "{{count}} lotura",
+        "links_other": "{{count}} lotura",
+        "comments_one": "{{count}} iruzkin",
+        "comments_other": "{{count}} iruzkin",
+        "tabs_one": "{{count}} fitxa",
+        "tabs_other": "{{count}} fitxa",
+        "reports_one": "{{count}} txosten",
+        "reports_other": "{{count}} txosten"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Esteka kopiatu",
     "shareLinkHelp": "Bidali esteka hau lankidetzan aritu nahi duzun pertsonei.",
     "stopSharing": "Partekatzeari utzi",
-    "stopping": "Gelditzen..."
+    "stopping": "Gelditzen...",
+    "mobile": {
+      "open": "Ireki mugikorrean",
+      "scan": "Eskaneatu telefonoaren kamerarekin.",
+      "qrLabel": "Lagun mugikorraren QR kodea",
+      "asyncRequired": "Lagun mugikorrak modu asinkronoan partekatzea behar du. Gelditu partekatzea eta partekatu berriro modu horrekin."
+    }
   },
   "dossierTags": {
     "title": "Espedienteren etiketak",

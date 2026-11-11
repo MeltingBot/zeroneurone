@@ -210,6 +210,8 @@ ZeroNeurone permet la collaboration asynchrone, permettant aux collaborateurs de
 2. Les modifications sont stockées sur le serveur pendant **7 jours**
 3. Les collaborateurs peuvent rejoindre quand ils veulent et recevoir les modifications accumulées
 
+Pour ouvrir le dossier sur un téléphone, voir [Compagnon mobile]({{< relref "mobile-companion" >}}).
+
 ### Conservez votre lien de partage
 
 {{< hint danger >}}

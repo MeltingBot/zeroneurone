@@ -360,6 +360,45 @@ export class UndecryptableUpdateError extends Error {
 }
 
 /**
+ * Reads the stored updates of an existing Y.js database, decrypted, without
+ * writing anything (a read-only transaction). Updates that cannot be
+ * decrypted are counted, not returned.
+ */
+export async function readStoredUpdates(
+  dbName: string,
+  encryptionKey: Uint8Array | null,
+): Promise<{ updates: Uint8Array[]; undecryptable: number }> {
+  const db = await idb.openDB(dbName, (db: IDBDatabase) =>
+    idb.createStores(db, [
+      [UPDATES_STORE_NAME, { autoIncrement: true }],
+      [CUSTOM_STORE_NAME],
+    ])
+  );
+  try {
+    const raws = await new Promise<(Uint8Array | ArrayBuffer)[]>((resolve, reject) => {
+      const request = db.transaction([UPDATES_STORE_NAME], 'readonly').objectStore(UPDATES_STORE_NAME).getAll();
+      request.onsuccess = () => resolve(request.result as (Uint8Array | ArrayBuffer)[]);
+      request.onerror = () => reject(request.error);
+    });
+    const updates: Uint8Array[] = [];
+    let undecryptable = 0;
+    for (const value of raws) {
+      const raw = value instanceof Uint8Array ? value : new Uint8Array(value);
+      if (!isEncryptedUpdate(raw)) {
+        updates.push(raw);
+        continue;
+      }
+      const decrypted = encryptionKey ? decryptUpdate(unwrapEncryptedUpdate(raw), encryptionKey) : null;
+      if (decrypted) updates.push(decrypted);
+      else undecryptable++;
+    }
+    return { updates, undecryptable };
+  } finally {
+    db.close();
+  }
+}
+
+/**
  * Replaces every stored update of `dbName` with the single update returned by
  * `transform`, given the decrypted updates. Read, transform and write happen
  * in one IndexedDB transaction: if anything throws, nothing is written, and no

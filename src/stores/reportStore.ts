@@ -99,7 +99,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
       const localReport = await reportRepository.getByDossier(dossierId);
 
       // Then, try to load from Y.Doc if available
-      const ydoc = syncService.getYDoc();
+      const ydoc = syncService.getYDocFor(dossierId);
       if (ydoc) {
         const { reports: reportsMap } = getYMaps(ydoc);
 
@@ -171,7 +171,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
       const report = await reportRepository.create(dossierId, title);
 
       // Sync to Y.Doc if available
-      const ydoc = syncService.getYDoc();
+      const ydoc = syncService.getYDocFor(dossierId);
       if (ydoc) {
         const { reports: reportsMap } = getYMaps(ydoc);
         ydoc.transact(() => {
@@ -200,7 +200,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     await reportRepository.update(currentReport.id, { title });
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = syncService.getYDocFor(currentReport.dossierId);
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
       const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
@@ -223,7 +223,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     const section = await reportRepository.addSection(currentReport.id, title);
 
     // Sync to Y.Doc if available
-    const ydoc = syncService.getYDoc();
+    const ydoc = syncService.getYDocFor(currentReport.dossierId);
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
       const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
@@ -249,7 +249,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     await reportRepository.updateSection(currentReport.id, sectionId, changes);
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = syncService.getYDocFor(currentReport.dossierId);
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
       const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
@@ -274,7 +274,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     await reportRepository.removeSection(currentReport.id, sectionId);
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = syncService.getYDocFor(currentReport.dossierId);
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
       const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
@@ -308,7 +308,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     await reportRepository.update(currentReport.id, { sections: updatedSections });
 
     // Sync to Y.Doc if available
-    const ydoc = syncService.getYDoc();
+    const ydoc = syncService.getYDocFor(currentReport.dossierId);
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
       const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
@@ -331,7 +331,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     await reportRepository.reorderSections(currentReport.id, sectionIds);
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = syncService.getYDocFor(currentReport.dossierId);
     if (ydoc) {
       const { reports: reportsMap } = getYMaps(ydoc);
       const ymap = reportsMap.get(currentReport.id) as Y.Map<unknown> | undefined;
@@ -362,8 +362,8 @@ export const useReportStore = create<ReportState>((set, get) => ({
   // ============================================================================
 
   _syncFromYDoc: () => {
-    const ydoc = syncService.getYDoc();
     const { currentReport } = get();
+    const ydoc = currentReport ? syncService.getYDocFor(currentReport.dossierId) : null;
     if (!ydoc || !currentReport) {
       return;
     }

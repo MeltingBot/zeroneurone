@@ -452,6 +452,30 @@
       "confirm": "ALLE dossiers en hun gegevens verwijderen?\n\nDeze actie is onomkeerbaar.",
       "confirmAgain": "Laatste bevestiging: alle gegevens gaan verloren. Doorgaan?",
       "error": "Fout bij verwijderen"
+    },
+    "integrity": {
+      "title": "Integriteit van dossiers",
+      "check": "Controleren",
+      "checking": "Controleren…",
+      "none": "Geen vermenging gevonden",
+      "error": "Controle mislukt",
+      "from": "uit \"{{name}}\"",
+      "unknownDossier": "onbekend dossier {{id}}",
+      "nameFrom": "Naam overgenomen van \"{{name}}\"",
+      "undecryptable_one": "{{count}} onleesbare update, niet gecontroleerd",
+      "undecryptable_other": "{{count}} onleesbare updates, niet gecontroleerd",
+      "kinds": {
+        "elements_one": "{{count}} element",
+        "elements_other": "{{count}} elementen",
+        "links_one": "{{count}} verbinding",
+        "links_other": "{{count}} verbindingen",
+        "comments_one": "{{count}} opmerking",
+        "comments_other": "{{count}} opmerkingen",
+        "tabs_one": "{{count}} tabblad",
+        "tabs_other": "{{count}} tabbladen",
+        "reports_one": "{{count}} rapport",
+        "reports_other": "{{count}} rapporten"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Link kopiëren",
     "shareLinkHelp": "Stuur deze link naar mensen met wie u wilt samenwerken.",
     "stopSharing": "Stoppen met delen",
-    "stopping": "Stoppen..."
+    "stopping": "Stoppen...",
+    "mobile": {
+      "open": "Openen op mobiel",
+      "scan": "Scan met de camera van de telefoon.",
+      "qrLabel": "QR-code van de mobiele companion",
+      "asyncRequired": "De mobiele companion vereist delen in asynchrone modus. Stop met delen en deel opnieuw met die modus."
+    }
   },
   "dossierTags": {
     "title": "Dossier-tags",

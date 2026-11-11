@@ -646,6 +646,8 @@ export interface SearchDocument {
   extractedText: string;
   /** Text of the comments on the element or link */
   comments: string;
+  /** Labels, descriptions and sources of the element's events */
+  events: string;
 }
 
 export interface SearchResult {

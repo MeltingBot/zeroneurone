@@ -452,6 +452,30 @@
       "drop": "Delete unreadable",
       "dropConfirm": "Permanently erase the unreadable changes ({{count}})? The rest of the content is kept.",
       "dropped": "Unreadable deleted: {{count}}"
+    },
+    "integrity": {
+      "title": "Dossier integrity",
+      "check": "Check",
+      "checking": "Checking…",
+      "none": "No mixing found",
+      "error": "Check failed",
+      "from": "from \"{{name}}\"",
+      "unknownDossier": "unknown dossier {{id}}",
+      "nameFrom": "Name taken from \"{{name}}\"",
+      "undecryptable_one": "{{count}} unreadable update, not checked",
+      "undecryptable_other": "{{count}} unreadable updates, not checked",
+      "kinds": {
+        "elements_one": "{{count}} element",
+        "elements_other": "{{count}} elements",
+        "links_one": "{{count}} link",
+        "links_other": "{{count}} links",
+        "comments_one": "{{count}} comment",
+        "comments_other": "{{count}} comments",
+        "tabs_one": "{{count}} tab",
+        "tabs_other": "{{count}} tabs",
+        "reports_one": "{{count}} report",
+        "reports_other": "{{count}} reports"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Copy link",
     "shareLinkHelp": "Send this link to people you want to collaborate with.",
     "stopSharing": "Stop sharing",
-    "stopping": "Stopping..."
+    "stopping": "Stopping...",
+    "mobile": {
+      "open": "Open on mobile",
+      "scan": "Scan with the phone's camera.",
+      "qrLabel": "Mobile companion QR code",
+      "asyncRequired": "The mobile companion needs a share in async mode. Stop sharing, then share again with that mode."
+    }
   },
   "dossierTags": {
     "title": "Dossier tags",

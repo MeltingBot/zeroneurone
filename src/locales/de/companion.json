@@ -1,0 +1,171 @@
+{
+  "back": "Zurück",
+  "close": "Schließen",
+  "cancel": "Abbrechen",
+  "yes": "Ja",
+  "no": "Nein",
+  "home": {
+    "title": "Dossiers",
+    "empty": "Scannen Sie den Freigabe-QR-Code oder fügen Sie den Link ein.",
+    "untitled": "Unbenanntes Dossier",
+    "add": "Dossier öffnen",
+    "linkPlaceholder": "Freigabelink einfügen",
+    "paste": "Einfügen",
+    "scan": "Scannen",
+    "invalidLink": "Link nicht erkannt",
+    "cameraUnavailable": "Kamera nicht verfügbar"
+  },
+  "join": {
+    "title": "Geteiltes Dossier",
+    "server": "Server: {{host}}",
+    "yourName": "Ihr Name",
+    "join": "Auf diesem Handy öffnen",
+    "invalidLink": "Unvollständiger Link.",
+    "notAsync": "Freigabe nicht asynchron."
+  },
+  "tabs": {
+    "elements": "Elemente",
+    "map": "Karte",
+    "timeline": "Zeitachse",
+    "comments": "Kommentare",
+    "capture": "Erfassen",
+    "settings": "Einstellungen"
+  },
+  "status": {
+    "pending_one": "{{count}} ausstehend",
+    "pending_other": "{{count}} ausstehend",
+    "connected_one": "Verbunden, {{count}} Rechner online",
+    "connected_other": "Verbunden, {{count}} Rechner online",
+    "reconnecting": "Verbinde neu…",
+    "offline": "Offline",
+    "closed": "Dossier abgeschlossen"
+  },
+  "install": {
+    "hint": "Zum Startbildschirm hinzufügen",
+    "dismiss": "Ausblenden"
+  },
+  "elements": {
+    "search": "Suchen",
+    "emptyDossier": "Keine Elemente.",
+    "noMatch": "Keine Ergebnisse.",
+    "loading": "Wird abgerufen…",
+    "waitingPeer": "Warte auf einen Rechner online",
+    "clear": "Suche löschen",
+    "results_one": "{{count}} Ergebnis",
+    "results_other": "{{count}} Ergebnisse",
+    "searchHint": "Suchen, oder # für ein Schlagwort"
+  },
+  "element": {
+    "untitled": "Ohne Titel",
+    "details": "Informationen",
+    "date": "Erfassungsdatum",
+    "source": "Quelle",
+    "position": "Standort",
+    "links_one": "{{count}} Verbindung",
+    "links_other": "{{count}} Verbindungen",
+    "notes": "Notiz",
+    "period": "Zeitraum",
+    "count_one": "{{count}} Element",
+    "count_other": "{{count}} Elemente",
+    "events_one": "{{count}} Ereignis",
+    "events_other": "{{count}} Ereignisse"
+  },
+  "asset": {
+    "missing": "Nicht verfügbar",
+    "receiving": "Wird empfangen"
+  },
+  "comments": {
+    "resolve": "Erledigen",
+    "reopen": "Wieder öffnen",
+    "placeholder": "Kommentar",
+    "send": "Senden",
+    "showResolved": "Erledigte anzeigen",
+    "empty": "Keine offenen Kommentare.",
+    "deletedTarget": "Gelöschtes Element"
+  },
+  "capture": {
+    "label": "Titel",
+    "notes": "Notiz",
+    "photo": "Foto aufnehmen",
+    "removePhoto": "Foto entfernen",
+    "position": "Meinen Standort hinzufügen",
+    "locating": "Ortung…",
+    "positionFailed": "Standort nicht verfügbar",
+    "removePosition": "Standort entfernen",
+    "save": "Zum Dossier hinzufügen",
+    "saving": "Wird hinzugefügt…",
+    "defaultLabel": "Erfassung {{time}}",
+    "tooLarge": "Foto zu groß",
+    "failed": "Hinzufügen fehlgeschlagen",
+    "source": "Quelle"
+  },
+  "settings": {
+    "identity": "Ihr Name",
+    "connection": "Verbindung",
+    "thisPhone": "Dieses Handy",
+    "forget": "Dossier vergessen",
+    "forgetConfirm": "Löschen",
+    "forgetPending_one": "{{count}} nicht gesendete Änderung geht verloren.",
+    "forgetPending_other": "{{count}} nicht gesendete Änderungen gehen verloren."
+  },
+  "graph": {
+    "label": "Nachbarschaftsgraph",
+    "depth": "Ebenen",
+    "hidden_one": "+{{count}} ausgeblendet",
+    "hidden_other": "+{{count}} ausgeblendet"
+  },
+  "map": {
+    "satellite": "Satellit",
+    "empty": "Keine verorteten Elemente"
+  },
+  "timeline": {
+    "empty": "Keine datierten Elemente"
+  },
+  "edit": {
+    "save": "Speichern",
+    "notes": "Notiz bearbeiten",
+    "addNote": "Notiz hinzufügen",
+    "invalid": "Ungültiger Wert"
+  },
+  "links": {
+    "add": "Verbinden",
+    "none": "Verbindungen",
+    "title": "Neue Verbindung",
+    "searchTarget": "„{{label}}“ verbinden mit…",
+    "createElement": "„{{label}}“ erstellen",
+    "label": "Bezeichnung",
+    "direction": "Richtung",
+    "create": "Verbindung erstellen",
+    "dirNone": "Ohne Richtung",
+    "dirForward": "Nach",
+    "dirBackward": "Von",
+    "dirBoth": "In beide Richtungen",
+    "source": "Quelle"
+  },
+  "delete": {
+    "element": "Element löschen",
+    "link": "Verbindung löschen",
+    "confirm": "Löschen",
+    "confirmElement": "„{{label}}“ löschen?",
+    "confirmLink": "Diese Verbindung löschen?",
+    "linksToo_one": "Seine Verbindung wird ebenfalls gelöscht.",
+    "linksToo_other": "Seine {{count}} Verbindungen werden ebenfalls gelöscht."
+  },
+  "tabsBar": {
+    "title": "Tabs",
+    "label": "Canvas-Tabs",
+    "all": "Alle",
+    "untitled": "Ohne Namen",
+    "manage": "Tabs verwalten",
+    "new": "Neuer Tab",
+    "name": "Tab-Name",
+    "create": "Tab erstellen",
+    "confirmDelete": "„{{name}}“ löschen? Seine Elemente bleiben im Dossier.",
+    "rename": "„{{name}}“ umbenennen",
+    "delete": "„{{name}}“ löschen"
+  },
+  "tags": {
+    "remove": "Schlagwort {{tag}} entfernen",
+    "none": "Keine Schlagwörter"
+  }
+}

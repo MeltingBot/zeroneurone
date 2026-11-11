@@ -1,6 +1,6 @@
 import { db } from '../db/database';
 import type { DossierId } from '../types';
-import { ydocDatabaseName } from './yjs/ydocName';
+import { ydocDatabaseName, deleteYDocDatabase } from './yjs/ydocName';
 
 /**
  * Removal of every trace of a dossier from this browser, and the check that
@@ -25,7 +25,7 @@ const LOCAL_STORAGE_PREFIXES = ['viewport_', 'zn:suggestions:excludedKeys:'] as 
 /** OPFS folders that may hold a dossier's files (`investigations` is the legacy name) */
 const OPFS_DIRS = ['dossiers', 'investigations'] as const;
 
-export { ydocDatabaseName };
+export { ydocDatabaseName, deleteYDocDatabase };
 
 export interface PurgeCheck {
   /** Where: `dexie:<table>`, `opfs:<dir>`, `indexeddb:ydoc`, `localStorage` */
@@ -81,23 +81,6 @@ export async function removeDossierOpfs(dossierId: string): Promise<void> {
       if (!(error instanceof DOMException && error.name === 'NotFoundError')) throw error;
     });
   }
-}
-
-/**
- * Delete the dossier's Y.js database. When another connection still holds it,
- * the browser reports "blocked" and deletes it as soon as that connection
- * closes: wait for that, up to `blockedTimeoutMs`.
- */
-export function deleteYDocDatabase(dossierId: string, blockedTimeoutMs = 5000): Promise<void> {
-  return new Promise((resolve, reject) => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const request = indexedDB.deleteDatabase(ydocDatabaseName(dossierId));
-    request.onsuccess = () => { if (timer) clearTimeout(timer); resolve(); };
-    request.onerror = () => { if (timer) clearTimeout(timer); reject(request.error); };
-    request.onblocked = () => {
-      timer = setTimeout(() => reject(new Error('Y.js database still in use')), blockedTimeoutMs);
-    };
-  });
 }
 
 async function checkDexie(dossierId: string): Promise<PurgeCheck[]> {

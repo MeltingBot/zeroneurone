@@ -1,0 +1,171 @@
+{
+  "back": "Atzera",
+  "close": "Itxi",
+  "cancel": "Utzi",
+  "yes": "Bai",
+  "no": "Ez",
+  "home": {
+    "title": "Espedienteak",
+    "empty": "Eskaneatu QR kodea edo itsatsi esteka.",
+    "untitled": "Izenik gabeko espedientea",
+    "add": "Ireki espediente bat",
+    "linkPlaceholder": "Itsatsi partekatzeko esteka",
+    "paste": "Itsatsi",
+    "scan": "Eskaneatu",
+    "invalidLink": "Esteka ez da ezagutu",
+    "cameraUnavailable": "Kamera ez dago erabilgarri"
+  },
+  "join": {
+    "title": "Partekatutako espedientea",
+    "server": "Zerbitzaria: {{host}}",
+    "yourName": "Zure izena",
+    "join": "Ireki telefono honetan",
+    "invalidLink": "Esteka osatugabea.",
+    "notAsync": "Partekatzea ez da asinkronoa."
+  },
+  "tabs": {
+    "elements": "Elementuak",
+    "map": "Mapa",
+    "timeline": "Kronologia",
+    "comments": "Iruzkinak",
+    "capture": "Jaso",
+    "settings": "Ezarpenak"
+  },
+  "status": {
+    "pending_one": "{{count}} zain",
+    "pending_other": "{{count}} zain",
+    "connected_one": "Konektatuta, {{count}} ordenagailu linean",
+    "connected_other": "Konektatuta, {{count}} ordenagailu linean",
+    "reconnecting": "Berriro konektatzen…",
+    "offline": "Lineaz kanpo",
+    "closed": "Espedientea itxita"
+  },
+  "install": {
+    "hint": "Gehitu hasierako pantailara",
+    "dismiss": "Ezkutatu"
+  },
+  "elements": {
+    "search": "Bilatu",
+    "emptyDossier": "Elementurik ez.",
+    "noMatch": "Emaitzarik ez.",
+    "loading": "Eskuratzen…",
+    "waitingPeer": "Linean dagoen ordenagailu baten zain",
+    "clear": "Garbitu bilaketa",
+    "results_one": "{{count}} emaitza",
+    "results_other": "{{count}} emaitza",
+    "searchHint": "Bilatu, edo # etiketa baterako"
+  },
+  "element": {
+    "untitled": "Izenbururik gabe",
+    "details": "Informazioa",
+    "date": "Bilketa data",
+    "source": "Iturria",
+    "position": "Kokapena",
+    "links_one": "{{count}} lotura",
+    "links_other": "{{count}} lotura",
+    "notes": "Oharra",
+    "period": "Aldia",
+    "count_one": "{{count}} elementu",
+    "count_other": "{{count}} elementu",
+    "events_one": "{{count}} gertaera",
+    "events_other": "{{count}} gertaera"
+  },
+  "asset": {
+    "missing": "Ez dago erabilgarri",
+    "receiving": "Jasotzen"
+  },
+  "comments": {
+    "resolve": "Ebatzi",
+    "reopen": "Berriro ireki",
+    "placeholder": "Iruzkina",
+    "send": "Bidali",
+    "showResolved": "Erakutsi ebatzitakoak",
+    "empty": "Ez dago iruzkin irekirik.",
+    "deletedTarget": "Ezabatutako elementua"
+  },
+  "capture": {
+    "label": "Izenburua",
+    "notes": "Oharra",
+    "photo": "Atera argazki bat",
+    "removePhoto": "Kendu argazkia",
+    "position": "Gehitu nire kokapena",
+    "locating": "Kokatzen…",
+    "positionFailed": "Kokapena ez dago erabilgarri",
+    "removePosition": "Kendu kokapena",
+    "save": "Gehitu espedientera",
+    "saving": "Gehitzen…",
+    "defaultLabel": "Jasotzea {{time}}",
+    "tooLarge": "Argazkia astunegia da",
+    "failed": "Ezin izan da gehitu",
+    "source": "Iturria"
+  },
+  "settings": {
+    "identity": "Zure izena",
+    "connection": "Konexioa",
+    "thisPhone": "Telefono hau",
+    "forget": "Ahaztu espediente hau",
+    "forgetConfirm": "Ezabatu",
+    "forgetPending_one": "Bidali gabeko {{count}} aldaketa galduko da.",
+    "forgetPending_other": "Bidali gabeko {{count}} aldaketa galduko dira."
+  },
+  "graph": {
+    "label": "Auzotasun grafoa",
+    "depth": "Mailak",
+    "hidden_one": "+{{count}} ezkutatuta",
+    "hidden_other": "+{{count}} ezkutatuta"
+  },
+  "map": {
+    "satellite": "Satelitea",
+    "empty": "Ez dago kokatutako elementurik"
+  },
+  "timeline": {
+    "empty": "Ez dago datatutako elementurik"
+  },
+  "edit": {
+    "save": "Gorde",
+    "notes": "Editatu oharra",
+    "addNote": "Gehitu ohar bat",
+    "invalid": "Balio baliogabea"
+  },
+  "links": {
+    "add": "Lotu",
+    "none": "Loturak",
+    "title": "Lotura berria",
+    "searchTarget": "Lotu «{{label}}» honekin…",
+    "createElement": "Sortu «{{label}}»",
+    "label": "Etiketa",
+    "direction": "Norabidea",
+    "create": "Sortu lotura",
+    "dirNone": "Norabiderik gabe",
+    "dirForward": "Nora",
+    "dirBackward": "Nondik",
+    "dirBoth": "Bi norabideetan",
+    "source": "Iturria"
+  },
+  "delete": {
+    "element": "Ezabatu elementua",
+    "link": "Ezabatu lotura",
+    "confirm": "Ezabatu",
+    "confirmElement": "«{{label}}» ezabatu?",
+    "confirmLink": "Lotura hau ezabatu?",
+    "linksToo_one": "Bere lotura ere ezabatuko da.",
+    "linksToo_other": "Bere {{count}} loturak ere ezabatuko dira."
+  },
+  "tabsBar": {
+    "title": "Fitxak",
+    "label": "Oihalaren fitxak",
+    "all": "Dena",
+    "untitled": "Izenik gabe",
+    "manage": "Kudeatu fitxak",
+    "new": "Fitxa berria",
+    "name": "Fitxaren izena",
+    "create": "Sortu fitxa",
+    "confirmDelete": "«{{name}}» ezabatu? Bere elementuak espedientean geratzen dira.",
+    "rename": "Aldatu «{{name}}» izena",
+    "delete": "Ezabatu «{{name}}»"
+  },
+  "tags": {
+    "remove": "Kendu {{tag}} etiketa",
+    "none": "Etiketarik ez"
+  }
+}

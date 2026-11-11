@@ -452,6 +452,30 @@
       "confirm": "Voleu suprimir TOTS els dossiers i les seves dades?\n\nAquesta acció és irreversible.",
       "confirmAgain": "Última confirmació: es perdran totes les dades. Voleu continuar?",
       "error": "Error en suprimir"
+    },
+    "integrity": {
+      "title": "Integritat dels expedients",
+      "check": "Comprova",
+      "checking": "Comprovant…",
+      "none": "No s'ha detectat cap barreja",
+      "error": "Comprovació impossible",
+      "from": "provinents de «{{name}}»",
+      "unknownDossier": "expedient desconegut {{id}}",
+      "nameFrom": "Nom pres de «{{name}}»",
+      "undecryptable_one": "{{count}} actualització il·legible, no comprovada",
+      "undecryptable_other": "{{count}} actualitzacions il·legibles, no comprovades",
+      "kinds": {
+        "elements_one": "{{count}} element",
+        "elements_other": "{{count}} elements",
+        "links_one": "{{count}} enllaç",
+        "links_other": "{{count}} enllaços",
+        "comments_one": "{{count}} comentari",
+        "comments_other": "{{count}} comentaris",
+        "tabs_one": "{{count}} pestanya",
+        "tabs_other": "{{count}} pestanyes",
+        "reports_one": "{{count}} informe",
+        "reports_other": "{{count}} informes"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Copiar enllaç",
     "shareLinkHelp": "Envieu aquest enllaç a les persones amb qui voleu col·laborar.",
     "stopSharing": "Deixar de compartir",
-    "stopping": "Aturant..."
+    "stopping": "Aturant...",
+    "mobile": {
+      "open": "Obrir al mòbil",
+      "scan": "Escanegeu amb la càmera del telèfon.",
+      "qrLabel": "Codi QR del company mòbil",
+      "asyncRequired": "El company mòbil requereix compartir en mode asíncron. Atureu la compartició i torneu a compartir amb aquest mode."
+    }
   },
   "dossierTags": {
     "title": "Etiquetes de l'expedient",

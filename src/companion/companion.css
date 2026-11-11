@@ -1,0 +1,27 @@
+/*
+ * Page sizing of the companion. The desktop stylesheet sizes #root at
+ * 100vh × 100vw: on a phone, 100vh is the height with the browser bars
+ * hidden, so the page was taller than the screen and scrolled under the
+ * dossier view; 100vw can add a sideways scroll. The companion sizes to the
+ * visible viewport instead (dvh follows the browser bars).
+ */
+html.zn-companion,
+html.zn-companion body {
+  height: auto;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+html.zn-companion #root {
+  height: auto;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+/* Dossier view open: the page itself never scrolls, only its content area */
+html.zn-companion-locked,
+html.zn-companion-locked body {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+}

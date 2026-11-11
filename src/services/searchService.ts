@@ -26,7 +26,7 @@ class SearchService {
 
   private createIndex(): MiniSearch<SearchDocument> {
     return new MiniSearch<SearchDocument>({
-      fields: ['label', 'notes', 'tags', 'properties', 'extractedText', 'comments'],
+      fields: ['label', 'notes', 'tags', 'properties', 'extractedText', 'comments', 'events'],
       storeFields: ['id', 'type', 'label', 'dossierId'],
       searchOptions: {
         boost: { label: 3, tags: 2, notes: 1 },
@@ -299,6 +299,9 @@ class SearchService {
         .join(' '),
       extractedText: this.assetTextMap.get(element.id) || '',
       comments: this.commentTextMap.get(element.id) || '',
+      events: (element.events ?? [])
+        .map((event) => [event.label, event.description, event.source].filter(Boolean).join(' '))
+        .join(' '),
     };
   }
 
@@ -315,6 +318,7 @@ class SearchService {
         .join(' '),
       extractedText: '',
       comments: this.commentTextMap.get(link.id) || '',
+      events: '',
     };
   }
 }

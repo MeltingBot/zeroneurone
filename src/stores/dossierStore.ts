@@ -65,6 +65,7 @@ import {
   yMapToComment,
   updateCommentYMap,
 } from '../services/yjs/commentMapper';
+import { buildNewElement, buildComment, buildNewLink } from '../services/yjs/factories';
 import {
   tabToYMap,
   yMapToTab,
@@ -234,6 +235,12 @@ let ydocObserverCleanup: (() => void) | null = null;
 
 /** The load just started, taken by a second load of the same dossier in the same task */
 let inflightLoad: { id: DossierId; promise: Promise<void> } | null = null;
+/**
+ * Bumped by every load of another dossier. A load that sees another value was
+ * superseded (the user opened another dossier while it awaited the network)
+ * and stops: finishing it would show this dossier over the other one's Y.Doc.
+ */
+let loadSeq = 0;
 
 // ============================================================================
 // ASSET CHUNK SYNC
@@ -779,37 +786,6 @@ function applyFirstTagVisual(
 // ============================================================================
 
 /** A new link with the default fields, `options` overriding them */
-function makeLink(dossierId: DossierId, fromId: ElementId, toId: ElementId, options?: Partial<Link>): Link {
-  const now = new Date();
-  return {
-    id: crypto.randomUUID(),
-    dossierId,
-    fromId,
-    toId,
-    sourceHandle: null,
-    targetHandle: null,
-    label: '',
-    notes: '',
-    tags: [],
-    properties: [],
-    directed: false,
-    direction: 'none',
-    confidence: null,
-    source: '',
-    date: null,
-    dateRange: null,
-    visual: {
-      color: '#9ca3af',
-      style: 'solid',
-      thickness: 2,
-    },
-    curveOffset: { x: 0, y: 0 },
-    createdAt: now,
-    updatedAt: now,
-    ...options,
-  };
-}
-
 // Deletions still finishing: the state drops the elements at once, their
 // removal from the tabs follows. An undo started in between would have its
 // tab restore undone by that removal, so undo/redo wait for them.
@@ -831,6 +807,22 @@ function warnSkippedEntry(kind: string, id: string, err: unknown): void {
   if (warnedSkippedEntries.has(key)) return;
   warnedSkippedEntries.add(key);
   console.warn(`[_syncFromYDoc] Unreadable ${kind} skipped:`, id, err);
+}
+
+/**
+ * The Y.Doc of the dossier the store shows, or null when the sync service
+ * holds another dossier's (a load in progress or superseded, a switch between
+ * dossiers). Every read and write of the store goes through this: writing the
+ * shown dossier's changes into another dossier's Y.Doc mixed the two, and the
+ * mix reached every collaborator of that other dossier.
+ */
+function dossierYDoc(dossierId: string | null | undefined): Y.Doc | null {
+  return syncService.getYDocFor(dossierId);
+}
+
+/** The shown dossier's Y.Doc (see dossierYDoc), for stores that write into it */
+export function currentDossierYDoc(): Y.Doc | null {
+  return dossierYDoc(useDossierStore.getState().currentDossier?.id);
 }
 
 export const useDossierStore = create<DossierState>((set, get) => ({
@@ -869,6 +861,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Only within the same task: a later load (dossier reopened) always runs,
     // even when an earlier one never ended.
     if (inflightLoad?.id === id) return inflightLoad.promise;
+    const seq = ++loadSeq;
+    /** Another load started, or the sync service now holds another Y.Doc */
+    const superseded = (doc?: Y.Doc) =>
+      seq !== loadSeq || (doc !== undefined && (syncService.getYDoc() !== doc || syncService.getDossierId() !== id));
     const promise = (async () => {
     // Undo entries reference elements by id, so replaying one recorded against
     // another dossier would apply it here. Only drop the stack when the dossier
@@ -896,6 +892,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       set({ loadingPhase: 'syncing', loadingDetail: dossier.name, loadingProgress: 30 });
       await new Promise(resolve => setTimeout(resolve, 0));
+      // Never open or close the sync session for a load already replaced
+      if (superseded()) return;
 
       // Check if Y.Doc is already open for this dossier (e.g., from JoinPage)
       let ydoc = syncService.getYDoc();
@@ -948,6 +946,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (initialSyncState.mode === 'shared') {
         await syncService.waitForSync(5000);
       }
+
+      if (superseded(ydoc)) return;
 
       // Check if Y.Doc has existing data
       const { meta: metaMap, elements: elementsMap, links: linksMap } = getYMaps(ydoc);
@@ -1048,6 +1048,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           linkRepository.getByDossier(id),
         ]);
 
+        if (superseded(ydoc)) return;
         ydoc.transact(() => {
           dexieElements.forEach(element => {
             const ymap = elementToYMap(element);
@@ -1072,6 +1073,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       if (shouldMigrateTabs) {
         const dexieTabs = await tabRepository.getByDossier(id);
+        if (superseded(ydoc)) return;
         if (dexieTabs.length > 0) {
           ydoc.transact(() => {
             dexieTabs.forEach(tab => {
@@ -1095,6 +1097,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       if (shouldMigrateComments) {
         const dexieComments = await db.comments.where('dossierId').equals(id).toArray();
+        if (superseded(ydoc)) return;
         ydoc.transact(() => {
           dexieComments.forEach((comment) => {
             commentsYMap.set(comment.id, commentToYMap(comment));
@@ -1174,6 +1177,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         }
       }
 
+      // Past this point the load replaces whatever the store shows: a
+      // superseded one must not swap the current dossier's observers for its own
+      if (superseded(ydoc)) return;
+
       // Setup Y.Doc observer to sync to Zustand
       if (ydocObserverCleanup) {
         ydocObserverCleanup();
@@ -1236,6 +1243,13 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const loadedElements = Array.from(elementsById.values());
       const loadedLinks = Array.from(linksById.values());
 
+      if (superseded(ydoc)) {
+        // Replaced during the yield above: drop the observers set for it
+        cleanupObserver();
+        detachPluginData();
+        return;
+      }
+
       set({
         currentDossier: dossier,
         elements: loadedElements,
@@ -1273,20 +1287,26 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         get()._syncFromYDoc();
         // Immediate safety re-sync if already connected
         if (syncState.connected) {
-          setTimeout(() => { setForceAssetResync(); get()._syncFromYDoc(); reconcileSharedTabs(ydoc); }, 2500);
+          setTimeout(() => {
+            if (superseded(ydoc)) return;
+            setForceAssetResync(); get()._syncFromYDoc(); reconcileSharedTabs(ydoc);
+          }, 2500);
         }
         // Also listen for future connection/sync events to trigger re-sync.
         // This handles the case where WebSocket connects AFTER initial load.
         let unsubSyncWatch: (() => void) | null = null;
         unsubSyncWatch = syncService.onStateChange((state) => {
-          if (state.mode !== 'shared') {
+          if (state.mode !== 'shared' || superseded(ydoc)) {
             unsubSyncWatch?.();
             return;
           }
           if (state.connected && !state.syncing) {
             // Connection established and sync complete — re-sync from Y.Doc
             unsubSyncWatch?.();
-            setTimeout(() => { setForceAssetResync(); get()._syncFromYDoc(); reconcileSharedTabs(ydoc); }, 500);
+            setTimeout(() => {
+              if (superseded(ydoc)) return;
+              setForceAssetResync(); get()._syncFromYDoc(); reconcileSharedTabs(ydoc);
+            }, 500);
           }
         });
       }
@@ -1298,8 +1318,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         const srcDossier = dossier;
         const srcAssets = assets;
         setTimeout(async () => {
-          const deferredYdoc = syncService.getYDoc();
-          if (!deferredYdoc) return;
+          // This dossier's Y.Doc, and only while it is still the open one: the
+          // sync service may hold another dossier by now (it once received
+          // this dossier's name, options and files)
+          if (superseded(ydoc)) return;
+          const deferredYdoc = ydoc;
           const { meta: deferredMeta } = getYMaps(deferredYdoc);
 
           deferredYdoc.transact(() => {
@@ -1386,7 +1409,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Then update Y.Doc for collaborative sync
     // The observer will trigger _syncFromYDoc, but since Zustand already has the new value,
     // no change will be detected (Y.Doc value == Zustand value)
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (ydoc) {
       const { meta: metaMap } = getYMaps(ydoc);
       ydoc.transact(() => {
@@ -1490,44 +1513,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       throw new Error('No dossier loaded');
     }
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
 
-    const now = new Date();
-    const element: Element = {
-      id: crypto.randomUUID(),
-      dossierId: currentDossier.id,
-      label,
-      notes: '',
-      tags: [],
-      properties: [],
-      confidence: null,
-      source: '',
-      date: null,
-      dateRange: null,
-      position,
-      isPositionLocked: false,
-      geo: null,
-      events: [],
-      visual: {
-        color: '#ffffff',
-        borderColor: '#e5e7eb',
-        shape: 'rectangle',
-        size: 'medium',
-        icon: null,
-        image: null,
-      },
-      assetIds: [],
-      parentGroupId: null,
-      isGroup: false,
-      isAnnotation: false,
-      childIds: [],
-      createdAt: now,
-      updatedAt: now,
-      ...options,
-    };
+    const element = buildNewElement(currentDossier.id, label, position, options);
 
     // First-tag visual: if the element is created with tags but no explicit
     // visual override for a given field, inherit the first tag's TagSet
@@ -1576,7 +1567,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   updateElement: async (id: ElementId, changes: ElementChanges) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1648,7 +1639,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   deleteElement: (id: ElementId) => get().deleteElements([id]),
 
   deleteElements: (ids: ElementId[]) => trackDeletion((async () => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1695,7 +1686,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   })()),
 
   updateElementPosition: async (id: ElementId, position: Position) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1723,7 +1714,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   updateElementPositions: async (updates: { id: ElementId; position: Position }[]) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1789,12 +1780,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       throw new Error('No dossier loaded');
     }
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
 
-    const link = makeLink(currentDossier.id, fromId, toId, options);
+    const link = buildNewLink(currentDossier.id, fromId, toId, options);
 
     const { links: linksMap } = getYMaps(ydoc);
     ydoc.transact(() => {
@@ -1820,14 +1811,14 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     if (!currentDossier) {
       throw new Error('No dossier loaded');
     }
-    const links = specs.map(({ fromId, toId, options }) => makeLink(currentDossier.id, fromId, toId, options));
+    const links = specs.map(({ fromId, toId, options }) => buildNewLink(currentDossier.id, fromId, toId, options));
     pasteElements([], links);
     for (const link of links) emitPluginEvent('link:created', currentDossier.id, link.id);
     return links;
   },
 
   updateLink: async (id: LinkId, changes: LinkChanges) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1865,7 +1856,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   deleteLink: async (id: LinkId) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1889,7 +1880,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   deleteLinks: async (ids: LinkId[]) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1918,7 +1909,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // ============================================================================
 
   updateElements: async (ids: ElementId[], changes: ElementChanges) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1947,7 +1938,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   updateLinks: async (ids: LinkId[], changes: LinkChanges) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1977,7 +1968,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
   // Batch paste: create all elements and links in a single Y.js transaction
   pasteElements: (newElements: Element[], newLinks: Link[]) => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     assertWritable(get);
     if (!ydoc) return;
 
@@ -2054,7 +2045,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Batch all child updates in a single Y.js transaction for instant visual update
     if (childIds && childIds.length > 0) {
-      const ydoc = syncService.getYDoc();
+      const ydoc = dossierYDoc(get().currentDossier?.id);
       if (ydoc) {
         const { elements: elementsMap } = getYMaps(ydoc);
 
@@ -2099,7 +2090,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     assertWritable(get);
     const group = elements.find(el => el.id === groupId && el.isGroup);
     if (!group) return [];
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) return [];
 
     // Top-level, non-group elements only: groups are a single level
@@ -2210,7 +2201,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const group = elements.find(el => el.id === groupId);
     if (!group || !group.isGroup) return;
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) return;
 
     const { elements: elementsMap } = getYMaps(ydoc);
@@ -2275,7 +2266,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   mergeElements: async (targetId: ElementId, sourceId: ElementId, keep?: MergeKeep) => {
     const { elements, links } = get();
     assertWritable(get);
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) throw new Error('Y.Doc not available');
 
     const target = elements.find(el => el.id === targetId);
@@ -2580,7 +2571,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const asset = await fileService.saveAsset(currentDossier.id, file);
 
     // Update element's assetIds in Y.Doc
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (ydoc) {
       const { elements: elementsMap } = getYMaps(ydoc);
       const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
@@ -2635,7 +2626,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   uploadAssetsForSharing: async () => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc || !get().currentDossier) return;
     await uploadMissingAssets(ydoc, get().assets);
   },
@@ -2643,7 +2634,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   removeAsset: async (elementId: ElementId, assetId: string) => {
     // Update element in Y.Doc
     assertWritable(get);
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (ydoc) {
       const { elements: elementsMap, assets: assetsMap } = getYMaps(ydoc);
       const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
@@ -2693,7 +2684,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   reorderAssets: async (elementId: ElementId, assetIds: string[]) => {
     // Update element in Y.Doc
     assertWritable(get);
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (ydoc) {
       const { elements: elementsMap } = getYMaps(ydoc);
       const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
@@ -2723,7 +2714,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       throw new Error('No dossier loaded');
     }
 
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -2733,19 +2724,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const authorName = localUser.name;
     const authorColor = localUser.color;
 
-    const comment: Comment = {
-      id: crypto.randomUUID(),
-      dossierId: currentDossier.id,
-      targetId,
-      targetType,
-      authorName,
-      authorColor,
-      content,
-      resolved: false,
-      resolvedBy: null,
-      resolvedAt: null,
-      createdAt: new Date(),
-    };
+    const comment = buildComment(currentDossier.id, targetId, targetType, content, { name: authorName, color: authorColor });
 
     const { comments: commentsMap } = getYMaps(ydoc);
     ydoc.transact(() => {
@@ -2759,7 +2738,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
   resolveComment: async (id, resolverName) => {
     assertWritable(get);
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -2781,7 +2760,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
   unresolveComment: async (id) => {
     assertWritable(get);
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -2803,7 +2782,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
   deleteComment: async (id) => {
     assertWritable(get);
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -3212,7 +3191,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // ============================================================================
 
   _syncFromYDoc: () => {
-    const ydoc = syncService.getYDoc();
+    const ydoc = dossierYDoc(get().currentDossier?.id);
     const { currentDossier, elements: stateElements, links: stateLinks, comments: stateComments, assets: currentAssets } = get();
     if (!ydoc || !currentDossier) {
       return;
@@ -3488,13 +3467,19 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           const map = ymap as Y.Map<unknown>;
           const assetId = map.get('id') as string;
           if (!assetId || currentAssetIds.has(assetId)) return;
-          processAssetMap(map, currentDossier.id, (saved) => {
+          const addSaved = (saved: Asset) => {
             set((state) => ({
               assets: state.assets.some((a) => a.id === saved.id)
                 ? state.assets
                 : [...state.assets, saved],
             }));
-          }).catch((err) => onPersistFailure(err, 'asset.process'));
+          };
+          // An asset already complete when first seen (a single chunk: any file
+          // under 512 KB) is saved right away and returned, not passed to the
+          // late-save callback: it must reach the state too.
+          processAssetMap(map, currentDossier.id, addSaved)
+            .then((saved) => { if (saved) addSaved(saved); })
+            .catch((err) => onPersistFailure(err, 'asset.process'));
         } catch (err) { warnSkippedEntry('asset', key, err); }
       });
     }

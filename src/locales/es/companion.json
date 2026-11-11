@@ -1,0 +1,171 @@
+{
+  "back": "Volver",
+  "close": "Cerrar",
+  "cancel": "Cancelar",
+  "yes": "Sí",
+  "no": "No",
+  "home": {
+    "title": "Expedientes",
+    "empty": "Escanee el código QR o pegue el enlace.",
+    "untitled": "Expediente sin nombre",
+    "add": "Abrir un expediente",
+    "linkPlaceholder": "Pegue el enlace compartido",
+    "paste": "Pegar",
+    "scan": "Escanear",
+    "invalidLink": "Enlace no reconocido",
+    "cameraUnavailable": "Cámara no disponible"
+  },
+  "join": {
+    "title": "Expediente compartido",
+    "server": "Servidor: {{host}}",
+    "yourName": "Su nombre",
+    "join": "Abrir en este teléfono",
+    "invalidLink": "Enlace incompleto.",
+    "notAsync": "Uso compartido no asíncrono."
+  },
+  "tabs": {
+    "elements": "Elementos",
+    "map": "Mapa",
+    "timeline": "Cronología",
+    "comments": "Comentarios",
+    "capture": "Capturar",
+    "settings": "Ajustes"
+  },
+  "status": {
+    "pending_one": "{{count}} pendiente",
+    "pending_other": "{{count}} pendientes",
+    "connected_one": "Conectado, {{count}} equipo en línea",
+    "connected_other": "Conectado, {{count}} equipos en línea",
+    "reconnecting": "Reconectando…",
+    "offline": "Sin conexión",
+    "closed": "Expediente cerrado"
+  },
+  "install": {
+    "hint": "Añadir a la pantalla de inicio",
+    "dismiss": "Ocultar"
+  },
+  "elements": {
+    "search": "Buscar",
+    "emptyDossier": "Ningún elemento.",
+    "noMatch": "Sin resultados.",
+    "loading": "Recuperando…",
+    "waitingPeer": "Esperando un equipo en línea",
+    "clear": "Borrar la búsqueda",
+    "results_one": "{{count}} resultado",
+    "results_other": "{{count}} resultados",
+    "searchHint": "Buscar, o # para una etiqueta"
+  },
+  "element": {
+    "untitled": "Sin título",
+    "details": "Información",
+    "date": "Fecha de recopilación",
+    "source": "Fuente",
+    "position": "Ubicación",
+    "links_one": "{{count}} vínculo",
+    "links_other": "{{count}} vínculos",
+    "notes": "Nota",
+    "period": "Periodo",
+    "count_one": "{{count}} elemento",
+    "count_other": "{{count}} elementos",
+    "events_one": "{{count}} evento",
+    "events_other": "{{count}} eventos"
+  },
+  "asset": {
+    "missing": "No disponible",
+    "receiving": "Recibiendo"
+  },
+  "comments": {
+    "resolve": "Resolver",
+    "reopen": "Reabrir",
+    "placeholder": "Comentario",
+    "send": "Enviar",
+    "showResolved": "Mostrar resueltos",
+    "empty": "Ningún comentario abierto.",
+    "deletedTarget": "Elemento eliminado"
+  },
+  "capture": {
+    "label": "Título",
+    "notes": "Nota",
+    "photo": "Hacer una foto",
+    "removePhoto": "Quitar la foto",
+    "position": "Añadir mi ubicación",
+    "locating": "Localizando…",
+    "positionFailed": "Ubicación no disponible",
+    "removePosition": "Quitar la ubicación",
+    "save": "Añadir al expediente",
+    "saving": "Añadiendo…",
+    "defaultLabel": "Captura del {{time}}",
+    "tooLarge": "Foto demasiado pesada",
+    "failed": "Error al añadir",
+    "source": "Fuente"
+  },
+  "settings": {
+    "identity": "Su nombre",
+    "connection": "Conexión",
+    "thisPhone": "Este teléfono",
+    "forget": "Olvidar este expediente",
+    "forgetConfirm": "Borrar",
+    "forgetPending_one": "{{count}} cambio no enviado se perderá.",
+    "forgetPending_other": "{{count}} cambios no enviados se perderán."
+  },
+  "graph": {
+    "label": "Grafo de vecindad",
+    "depth": "Niveles",
+    "hidden_one": "+{{count}} oculto",
+    "hidden_other": "+{{count}} ocultos"
+  },
+  "map": {
+    "satellite": "Satélite",
+    "empty": "Ningún elemento localizado"
+  },
+  "timeline": {
+    "empty": "Ningún elemento fechado"
+  },
+  "edit": {
+    "save": "Guardar",
+    "notes": "Editar la nota",
+    "addNote": "Añadir una nota",
+    "invalid": "Valor no válido"
+  },
+  "links": {
+    "add": "Vincular",
+    "none": "Vínculos",
+    "title": "Nuevo vínculo",
+    "searchTarget": "Vincular «{{label}}» con…",
+    "createElement": "Crear «{{label}}»",
+    "label": "Etiqueta",
+    "direction": "Sentido",
+    "create": "Crear el vínculo",
+    "dirNone": "Sin sentido",
+    "dirForward": "Hacia",
+    "dirBackward": "Desde",
+    "dirBoth": "En ambos sentidos",
+    "source": "Fuente"
+  },
+  "delete": {
+    "element": "Eliminar el elemento",
+    "link": "Eliminar el vínculo",
+    "confirm": "Eliminar",
+    "confirmElement": "¿Eliminar «{{label}}»?",
+    "confirmLink": "¿Eliminar este vínculo?",
+    "linksToo_one": "Su vínculo también se eliminará.",
+    "linksToo_other": "Sus {{count}} vínculos también se eliminarán."
+  },
+  "tabsBar": {
+    "title": "Pestañas",
+    "label": "Pestañas del lienzo",
+    "all": "Todo",
+    "untitled": "Sin nombre",
+    "manage": "Gestionar pestañas",
+    "new": "Nueva pestaña",
+    "name": "Nombre de la pestaña",
+    "create": "Crear la pestaña",
+    "confirmDelete": "¿Eliminar «{{name}}»? Sus elementos permanecen en el expediente.",
+    "rename": "Renombrar «{{name}}»",
+    "delete": "Eliminar «{{name}}»"
+  },
+  "tags": {
+    "remove": "Quitar la etiqueta {{tag}}",
+    "none": "Ninguna etiqueta"
+  }
+}

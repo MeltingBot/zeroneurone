@@ -4,6 +4,7 @@ import { generateUUID, bufferToHex, getExtension } from '../utils';
 import type { Asset, AssetId, DossierId } from '../types';
 import { useEncryptionStore } from '../stores/encryptionStore';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
+import { generateImageThumbnail } from '../utils/imageThumbnail';
 
 import { loadPdfjs } from './pdfjsLoader';
 import { isEmlFile } from '../utils/fileTypes';
@@ -419,7 +420,7 @@ class FileService {
 
   private async generateThumbnail(file: File, arrayBuffer: ArrayBuffer): Promise<string | null> {
     if (file.type.startsWith('image/')) {
-      return this.generateImageThumbnail(file);
+      return generateImageThumbnail(file);
     }
 
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
@@ -427,41 +428,6 @@ class FileService {
     }
 
     return null;
-  }
-
-  private async generateImageThumbnail(file: File): Promise<string | null> {
-    try {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = reject;
-        img.src = url;
-      });
-
-      URL.revokeObjectURL(url);
-
-      // Create thumbnail (max 200x200)
-      const maxSize = 200;
-      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
-      const width = Math.round(img.width * scale);
-      const height = Math.round(img.height * scale);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return null;
-
-      ctx.drawImage(img, 0, 0, width, height);
-
-      return canvas.toDataURL('image/jpeg', 0.7);
-    } catch (error) {
-      console.warn('Failed to generate image thumbnail:', error);
-      return null;
-    }
   }
 
   private async generatePdfThumbnail(arrayBuffer: ArrayBuffer): Promise<string | null> {

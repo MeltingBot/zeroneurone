@@ -1,5 +1,5 @@
 ==============================================================================
-ZeroNeurone 2.92.4 — Licences des composants tiers
+ZeroNeurone 2.93.0 — Licences des composants tiers
 ==============================================================================
 
 ZeroNeurone est distribué sous licence MIT (voir le fichier LICENSE).
@@ -10,7 +10,7 @@ Il est généré automatiquement à partir des dépendances de production
 réellement installées — les outils de développement, absents du produit
 livré, n'y figurent pas.
 
-Composants recensés : 216
+Composants recensés : 217
 
 ------------------------------------------------------------------------------
 Composants sous double licence — option retenue
@@ -193,6 +193,7 @@ Sommaire
   process-nextick-args@2.0.1 — MIT
   property-information@7.2.0 — MIT
   protocol-buffers-schema@3.6.1 — MIT
+  qrcode-generator@2.0.4 — MIT
   quickselect@3.0.0 — ISC
   react@19.2.7 — MIT
   react-dom@19.2.7 — MIT
@@ -237,7 +238,7 @@ Sommaire
   y-protocols@1.0.7 — MIT
   y-websocket@3.0.0 — MIT
   yjs@13.6.31 — MIT
-  zeroneurone-app@2.92.4 — MIT
+  zeroneurone-app@2.93.0 — MIT
   zustand@5.0.14 — MIT
   zwitch@2.0.4 — MIT
 
@@ -7090,6 +7091,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ==============================================================================
+qrcode-generator@2.0.4
+==============================================================================
+
+Licence déclarée : MIT
+Source           : https://github.com/kazuhikoarase/qrcode-generator.git
+
+Ce paquet ne publie pas de fichier de licence.
+
+Auteur déclaré : Kazuhiko Arase
+
+Distribué sous licence MIT — se reporter au texte de référence de cette licence.
+
+==============================================================================
 quickselect@3.0.0
 ==============================================================================
 
@@ -8442,7 +8456,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-zeroneurone-app@2.92.4
+zeroneurone-app@2.93.0
 ==============================================================================
 
 Licence déclarée : MIT

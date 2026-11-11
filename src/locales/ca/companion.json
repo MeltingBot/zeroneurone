@@ -1,0 +1,171 @@
+{
+  "back": "Enrere",
+  "close": "Tanca",
+  "cancel": "Cancel·la",
+  "yes": "Sí",
+  "no": "No",
+  "home": {
+    "title": "Expedients",
+    "empty": "Escanegeu el codi QR o enganxeu l'enllaç.",
+    "untitled": "Expedient sense nom",
+    "add": "Obre un expedient",
+    "linkPlaceholder": "Enganxeu l'enllaç de compartició",
+    "paste": "Enganxa",
+    "scan": "Escaneja",
+    "invalidLink": "Enllaç no reconegut",
+    "cameraUnavailable": "Càmera no disponible"
+  },
+  "join": {
+    "title": "Expedient compartit",
+    "server": "Servidor: {{host}}",
+    "yourName": "El vostre nom",
+    "join": "Obre en aquest telèfon",
+    "invalidLink": "Enllaç incomplet.",
+    "notAsync": "Compartició no asíncrona."
+  },
+  "tabs": {
+    "elements": "Elements",
+    "map": "Mapa",
+    "timeline": "Cronologia",
+    "comments": "Comentaris",
+    "capture": "Captura",
+    "settings": "Configuració"
+  },
+  "status": {
+    "pending_one": "{{count}} pendent",
+    "pending_other": "{{count}} pendents",
+    "connected_one": "Connectat, {{count}} ordinador en línia",
+    "connected_other": "Connectat, {{count}} ordinadors en línia",
+    "reconnecting": "Reconnectant…",
+    "offline": "Fora de línia",
+    "closed": "Expedient tancat"
+  },
+  "install": {
+    "hint": "Afegeix a la pantalla d'inici",
+    "dismiss": "Amaga"
+  },
+  "elements": {
+    "search": "Cerca",
+    "emptyDossier": "Cap element.",
+    "noMatch": "Cap resultat.",
+    "loading": "Recuperant…",
+    "waitingPeer": "Esperant un ordinador en línia",
+    "clear": "Esborra la cerca",
+    "results_one": "{{count}} resultat",
+    "results_other": "{{count}} resultats",
+    "searchHint": "Cerca, o # per a una etiqueta"
+  },
+  "element": {
+    "untitled": "Sense títol",
+    "details": "Informació",
+    "date": "Data de recollida",
+    "source": "Font",
+    "position": "Ubicació",
+    "links_one": "{{count}} enllaç",
+    "links_other": "{{count}} enllaços",
+    "notes": "Nota",
+    "period": "Període",
+    "count_one": "{{count}} element",
+    "count_other": "{{count}} elements",
+    "events_one": "{{count}} esdeveniment",
+    "events_other": "{{count}} esdeveniments"
+  },
+  "asset": {
+    "missing": "No disponible",
+    "receiving": "Rebent"
+  },
+  "comments": {
+    "resolve": "Resol",
+    "reopen": "Reobre",
+    "placeholder": "Comentari",
+    "send": "Envia",
+    "showResolved": "Mostra els resolts",
+    "empty": "Cap comentari obert.",
+    "deletedTarget": "Element suprimit"
+  },
+  "capture": {
+    "label": "Títol",
+    "notes": "Nota",
+    "photo": "Fes una foto",
+    "removePhoto": "Treu la foto",
+    "position": "Afegeix la meva ubicació",
+    "locating": "Localitzant…",
+    "positionFailed": "Ubicació no disponible",
+    "removePosition": "Treu la ubicació",
+    "save": "Afegeix a l'expedient",
+    "saving": "Afegint…",
+    "defaultLabel": "Captura del {{time}}",
+    "tooLarge": "Foto massa pesada",
+    "failed": "Error en afegir",
+    "source": "Font"
+  },
+  "settings": {
+    "identity": "El vostre nom",
+    "connection": "Connexió",
+    "thisPhone": "Aquest telèfon",
+    "forget": "Oblida aquest expedient",
+    "forgetConfirm": "Esborra",
+    "forgetPending_one": "Es perdrà {{count}} canvi no enviat.",
+    "forgetPending_other": "Es perdran {{count}} canvis no enviats."
+  },
+  "graph": {
+    "label": "Graf de veïnatge",
+    "depth": "Nivells",
+    "hidden_one": "+{{count}} amagat",
+    "hidden_other": "+{{count}} amagats"
+  },
+  "map": {
+    "satellite": "Satèl·lit",
+    "empty": "Cap element localitzat"
+  },
+  "timeline": {
+    "empty": "Cap element datat"
+  },
+  "edit": {
+    "save": "Desa",
+    "notes": "Edita la nota",
+    "addNote": "Afegeix una nota",
+    "invalid": "Valor no vàlid"
+  },
+  "links": {
+    "add": "Enllaça",
+    "none": "Enllaços",
+    "title": "Nou enllaç",
+    "searchTarget": "Enllaça «{{label}}» amb…",
+    "createElement": "Crea «{{label}}»",
+    "label": "Etiqueta",
+    "direction": "Sentit",
+    "create": "Crea l'enllaç",
+    "dirNone": "Sense sentit",
+    "dirForward": "Cap a",
+    "dirBackward": "Des de",
+    "dirBoth": "En tots dos sentits",
+    "source": "Font"
+  },
+  "delete": {
+    "element": "Suprimeix l'element",
+    "link": "Suprimeix l'enllaç",
+    "confirm": "Suprimeix",
+    "confirmElement": "Voleu suprimir «{{label}}»?",
+    "confirmLink": "Voleu suprimir aquest enllaç?",
+    "linksToo_one": "També se suprimirà el seu enllaç.",
+    "linksToo_other": "També se suprimiran els seus {{count}} enllaços."
+  },
+  "tabsBar": {
+    "title": "Pestanyes",
+    "label": "Pestanyes del llenç",
+    "all": "Tot",
+    "untitled": "Sense nom",
+    "manage": "Gestiona les pestanyes",
+    "new": "Pestanya nova",
+    "name": "Nom de la pestanya",
+    "create": "Crea la pestanya",
+    "confirmDelete": "Voleu suprimir «{{name}}»? Els seus elements es queden a l'expedient.",
+    "rename": "Canvia el nom de «{{name}}»",
+    "delete": "Suprimeix «{{name}}»"
+  },
+  "tags": {
+    "remove": "Treu l'etiqueta {{tag}}",
+    "none": "Cap etiqueta"
+  }
+}

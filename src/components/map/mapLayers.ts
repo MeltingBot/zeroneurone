@@ -11,7 +11,7 @@ export const LINK_ARROWS_SOURCE = 'link-arrows';
 
 export const LINK_OUTLINE_LAYER = 'link-outline';
 
-const LINK_LINE_LAYERS = { solid: 'link-line-solid', dashed: 'link-line-dashed', dotted: 'link-line-dotted' } as const;
+export const LINK_LINE_LAYERS = { solid: 'link-line-solid', dashed: 'link-line-dashed', dotted: 'link-line-dotted' } as const;
 
 const LINK_ARROWS_LAYER = 'link-arrows';
 

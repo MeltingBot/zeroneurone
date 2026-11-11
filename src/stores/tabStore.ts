@@ -78,6 +78,7 @@ type YDocDeps = {
   syncService: typeof import('../services/syncService')['syncService'];
   getYMaps: typeof import('../types/yjs')['getYMaps'];
   setLocalOpPending: typeof import('./dossierStore')['setLocalOpPending'];
+  currentDossierYDoc: typeof import('./dossierStore')['currentDossierYDoc'];
   tabToYMap: typeof import('../services/yjs/tabMapper')['tabToYMap'];
 };
 let yDocDeps: YDocDeps | null = null;
@@ -89,8 +90,8 @@ function loadYDocDeps(): Promise<YDocDeps> {
     import('../types/yjs'),
     import('./dossierStore'),
     import('../services/yjs/tabMapper'),
-  ]).then(([{ syncService }, { getYMaps }, { setLocalOpPending }, { tabToYMap }]) => {
-    yDocDeps = { syncService, getYMaps, setLocalOpPending, tabToYMap };
+  ]).then(([{ syncService }, { getYMaps }, { setLocalOpPending, currentDossierYDoc }, { tabToYMap }]) => {
+    yDocDeps = { syncService, getYMaps, setLocalOpPending, currentDossierYDoc, tabToYMap };
     return yDocDeps;
   }).finally(() => { yDocDepsLoading = null; });
   return yDocDepsLoading;
@@ -101,7 +102,8 @@ type TabsYMap = Y.Map<unknown>;
 /** Write to the Y.Doc's tabs map, in one transaction (fire-and-forget). */
 function withTabsYMap(write: (tabsMap: TabsYMap, deps: YDocDeps) => void): Promise<void> {
   const run = (deps: YDocDeps) => {
-    const ydoc = deps.syncService.getYDoc();
+    // Only the shown dossier's Y.Doc: never another dossier's mid-switch
+    const ydoc = deps.currentDossierYDoc();
     if (!ydoc) return;
     deps.setLocalOpPending();
     const { tabs: tabsMap } = deps.getYMaps(ydoc);

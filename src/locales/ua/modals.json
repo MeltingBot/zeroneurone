@@ -456,6 +456,42 @@
       "confirm": "Видалити ВСІ досьє та їхні дані?\n\nЦю дію не можна скасувати.",
       "confirmAgain": "Останнє підтвердження: усі дані буде втрачено. Продовжити?",
       "error": "Помилка під час видалення"
+    },
+    "integrity": {
+      "title": "Цілісність справ",
+      "check": "Перевірити",
+      "checking": "Перевірка…",
+      "none": "Змішування не виявлено",
+      "error": "Перевірка неможлива",
+      "from": "із «{{name}}»",
+      "unknownDossier": "невідома справа {{id}}",
+      "nameFrom": "Назву взято з «{{name}}»",
+      "undecryptable_one": "{{count}} нечитабельне оновлення, не перевірено",
+      "undecryptable_few": "{{count}} нечитабельні оновлення, не перевірено",
+      "undecryptable_many": "{{count}} нечитабельних оновлень, не перевірено",
+      "undecryptable_other": "{{count}} нечитабельного оновлення, не перевірено",
+      "kinds": {
+        "elements_one": "{{count}} елемент",
+        "elements_few": "{{count}} елементи",
+        "elements_many": "{{count}} елементів",
+        "elements_other": "{{count}} елемента",
+        "links_one": "{{count}} зв'язок",
+        "links_few": "{{count}} зв'язки",
+        "links_many": "{{count}} зв'язків",
+        "links_other": "{{count}} зв'язку",
+        "comments_one": "{{count}} коментар",
+        "comments_few": "{{count}} коментарі",
+        "comments_many": "{{count}} коментарів",
+        "comments_other": "{{count}} коментаря",
+        "tabs_one": "{{count}} вкладка",
+        "tabs_few": "{{count}} вкладки",
+        "tabs_many": "{{count}} вкладок",
+        "tabs_other": "{{count}} вкладки",
+        "reports_one": "{{count}} звіт",
+        "reports_few": "{{count}} звіти",
+        "reports_many": "{{count}} звітів",
+        "reports_other": "{{count}} звіту"
+      }
     }
   },
   "localStorage": {
@@ -604,7 +640,13 @@
     "copyLink": "Копіювати посилання",
     "shareLinkHelp": "Надішліть це посилання людям, з якими хочете співпрацювати.",
     "stopSharing": "Припинити спільний доступ",
-    "stopping": "Зупинка..."
+    "stopping": "Зупинка...",
+    "mobile": {
+      "open": "Відкрити на телефоні",
+      "scan": "Відскануйте камерою телефону.",
+      "qrLabel": "QR-код мобільного компаньйона",
+      "asyncRequired": "Мобільний компаньйон потребує спільного доступу в асинхронному режимі. Зупиніть доступ і поділіться знову в цьому режимі."
+    }
   },
   "dossierTags": {
     "title": "Теги справа",

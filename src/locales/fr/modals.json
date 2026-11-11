@@ -452,6 +452,30 @@
       "confirm": "Supprimer TOUS les dossiers et leurs données ?\n\nCette action est irréversible.",
       "confirmAgain": "Dernière confirmation : toutes les données seront perdues. Continuer ?",
       "error": "Erreur lors de la suppression"
+    },
+    "integrity": {
+      "title": "Intégrité des dossiers",
+      "check": "Vérifier",
+      "checking": "Vérification…",
+      "none": "Aucun mélange détecté",
+      "error": "Vérification impossible",
+      "from": "venant de « {{name}} »",
+      "unknownDossier": "dossier inconnu {{id}}",
+      "nameFrom": "Nom repris de « {{name}} »",
+      "undecryptable_one": "{{count}} mise à jour illisible, non vérifiée",
+      "undecryptable_other": "{{count}} mises à jour illisibles, non vérifiées",
+      "kinds": {
+        "elements_one": "{{count}} élément",
+        "elements_other": "{{count}} éléments",
+        "links_one": "{{count}} lien",
+        "links_other": "{{count}} liens",
+        "comments_one": "{{count}} commentaire",
+        "comments_other": "{{count}} commentaires",
+        "tabs_one": "{{count}} onglet",
+        "tabs_other": "{{count}} onglets",
+        "reports_one": "{{count}} rapport",
+        "reports_other": "{{count}} rapports"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Copier le lien",
     "shareLinkHelp": "Envoyez ce lien aux personnes avec qui vous souhaitez collaborer.",
     "stopSharing": "Arrêter le partage",
-    "stopping": "Arrêt..."
+    "stopping": "Arrêt...",
+    "mobile": {
+      "open": "Ouvrir sur mobile",
+      "scan": "Scannez avec l'appareil photo du téléphone.",
+      "qrLabel": "QR code du compagnon mobile",
+      "asyncRequired": "Le compagnon mobile nécessite un partage en mode asynchrone. Arrêtez le partage puis repartagez avec ce mode."
+    }
   },
   "dossierTags": {
     "title": "Tags du dossier",
