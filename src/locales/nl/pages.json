@@ -339,7 +339,7 @@
     "closedBanner": "Afgesloten op {{date}} — alleen-lezen",
     "undecryptableUpdates": "Onleesbare wijzigingen: {{count}}. Ze blijven bewaard; zie Opslag > Onderhoud.",
     "popupBlocked": "Pop-up geblokkeerd door de browser",
-    "readOnlyLinkBanner": "Alleen-lezen (deellink)"
+    "readOnlyLinkBanner": "Alleen lezen"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",
@@ -580,6 +580,11 @@
       "connectionTimeout": "Verbindingstimeout",
       "connectionLost": "Verbinding verloren",
       "connectionError": "Fout tijdens verbinden"
+    },
+    "writeCode": {
+      "label": "Schrijfcode",
+      "hint": "Leeg: alleen lezen",
+      "wrong": "Onjuiste code"
     }
   },
   "tutorial": {

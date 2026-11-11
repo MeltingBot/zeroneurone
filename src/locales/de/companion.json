@@ -23,7 +23,10 @@
     "yourName": "Ihr Name",
     "join": "Auf diesem Handy öffnen",
     "invalidLink": "Unvollständiger Link.",
-    "notAsync": "Freigabe nicht asynchron."
+    "notAsync": "Freigabe nicht asynchron.",
+    "writeCode": "Schreibcode",
+    "writeCodeHint": "Leer: nur lesen",
+    "wrongWriteCode": "Falscher Code"
   },
   "tabs": {
     "elements": "Elemente",

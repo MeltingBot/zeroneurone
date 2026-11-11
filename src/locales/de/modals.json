@@ -631,9 +631,10 @@
       "qrLabel": "QR-Code des mobilen Begleiters",
       "asyncRequired": "Der mobile Begleiter erfordert eine Freigabe im asynchronen Modus. Freigabe beenden und mit diesem Modus erneut freigeben."
     },
-    "editLink": "Bearbeitungslink",
     "readLink": "Leselink",
-    "readLinkHelp": "Nur Ansicht: keine Änderung möglich."
+    "readLinkHelp": "Nur Ansicht: keine Änderung möglich.",
+    "writeCode": "Schreibcode",
+    "writeCodeHelp": "Zum Bearbeiten beim Beitreten eingeben. Getrennt übermitteln."
   },
   "dossierTags": {
     "title": "Akten-Tags",

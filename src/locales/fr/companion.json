@@ -23,7 +23,10 @@
     "yourName": "Votre nom",
     "join": "Ouvrir sur ce téléphone",
     "invalidLink": "Lien incomplet.",
-    "notAsync": "Partage non asynchrone."
+    "notAsync": "Partage non asynchrone.",
+    "writeCode": "Code d'écriture",
+    "writeCodeHint": "Vide : lecture seule",
+    "wrongWriteCode": "Code incorrect"
   },
   "tabs": {
     "elements": "Éléments",

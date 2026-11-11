@@ -341,7 +341,7 @@
     "closedBanner": "Закрито {{date}} — лише для читання",
     "undecryptableUpdates": "Нечитабельні зміни: {{count}}. Їх збережено; див. Сховище > Обслуговування.",
     "popupBlocked": "Вікно заблоковано браузером",
-    "readOnlyLinkBanner": "Лише читання (посилання)"
+    "readOnlyLinkBanner": "Лише читання"
   },
   "map": {
     "noGeoElements": "Немає геолокалізованих елементів",
@@ -584,6 +584,11 @@
       "connectionTimeout": "Час очікування з'єднання вичерпано",
       "connectionLost": "З'єднання втрачено",
       "connectionError": "Помилка під час з'єднання"
+    },
+    "writeCode": {
+      "label": "Код запису",
+      "hint": "Порожньо: лише читання",
+      "wrong": "Неправильний код"
     }
   },
   "tutorial": {

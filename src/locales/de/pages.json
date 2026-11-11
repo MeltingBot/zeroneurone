@@ -339,7 +339,7 @@
     "closedBanner": "Abgeschlossen am {{date}} — schreibgeschützt",
     "undecryptableUpdates": "Unlesbare Änderungen: {{count}}. Sie bleiben erhalten; siehe Speicher > Wartung.",
     "popupBlocked": "Popup vom Browser blockiert",
-    "readOnlyLinkBanner": "Schreibgeschützt (Freigabelink)"
+    "readOnlyLinkBanner": "Nur lesen"
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",
@@ -580,6 +580,11 @@
       "connectionTimeout": "Verbindungs-Timeout",
       "connectionLost": "Verbindung verloren",
       "connectionError": "Fehler bei der Verbindung"
+    },
+    "writeCode": {
+      "label": "Schreibcode",
+      "hint": "Leer: nur lesen",
+      "wrong": "Falscher Code"
     }
   },
   "tutorial": {

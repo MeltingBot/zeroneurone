@@ -341,7 +341,7 @@
     "closedBanner": "Zamknięta {{date}} — tylko do odczytu",
     "undecryptableUpdates": "Nieczytelne zmiany: {{count}}. Zostały zachowane; zobacz Pamięć > Konserwacja.",
     "popupBlocked": "Okno zablokowane przez przeglądarkę",
-    "readOnlyLinkBanner": "Tylko do odczytu (link udostępniania)"
+    "readOnlyLinkBanner": "Tylko odczyt"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",
@@ -584,6 +584,11 @@
       "connectionTimeout": "Przekroczono limit czasu połączenia",
       "connectionLost": "Utracono połączenie",
       "connectionError": "Błąd podczas łączenia"
+    },
+    "writeCode": {
+      "label": "Kod zapisu",
+      "hint": "Puste: tylko odczyt",
+      "wrong": "Nieprawidłowy kod"
     }
   },
   "tutorial": {

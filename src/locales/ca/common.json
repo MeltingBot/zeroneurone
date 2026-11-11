@@ -310,8 +310,7 @@
   "dossierLock": {
     "closed": "Dossier tancat: només lectura.",
     "retention": "Dossier en només lectura: retenció caducada.",
-    "plugin": "Modificacions suspeses: {{reason}}",
-    "readOnlyLink": "Expedient obert en només lectura: no es pot modificar."
+    "plugin": "Modificacions suspeses: {{reason}}"
   },
   "requiredPlugins": {
     "title": "Extensió obligatòria no disponible",

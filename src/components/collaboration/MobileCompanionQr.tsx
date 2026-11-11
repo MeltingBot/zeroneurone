@@ -39,7 +39,7 @@ export function MobileCompanionQr({ dossierId, encryptionKey, asyncEnabled }: Mo
     (async () => {
       const [{ default: qrcode }, url] = await Promise.all([
         import('qrcode-generator'),
-        syncService.buildShareUrl(dossierId, encryptionKey, undefined, true, 'm'),
+        syncService.buildShareUrl(dossierId, encryptionKey, undefined, true, 'm', undefined, true),
       ]);
       const code = qrcode(0, 'M');
       code.addData(url);

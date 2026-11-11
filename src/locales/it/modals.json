@@ -631,9 +631,10 @@
       "qrLabel": "Codice QR del compagno mobile",
       "asyncRequired": "Il compagno mobile richiede una condivisione in modalità asincrona. Interrompi la condivisione e condividi di nuovo con questa modalità."
     },
-    "editLink": "Link di modifica",
     "readLink": "Link di lettura",
-    "readLinkHelp": "Solo consultazione: nessuna modifica possibile."
+    "readLinkHelp": "Solo consultazione: nessuna modifica possibile.",
+    "writeCode": "Codice di scrittura",
+    "writeCodeHelp": "Per modificare: da inserire all'accesso. Inviarlo a parte."
   },
   "dossierTags": {
     "title": "Tag delil fascicolo",

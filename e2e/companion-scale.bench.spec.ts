@@ -84,7 +84,7 @@ for (const { elements: size, photos, name } of SIZES) {
       const { useSyncStore } = await import('/src/stores/syncStore.ts');
       const { syncService } = await import('/src/services/syncService.ts');
       const { encryptionKey } = await useSyncStore.getState().share('Bench', true);
-      return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Bench', true, 'm');
+      return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Bench', true, 'm', undefined, true);
     });
 
     const { defaultBrowserType: _ignored, ...iphone } = devices['iPhone 13'];

@@ -6,7 +6,7 @@ import { generateEncryptionKey } from './cryptoService';
 import { EncryptedWebSocket, createEncryptedWebSocketClass } from './encryptedWebSocket';
 import { CATEGORY, categoryOf, readCategory, withCategory } from './messageCategory';
 import { encodeChunk, encodeRequest } from './assetRequests';
-import { generateWriteAccess, isReadOnly, setRelayClockOffset, signedRoomId, withAccess } from './writeAccess';
+import { generateWriteAccess, isReadOnly, isValidWriteLock, lockSeed, setRelayClockOffset, signedRoomId, unlockSeed, withAccess, writeCodeOf } from './writeAccess';
 
 const message = (...parts: number[]) => {
   const e = encoding.createEncoder();
@@ -35,6 +35,22 @@ describe('write keys', () => {
     // The files room has its own proof
     const files = withAccess(`ws://relay/${room}.files?token=t`, access);
     expect(accessOf(`${room}.files`, params(files))).toEqual({ writer: true });
+  });
+});
+
+describe('the write code', () => {
+  it('unlocks the private key from the link, and nothing else does', async () => {
+    const access = generateWriteAccess();
+    const code = await writeCodeOf(access.seed);
+    expect(code).toMatch(/^\d{6}$/);
+    expect(await writeCodeOf(access.seed)).toBe(code);
+    const locked = await lockSeed(access);
+    expect(isValidWriteLock(locked)).toBe(true);
+    expect(await unlockSeed(access.publicKey, locked, code)).toBe(access.seed);
+    const wrong = String((Number(code) + 1) % 1_000_000).padStart(6, '0');
+    expect(await unlockSeed(access.publicKey, locked, wrong)).toBeNull();
+    // Locked for another key: refused
+    expect(await unlockSeed(generateWriteAccess().publicKey, locked, code)).toBeNull();
   });
 });
 

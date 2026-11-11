@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ChevronRight, Paperclip, Settings } from 'lucide-react';
 import { isValidKeyString } from '../services/cryptoService';
 import { parseJoinLink } from '../utils/joinUrl';
+import { unlockSeed } from '../services/writeAccess';
 import { getSession, listSessions, pendingDeletions, saveSession, type CompanionSession } from './sessions';
 import { eraseLocalCopy } from './erase';
 import { getLocalUser, hasChosenName, setLocalUserName } from './presence';
@@ -263,12 +264,15 @@ function JoinScreen({ roomId }: { roomId: string }) {
   const [link] = useState(() => parseJoinLink(roomId, window.location.search, window.location.hash));
   const [name, setName] = useState(() => (hasChosenName() ? getLocalUser().name : ''));
   const [error, setError] = useState<string | null>(null);
+  /** Write code: empty, the phone joins read-only */
+  const [writeCode, setWriteCode] = useState('');
+  const asksWriteCode = !!link.writeLock && !!link.access && !link.access.seed;
 
   const validKey = !!link.encryptionKey && isValidKeyString(link.encryptionKey);
   const server = link.server ?? '';
   const known = getSession(link.dossierId);
 
-  const join = useCallback(() => {
+  const join = useCallback(async () => {
     if (!validKey || !server) {
       setError(t('join.invalidLink'));
       return;
@@ -276,6 +280,15 @@ function JoinScreen({ roomId }: { roomId: string }) {
     if (!link.asyncEnabled) {
       setError(t('join.notAsync'));
       return;
+    }
+    let access = link.access;
+    if (access && !access.seed && link.writeLock && writeCode.trim()) {
+      const seed = await unlockSeed(access.publicKey, link.writeLock, writeCode);
+      if (!seed) {
+        setError(t('join.wrongWriteCode'));
+        return;
+      }
+      access = { publicKey: access.publicKey, seed };
     }
     const trimmed = name.trim();
     if (trimmed) setLocalUserName(trimmed);
@@ -286,12 +299,12 @@ function JoinScreen({ roomId }: { roomId: string }) {
       server,
       name: link.name ?? known?.name ?? '',
       joinedAt: new Date().toISOString(),
-      ...(link.access ? { access: link.access } : {}),
+      ...(access ? { access } : {}),
     };
     saveSession(session);
     // Replace: the key leaves the address bar and the history
     navigate(`d/${encodeURIComponent(session.dossierId)}`, true);
-  }, [validKey, server, link, name, known, t]);
+  }, [validKey, server, link, name, known, writeCode, t]);
 
   let host = server;
   try { host = new URL(server).host; } catch { /* shown as given */ }
@@ -317,8 +330,22 @@ function JoinScreen({ roomId }: { roomId: string }) {
                 autoComplete="nickname"
               />
             </label>
+            {asksWriteCode && (
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-text-primary">{t('join.writeCode')}</span>
+                <input
+                  className={inputClass}
+                  value={writeCode}
+                  onChange={(e) => { setWriteCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(null); }}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="000000"
+                />
+                <span className="block text-xs text-text-tertiary">{t('join.writeCodeHint')}</span>
+              </label>
+            )}
             {error && <p className="text-sm text-error">{error}</p>}
-            <button type="button" className={`${primaryButton} w-full`} onClick={join}>
+            <button type="button" className={`${primaryButton} w-full`} onClick={() => void join()}>
               {t('join.join')}
             </button>
           </>

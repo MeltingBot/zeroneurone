@@ -631,9 +631,10 @@
       "qrLabel": "Código QR do companheiro móvel",
       "asyncRequired": "O companheiro móvel requer uma partilha em modo assíncrono. Pare a partilha e partilhe de novo com esse modo."
     },
-    "editLink": "Ligação de edição",
     "readLink": "Ligação de leitura",
-    "readLinkHelp": "Apenas consulta: nenhuma alteração possível."
+    "readLinkHelp": "Apenas consulta: nenhuma alteração possível.",
+    "writeCode": "Código de escrita",
+    "writeCodeHelp": "Para editar: introduzido ao entrar. Envie-o à parte."
   },
   "dossierTags": {
     "title": "Tags do dossiê",

@@ -631,9 +631,10 @@
       "qrLabel": "Lagun mugikorraren QR kodea",
       "asyncRequired": "Lagun mugikorrak modu asinkronoan partekatzea behar du. Gelditu partekatzea eta partekatu berriro modu horrekin."
     },
-    "editLink": "Edizio-esteka",
     "readLink": "Irakurketa-esteka",
-    "readLinkHelp": "Kontsulta soilik: ezin da ezer aldatu."
+    "readLinkHelp": "Kontsulta soilik: ezin da ezer aldatu.",
+    "writeCode": "Idazketa-kodea",
+    "writeCodeHelp": "Aldatzeko: sartzean idatzi. Bidali bereiz."
   },
   "dossierTags": {
     "title": "Espedienteren etiketak",

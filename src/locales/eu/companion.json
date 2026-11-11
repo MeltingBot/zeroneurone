@@ -23,7 +23,10 @@
     "yourName": "Zure izena",
     "join": "Ireki telefono honetan",
     "invalidLink": "Esteka osatugabea.",
-    "notAsync": "Partekatzea ez da asinkronoa."
+    "notAsync": "Partekatzea ez da asinkronoa.",
+    "writeCode": "Idazketa-kodea",
+    "writeCodeHint": "Hutsik: irakurtzeko soilik",
+    "wrongWriteCode": "Kode okerra"
   },
   "tabs": {
     "elements": "Elementuak",

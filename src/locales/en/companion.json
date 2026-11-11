@@ -23,7 +23,10 @@
     "yourName": "Your name",
     "join": "Open on this phone",
     "invalidLink": "Incomplete link.",
-    "notAsync": "Share is not async."
+    "notAsync": "Share is not async.",
+    "writeCode": "Write code",
+    "writeCodeHint": "Empty: read-only",
+    "wrongWriteCode": "Wrong code"
   },
   "tabs": {
     "elements": "Elements",

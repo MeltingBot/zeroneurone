@@ -23,7 +23,10 @@
     "yourName": "O seu nome",
     "join": "Abrir neste telemóvel",
     "invalidLink": "Ligação incompleta.",
-    "notAsync": "Partilha não assíncrona."
+    "notAsync": "Partilha não assíncrona.",
+    "writeCode": "Código de escrita",
+    "writeCodeHint": "Vazio: só leitura",
+    "wrongWriteCode": "Código incorreto"
   },
   "tabs": {
     "elements": "Elementos",

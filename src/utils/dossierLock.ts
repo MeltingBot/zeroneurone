@@ -69,12 +69,12 @@ export function getOpenDossierLock(): DossierLockReason | null {
 /** Notify (at most every few seconds, a burst of refused writes shows one notice) and throw */
 export function refuseWrite(reason: DossierLockReason): never {
   const now = Date.now();
-  if (now - lastNoticeAt > 3000) {
+  // Read link: the banner says it all the time, a notice on each refusal is noise
+  if (reason !== 'readOnlyLink' && now - lastNoticeAt > 3000) {
     lastNoticeAt = now;
     toast.warning(reason === 'plugin'
       ? i18next.t('common:dossierLock.plugin', { reason: getPluginWriteLock() ?? '' })
       : i18next.t(reason === 'closed' ? 'common:dossierLock.closed'
-        : reason === 'readOnlyLink' ? 'common:dossierLock.readOnlyLink'
         : 'common:dossierLock.retention'));
   }
   throw new DossierLockedError(reason);

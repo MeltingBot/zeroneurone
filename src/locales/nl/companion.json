@@ -23,7 +23,10 @@
     "yourName": "Uw naam",
     "join": "Openen op deze telefoon",
     "invalidLink": "Onvolledige link.",
-    "notAsync": "Delen niet asynchroon."
+    "notAsync": "Delen niet asynchroon.",
+    "writeCode": "Schrijfcode",
+    "writeCodeHint": "Leeg: alleen lezen",
+    "wrongWriteCode": "Onjuiste code"
   },
   "tabs": {
     "elements": "Elementen",

@@ -25,7 +25,10 @@
     "yourName": "Twoje imię",
     "join": "Otwórz na tym telefonie",
     "invalidLink": "Niepełny link.",
-    "notAsync": "Udostępnianie nie jest asynchroniczne."
+    "notAsync": "Udostępnianie nie jest asynchroniczne.",
+    "writeCode": "Kod zapisu",
+    "writeCodeHint": "Puste: tylko odczyt",
+    "wrongWriteCode": "Nieprawidłowy kod"
   },
   "tabs": {
     "elements": "Elementy",

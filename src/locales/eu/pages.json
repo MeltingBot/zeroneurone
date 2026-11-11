@@ -339,7 +339,7 @@
     "closedBanner": "{{date}}(e)an itxita — irakurtzeko soilik",
     "undecryptableUpdates": "Aldaketa irakurtezinak: {{count}}. Gorde egin dira; ikus Biltegiratzea > Mantentzea.",
     "popupBlocked": "Nabigatzaileak leihoa blokeatu du",
-    "readOnlyLinkBanner": "Irakurtzeko soilik (partekatze-esteka)"
+    "readOnlyLinkBanner": "Irakurtzeko soilik"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",
@@ -580,6 +580,11 @@
       "connectionTimeout": "Konexio denbora-muga",
       "connectionLost": "Konexioa galdu da",
       "connectionError": "Errorea konektatzean"
+    },
+    "writeCode": {
+      "label": "Idazketa-kodea",
+      "hint": "Hutsik: irakurtzeko soilik",
+      "wrong": "Kode okerra"
     }
   },
   "tutorial": {

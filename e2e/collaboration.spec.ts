@@ -87,8 +87,12 @@ test('two peers editing at once converge', async ({ browser }) => {
   await a.setInputFiles('input[type="file"]', file);
   await a.waitForSelector('.react-flow__node', { timeout: 120_000 });
   await a.waitForTimeout(3000);
-  const { shareUrl } = await a.evaluate(async () =>
-    (await import('/src/stores/syncStore.ts')).useSyncStore.getState().share('Collab'));
+  // B must write: the link with the write key in clear (as the mobile QR code)
+  const shareUrl = await a.evaluate(async () => {
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await (await import('/src/stores/syncStore.ts')).useSyncStore.getState().share('Collab');
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Collab', syncService.isAsync(), 'join', undefined, true);
+  });
   expect(shareUrl).toContain('/join/');
 
   // ── B joins through the link ────────────────────────────────────────────

@@ -163,7 +163,18 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['maplibre-gl'],
   },
-  server: {},
+  server: {
+    // Dev only: the local relay (node relay/index.js, port 4444) under
+    // /relay, so a phone on the LAN reaches it as wss:// through the HTTPS
+    // dev server (an HTTPS page cannot use a plain ws:// relay)
+    proxy: {
+      '/relay': {
+        target: 'ws://localhost:4444',
+        ws: true,
+        rewrite: (path) => path.replace(/^\/relay/, '') || '/',
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

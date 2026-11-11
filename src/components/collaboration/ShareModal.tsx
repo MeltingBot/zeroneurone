@@ -10,6 +10,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { useSyncStore, useDossierStore } from '../../stores';
 import { syncService } from '../../services/syncService';
+import { writeCodeOf } from '../../services/writeAccess';
 import { useShallow } from 'zustand/react/shallow';
 import { MobileCompanionQr } from './MobileCompanionQr';
 
@@ -26,18 +27,19 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore(useShallow((s) => ({ mode: s.mode, share: s.share, unshare: s.unshare, localUser: s.localUser, updateLocalUserName: s.updateLocalUserName })));
   const currentDossier = useDossierStore((state) => state.currentDossier);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  /** Read link of a signed room, next to the write link (read-only sharing) */
-  const [readUrl, setReadUrl] = useState<string | null>(null);
   const access = mode === 'shared' ? syncService.getWriteAccess() : null;
   const readOnly = !!access && !access.seed;
+  /** Code that unlocks writing from the link (signed room, writer only) */
+  const [codeOf, setCodeOf] = useState<{ seed: string; code: string } | null>(null);
+  const writeCode = isOpen && access?.seed && codeOf?.seed === access.seed ? codeOf.code : null;
 
   useEffect(() => {
-    if (!isOpen || !shareUrl || !currentDossier || !access?.seed || readUrl) return;
-    const encryptionKey = syncService.getEncryptionKey();
-    if (!encryptionKey) return;
-    void syncService.buildShareUrl(currentDossier.id, encryptionKey, currentDossier.name, syncService.isAsync(), 'join', { publicKey: access.publicKey })
-      .then(setReadUrl);
-  }, [isOpen, shareUrl, currentDossier, access, readUrl]);
+    const seed = access?.seed;
+    if (!isOpen || !seed) return;
+    let cancelled = false;
+    void writeCodeOf(seed).then((code) => { if (!cancelled) setCodeOf({ seed, code }); });
+    return () => { cancelled = true; };
+  }, [isOpen, access?.seed]);
 
   // Rebuild share URL when modal opens if already sharing/connected
   // Works for both host and client (gets key from syncService)
@@ -91,7 +93,6 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     setIsLoading(true);
     try {
       const result = await share(currentDossier?.name, asyncEnabled);
-      setReadUrl(null);
       setShareUrl(result.shareUrl);
     } catch (error) {
       console.error('Failed to share:', error);
@@ -105,7 +106,6 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     try {
       await unshare();
       setShareUrl(null);
-      setReadUrl(null);
     } catch (error) {
       console.error('Failed to unshare:', error);
     } finally {
@@ -283,18 +283,14 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Share links: write and read for a signed room, one link otherwise */}
-              {readUrl ? (
-                <>
-                  <ShareLinkRow label={t('collaboration.editLink')} url={shareUrl} help={t('collaboration.shareLinkHelp')} />
-                  <ShareLinkRow label={t('collaboration.readLink')} url={readUrl} help={t('collaboration.readLinkHelp')} />
-                </>
-              ) : (
-                <ShareLinkRow
-                  label={t(readOnly ? 'collaboration.readLink' : 'collaboration.shareLink')}
-                  url={shareUrl}
-                  help={t(readOnly ? 'collaboration.readLinkHelp' : 'collaboration.shareLinkHelp')}
-                />
+              {/* Share link; for a signed room, the code that unlocks writing */}
+              <ShareLinkRow
+                label={t(readOnly ? 'collaboration.readLink' : 'collaboration.shareLink')}
+                url={shareUrl}
+                help={t(readOnly ? 'collaboration.readLinkHelp' : 'collaboration.shareLinkHelp')}
+              />
+              {writeCode && (
+                <ShareLinkRow label={t('collaboration.writeCode')} url={writeCode} help={t('collaboration.writeCodeHelp')} />
               )}
 
               {/* Mobile companion */}

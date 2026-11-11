@@ -4,9 +4,9 @@ import { connect } from 'node:net';
 import { setupCleanEnvironment, createTestDossier, createElementOnCanvas, waitForAppLoad } from './fixtures/test-utils';
 
 /**
- * Read-only sharing: a shared dossier gets an edit link and a read link. A
- * computer joined with the edit link writes as before; one joined with the
- * read link sees every change and can change nothing, even by writing into
+ * Read-only sharing: a shared dossier gets one link and a write code. A
+ * computer joined with the code writes as before; one joined without it
+ * sees every change and can change nothing, even by writing into
  * the shared document behind the app's back (the relay drops its changes,
  * relay/access.js). Dev server only: reads the stores through Vite's URLs.
  */
@@ -40,11 +40,19 @@ async function labels(page: Page): Promise<string[]> {
   return page.evaluate(async () => (await import('/src/stores/dossierStore.ts')).useDossierStore.getState().elements.map((e) => e.label));
 }
 
-async function join(browser: Browser, url: string): Promise<Page> {
+async function join(browser: Browser, url: string, code?: string): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
   await page.goto(url);
   // A fresh browser has no server yet: accept the one from the link
   await page.getByRole('button', { name: /^(save|enregistrer)$/i }).click({ timeout: 30_000 });
+  if (code) {
+    const field = page.getByLabel(/^(write code|code d'écriture)$/i);
+    // A wrong code: refused, the page stays
+    await field.fill(code === '000000' ? '111111' : '000000');
+    await page.getByRole('button', { name: /^(join|rejoindre)$/i }).click();
+    await expect(page.getByText(/^(wrong code|code incorrect)$/i)).toBeVisible({ timeout: 10_000 });
+    await field.fill(code);
+  }
   await page.getByRole('button', { name: /^(join|rejoindre)$/i }).click({ timeout: 30_000 });
   const disclaimer = page.locator('[data-testid="disclaimer-accept"]');
   if (await disclaimer.isVisible({ timeout: 2000 }).catch(() => false)) await disclaimer.click();
@@ -65,10 +73,10 @@ async function create(page: Page, label: string): Promise<string> {
   }, label);
 }
 
-test('a read link sees everything and changes nothing; edit links write both ways', async ({ browser }) => {
+test('without the write code a computer sees everything and changes nothing; with it, writes both ways', async ({ browser }) => {
   test.setTimeout(4 * 60 * 1000);
 
-  // The author shares: an edit link and a read link
+  // The author shares: a link and a write code
   const owner = await (await browser.newContext()).newPage();
   await setupCleanEnvironment(owner);
   await owner.evaluate((url) => localStorage.setItem('zeroneurone-signaling-server', url), SERVER);
@@ -79,20 +87,21 @@ test('a read link sees everything and changes nothing; edit links write both way
   await owner.getByRole('button', { name: /^(share|partager)$/i }).first().click();
   const dialog = owner.getByRole('dialog');
   await dialog.getByRole('button', { name: /^(share|partager)$/i }).click();
-  const editInput = dialog.getByRole('textbox', { name: /^(edit link|lien de modification)$/i });
-  const readInput = dialog.getByRole('textbox', { name: /^(read link|lien de lecture)$/i });
-  await expect(editInput).toHaveValue(/\/join\/w1-.*#.*wseed=/, { timeout: 20_000 });
-  await expect(readInput).toHaveValue(/\/join\/w1-.*#.*wpub=/, { timeout: 20_000 });
-  const editUrl = await editInput.inputValue();
-  const readUrl = await readInput.inputValue();
-  expect(readUrl).not.toContain('wseed=');
+  // One link, read-only without the write code
+  const linkInput = dialog.getByRole('textbox', { name: /^(share link|lien de partage)$/i });
+  const codeInput = dialog.getByRole('textbox', { name: /^(write code|code d'écriture)$/i });
+  await expect(linkInput).toHaveValue(/\/join\/w1-.*#.*wlock=/, { timeout: 20_000 });
+  await expect(codeInput).toHaveValue(/^\d{6}$/, { timeout: 20_000 });
+  const url = await linkInput.inputValue();
+  const code = await codeInput.inputValue();
+  expect(url).not.toContain('wseed=');
   await owner.keyboard.press('Escape');
   const initial = await labels(owner);
   expect(initial).toHaveLength(1);
 
-  // A second computer with the edit link, a third with the read link
-  const writer = await join(browser, editUrl);
-  const reader = await join(browser, readUrl);
+  // A second computer with the code, a third without
+  const writer = await join(browser, url, code);
+  const reader = await join(browser, url);
   await expect.poll(() => labels(writer), { timeout: 30_000 }).toEqual(initial);
   await expect.poll(() => labels(reader), { timeout: 30_000 }).toEqual(initial);
   await expect(reader.getByTestId('read-only-link-banner')).toBeVisible();
@@ -102,7 +111,7 @@ test('a read link sees everything and changes nothing; edit links write both way
   await expect(owner.locator('[data-reader="true"]')).toHaveCount(1, { timeout: 30_000 });
   await expect(reader.locator('[data-reader="true"]')).toHaveCount(1);
 
-  // Edit links write both ways
+  // Author and code holder write both ways
   expect(await create(owner, 'Par l\'auteur')).toBe('created');
   expect(await create(writer, 'Par le second')).toBe('created');
   await expect.poll(async () => (await labels(writer)).sort(), { timeout: 30_000 }).toContain('Par l\'auteur');
@@ -118,7 +127,7 @@ test('a read link sees everything and changes nothing; edit links write both way
     const { syncService } = await import('/src/services/syncService.ts');
     syncService.getYDoc()!.getMap('meta').set('forgedByReader', 'yes');
   });
-  // The same write from the edit link does arrive: had the reader's got through, it would be seen
+  // The same write with the code does arrive: had the reader's got through, it would be seen
   await writer.bringToFront();
   await writer.evaluate(async () => {
     const { syncService } = await import('/src/services/syncService.ts');

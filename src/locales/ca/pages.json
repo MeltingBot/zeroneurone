@@ -339,7 +339,7 @@
     "closedBanner": "Tancat el {{date}} — només lectura",
     "undecryptableUpdates": "Canvis il·legibles: {{count}}. Es conserven; vegeu Emmagatzematge > Manteniment.",
     "popupBlocked": "Finestra bloquejada pel navegador",
-    "readOnlyLinkBanner": "Només lectura (enllaç compartit)"
+    "readOnlyLinkBanner": "Només lectura"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",
@@ -580,6 +580,11 @@
       "connectionTimeout": "Temps de connexió esgotat",
       "connectionLost": "Connexió perduda",
       "connectionError": "Error durant la connexió"
+    },
+    "writeCode": {
+      "label": "Codi d'escriptura",
+      "hint": "Buit: només lectura",
+      "wrong": "Codi incorrecte"
     }
   },
   "tutorial": {

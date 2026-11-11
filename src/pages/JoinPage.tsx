@@ -17,7 +17,7 @@
  * 5. Redirect to dossier page
  */
 
-import type { WriteAccess } from '../services/writeAccess';
+import { unlockSeed, type WriteAccess } from '../services/writeAccess';
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -54,6 +54,15 @@ export function JoinPage() {
   // User name editing
   const [editingUserName, setEditingUserName] = useState(false);
   const [userNameInput, setUserNameInput] = useState(localUser.name);
+  /** Write code: empty, the link joins read-only */
+  const [writeCode, setWriteCode] = useState('');
+  const [wrongWriteCode, setWrongWriteCode] = useState(false);
+  // The link carries the private key locked by the write code
+  const [asksWriteCode] = useState(() => {
+    if (!pathSegment) return false;
+    const link = parseJoinLink(pathSegment, location.search, location.hash);
+    return !!link.writeLock && !!link.access && !link.access.seed;
+  });
 
   // Parse URL fragment for all formats
   const urlParams = useRef<{
@@ -64,6 +73,7 @@ export function JoinPage() {
     isLegacyFormat: boolean;
     asyncEnabled: boolean;
     access: WriteAccess | null;
+    writeLock: string | null;
   } | null>(null);
 
   if (!urlParams.current && pathSegment) {
@@ -76,6 +86,7 @@ export function JoinPage() {
       isLegacyFormat: link.isLegacyFormat,
       asyncEnabled: link.asyncEnabled,
       access: link.access,
+      writeLock: link.writeLock,
     };
   }
 
@@ -168,6 +179,18 @@ export function JoinPage() {
       return;
     }
 
+    // The write code unlocks the private key carried by the link
+    let access = urlParams.current?.access ?? null;
+    const writeLock = urlParams.current?.writeLock;
+    if (access && !access.seed && writeLock && writeCode.trim()) {
+      const seed = await unlockSeed(access.publicKey, writeLock, writeCode);
+      if (!seed) {
+        setWrongWriteCode(true);
+        return;
+      }
+      access = { publicKey: access.publicKey, seed };
+    }
+
     setState('connecting');
     setError(null);
 
@@ -206,8 +229,8 @@ export function JoinPage() {
         const updates: Partial<Dossier> = {
           lastSharedKey: encryptionKeyFromUrl,
           lastSharedAsync: urlParams.current?.asyncEnabled ?? false,
-          lastSharedWriteKey: urlParams.current?.access?.publicKey,
-          lastSharedWriteSeed: urlParams.current?.access?.seed,
+          lastSharedWriteKey: access?.publicKey,
+          lastSharedWriteSeed: access?.seed,
         };
         if (existingDossier.origin === undefined) {
           updates.origin = 'joined';
@@ -230,7 +253,7 @@ export function JoinPage() {
         encryptionKeyFromUrl || undefined,
         roomId,  // Pass separate roomId for WebSocket
         urlParams.current?.asyncEnabled || false,
-        urlParams.current?.access ?? null,
+        access,
       );
       emitPluginEvent('dossier:joined', dossierId!);
 
@@ -551,6 +574,26 @@ export function JoinPage() {
               {t('join.localCopy.hint')}
             </p>
           </div>
+
+          {/* Write code: only for a link that can unlock writing */}
+          {asksWriteCode && (
+            <div className="mb-6">
+              <label htmlFor="join-write-code" className="block text-xs font-medium text-text-secondary mb-1.5">
+                {t('join.writeCode.label')}
+              </label>
+              <Input
+                id="join-write-code"
+                value={writeCode}
+                onChange={(e) => { setWriteCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setWrongWriteCode(false); }}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="000000"
+              />
+              <p className={`mt-1 text-xs ${wrongWriteCode ? 'text-error' : 'text-text-tertiary'}`}>
+                {t(wrongWriteCode ? 'join.writeCode.wrong' : 'join.writeCode.hint')}
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3">

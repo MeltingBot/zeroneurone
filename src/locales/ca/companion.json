@@ -23,7 +23,10 @@
     "yourName": "El vostre nom",
     "join": "Obre en aquest telèfon",
     "invalidLink": "Enllaç incomplet.",
-    "notAsync": "Compartició no asíncrona."
+    "notAsync": "Compartició no asíncrona.",
+    "writeCode": "Codi d'escriptura",
+    "writeCodeHint": "Buit: només lectura",
+    "wrongWriteCode": "Codi incorrecte"
   },
   "tabs": {
     "elements": "Elements",

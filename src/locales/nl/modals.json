@@ -631,9 +631,10 @@
       "qrLabel": "QR-code van de mobiele companion",
       "asyncRequired": "De mobiele companion vereist delen in asynchrone modus. Stop met delen en deel opnieuw met die modus."
     },
-    "editLink": "Bewerkingslink",
     "readLink": "Leeslink",
-    "readLinkHelp": "Alleen bekijken: geen wijziging mogelijk."
+    "readLinkHelp": "Alleen bekijken: geen wijziging mogelijk.",
+    "writeCode": "Schrijfcode",
+    "writeCodeHelp": "Om te bewerken: invoeren bij deelname. Apart versturen."
   },
   "dossierTags": {
     "title": "Dossier-tags",

@@ -339,7 +339,7 @@
     "closedBanner": "Clôturé le {{date}} — lecture seule",
     "undecryptableUpdates": "Modifications illisibles : {{count}}. Elles sont conservées ; voir Stockage > Maintenance.",
     "popupBlocked": "Fenêtre bloquée par le navigateur",
-    "readOnlyLinkBanner": "Lecture seule (lien de partage)"
+    "readOnlyLinkBanner": "Lecture seule"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",
@@ -580,6 +580,11 @@
       "connectionTimeout": "Délai de connexion dépassé",
       "connectionLost": "Connexion perdue",
       "connectionError": "Erreur lors de la connexion"
+    },
+    "writeCode": {
+      "label": "Code d'écriture",
+      "hint": "Vide : lecture seule",
+      "wrong": "Code incorrect"
     }
   },
   "tutorial": {

@@ -647,9 +647,10 @@
       "qrLabel": "Kod QR towarzysza mobilnego",
       "asyncRequired": "Towarzysz mobilny wymaga udostępniania w trybie asynchronicznym. Zatrzymaj udostępnianie i udostępnij ponownie w tym trybie."
     },
-    "editLink": "Link do edycji",
     "readLink": "Link do odczytu",
-    "readLinkHelp": "Tylko podgląd: zmiany niemożliwe."
+    "readLinkHelp": "Tylko podgląd: zmiany niemożliwe.",
+    "writeCode": "Kod zapisu",
+    "writeCodeHelp": "Aby edytować: wpisz przy dołączaniu. Przekaż osobno."
   },
   "dossierTags": {
     "title": "Tagi teczki",

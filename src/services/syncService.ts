@@ -16,7 +16,7 @@ import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
-import { generateWriteAccess, isReadOnly, setRelayClockOffset, signedRoomId, type WriteAccess } from './writeAccess';
+import { generateWriteAccess, isReadOnly, lockSeed, setRelayClockOffset, signedRoomId, type WriteAccess } from './writeAccess';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
 import { toBase64Url } from '../utils/base64url';
@@ -1005,6 +1005,8 @@ class SyncService {
     asyncEnabled?: boolean,
     route: 'join' | 'm' = 'join',
     access?: WriteAccess | null,
+    /** Private key in clear, no code to enter: the QR code shown on this computer */
+    writeInClear = false,
   ): Promise<string> {
     const base = appUrl('/').replace(/\/$/, '');
     const writeAccess = access === undefined
@@ -1031,7 +1033,9 @@ class SyncService {
     fragmentParams.set('id', dossierId);
     if (writeAccess) {
       fragmentParams.set('wpub', writeAccess.publicKey);
-      if (writeAccess.seed) fragmentParams.set('wseed', writeAccess.seed);
+      // The private key travels locked by the write code: without it, the link reads
+      if (writeAccess.seed && writeInClear) fragmentParams.set('wseed', writeAccess.seed);
+      else if (writeAccess.seed) fragmentParams.set('wlock', await lockSeed({ publicKey: writeAccess.publicKey, seed: writeAccess.seed }));
     }
     if (dossierName) {
       fragmentParams.set('name', dossierName);

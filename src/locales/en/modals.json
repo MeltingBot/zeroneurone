@@ -631,9 +631,10 @@
       "qrLabel": "Mobile companion QR code",
       "asyncRequired": "The mobile companion needs a share in async mode. Stop sharing, then share again with that mode."
     },
-    "editLink": "Edit link",
     "readLink": "Read link",
-    "readLinkHelp": "View only: no change possible."
+    "readLinkHelp": "View only: no change possible.",
+    "writeCode": "Write code",
+    "writeCodeHelp": "To edit: entered when joining. Send it separately."
   },
   "dossierTags": {
     "title": "Dossier tags",

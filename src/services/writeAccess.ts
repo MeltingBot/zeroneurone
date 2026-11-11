@@ -8,6 +8,11 @@
  * (the proof is valid five minutes, so it is made again on every reconnection,
  * encryptedWebSocket.ts); a reader connects with the public key alone, and the
  * relay passes on only its presence and requests.
+ *
+ * The share link carries the seed locked by a six-digit write code (`wlock`):
+ * without the code, the link only reads. The code guards the original against
+ * a change by mistake; it does not hold against someone who has the link and
+ * tries every code.
  */
 
 import nacl from 'tweetnacl';
@@ -95,4 +100,57 @@ export function withAccess(url: string, access: WriteAccess, nowSeconds = relayN
     parsed.searchParams.set('wsig', toB64url(signature));
   }
   return parsed.toString();
+}
+
+const WRITE_CODE_ITERATIONS = 300_000;
+const lockCache = new Map<string, string>();
+
+/** The write code of a key: six digits, from the seed (nothing to store) */
+export async function writeCodeOf(seed: string): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`zn-write-code-v1:${seed}`)));
+  const value = new DataView(digest.buffer).getUint32(0) % 1_000_000;
+  return String(value).padStart(6, '0');
+}
+
+async function codeKey(code: string, publicKey: string): Promise<CryptoKey> {
+  const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: Uint8Array.from(fromB64url(publicKey)), iterations: WRITE_CODE_ITERATIONS, hash: 'SHA-256' },
+    material,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
+
+// One key per (code, public key), which locks one value only: a fixed IV is safe
+const LOCK_IV = new Uint8Array(12);
+
+/** The seed locked by the write code, for the share link */
+export async function lockSeed(access: Required<WriteAccess>): Promise<string> {
+  const cached = lockCache.get(access.publicKey);
+  if (cached) return cached;
+  const key = await codeKey(await writeCodeOf(access.seed), access.publicKey);
+  const locked = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: LOCK_IV }, key, Uint8Array.from(fromB64url(access.seed))));
+  const value = toB64url(locked);
+  lockCache.set(access.publicKey, value);
+  return value;
+}
+
+/** The seed from the link and the write code, or null when the code is wrong */
+export async function unlockSeed(publicKey: string, locked: string, code: string): Promise<string | null> {
+  try {
+    const key = await codeKey(code.trim(), publicKey);
+    const seed = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: LOCK_IV }, key, Uint8Array.from(fromB64url(locked))));
+    const value = toB64url(seed);
+    // The seed must be that of the room's key
+    return toB64url(nacl.sign.keyPair.fromSeed(seed).publicKey) === publicKey ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Whether a string is a locked seed (32 bytes + 16 of tag, base64url) */
+export function isValidWriteLock(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{64}$/.test(value);
 }

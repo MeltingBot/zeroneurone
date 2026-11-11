@@ -631,9 +631,10 @@
       "qrLabel": "Código QR del acompañante móvil",
       "asyncRequired": "El acompañante móvil requiere compartir en modo asíncrono. Deje de compartir y vuelva a compartir con ese modo."
     },
-    "editLink": "Enlace de edición",
     "readLink": "Enlace de lectura",
-    "readLinkHelp": "Solo consulta: ninguna modificación posible."
+    "readLinkHelp": "Solo consulta: ninguna modificación posible.",
+    "writeCode": "Código de escritura",
+    "writeCodeHelp": "Para modificar: se introduce al unirse. Envíelo por separado."
   },
   "dossierTags": {
     "title": "Tags de expediente",

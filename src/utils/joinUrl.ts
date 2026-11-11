@@ -1,4 +1,4 @@
-import { isValidAccessKey, type WriteAccess } from '../services/writeAccess';
+import { isValidAccessKey, isValidWriteLock, type WriteAccess } from '../services/writeAccess';
 
 /**
  * Parsing of a share link, shared by the desktop join page (/join/…) and the
@@ -7,7 +7,8 @@ import { isValidAccessKey, type WriteAccess } from '../services/writeAccess';
  *   /{route}/{roomId}?server=wss://…&async=1#key=…&id={uuid}&name=…
  *
  * A signed room (read-only sharing, writeAccess.ts) adds `wpub` (public write
- * key) and, in a write link only, `wseed` (private write key).
+ * key) and `wlock` (private write key locked by the write code, entered on
+ * joining). A `wseed` (private write key in clear) is still read.
  *
  * The key, the dossier UUID and its name sit in the fragment, never sent to
  * the server. Links made before v1.7 put the UUID in the path and the name in
@@ -25,6 +26,8 @@ export interface JoinLink {
   isLegacyFormat: boolean;
   /** Write key of a signed room; without seed: a read link */
   access: WriteAccess | null;
+  /** Private write key locked by the write code, when the link has it */
+  writeLock: string | null;
 }
 
 function accessOf(hashParams: URLSearchParams): WriteAccess | null {
@@ -47,5 +50,6 @@ export function parseJoinLink(pathSegment: string, search: string, hash: string)
     asyncEnabled: searchParams.get('async') === '1',
     isLegacyFormat: !fragmentId,
     access: accessOf(hashParams),
+    writeLock: isValidWriteLock(hashParams.get('wlock')) ? hashParams.get('wlock') : null,
   };
 }

@@ -144,7 +144,7 @@ test('a phone joins, captures, comments and catches up offline', async ({ browse
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Terrain', true);
     const id = syncService.getDossierId()!;
-    return syncService.buildShareUrl(id, encryptionKey, 'Terrain', syncService.isAsync(), 'm');
+    return syncService.buildShareUrl(id, encryptionKey, 'Terrain', syncService.isAsync(), 'm', undefined, true);
   });
   expect(mobileUrl).toContain('/m/');
   expect(mobileUrl).toContain('async=1');
@@ -632,7 +632,7 @@ test('a capture made while every computer is off reaches the desktop later', asy
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Seul', true);
     const id = syncService.getDossierId()!;
-    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Seul', true, 'm'), dossierId: id };
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Seul', true, 'm', undefined, true), dossierId: id };
   });
   const phone = await newPhone(browser);
   phonePage = phone;
@@ -676,7 +676,7 @@ test('in the browser holding the desktop copy, the companion keeps its own and f
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Même navigateur', true);
     const id = syncService.getDossierId()!;
-    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Même navigateur', true, 'm'), dossierId: id };
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Même navigateur', true, 'm', undefined, true), dossierId: id };
   });
   const desktopCopy = `zeroneurone-ydoc-${dossierId}`;
   const companionCopy = `zeroneurone-companion-ydoc-${dossierId}`;
@@ -720,7 +720,7 @@ test('something shared from another app becomes a capture in the dossier', async
     const { useSyncStore } = await import('/src/stores/syncStore.ts');
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Partage', true);
-    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Partage', true, 'm');
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Partage', true, 'm', undefined, true);
   });
   const phone = await newPhone(browser);
   phonePage = phone;
@@ -772,7 +772,7 @@ test('the lock: the phone\'s passkey encrypts what it keeps, and opens it again'
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Verrou', true);
     const id = syncService.getDossierId()!;
-    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Verrou', true, 'm'), shareKey: encryptionKey, dossierId: id };
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Verrou', true, 'm', undefined, true), shareKey: encryptionKey, dossierId: id };
   });
   const phone = await newPhone(browser);
   phonePage = phone;
@@ -920,7 +920,7 @@ test('a phone relaunched (app closed, reopened) syncs again both ways', async ({
     const { useSyncStore } = await import('/src/stores/syncStore.ts');
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Relance', true);
-    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Relance', true, 'm');
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Relance', true, 'm', undefined, true);
   });
   const phone = await newPhone(browser);
   phonePage = phone;
@@ -965,7 +965,7 @@ test('presence replayed from the relay buffer is not taken for a computer online
     const { useSyncStore } = await import('/src/stores/syncStore.ts');
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Fantôme', true);
-    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Fantôme', true, 'm');
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Fantôme', true, 'm', undefined, true);
   });
   // Alone in the room: its presence heartbeats (every 10 s) go to the buffer
   await desktop.waitForTimeout(12_000);
@@ -993,7 +993,7 @@ test('a local copy that cannot be opened says so, and the dossier can still be f
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Bloqué', true);
     const id = syncService.getDossierId()!;
-    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Bloqué', true, 'm'), dossierId: id };
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Bloqué', true, 'm', undefined, true), dossierId: id };
   });
   const phone = await newPhone(browser);
   phonePage = phone;
@@ -1056,7 +1056,7 @@ test('a file added on a computer opens on the phone on demand, then from its cac
     const { useSyncStore } = await import('/src/stores/syncStore.ts');
     const { syncService } = await import('/src/services/syncService.ts');
     const { encryptionKey } = await useSyncStore.getState().share('Fichiers', true);
-    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Fichiers', true, 'm');
+    return syncService.buildShareUrl(syncService.getDossierId()!, encryptionKey, 'Fichiers', true, 'm', undefined, true);
   });
 
   // Two files on the computer: a photo opened while it is online, a PDF after it left

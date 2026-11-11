@@ -339,7 +339,7 @@
     "closedBanner": "Closed on {{date}} — read-only",
     "undecryptableUpdates": "Unreadable changes: {{count}}. They are kept; see Storage > Maintenance.",
     "popupBlocked": "Popup blocked by the browser",
-    "readOnlyLinkBanner": "Read-only (share link)"
+    "readOnlyLinkBanner": "Read-only"
   },
   "map": {
     "noGeoElements": "No geolocated elements",
@@ -580,6 +580,11 @@
       "connectionTimeout": "Connection timeout",
       "connectionLost": "Connection lost",
       "connectionError": "Connection error"
+    },
+    "writeCode": {
+      "label": "Write code",
+      "hint": "Empty: read-only",
+      "wrong": "Wrong code"
     }
   },
   "tutorial": {

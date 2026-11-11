@@ -631,9 +631,10 @@
       "qrLabel": "Codi QR del company mòbil",
       "asyncRequired": "El company mòbil requereix compartir en mode asíncron. Atureu la compartició i torneu a compartir amb aquest mode."
     },
-    "editLink": "Enllaç d'edició",
     "readLink": "Enllaç de lectura",
-    "readLinkHelp": "Només consulta: cap modificació possible."
+    "readLinkHelp": "Només consulta: cap modificació possible.",
+    "writeCode": "Codi d'escriptura",
+    "writeCodeHelp": "Per modificar: s'introdueix en unir-se. Envieu-lo a part."
   },
   "dossierTags": {
     "title": "Etiquetes de l'expedient",

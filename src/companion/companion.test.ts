@@ -42,7 +42,7 @@ describe('parseJoinLink', () => {
     const link = parseJoinLink('room', '?server=wss%3A%2F%2Fr.example&async=1', '#key=K&id=uuid&name=Terrain');
     expect(link).toEqual({
       roomId: 'room', dossierId: 'uuid', encryptionKey: 'K', name: 'Terrain',
-      server: 'wss://r.example', asyncEnabled: true, isLegacyFormat: false, access: null,
+      server: 'wss://r.example', asyncEnabled: true, isLegacyFormat: false, access: null, writeLock: null,
     });
   });
 
@@ -51,6 +51,12 @@ describe('parseJoinLink', () => {
     const seed = 'B'.repeat(43);
     expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}&wseed=${seed}`).access).toEqual({ publicKey: pub, seed });
     expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}`).access).toEqual({ publicKey: pub });
+    // The private key locked by the write code
+    const lock = 'C'.repeat(64);
+    const locked = parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}&wlock=${lock}`);
+    expect(locked.access).toEqual({ publicKey: pub });
+    expect(locked.writeLock).toBe(lock);
+    expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}&wlock=short`).writeLock).toBeNull();
     // Malformed: ignored
     expect(parseJoinLink('w1-room', '', '#key=K&id=uuid&wpub=short').access).toBeNull();
     expect(parseJoinLink('w1-room', '', `#key=K&id=uuid&wpub=${pub}&wseed=bad`).access).toEqual({ publicKey: pub });
