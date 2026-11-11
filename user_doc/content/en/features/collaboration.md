@@ -40,6 +40,15 @@ Once sharing is active:
 1. Click **Copy link**
 2. Send the link to your collaborators (email, messaging...)
 
+### Write code
+
+Under the link, the share window shows a 6-digit **write code**:
+
+- **Without the code**, the link opens the dossier [read only](#read-only)
+- **With the code**, entered when joining, you can edit
+
+Send the link to everyone, and the code, through another channel, to those who must edit. With a relay that does not know read-only sharing (older than 2.94.0), there is no code: the link can edit.
+
 
 ### Link Format
 
@@ -55,6 +64,8 @@ https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&n
 | `#key=` | Encryption key |
 | `#id=` | Original dossier UUID |
 | `#name=` | Dossier name |
+| `#wpub=` | Public write key (share with a write code) |
+| `#wlock=` | Private write key, encrypted by the write code |
 
 {{< hint warning >}}
 **Important**: Everything after `#` (fragment) is never sent to the server (browser standard). The room ID is derived from a hash of the UUID + encryption key, so the server cannot correlate sessions with dossiers. This is what guarantees end-to-end encryption and metadata privacy.
@@ -69,7 +80,8 @@ https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&n
 1. Click on the received link
 2. Configure your username
 3. Verify the server address
-4. Click **Join**
+4. To edit, enter the **write code**; left empty, the dossier opens read only
+5. Click **Join**
 
 
 ### Initial Synchronization
@@ -122,6 +134,7 @@ Connected collaborators appear in the toolbar:
 - Blue circle = you
 - Hover = full name
 - `+N` if more than 5 users
+- Eye on the avatar = connected read only
 
 ### Real-time Cursors
 
@@ -199,6 +212,36 @@ If two users modify the same element:
 {{< hint warning >}}
 **Note**: Collaborators keep their local copy. To revoke access to future modifications, you must create a new session with a new link.
 {{< /hint >}}
+
+---
+
+## Read only
+
+A computer or phone that joins **without the write code** sees the dossier and receives every change, but changes nothing:
+
+- A **Read-only** banner shows, and any change is refused
+- The mode stays when the dossier is reopened
+- The reader shows up to the other participants, marked with an eye
+
+### How it is enforced
+
+Without the code, the private write key in the link stays encrypted. Computers that unlocked it prove to the relay, at each connection, that they hold it; from a reader the relay passes on only its presence and sync requests, never a change. Each computer also checks that what it receives matches what was announced to the relay. A reader who altered the app therefore does not change the others' dossier.
+
+The write proof is dated and checked against the relay's clock: a computer whose clock is off sets itself on the relay's. If the relay still refuses writing, a message says so: check the device's time.
+
+### Limits
+
+{{< hint warning >}}
+**Reading means reading everything.** The link holds the encryption key: the reader sees the whole dossier, files included, and keeps a copy. They can neither comment nor edit.
+{{< /hint >}}
+
+- **The code is a safeguard, not a protection.** It prevents changing the original by mistake. Six digits can be found by trying them all: someone who has the link and is set on editing will manage
+- The code cannot be changed: to get another one, stop sharing and share again
+- Dossiers shared before 2.94.0 have no code: stop sharing, then share again. The new link replaces the old one: send it to the collaborators again
+- Read-only sharing relies on the relay: it takes an up-to-date relay (2.94.0 or later), and a relay altered by whoever runs it could let a reader's changes through. With your own relay, that risk is yours
+- **Stop sharing** cuts everyone off, readers and writers alike
+- A computer still on a version older than 2.94.0 cannot join a share that has a write code: update every computer
+- The eye on the avatar is declared by the reader's device: a marker, not a control. The control is the relay's
 
 ---
 
@@ -284,6 +327,7 @@ The relay stores no file on disk. It passes encrypted messages on and, in async 
 - Only share the link with trusted people
 - Use secure channels to transmit the link
 - Create a new session if a participant should no longer have access
+- Give the write code only to those who must edit the dossier, through another channel than the link
 
 ### Performance
 

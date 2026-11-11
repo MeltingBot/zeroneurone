@@ -20,6 +20,8 @@ The companion relies on [collaboration]({{< relref "collaboration" >}}): the dos
 
 The dossier is then listed at the `/m/` address: no QR code needed to reopen it.
 
+The QR code grants the same access as the computer showing it, with no code to enter. A share link received, opened or pasted on the phone, asks for the **write code**; left empty, the dossier shows as **Read-only**, receives changes, and offers no capture, editing or comment. See [Read only]({{< relref "collaboration#read-only" >}}).
+
 A desktop share link (`/join/…`) opened on a phone leads to the companion too. On that page you can also **paste the share link** (the desktop `/join/…` link works) or **scan** it with the built-in scanner (Android and iPhone): with no dossier on the phone yet, tap the large QR code on the home page.
 
 {{< hint warning >}}
@@ -145,4 +147,4 @@ Safari may erase the data of a site not opened for 7 days, pending captures incl
 - The phone does not create tags: it offers those already set on the dossier's elements. Tag sets stay on each computer: a tag never used in the dossier is not offered, and a tag added from the phone does not change the element's appearance
 - A note, tags or properties edited offline replace the whole version on reconnection: if the computer edited the same note, or the same element's tags or properties, meanwhile, only one of the two versions stays. Avoid editing the same element on both sides while the phone is offline
 - A closed dossier is read only; retention, set per computer, does not apply to the phone
-- Anyone with the link or QR code can read and edit the dossier: there is no read-only role
+- Anyone with the QR code of a computer that edits, or with the link and the write code, can read and edit the dossier; the link alone only reads

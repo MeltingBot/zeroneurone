@@ -20,6 +20,8 @@ Le compagnon passe par la [collaboration]({{< relref "collaboration" >}}) : le d
 
 Le dossier est ensuite listé à l'adresse `/m/` : plus besoin du QR code pour le rouvrir.
 
+Le QR code donne le même accès que le poste qui l'affiche, sans code à saisir. Un lien de partage reçu, ouvert ou collé sur le téléphone, demande le **code d'écriture** ; laissé vide, le dossier s'affiche marqué **Lecture seule**, reçoit les modifications, et ne propose ni capture, ni modification, ni commentaire. Voir [Lecture seule]({{< relref "collaboration#lecture-seule" >}}).
+
 Un lien de partage desktop (`/join/…`) ouvert sur un téléphone mène aussi au compagnon. Sur cette page, vous pouvez aussi **coller le lien de partage** (le lien desktop `/join/…` convient) ou le **scanner** avec le lecteur intégré (Android et iPhone) : sans dossier sur le téléphone, touchez le grand QR code de l'accueil.
 
 {{< hint warning >}}
@@ -145,4 +147,4 @@ Safari peut effacer les données d'un site non ouvert depuis 7 jours, captures e
 - Le téléphone ne crée pas de tag : il propose ceux déjà posés sur des éléments du dossier. Les jeux de tags restent sur chaque poste : un tag jamais utilisé dans le dossier n'est pas proposé, et un tag ajouté depuis le téléphone ne change pas l'apparence de l'élément
 - Une note, des tags ou des propriétés modifiées hors ligne remplacent, à la reconnexion, la version entière : si le poste a modifié la même note, les tags ou les propriétés du même élément entre-temps, une seule des deux versions reste. Évitez de modifier le même élément des deux côtés pendant que le téléphone est hors ligne
 - Un dossier clôturé est en lecture seule ; la rétention, propre à chaque poste, ne s'applique pas au téléphone
-- Toute personne qui a le lien ou le QR code peut lire et modifier le dossier : il n'y a pas de rôle en lecture seule
+- Toute personne qui a le QR code d'un poste qui modifie, ou le lien et le code d'écriture, peut lire et modifier le dossier ; le lien seul ne permet que de lire
