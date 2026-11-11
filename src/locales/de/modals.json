@@ -452,6 +452,30 @@
       "confirm": "ALLE Dossiers und ihre Daten löschen?\n\nDiese Aktion ist nicht umkehrbar.",
       "confirmAgain": "Letzte Bestätigung: Alle Daten gehen verloren. Fortfahren?",
       "error": "Fehler beim Löschen"
+    },
+    "integrity": {
+      "title": "Integrität der Dossiers",
+      "check": "Prüfen",
+      "checking": "Prüfung…",
+      "none": "Keine Vermischung gefunden",
+      "error": "Prüfung fehlgeschlagen",
+      "from": "aus „{{name}}“",
+      "unknownDossier": "unbekanntes Dossier {{id}}",
+      "nameFrom": "Name aus „{{name}}“ übernommen",
+      "undecryptable_one": "{{count}} unlesbare Aktualisierung, nicht geprüft",
+      "undecryptable_other": "{{count}} unlesbare Aktualisierungen, nicht geprüft",
+      "kinds": {
+        "elements_one": "{{count}} Element",
+        "elements_other": "{{count}} Elemente",
+        "links_one": "{{count}} Verbindung",
+        "links_other": "{{count}} Verbindungen",
+        "comments_one": "{{count}} Kommentar",
+        "comments_other": "{{count}} Kommentare",
+        "tabs_one": "{{count}} Tab",
+        "tabs_other": "{{count}} Tabs",
+        "reports_one": "{{count}} Bericht",
+        "reports_other": "{{count}} Berichte"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Link kopieren",
     "shareLinkHelp": "Senden Sie diesen Link an Personen, mit denen Sie zusammenarbeiten möchten.",
     "stopSharing": "Freigabe beenden",
-    "stopping": "Wird beendet..."
+    "stopping": "Wird beendet...",
+    "mobile": {
+      "open": "Auf dem Handy öffnen",
+      "scan": "Mit der Kamera des Handys scannen.",
+      "qrLabel": "QR-Code des mobilen Begleiters",
+      "asyncRequired": "Der mobile Begleiter erfordert eine Freigabe im asynchronen Modus. Freigabe beenden und mit diesem Modus erneut freigeben."
+    }
   },
   "dossierTags": {
     "title": "Akten-Tags",

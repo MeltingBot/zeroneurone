@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.93.0
+
+### Corrections
+
+- **Dossiers mélangés en collaboration** — ouvrir un autre dossier pendant
+  qu'un dossier partagé se chargeait (jusqu'à 5 s d'attente du réseau, à
+  chaque ouverture en mode asynchrone sans autre poste en ligne) pouvait
+  afficher le premier dossier sur le document partagé du second. Les
+  créations, collages et annulations faits alors partaient dans le second
+  dossier, et le relais les rejouait chez ses participants ; le nom, les
+  options et les fichiers du premier pouvaient aussi y être copiés. Un
+  chargement dépassé s'arrête désormais, et aucune écriture ne vise un
+  autre dossier que celui affiché. Bug présent depuis la v2.5, rendu
+  fréquent par la reprise automatique des sessions partagées (v2.41.3).
+- **Pièces jointes reçues d'un collaborateur** — un fichier de moins de
+  512 Ko, reçu complet d'un coup, était enregistré mais n'apparaissait
+  qu'après un rechargement.
+- **Lien de partage** — rouvert dans la fenêtre de partage, il perdait le
+  mode asynchrone.
+
+### Nouveautés
+
+- **Compagnon mobile** — un dossier partagé en mode asynchrone s'ouvre sur
+  un téléphone, dans le navigateur, à l'adresse `/m/` : QR code dans la
+  fenêtre de partage, ou lien collé ou scanné depuis la page. Capture de
+  terrain (photo, note, position, source, date de collecte), hors réseau
+  compris ; recherche (fautes de frappe, étiquettes avec `#`), onglets du
+  canvas, carte avec les liens, chronologie, graphe du voisinage, fiche
+  avec note en Markdown, propriétés, événements, liens à créer ou
+  supprimer, commentaires. Chargement léger : le canvas, la carte et le
+  graphe ne se chargent qu'à l'usage. Voir la page **Compagnon mobile**
+  de la documentation.
+- **Intégrité des dossiers** — dans **Stockage > Maintenance**,
+  **Vérifier** liste, sans rien modifier, les éléments, liens,
+  commentaires, onglets et rapports d'un dossier qui appartiennent à un
+  autre dossier, ainsi qu'un nom de dossier repris d'un autre.
+- **Recherche dans les événements** — la recherche trouve un élément par
+  le libellé, la description ou la source de ses événements, affiche
+  l'événement trouvé et ouvre la fiche dessus.
+
+### Améliorations
+
+- **Gestionnaire d'étiquettes** — le bouton **Nouvelle étiquette** est à
+  côté de la recherche, en haut, au lieu du bas d'une liste parfois longue.
+
 ## 2.92.4
 
 ### Nouveautés

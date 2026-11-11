@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { execSync } from 'child_process'
@@ -47,10 +48,41 @@ function writeVersionFile(): Plugin {
 const base = `/${(process.env.VITE_BASE || '').replace(/^\/+|\/+$/g, '')}/`.replace(/\/\/$/, '/')
 const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+/**
+ * Dev HTTPS for phones, two fixes on top of basic-ssl:
+ * - HTTP/1.1 only (TLS ALPN): over HTTP/2 with an untrusted certificate,
+ *   Chrome on Android fails the hundreds of module requests of the dev server
+ *   with ERR_TOO_MANY_RETRIES. basic-ssl merges its certificate into this.
+ * - Node 22.21 calls server.shouldUpgradeCallback() on every upgrade request,
+ *   but the HTTP/2 server Vite creates for HTTPS (allowHTTP1) does not define
+ *   it: the HMR WebSocket crashed the dev server. Restores Node's default.
+ */
+function devHttpsFix(): Plugin {
+  return {
+    name: 'zn-dev-https-fix',
+    config() {
+      // ALPNCallback, not ALPNProtocols: Node's HTTP/2 server overwrites the latter
+      return { server: { https: { ALPNCallback: () => 'http/1.1' } } }
+    },
+    configureServer(server) {
+      const httpServer = server.httpServer as (typeof server.httpServer & {
+        shouldUpgradeCallback?: (req: unknown) => boolean
+      }) | null
+      if (httpServer && typeof httpServer.shouldUpgradeCallback !== 'function') {
+        httpServer.shouldUpgradeCallback = () => httpServer.listenerCount('upgrade') > 0
+      }
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   base,
   plugins: [
+    // HTTPS=1 npm run dev -- --host: self-signed HTTPS to open the dev server
+    // from a phone on the LAN. Over plain http on an IP, the browser withholds
+    // crypto.subtle, crypto.randomUUID and geolocation (not a secure context).
+    ...(process.env.HTTPS === '1' ? [devHttpsFix(), basicSsl()] : []),
     react(),
     tailwindcss(),
     writeVersionFile(),
@@ -139,7 +171,15 @@ export default defineConfig({
           // Locales are deliberately left alone: each is imported on demand by
           // i18n.ts, so grouping them would pull all eleven back into one
           // eagerly-loaded chunk.
+          // Rollup's CommonJS interop helpers otherwise land in the jszip chunk,
+          // which every page would then load for them
+          if (id.startsWith('\0commonjs') || id.includes('commonjsHelpers')) return 'react';
           if (!id.includes('/node_modules/')) return undefined;
+          // React and the state libraries get their own chunk: left unassigned,
+          // Rollup files them into the first manual chunk depending on them
+          // (xyflow), and every page — the mobile companion too — then loads
+          // React Flow just to get React.
+          if (/\/node_modules\/(react|react-dom|scheduler|zustand|use-sync-external-store)\//.test(id)) return 'react';
           if (id.includes('/@xyflow/')) return 'xyflow';
           if (id.includes('/graphology') || id.includes('/@dagrejs/')) return 'graph';
           if (/\/(yjs|y-websocket|y-indexeddb|lib0)\//.test(id)) return 'yjs';

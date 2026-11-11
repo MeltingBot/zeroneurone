@@ -452,6 +452,30 @@
       "confirm": "Eliminare TUTTI i dossier e i loro dati?\n\nQuesta azione è irreversibile.",
       "confirmAgain": "Ultima conferma: tutti i dati andranno persi. Continuare?",
       "error": "Errore durante l'eliminazione"
+    },
+    "integrity": {
+      "title": "Integrità dei fascicoli",
+      "check": "Verifica",
+      "checking": "Verifica…",
+      "none": "Nessuna mescolanza rilevata",
+      "error": "Verifica impossibile",
+      "from": "provenienti da «{{name}}»",
+      "unknownDossier": "fascicolo sconosciuto {{id}}",
+      "nameFrom": "Nome ripreso da «{{name}}»",
+      "undecryptable_one": "{{count}} aggiornamento illeggibile, non verificato",
+      "undecryptable_other": "{{count}} aggiornamenti illeggibili, non verificati",
+      "kinds": {
+        "elements_one": "{{count}} elemento",
+        "elements_other": "{{count}} elementi",
+        "links_one": "{{count}} collegamento",
+        "links_other": "{{count}} collegamenti",
+        "comments_one": "{{count}} commento",
+        "comments_other": "{{count}} commenti",
+        "tabs_one": "{{count}} scheda",
+        "tabs_other": "{{count}} schede",
+        "reports_one": "{{count}} rapporto",
+        "reports_other": "{{count}} rapporti"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Copia link",
     "shareLinkHelp": "Invia questo link alle persone con cui vuoi collaborare.",
     "stopSharing": "Interrompi condivisione",
-    "stopping": "Interruzione..."
+    "stopping": "Interruzione...",
+    "mobile": {
+      "open": "Apri sul cellulare",
+      "scan": "Scansiona con la fotocamera del telefono.",
+      "qrLabel": "Codice QR del compagno mobile",
+      "asyncRequired": "Il compagno mobile richiede una condivisione in modalità asincrona. Interrompi la condivisione e condividi di nuovo con questa modalità."
+    }
   },
   "dossierTags": {
     "title": "Tag delil fascicolo",

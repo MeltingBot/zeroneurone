@@ -1,0 +1,171 @@
+{
+  "back": "Retour",
+  "close": "Fermer",
+  "cancel": "Annuler",
+  "yes": "Oui",
+  "no": "Non",
+  "home": {
+    "title": "Dossiers",
+    "empty": "Scannez le QR code de partage ou collez le lien.",
+    "untitled": "Dossier sans nom",
+    "add": "Ouvrir un dossier",
+    "linkPlaceholder": "Coller le lien de partage",
+    "paste": "Coller",
+    "scan": "Scanner",
+    "invalidLink": "Lien non reconnu",
+    "cameraUnavailable": "Caméra indisponible"
+  },
+  "join": {
+    "title": "Dossier partagé",
+    "server": "Serveur : {{host}}",
+    "yourName": "Votre nom",
+    "join": "Ouvrir sur ce téléphone",
+    "invalidLink": "Lien incomplet.",
+    "notAsync": "Partage non asynchrone."
+  },
+  "tabs": {
+    "elements": "Éléments",
+    "map": "Carte",
+    "timeline": "Chronologie",
+    "comments": "Commentaires",
+    "capture": "Capturer",
+    "settings": "Réglages"
+  },
+  "status": {
+    "pending_one": "{{count}} en attente",
+    "pending_other": "{{count}} en attente",
+    "connected_one": "Connecté, {{count}} poste en ligne",
+    "connected_other": "Connecté, {{count}} postes en ligne",
+    "reconnecting": "Reconnexion…",
+    "offline": "Hors ligne",
+    "closed": "Dossier clôturé"
+  },
+  "install": {
+    "hint": "Ajouter à l'écran d'accueil",
+    "dismiss": "Masquer"
+  },
+  "elements": {
+    "search": "Rechercher",
+    "emptyDossier": "Aucun élément.",
+    "noMatch": "Aucun résultat.",
+    "loading": "Récupération…",
+    "waitingPeer": "En attente d'un poste en ligne",
+    "clear": "Effacer la recherche",
+    "results_one": "{{count}} résultat",
+    "results_other": "{{count}} résultats",
+    "searchHint": "Rechercher, ou # pour une étiquette"
+  },
+  "element": {
+    "untitled": "Sans titre",
+    "details": "Informations",
+    "date": "Date de collecte",
+    "source": "Source",
+    "position": "Position",
+    "links_one": "{{count}} lien",
+    "links_other": "{{count}} liens",
+    "notes": "Note",
+    "period": "Période",
+    "count_one": "{{count}} élément",
+    "count_other": "{{count}} éléments",
+    "events_one": "{{count}} événement",
+    "events_other": "{{count}} événements"
+  },
+  "asset": {
+    "missing": "Indisponible",
+    "receiving": "Réception en cours"
+  },
+  "comments": {
+    "resolve": "Résoudre",
+    "reopen": "Rouvrir",
+    "placeholder": "Commentaire",
+    "send": "Envoyer",
+    "showResolved": "Afficher les résolus",
+    "empty": "Aucun commentaire ouvert.",
+    "deletedTarget": "Élément supprimé"
+  },
+  "capture": {
+    "label": "Titre",
+    "notes": "Note",
+    "photo": "Prendre une photo",
+    "removePhoto": "Retirer la photo",
+    "position": "Ajouter ma position",
+    "locating": "Localisation…",
+    "positionFailed": "Position indisponible",
+    "removePosition": "Retirer la position",
+    "save": "Ajouter au dossier",
+    "saving": "Ajout…",
+    "defaultLabel": "Capture du {{time}}",
+    "tooLarge": "Photo trop lourde",
+    "failed": "Échec de l'ajout",
+    "source": "Source"
+  },
+  "settings": {
+    "identity": "Votre nom",
+    "connection": "Connexion",
+    "thisPhone": "Ce téléphone",
+    "forget": "Oublier ce dossier",
+    "forgetConfirm": "Effacer",
+    "forgetPending_one": "{{count}} modification non envoyée sera perdue.",
+    "forgetPending_other": "{{count}} modifications non envoyées seront perdues."
+  },
+  "graph": {
+    "label": "Graphe du voisinage",
+    "depth": "Niveaux",
+    "hidden_one": "+{{count}} masqué",
+    "hidden_other": "+{{count}} masqués"
+  },
+  "map": {
+    "satellite": "Satellite",
+    "empty": "Aucun élément localisé"
+  },
+  "timeline": {
+    "empty": "Aucun élément daté"
+  },
+  "edit": {
+    "save": "Enregistrer",
+    "notes": "Modifier la note",
+    "addNote": "Ajouter une note",
+    "invalid": "Valeur invalide"
+  },
+  "links": {
+    "add": "Lier",
+    "none": "Liens",
+    "title": "Nouveau lien",
+    "searchTarget": "Lier « {{label}} » à…",
+    "createElement": "Créer « {{label}} »",
+    "label": "Libellé",
+    "direction": "Sens",
+    "create": "Créer le lien",
+    "dirNone": "Sans sens",
+    "dirForward": "Vers",
+    "dirBackward": "Depuis",
+    "dirBoth": "Dans les deux sens",
+    "source": "Source"
+  },
+  "delete": {
+    "element": "Supprimer l'élément",
+    "link": "Supprimer le lien",
+    "confirm": "Supprimer",
+    "confirmElement": "Supprimer « {{label}} » ?",
+    "confirmLink": "Supprimer ce lien ?",
+    "linksToo_one": "Son lien sera supprimé aussi.",
+    "linksToo_other": "Ses {{count}} liens seront supprimés aussi."
+  },
+  "tabsBar": {
+    "title": "Onglets",
+    "label": "Onglets du canvas",
+    "all": "Tout",
+    "untitled": "Sans nom",
+    "manage": "Gérer les onglets",
+    "new": "Nouvel onglet",
+    "name": "Nom de l'onglet",
+    "create": "Créer l'onglet",
+    "confirmDelete": "Supprimer « {{name}} » ? Ses éléments restent dans le dossier.",
+    "rename": "Renommer « {{name}} »",
+    "delete": "Supprimer « {{name}} »"
+  },
+  "tags": {
+    "remove": "Retirer l'étiquette {{tag}}",
+    "none": "Aucune étiquette"
+  }
+}

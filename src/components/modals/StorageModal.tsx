@@ -33,6 +33,7 @@ import { appPath } from '../../utils/basePath';
 import { emitExport } from '../../plugins/pluginEventBus';
 import { dossierIdOfYdocDatabase } from '../../services/yjs/ydocName';
 import { downloadBlob } from '../../utils/download';
+import { IntegrityCheck } from './IntegrityCheck';
 
 interface StorageModalProps {
   isOpen: boolean;
@@ -501,6 +502,8 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
             {/* ── Maintenance tab ── */}
             {activeTab === 'maintenance' && (
               <>
+                <IntegrityCheck />
+
                 {/* Storage details */}
                 <div className="p-3 bg-bg-secondary rounded border border-border-default">
                   <div className="flex items-center gap-2 mb-3">

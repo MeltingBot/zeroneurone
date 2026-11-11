@@ -452,6 +452,30 @@
       "confirm": "Eliminar TODOS os dossiês e os seus dados?\n\nEsta ação é irreversível.",
       "confirmAgain": "Última confirmação: todos os dados serão perdidos. Continuar?",
       "error": "Erro ao eliminar"
+    },
+    "integrity": {
+      "title": "Integridade dos processos",
+      "check": "Verificar",
+      "checking": "A verificar…",
+      "none": "Nenhuma mistura detetada",
+      "error": "Verificação impossível",
+      "from": "vindos de «{{name}}»",
+      "unknownDossier": "processo desconhecido {{id}}",
+      "nameFrom": "Nome retirado de «{{name}}»",
+      "undecryptable_one": "{{count}} atualização ilegível, não verificada",
+      "undecryptable_other": "{{count}} atualizações ilegíveis, não verificadas",
+      "kinds": {
+        "elements_one": "{{count}} elemento",
+        "elements_other": "{{count}} elementos",
+        "links_one": "{{count}} ligação",
+        "links_other": "{{count}} ligações",
+        "comments_one": "{{count}} comentário",
+        "comments_other": "{{count}} comentários",
+        "tabs_one": "{{count}} separador",
+        "tabs_other": "{{count}} separadores",
+        "reports_one": "{{count}} relatório",
+        "reports_other": "{{count}} relatórios"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Copiar ligação",
     "shareLinkHelp": "Envie esta ligação às pessoas com quem deseja colaborar.",
     "stopSharing": "Parar de partilhar",
-    "stopping": "A parar..."
+    "stopping": "A parar...",
+    "mobile": {
+      "open": "Abrir no telemóvel",
+      "scan": "Digitalize com a câmara do telefone.",
+      "qrLabel": "Código QR do companheiro móvel",
+      "asyncRequired": "O companheiro móvel requer uma partilha em modo assíncrono. Pare a partilha e partilhe de novo com esse modo."
+    }
   },
   "dossierTags": {
     "title": "Tags do dossiê",

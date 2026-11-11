@@ -1,0 +1,171 @@
+{
+  "back": "Back",
+  "close": "Close",
+  "cancel": "Cancel",
+  "yes": "Yes",
+  "no": "No",
+  "home": {
+    "title": "Dossiers",
+    "empty": "Scan the share QR code or paste the link.",
+    "untitled": "Untitled dossier",
+    "add": "Open a dossier",
+    "linkPlaceholder": "Paste the share link",
+    "paste": "Paste",
+    "scan": "Scan",
+    "invalidLink": "Link not recognised",
+    "cameraUnavailable": "Camera unavailable"
+  },
+  "join": {
+    "title": "Shared dossier",
+    "server": "Server: {{host}}",
+    "yourName": "Your name",
+    "join": "Open on this phone",
+    "invalidLink": "Incomplete link.",
+    "notAsync": "Share is not async."
+  },
+  "tabs": {
+    "elements": "Elements",
+    "map": "Map",
+    "timeline": "Timeline",
+    "comments": "Comments",
+    "capture": "Capture",
+    "settings": "Settings"
+  },
+  "status": {
+    "pending_one": "{{count}} pending",
+    "pending_other": "{{count}} pending",
+    "connected_one": "Connected, {{count}} computer online",
+    "connected_other": "Connected, {{count}} computers online",
+    "reconnecting": "Reconnecting…",
+    "offline": "Offline",
+    "closed": "Dossier closed"
+  },
+  "install": {
+    "hint": "Add to home screen",
+    "dismiss": "Hide"
+  },
+  "elements": {
+    "search": "Search",
+    "emptyDossier": "No elements.",
+    "noMatch": "No results.",
+    "loading": "Fetching…",
+    "waitingPeer": "Waiting for a computer online",
+    "clear": "Clear search",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "searchHint": "Search, or # for a tag"
+  },
+  "element": {
+    "untitled": "Untitled",
+    "details": "Details",
+    "date": "Collection date",
+    "source": "Source",
+    "position": "Location",
+    "links_one": "{{count}} link",
+    "links_other": "{{count}} links",
+    "notes": "Note",
+    "period": "Period",
+    "count_one": "{{count}} element",
+    "count_other": "{{count}} elements",
+    "events_one": "{{count}} event",
+    "events_other": "{{count}} events"
+  },
+  "asset": {
+    "missing": "Unavailable",
+    "receiving": "Receiving"
+  },
+  "comments": {
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "placeholder": "Comment",
+    "send": "Send",
+    "showResolved": "Show resolved",
+    "empty": "No open comments.",
+    "deletedTarget": "Deleted element"
+  },
+  "capture": {
+    "label": "Title",
+    "notes": "Note",
+    "photo": "Take a photo",
+    "removePhoto": "Remove photo",
+    "position": "Add my location",
+    "locating": "Locating…",
+    "positionFailed": "Location unavailable",
+    "removePosition": "Remove location",
+    "save": "Add to dossier",
+    "saving": "Adding…",
+    "defaultLabel": "Capture {{time}}",
+    "tooLarge": "Photo too large",
+    "failed": "Could not add",
+    "source": "Source"
+  },
+  "settings": {
+    "identity": "Your name",
+    "connection": "Connection",
+    "thisPhone": "This phone",
+    "forget": "Forget this dossier",
+    "forgetConfirm": "Erase",
+    "forgetPending_one": "{{count}} unsent change will be lost.",
+    "forgetPending_other": "{{count}} unsent changes will be lost."
+  },
+  "graph": {
+    "label": "Neighbourhood graph",
+    "depth": "Levels",
+    "hidden_one": "+{{count}} hidden",
+    "hidden_other": "+{{count}} hidden"
+  },
+  "map": {
+    "satellite": "Satellite",
+    "empty": "No located elements"
+  },
+  "timeline": {
+    "empty": "No dated elements"
+  },
+  "edit": {
+    "save": "Save",
+    "notes": "Edit note",
+    "addNote": "Add a note",
+    "invalid": "Invalid value"
+  },
+  "links": {
+    "add": "Link",
+    "none": "Links",
+    "title": "New link",
+    "searchTarget": "Link \"{{label}}\" to…",
+    "createElement": "Create \"{{label}}\"",
+    "label": "Label",
+    "direction": "Direction",
+    "create": "Create link",
+    "dirNone": "No direction",
+    "dirForward": "To",
+    "dirBackward": "From",
+    "dirBoth": "Both ways",
+    "source": "Source"
+  },
+  "delete": {
+    "element": "Delete element",
+    "link": "Delete link",
+    "confirm": "Delete",
+    "confirmElement": "Delete \"{{label}}\"?",
+    "confirmLink": "Delete this link?",
+    "linksToo_one": "Its link will be deleted too.",
+    "linksToo_other": "Its {{count}} links will be deleted too."
+  },
+  "tabsBar": {
+    "title": "Tabs",
+    "label": "Canvas tabs",
+    "all": "All",
+    "untitled": "Untitled",
+    "manage": "Manage tabs",
+    "new": "New tab",
+    "name": "Tab name",
+    "create": "Create tab",
+    "confirmDelete": "Delete \"{{name}}\"? Its elements stay in the dossier.",
+    "rename": "Rename \"{{name}}\"",
+    "delete": "Delete \"{{name}}\""
+  },
+  "tags": {
+    "remove": "Remove tag {{tag}}",
+    "none": "No tags"
+  }
+}

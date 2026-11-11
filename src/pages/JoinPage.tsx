@@ -28,6 +28,7 @@ import { isValidKeyString } from '../services/cryptoService';
 import { dossierRepository } from '../db/repositories';
 import type { Dossier } from '../types';
 import { dateLocale } from '../utils/dates';
+import { parseJoinLink } from '../utils/joinUrl';
 import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -64,33 +65,20 @@ export function JoinPage() {
   } | null>(null);
 
   if (!urlParams.current && pathSegment) {
-    const hashParams = location.hash ? new URLSearchParams(location.hash.slice(1)) : null;
-
-    const encryptionKey = hashParams?.get('key') || null;
-    const fragmentId = hashParams?.get('id') || null;
-    const fragmentName = hashParams?.get('name') || null;
-
-    // Determine format:
-    // - NEW FORMAT: id is in fragment, path contains hash
-    // - OLD FORMAT: path contains UUID, name may be in query
-    const isLegacyFormat = !fragmentId;
-
-    // Parse async flag from query params
-    const asyncEnabled = searchParams.get('async') === '1';
-
+    const link = parseJoinLink(pathSegment, location.search, location.hash);
     urlParams.current = {
-      encryptionKey,
-      dossierId: fragmentId || pathSegment, // UUID from fragment (new) or path (old)
-      nameFromFragment: fragmentName,
-      roomId: pathSegment, // Always the path segment (hash or UUID)
-      isLegacyFormat,
-      asyncEnabled,
+      encryptionKey: link.encryptionKey,
+      dossierId: link.dossierId,
+      nameFromFragment: link.name,
+      roomId: link.roomId,
+      isLegacyFormat: link.isLegacyFormat,
+      asyncEnabled: link.asyncEnabled,
     };
   }
 
   // Get params from URL (supports both formats)
   const serverFromUrl = searchParams.get('server');
-  const nameFromUrl = urlParams.current?.nameFromFragment || searchParams.get('name');
+  const nameFromUrl = urlParams.current?.nameFromFragment ?? null;
   const encryptionKeyFromUrl = urlParams.current?.encryptionKey || null;
   const dossierId = urlParams.current?.dossierId || pathSegment;
   const roomId = urlParams.current?.roomId || pathSegment;

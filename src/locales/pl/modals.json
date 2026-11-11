@@ -456,6 +456,42 @@
       "confirm": "Usunąć WSZYSTKIE dossier i ich dane?\n\nTej operacji nie można cofnąć.",
       "confirmAgain": "Ostatnie potwierdzenie: wszystkie dane zostaną utracone. Kontynuować?",
       "error": "Błąd podczas usuwania"
+    },
+    "integrity": {
+      "title": "Integralność spraw",
+      "check": "Sprawdź",
+      "checking": "Sprawdzanie…",
+      "none": "Nie wykryto mieszania",
+      "error": "Sprawdzenie nie powiodło się",
+      "from": "pochodzące z „{{name}}”",
+      "unknownDossier": "nieznana sprawa {{id}}",
+      "nameFrom": "Nazwa przejęta z „{{name}}”",
+      "undecryptable_one": "{{count}} nieczytelna aktualizacja, niesprawdzona",
+      "undecryptable_few": "{{count}} nieczytelne aktualizacje, niesprawdzone",
+      "undecryptable_many": "{{count}} nieczytelnych aktualizacji, niesprawdzonych",
+      "undecryptable_other": "{{count}} nieczytelnej aktualizacji, niesprawdzonej",
+      "kinds": {
+        "elements_one": "{{count}} element",
+        "elements_few": "{{count}} elementy",
+        "elements_many": "{{count}} elementów",
+        "elements_other": "{{count}} elementu",
+        "links_one": "{{count}} powiązanie",
+        "links_few": "{{count}} powiązania",
+        "links_many": "{{count}} powiązań",
+        "links_other": "{{count}} powiązania",
+        "comments_one": "{{count}} komentarz",
+        "comments_few": "{{count}} komentarze",
+        "comments_many": "{{count}} komentarzy",
+        "comments_other": "{{count}} komentarza",
+        "tabs_one": "{{count}} karta",
+        "tabs_few": "{{count}} karty",
+        "tabs_many": "{{count}} kart",
+        "tabs_other": "{{count}} karty",
+        "reports_one": "{{count}} raport",
+        "reports_few": "{{count}} raporty",
+        "reports_many": "{{count}} raportów",
+        "reports_other": "{{count}} raportu"
+      }
     }
   },
   "localStorage": {
@@ -604,7 +640,13 @@
     "copyLink": "Kopiuj link",
     "shareLinkHelp": "Wyślij ten link osobom, z którymi chcesz współpracować.",
     "stopSharing": "Zatrzymaj udostępnianie",
-    "stopping": "Zatrzymywanie..."
+    "stopping": "Zatrzymywanie...",
+    "mobile": {
+      "open": "Otwórz na telefonie",
+      "scan": "Zeskanuj aparatem telefonu.",
+      "qrLabel": "Kod QR towarzysza mobilnego",
+      "asyncRequired": "Towarzysz mobilny wymaga udostępniania w trybie asynchronicznym. Zatrzymaj udostępnianie i udostępnij ponownie w tym trybie."
+    }
   },
   "dossierTags": {
     "title": "Tagi teczki",

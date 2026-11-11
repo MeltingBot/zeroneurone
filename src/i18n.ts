@@ -22,7 +22,7 @@ import languagesConfig from './locales/languages.json';
 export const SUPPORTED_LANGUAGES: LanguageConfig[] = languagesConfig;
 
 export const FALLBACK_LANGUAGE = 'en';
-export const NAMESPACES = ['common', 'modals', 'panels', 'pages', 'importData'];
+export const NAMESPACES = ['common', 'modals', 'panels', 'pages', 'importData', 'companion'];
 
 const LANGUAGE_STORAGE_KEY = 'zeroneurone-lang';
 

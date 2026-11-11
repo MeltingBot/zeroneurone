@@ -1,0 +1,171 @@
+{
+  "back": "Terug",
+  "close": "Sluiten",
+  "cancel": "Annuleren",
+  "yes": "Ja",
+  "no": "Nee",
+  "home": {
+    "title": "Dossiers",
+    "empty": "Scan de QR-code of plak de link.",
+    "untitled": "Naamloos dossier",
+    "add": "Een dossier openen",
+    "linkPlaceholder": "Plak de deellink",
+    "paste": "Plakken",
+    "scan": "Scannen",
+    "invalidLink": "Link niet herkend",
+    "cameraUnavailable": "Camera niet beschikbaar"
+  },
+  "join": {
+    "title": "Gedeeld dossier",
+    "server": "Server: {{host}}",
+    "yourName": "Uw naam",
+    "join": "Openen op deze telefoon",
+    "invalidLink": "Onvolledige link.",
+    "notAsync": "Delen niet asynchroon."
+  },
+  "tabs": {
+    "elements": "Elementen",
+    "map": "Kaart",
+    "timeline": "Tijdlijn",
+    "comments": "Opmerkingen",
+    "capture": "Vastleggen",
+    "settings": "Instellingen"
+  },
+  "status": {
+    "pending_one": "{{count}} in afwachting",
+    "pending_other": "{{count}} in afwachting",
+    "connected_one": "Verbonden, {{count}} computer online",
+    "connected_other": "Verbonden, {{count}} computers online",
+    "reconnecting": "Opnieuw verbinden…",
+    "offline": "Offline",
+    "closed": "Dossier afgesloten"
+  },
+  "install": {
+    "hint": "Toevoegen aan beginscherm",
+    "dismiss": "Verbergen"
+  },
+  "elements": {
+    "search": "Zoeken",
+    "emptyDossier": "Geen elementen.",
+    "noMatch": "Geen resultaten.",
+    "loading": "Ophalen…",
+    "waitingPeer": "Wachten op een computer online",
+    "clear": "Zoekopdracht wissen",
+    "results_one": "{{count}} resultaat",
+    "results_other": "{{count}} resultaten",
+    "searchHint": "Zoeken, of # voor een label"
+  },
+  "element": {
+    "untitled": "Zonder titel",
+    "details": "Informatie",
+    "date": "Verzameldatum",
+    "source": "Bron",
+    "position": "Locatie",
+    "links_one": "{{count}} verbinding",
+    "links_other": "{{count}} verbindingen",
+    "notes": "Notitie",
+    "period": "Periode",
+    "count_one": "{{count}} element",
+    "count_other": "{{count}} elementen",
+    "events_one": "{{count}} gebeurtenis",
+    "events_other": "{{count}} gebeurtenissen"
+  },
+  "asset": {
+    "missing": "Niet beschikbaar",
+    "receiving": "Wordt ontvangen"
+  },
+  "comments": {
+    "resolve": "Afhandelen",
+    "reopen": "Heropenen",
+    "placeholder": "Opmerking",
+    "send": "Verzenden",
+    "showResolved": "Afgehandelde tonen",
+    "empty": "Geen open opmerkingen.",
+    "deletedTarget": "Verwijderd element"
+  },
+  "capture": {
+    "label": "Titel",
+    "notes": "Notitie",
+    "photo": "Foto maken",
+    "removePhoto": "Foto verwijderen",
+    "position": "Mijn locatie toevoegen",
+    "locating": "Lokaliseren…",
+    "positionFailed": "Locatie niet beschikbaar",
+    "removePosition": "Locatie verwijderen",
+    "save": "Toevoegen aan dossier",
+    "saving": "Toevoegen…",
+    "defaultLabel": "Vastlegging {{time}}",
+    "tooLarge": "Foto te groot",
+    "failed": "Toevoegen mislukt",
+    "source": "Bron"
+  },
+  "settings": {
+    "identity": "Uw naam",
+    "connection": "Verbinding",
+    "thisPhone": "Deze telefoon",
+    "forget": "Dit dossier vergeten",
+    "forgetConfirm": "Wissen",
+    "forgetPending_one": "{{count}} niet-verzonden wijziging gaat verloren.",
+    "forgetPending_other": "{{count}} niet-verzonden wijzigingen gaan verloren."
+  },
+  "graph": {
+    "label": "Buurtgraaf",
+    "depth": "Niveaus",
+    "hidden_one": "+{{count}} verborgen",
+    "hidden_other": "+{{count}} verborgen"
+  },
+  "map": {
+    "satellite": "Satelliet",
+    "empty": "Geen gelokaliseerde elementen"
+  },
+  "timeline": {
+    "empty": "Geen gedateerde elementen"
+  },
+  "edit": {
+    "save": "Opslaan",
+    "notes": "Notitie bewerken",
+    "addNote": "Notitie toevoegen",
+    "invalid": "Ongeldige waarde"
+  },
+  "links": {
+    "add": "Verbinden",
+    "none": "Verbindingen",
+    "title": "Nieuwe verbinding",
+    "searchTarget": "\"{{label}}\" verbinden met…",
+    "createElement": "\"{{label}}\" aanmaken",
+    "label": "Label",
+    "direction": "Richting",
+    "create": "Verbinding maken",
+    "dirNone": "Zonder richting",
+    "dirForward": "Naar",
+    "dirBackward": "Van",
+    "dirBoth": "Beide richtingen",
+    "source": "Bron"
+  },
+  "delete": {
+    "element": "Element verwijderen",
+    "link": "Verbinding verwijderen",
+    "confirm": "Verwijderen",
+    "confirmElement": "\"{{label}}\" verwijderen?",
+    "confirmLink": "Deze verbinding verwijderen?",
+    "linksToo_one": "Zijn verbinding wordt ook verwijderd.",
+    "linksToo_other": "Zijn {{count}} verbindingen worden ook verwijderd."
+  },
+  "tabsBar": {
+    "title": "Tabbladen",
+    "label": "Canvas-tabbladen",
+    "all": "Alles",
+    "untitled": "Naamloos",
+    "manage": "Tabbladen beheren",
+    "new": "Nieuw tabblad",
+    "name": "Naam van het tabblad",
+    "create": "Tabblad maken",
+    "confirmDelete": "\"{{name}}\" verwijderen? De elementen blijven in het dossier.",
+    "rename": "\"{{name}}\" hernoemen",
+    "delete": "\"{{name}}\" verwijderen"
+  },
+  "tags": {
+    "remove": "Label {{tag}} verwijderen",
+    "none": "Geen labels"
+  }
+}

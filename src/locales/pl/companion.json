@@ -1,0 +1,189 @@
+{
+  "back": "Wstecz",
+  "close": "Zamknij",
+  "cancel": "Anuluj",
+  "yes": "Tak",
+  "no": "Nie",
+  "home": {
+    "title": "Sprawy",
+    "empty": "Zeskanuj kod QR lub wklej link.",
+    "untitled": "Sprawa bez nazwy",
+    "add": "Otwórz sprawę",
+    "linkPlaceholder": "Wklej link udostępniania",
+    "paste": "Wklej",
+    "scan": "Skanuj",
+    "invalidLink": "Nierozpoznany link",
+    "cameraUnavailable": "Aparat niedostępny"
+  },
+  "join": {
+    "title": "Udostępniona sprawa",
+    "server": "Serwer: {{host}}",
+    "yourName": "Twoje imię",
+    "join": "Otwórz na tym telefonie",
+    "invalidLink": "Niepełny link.",
+    "notAsync": "Udostępnianie nie jest asynchroniczne."
+  },
+  "tabs": {
+    "elements": "Elementy",
+    "map": "Mapa",
+    "timeline": "Oś czasu",
+    "comments": "Komentarze",
+    "capture": "Zapisz",
+    "settings": "Ustawienia"
+  },
+  "status": {
+    "pending_one": "{{count}} oczekuje",
+    "pending_few": "{{count}} oczekują",
+    "pending_many": "{{count}} oczekuje",
+    "pending_other": "{{count}} oczekuje",
+    "connected_one": "Połączono, {{count}} komputer online",
+    "connected_few": "Połączono, {{count}} komputery online",
+    "connected_many": "Połączono, {{count}} komputerów online",
+    "connected_other": "Połączono, {{count}} komputera online",
+    "reconnecting": "Ponowne łączenie…",
+    "offline": "Offline",
+    "closed": "Sprawa zamknięta"
+  },
+  "install": {
+    "hint": "Dodaj do ekranu głównego",
+    "dismiss": "Ukryj"
+  },
+  "elements": {
+    "search": "Szukaj",
+    "emptyDossier": "Brak elementów.",
+    "noMatch": "Brak wyników.",
+    "loading": "Pobieranie…",
+    "waitingPeer": "Oczekiwanie na komputer online",
+    "clear": "Wyczyść wyszukiwanie",
+    "results_one": "{{count}} wynik",
+    "results_few": "{{count}} wyniki",
+    "results_many": "{{count}} wyników",
+    "results_other": "{{count}} wyniku",
+    "searchHint": "Szukaj lub # dla tagu"
+  },
+  "element": {
+    "untitled": "Bez tytułu",
+    "details": "Informacje",
+    "date": "Data zebrania",
+    "source": "Źródło",
+    "position": "Lokalizacja",
+    "links_one": "{{count}} powiązanie",
+    "links_few": "{{count}} powiązania",
+    "links_many": "{{count}} powiązań",
+    "links_other": "{{count}} powiązania",
+    "notes": "Notatka",
+    "period": "Okres",
+    "count_one": "{{count}} element",
+    "count_few": "{{count}} elementy",
+    "count_many": "{{count}} elementów",
+    "count_other": "{{count}} elementu",
+    "events_one": "{{count}} zdarzenie",
+    "events_few": "{{count}} zdarzenia",
+    "events_many": "{{count}} zdarzeń",
+    "events_other": "{{count}} zdarzenia"
+  },
+  "asset": {
+    "missing": "Niedostępne",
+    "receiving": "Odbieranie"
+  },
+  "comments": {
+    "resolve": "Rozwiąż",
+    "reopen": "Otwórz ponownie",
+    "placeholder": "Komentarz",
+    "send": "Wyślij",
+    "showResolved": "Pokaż rozwiązane",
+    "empty": "Brak otwartych komentarzy.",
+    "deletedTarget": "Usunięty element"
+  },
+  "capture": {
+    "label": "Tytuł",
+    "notes": "Notatka",
+    "photo": "Zrób zdjęcie",
+    "removePhoto": "Usuń zdjęcie",
+    "position": "Dodaj moją lokalizację",
+    "locating": "Lokalizowanie…",
+    "positionFailed": "Lokalizacja niedostępna",
+    "removePosition": "Usuń lokalizację",
+    "save": "Dodaj do sprawy",
+    "saving": "Dodawanie…",
+    "defaultLabel": "Zapis z {{time}}",
+    "tooLarge": "Zdjęcie jest za duże",
+    "failed": "Nie udało się dodać",
+    "source": "Źródło"
+  },
+  "settings": {
+    "identity": "Twoje imię",
+    "connection": "Połączenie",
+    "thisPhone": "Ten telefon",
+    "forget": "Zapomnij tę sprawę",
+    "forgetConfirm": "Usuń",
+    "forgetPending_one": "{{count}} niewysłana zmiana zostanie utracona.",
+    "forgetPending_few": "{{count}} niewysłane zmiany zostaną utracone.",
+    "forgetPending_many": "{{count}} niewysłanych zmian zostanie utraconych.",
+    "forgetPending_other": "{{count}} niewysłanej zmiany zostanie utracone."
+  },
+  "graph": {
+    "label": "Graf sąsiedztwa",
+    "depth": "Poziomy",
+    "hidden_one": "+{{count}} ukryty",
+    "hidden_few": "+{{count}} ukryte",
+    "hidden_many": "+{{count}} ukrytych",
+    "hidden_other": "+{{count}} ukrytego"
+  },
+  "map": {
+    "satellite": "Satelita",
+    "empty": "Brak zlokalizowanych elementów"
+  },
+  "timeline": {
+    "empty": "Brak elementów z datą"
+  },
+  "edit": {
+    "save": "Zapisz",
+    "notes": "Edytuj notatkę",
+    "addNote": "Dodaj notatkę",
+    "invalid": "Nieprawidłowa wartość"
+  },
+  "links": {
+    "add": "Połącz",
+    "none": "Powiązania",
+    "title": "Nowe powiązanie",
+    "searchTarget": "Połącz „{{label}}” z…",
+    "createElement": "Utwórz „{{label}}”",
+    "label": "Etykieta",
+    "direction": "Kierunek",
+    "create": "Utwórz powiązanie",
+    "dirNone": "Bez kierunku",
+    "dirForward": "Do",
+    "dirBackward": "Od",
+    "dirBoth": "W obie strony",
+    "source": "Źródło"
+  },
+  "delete": {
+    "element": "Usuń element",
+    "link": "Usuń powiązanie",
+    "confirm": "Usuń",
+    "confirmElement": "Usunąć „{{label}}”?",
+    "confirmLink": "Usunąć to powiązanie?",
+    "linksToo_one": "Jego powiązanie również zostanie usunięte.",
+    "linksToo_few": "Jego {{count}} powiązania również zostaną usunięte.",
+    "linksToo_many": "Jego {{count}} powiązań również zostanie usuniętych.",
+    "linksToo_other": "Jego {{count}} powiązania również zostaną usunięte."
+  },
+  "tabsBar": {
+    "title": "Karty",
+    "label": "Karty kanwy",
+    "all": "Wszystko",
+    "untitled": "Bez nazwy",
+    "manage": "Zarządzaj kartami",
+    "new": "Nowa karta",
+    "name": "Nazwa karty",
+    "create": "Utwórz kartę",
+    "confirmDelete": "Usunąć „{{name}}”? Jej elementy pozostają w sprawie.",
+    "rename": "Zmień nazwę „{{name}}”",
+    "delete": "Usuń „{{name}}”"
+  },
+  "tags": {
+    "remove": "Usuń tag {{tag}}",
+    "none": "Brak tagów"
+  }
+}

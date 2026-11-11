@@ -445,17 +445,23 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
             )}
           </div>
 
-          {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('common:actions.search')}
-              aria-label={t('common:actions.search')}
-              className="w-full pl-7 pr-2 py-1.5 text-sm sketchy-border border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
-            />
+          {/* Search, and the new tag at hand above a long list */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('common:actions.search')}
+                aria-label={t('common:actions.search')}
+                className="w-full pl-7 pr-2 py-1.5 text-sm sketchy-border border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+              />
+            </div>
+            <Button variant="secondary" onClick={handleCreate} data-testid="tagset-new" className="shrink-0">
+              <Plus size={14} />
+              {t('tagSets.newTag')}
+            </Button>
           </div>
 
           {/* TagSet list */}
@@ -472,15 +478,6 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
               {t('search.noResults', { query: query.trim() })}
             </p>
           )}
-
-          {/* Add button */}
-          <button
-            onClick={handleCreate}
-            className="w-full flex items-center justify-center gap-2 py-3 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-secondary border border-dashed border-border-default rounded transition-colors"
-          >
-            <Plus size={14} />
-            {t('tagSets.newTag')}
-          </button>
 
           {/* Hidden file input for import */}
           <input

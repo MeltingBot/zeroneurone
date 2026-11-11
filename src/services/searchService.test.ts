@@ -166,3 +166,23 @@ describe('searchService.loadDossier in slices', () => {
     expect(searchService.search('Autre', 5, 'exact').map((r) => r.id)).toEqual(['el-1']);
   });
 });
+
+describe('searchService: element events', () => {
+  beforeEach(async () => {
+    searchService.clear();
+    await searchService.loadDossier('d', [
+      element(1),
+      element(2, {
+        events: [{ id: 'ev1', date: new Date(2026, 2, 12), label: 'Escale Marseille', description: 'navire Calypso', source: 'AIS' }],
+      }),
+    ], []);
+  });
+
+  it('finds an element by the label, description or source of one of its events', () => {
+    for (const term of ['marseille', 'calypso', 'ais']) {
+      const results = searchService.search(term);
+      expect(results.map((r) => r.id)).toEqual(['el-2']);
+      expect(Object.values(results[0].matches).flat()).toContain('events');
+    }
+  });
+});

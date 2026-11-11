@@ -452,6 +452,30 @@
       "confirm": "¿Eliminar TODOS los dossiers y sus datos?\n\nEsta acción es irreversible.",
       "confirmAgain": "Última confirmación: se perderán todos los datos. ¿Continuar?",
       "error": "Error al eliminar"
+    },
+    "integrity": {
+      "title": "Integridad de los expedientes",
+      "check": "Comprobar",
+      "checking": "Comprobando…",
+      "none": "No se ha detectado ninguna mezcla",
+      "error": "Comprobación imposible",
+      "from": "procedente de «{{name}}»",
+      "unknownDossier": "expediente desconocido {{id}}",
+      "nameFrom": "Nombre tomado de «{{name}}»",
+      "undecryptable_one": "{{count}} actualización ilegible, no comprobada",
+      "undecryptable_other": "{{count}} actualizaciones ilegibles, no comprobadas",
+      "kinds": {
+        "elements_one": "{{count}} elemento",
+        "elements_other": "{{count}} elementos",
+        "links_one": "{{count}} vínculo",
+        "links_other": "{{count}} vínculos",
+        "comments_one": "{{count}} comentario",
+        "comments_other": "{{count}} comentarios",
+        "tabs_one": "{{count}} pestaña",
+        "tabs_other": "{{count}} pestañas",
+        "reports_one": "{{count}} informe",
+        "reports_other": "{{count}} informes"
+      }
     }
   },
   "localStorage": {
@@ -600,7 +624,13 @@
     "copyLink": "Copiar enlace",
     "shareLinkHelp": "Envíe este enlace a las personas con las que desea colaborar.",
     "stopSharing": "Dejar de compartir",
-    "stopping": "Deteniendo..."
+    "stopping": "Deteniendo...",
+    "mobile": {
+      "open": "Abrir en el móvil",
+      "scan": "Escanee con la cámara del teléfono.",
+      "qrLabel": "Código QR del acompañante móvil",
+      "asyncRequired": "El acompañante móvil requiere compartir en modo asíncrono. Deje de compartir y vuelva a compartir con ese modo."
+    }
   },
   "dossierTags": {
     "title": "Tags de expediente",

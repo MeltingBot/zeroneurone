@@ -17,6 +17,8 @@ let ydoc = new Y.Doc();
 vi.mock('../services/syncService', () => ({
   syncService: {
     getYDoc: () => ydoc,
+    // The store only writes into the shown dossier's Y.Doc (getYDocFor)
+    getYDocFor: (id: string | null | undefined) => (id ? ydoc : null),
     isConnected: () => false,
     getProvider: () => null,
     broadcastAsset: vi.fn(),

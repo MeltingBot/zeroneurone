@@ -1,0 +1,189 @@
+{
+  "back": "Назад",
+  "close": "Закрити",
+  "cancel": "Скасувати",
+  "yes": "Так",
+  "no": "Ні",
+  "home": {
+    "title": "Справи",
+    "empty": "Відскануйте QR-код або вставте посилання.",
+    "untitled": "Справа без назви",
+    "add": "Відкрити справу",
+    "linkPlaceholder": "Вставте посилання",
+    "paste": "Вставити",
+    "scan": "Сканувати",
+    "invalidLink": "Посилання не розпізнано",
+    "cameraUnavailable": "Камера недоступна"
+  },
+  "join": {
+    "title": "Спільна справа",
+    "server": "Сервер: {{host}}",
+    "yourName": "Ваше ім'я",
+    "join": "Відкрити на цьому телефоні",
+    "invalidLink": "Неповне посилання.",
+    "notAsync": "Доступ не асинхронний."
+  },
+  "tabs": {
+    "elements": "Елементи",
+    "map": "Мапа",
+    "timeline": "Хронологія",
+    "comments": "Коментарі",
+    "capture": "Зафіксувати",
+    "settings": "Налаштування"
+  },
+  "status": {
+    "pending_one": "{{count}} в очікуванні",
+    "pending_few": "{{count}} в очікуванні",
+    "pending_many": "{{count}} в очікуванні",
+    "pending_other": "{{count}} в очікуванні",
+    "connected_one": "Підключено, {{count}} комп'ютер онлайн",
+    "connected_few": "Підключено, {{count}} комп'ютери онлайн",
+    "connected_many": "Підключено, {{count}} комп'ютерів онлайн",
+    "connected_other": "Підключено, {{count}} комп'ютера онлайн",
+    "reconnecting": "Перепідключення…",
+    "offline": "Офлайн",
+    "closed": "Справу закрито"
+  },
+  "install": {
+    "hint": "Додати на головний екран",
+    "dismiss": "Приховати"
+  },
+  "elements": {
+    "search": "Пошук",
+    "emptyDossier": "Немає елементів.",
+    "noMatch": "Немає результатів.",
+    "loading": "Отримання…",
+    "waitingPeer": "Очікування комп'ютера онлайн",
+    "clear": "Очистити пошук",
+    "results_one": "{{count}} результат",
+    "results_few": "{{count}} результати",
+    "results_many": "{{count}} результатів",
+    "results_other": "{{count}} результату",
+    "searchHint": "Пошук або # для мітки"
+  },
+  "element": {
+    "untitled": "Без назви",
+    "details": "Відомості",
+    "date": "Дата збору",
+    "source": "Джерело",
+    "position": "Розташування",
+    "links_one": "{{count}} зв'язок",
+    "links_few": "{{count}} зв'язки",
+    "links_many": "{{count}} зв'язків",
+    "links_other": "{{count}} зв'язку",
+    "notes": "Нотатка",
+    "period": "Період",
+    "count_one": "{{count}} елемент",
+    "count_few": "{{count}} елементи",
+    "count_many": "{{count}} елементів",
+    "count_other": "{{count}} елемента",
+    "events_one": "{{count}} подія",
+    "events_few": "{{count}} події",
+    "events_many": "{{count}} подій",
+    "events_other": "{{count}} події"
+  },
+  "asset": {
+    "missing": "Недоступно",
+    "receiving": "Отримання"
+  },
+  "comments": {
+    "resolve": "Вирішити",
+    "reopen": "Відкрити знову",
+    "placeholder": "Коментар",
+    "send": "Надіслати",
+    "showResolved": "Показати вирішені",
+    "empty": "Немає відкритих коментарів.",
+    "deletedTarget": "Видалений елемент"
+  },
+  "capture": {
+    "label": "Назва",
+    "notes": "Нотатка",
+    "photo": "Зробити фото",
+    "removePhoto": "Прибрати фото",
+    "position": "Додати моє розташування",
+    "locating": "Визначення…",
+    "positionFailed": "Розташування недоступне",
+    "removePosition": "Прибрати розташування",
+    "save": "Додати до справи",
+    "saving": "Додавання…",
+    "defaultLabel": "Фіксація {{time}}",
+    "tooLarge": "Фото завелике",
+    "failed": "Не вдалося додати",
+    "source": "Джерело"
+  },
+  "settings": {
+    "identity": "Ваше ім'я",
+    "connection": "Підключення",
+    "thisPhone": "Цей телефон",
+    "forget": "Забути цю справу",
+    "forgetConfirm": "Видалити",
+    "forgetPending_one": "{{count}} ненадіслану зміну буде втрачено.",
+    "forgetPending_few": "{{count}} ненадіслані зміни буде втрачено.",
+    "forgetPending_many": "{{count}} ненадісланих змін буде втрачено.",
+    "forgetPending_other": "{{count}} ненадісланої зміни буде втрачено."
+  },
+  "graph": {
+    "label": "Граф сусідства",
+    "depth": "Рівні",
+    "hidden_one": "+{{count}} прихований",
+    "hidden_few": "+{{count}} приховані",
+    "hidden_many": "+{{count}} прихованих",
+    "hidden_other": "+{{count}} прихованого"
+  },
+  "map": {
+    "satellite": "Супутник",
+    "empty": "Немає елементів із розташуванням"
+  },
+  "timeline": {
+    "empty": "Немає датованих елементів"
+  },
+  "edit": {
+    "save": "Зберегти",
+    "notes": "Редагувати нотатку",
+    "addNote": "Додати нотатку",
+    "invalid": "Неприпустиме значення"
+  },
+  "links": {
+    "add": "Звʼязати",
+    "none": "Зв'язки",
+    "title": "Новий зв'язок",
+    "searchTarget": "Звʼязати «{{label}}» з…",
+    "createElement": "Створити «{{label}}»",
+    "label": "Підпис",
+    "direction": "Напрямок",
+    "create": "Створити зв'язок",
+    "dirNone": "Без напрямку",
+    "dirForward": "До",
+    "dirBackward": "Від",
+    "dirBoth": "В обидва боки",
+    "source": "Джерело"
+  },
+  "delete": {
+    "element": "Видалити елемент",
+    "link": "Видалити зв'язок",
+    "confirm": "Видалити",
+    "confirmElement": "Видалити «{{label}}»?",
+    "confirmLink": "Видалити цей зв'язок?",
+    "linksToo_one": "Його зв'язок теж буде видалено.",
+    "linksToo_few": "Його {{count}} зв'язки теж буде видалено.",
+    "linksToo_many": "Його {{count}} зв'язків теж буде видалено.",
+    "linksToo_other": "Його {{count}} зв'язку теж буде видалено."
+  },
+  "tabsBar": {
+    "title": "Вкладки",
+    "label": "Вкладки полотна",
+    "all": "Усе",
+    "untitled": "Без назви",
+    "manage": "Керувати вкладками",
+    "new": "Нова вкладка",
+    "name": "Назва вкладки",
+    "create": "Створити вкладку",
+    "confirmDelete": "Видалити «{{name}}»? Її елементи залишаться у справі.",
+    "rename": "Перейменувати «{{name}}»",
+    "delete": "Видалити «{{name}}»"
+  },
+  "tags": {
+    "remove": "Прибрати мітку {{tag}}",
+    "none": "Немає міток"
+  }
+}

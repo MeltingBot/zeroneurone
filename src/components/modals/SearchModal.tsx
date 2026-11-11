@@ -1,19 +1,28 @@
 import { useState, useCallback, useEffect, useRef, useMemo, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Box, Link2, X, Tag, MessageSquare } from 'lucide-react';
+import { Search, Box, Link2, X, Tag, MessageSquare, CalendarDays } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useTabStore, useUIStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import { useQueryStore } from '../../stores/queryStore';
 import { searchService, SEARCH_INDEX_TASK } from '../../services/searchService';
 import { useProgressStore } from '../../stores/progressStore';
-import type { SearchResult } from '../../types';
+import type { Element, ElementEvent, SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
+import { formatPreciseDate } from '../../utils/dates';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { canvasPosition } from '../../utils/revealElement';
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+/** First event of an element whose label, description or source holds the query */
+function findMatchingEvent(element: Element | undefined, query: string): ElementEvent | null {
+  const queryLower = query.trim().toLowerCase();
+  if (!element || !queryLower) return null;
+  return (element.events ?? []).find((e) =>
+    [e.label, e.description, e.source].some((field) => field?.toLowerCase().includes(queryLower))) ?? null;
 }
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
@@ -30,7 +39,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const { elements, links, assets, comments } = useDossierStore(useShallow((s) => ({ elements: s.elements, links: s.links, assets: s.assets, comments: s.comments })));
-  const { selectElement, selectLink, clearSelection } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectLink: s.selectLink, clearSelection: s.clearSelection })));
+  const { selectElement, selectLink, clearSelection, setFocusedEventId } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectLink: s.selectLink, clearSelection: s.clearSelection, setFocusedEventId: s.setFocusedEventId })));
   const { requestViewportChange } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange })));
   const canvasTabs = useTabStore((s) => s.tabs);
   const activeTabId = useTabStore((s) => s.activeTabId);
@@ -122,6 +131,12 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         const element = elementsMap.get(result.id);
         if (element) {
           selectElement(element.id);
+          // Found through one of its events: open the element on that event
+          const event = findMatchingEvent(element, query);
+          if (event) {
+            setFocusedEventId(null);
+            queueMicrotask(() => setFocusedEventId(event.id));
+          }
 
           if (currentMode === 'map' && element.geo) {
             // Fly to element on map
@@ -190,6 +205,8 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       tabMemberSet,
       canvasTabs,
       setActiveTab,
+      query,
+      setFocusedEventId,
     ]
   );
 
@@ -341,6 +358,21 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [comments, query]
   );
 
+  // First event of the element whose label, description or source holds the query
+  const getMatchingEvent = useCallback(
+    (result: SearchResult): { date: string; text: string } | null => {
+      if (result.type !== 'element') return null;
+      const event = findMatchingEvent(elementsMap.get(result.id), query);
+      if (!event) return null;
+      const text = [event.label, event.description].filter(Boolean).join(' — ').replace(/\s+/g, ' ').trim();
+      const date = event.date instanceof Date && !Number.isNaN(event.date.getTime())
+        ? formatPreciseDate(event.date, event.precision, event.approximate, i18n.language)
+        : '';
+      return { date, text };
+    },
+    [elementsMap, query, i18n.language]
+  );
+
   // Get matching extracted text snippet from assets
   const getMatchingExtractedText = useCallback(
     (result: SearchResult): string[] | null => {
@@ -476,6 +508,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             const notes = getResultNotes(result);
             const extractedSnippets = getMatchingExtractedText(result);
             const matchingComment = matchingProp ? null : getMatchingComment(result);
+            const matchingEvent = matchingProp || matchingComment ? null : getMatchingEvent(result);
             const tabNames = getResultTabNames(result);
 
             return (
@@ -520,8 +553,16 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       <span className="truncate">{highlightMatch(matchingComment.text, query)}</span>
                     </div>
                   )}
+                  {/* Matching event */}
+                  {matchingEvent && (
+                    <div className="flex items-center gap-1 text-xs text-text-secondary truncate mt-0.5">
+                      <CalendarDays size={10} className="shrink-0 text-text-tertiary" />
+                      {matchingEvent.date && <span className="text-text-tertiary shrink-0">{matchingEvent.date}:</span>}
+                      <span className="truncate">{highlightMatch(matchingEvent.text, query)}</span>
+                    </div>
+                  )}
                   {/* Notes excerpt */}
-                  {notes && !matchingProp && !matchingComment && !extractedSnippets && (
+                  {notes && !matchingProp && !matchingComment && !matchingEvent && !extractedSnippets && (
                     <div className="text-xs text-text-tertiary truncate mt-0.5">
                       {highlightMatch(notes, query)}
                     </div>

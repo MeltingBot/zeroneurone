@@ -11,6 +11,7 @@ import { Input } from '../common/Input';
 import { useSyncStore, useDossierStore } from '../../stores';
 import { syncService } from '../../services/syncService';
 import { useShallow } from 'zustand/react/shallow';
+import { MobileCompanionQr } from './MobileCompanionQr';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 const DEFAULT_SERVER_URL = ''; // Empty = not configured
@@ -36,7 +37,8 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
           const url = await syncService.buildShareUrl(
             currentDossier.id,
             encryptionKey,
-            currentDossier.name
+            currentDossier.name,
+            syncService.isAsync(),
           );
           setShareUrl(url);
         }
@@ -305,6 +307,15 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                   {t('collaboration.shareLinkHelp')}
                 </p>
               </div>
+
+              {/* Mobile companion */}
+              {currentDossier && syncService.getEncryptionKey() && (
+                <MobileCompanionQr
+                  dossierId={currentDossier.id}
+                  encryptionKey={syncService.getEncryptionKey()!}
+                  asyncEnabled={syncService.isAsync()}
+                />
+              )}
 
               {/* Stop sharing */}
               <div className="pt-2 border-t border-border-default">

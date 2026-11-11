@@ -210,6 +210,8 @@ ZeroNeurone supports asynchronous collaboration, allowing collaborators to work 
 2. Changes are stored on the server for **7 days**
 3. Collaborators can join when they want and receive accumulated changes
 
+To open the dossier on a phone, see [Mobile companion]({{< relref "mobile-companion" >}}).
+
 ### Keep Your Share Link
 
 {{< hint danger >}}

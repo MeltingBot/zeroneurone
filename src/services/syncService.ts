@@ -18,8 +18,7 @@ import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
-import { deleteYDocDatabase } from './dossierPurge';
-import { ydocDatabaseName } from './yjs/ydocName';
+import { ydocDatabaseName, deleteYDocDatabase } from './yjs/ydocName';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
@@ -39,6 +38,8 @@ class SyncService {
   private websocketProvider: WebsocketProvider | null = null;
   private dossierId: string | null = null;
   private encryptionKey: string | null = null;
+  /** The open session asked the relay to buffer messages (async mode) */
+  private asyncMode = false;
 
   // Guards to suppress event handlers during teardown / page unload
   private isClosing = false;
@@ -141,6 +142,15 @@ class SyncService {
    */
   getYDoc(): Y.Doc | null {
     return this.ydoc;
+  }
+
+  /**
+   * The Y.Doc if it is the given dossier's, else null. Writers use this:
+   * between two dossiers (a load in progress, a switch) the open Y.Doc may
+   * belong to another dossier, and writing into it mixes the two.
+   */
+  getYDocFor(dossierId: string | null | undefined): Y.Doc | null {
+    return this.ydoc && dossierId && this.dossierId === dossierId ? this.ydoc : null;
   }
 
   /**
@@ -408,6 +418,23 @@ class SyncService {
    * Sends our state vector (sync step 1) to the room: peers answer, through
    * the y-websocket protocol, with exactly the updates we do not have.
    */
+  /**
+   * Sends an update to the room as a sync "update" message, like y-websocket
+   * does for local edits. Used by the mobile companion to resend what it wrote
+   * while offline: y-websocket only sends edits made while connected, and the
+   * relay keeps no copy of the dossier. Returns false when not connected.
+   */
+  broadcastUpdate(update: Uint8Array): boolean {
+    const ws = this.websocketProvider?.ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, messageSync);
+    encoding.writeVarUint(encoder, messageYjsUpdate);
+    encoding.writeVarUint8Array(encoder, update);
+    ws.send(encoding.toUint8Array(encoder));
+    return true;
+  }
+
   private requestMissingUpdates(): void {
     const ws = this.websocketProvider?.ws;
     if (!this.ydoc || !ws || ws.readyState !== WebSocket.OPEN) return;
@@ -437,6 +464,8 @@ class SyncService {
       this.websocketProvider.destroy();
       this.websocketProvider = null;
     }
+
+    this.asyncMode = !!options?.async;
 
     // Create encrypted WebSocket class if encryption key is provided
     this.keyFailed = false;
@@ -683,6 +712,11 @@ class SyncService {
   // UTILITIES
   // ============================================================================
 
+  /** Whether the open shared session is in async mode (relay buffering) */
+  isAsync(): boolean {
+    return this.websocketProvider !== null && this.asyncMode;
+  }
+
   /**
    * Check if E2E encryption is active
    */
@@ -707,19 +741,21 @@ class SyncService {
    * @param encryptionKey - The E2E encryption key
    * @param dossierName - Optional display name
    * @param asyncEnabled - Whether async buffering is enabled (default: false)
+   * @param route - `join` for the desktop app, `m` for the mobile companion
    */
   async buildShareUrl(
     dossierId: string,
     encryptionKey: string,
     dossierName?: string,
     asyncEnabled?: boolean,
+    route: 'join' | 'm' = 'join',
   ): Promise<string> {
     const base = appUrl('/').replace(/\/$/, '');
 
     // Derive hashed room ID from UUID + key (server cannot correlate)
     const hashedRoomId = await deriveRoomId(dossierId, encryptionKey);
 
-    const url = new URL(`${base}/join/${hashedRoomId}`);
+    const url = new URL(`${base}/${route}/${hashedRoomId}`);
 
     if (this.serverUrl) {
       url.searchParams.set('server', this.serverUrl);
