@@ -2,7 +2,8 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { captureFromShare, deleteShare, dropOldShares, keepShare, readShare } from './shareInbox';
+import { captureFromShare, deleteShare, dropOldShares, keepShare, readShare, setSharePublicKey } from './shareInbox';
+import { setUnlocked } from './lockState';
 
 /** Runs public/share-target-sw.js against a fake worker scope; returns its fetch handler */
 function loadShareWorker(): (event: { request: Request; respondWith: (r: Promise<Response>) => void }) => void {
@@ -50,6 +51,39 @@ describe('share to ZeroNeurone', () => {
     expect(item!.files.map((f) => [f.name, f.type, f.blob.size])).toEqual([['p.jpg', 'image/jpeg', 3]]);
     await deleteShare(id);
     expect(await readShare(id)).toBeNull();
+  });
+
+  it('with the lock on, keeps the share encrypted: unreadable until unlocked', async () => {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']) as CryptoKeyPair;
+    await setSharePublicKey(await crypto.subtle.exportKey('jwk', pair.publicKey));
+    const fetchHandler = loadShareWorker();
+    const form = new FormData();
+    form.set('title', 'Secret');
+    form.set('text', 'Note confidentielle');
+    form.append('files', new File([new Uint8Array([9, 8, 7, 6])], 'x.jpg', { type: 'image/jpeg' }));
+    let response: Promise<Response> | null = null;
+    fetchHandler({ request: new Request('https://zn.example/m/share', { method: 'POST', body: form }), respondWith: (r) => { response = r; } });
+    const id = new URL((await response!).headers.get('location')!).searchParams.get('id')!;
+
+    // Stored without any readable field
+    const raw = await new Promise<Record<string, unknown>>((resolve) => {
+      indexedDB.open('zeroneurone-companion-share', 2).onsuccess = (e) => {
+        const db = (e.target as IDBOpenDBRequest).result;
+        const req = db.transaction('shares').objectStore('shares').get(id);
+        req.onsuccess = () => { db.close(); resolve(req.result); };
+      };
+    });
+    expect(JSON.stringify(raw)).not.toContain('Secret');
+    expect(raw).not.toHaveProperty('title');
+
+    setUnlocked(null, null);
+    expect(await readShare(id)).toBeNull();
+    setUnlocked(new Uint8Array(32), pair.privateKey);
+    const item = await readShare(id);
+    expect(item).toMatchObject({ title: 'Secret', text: 'Note confidentielle' });
+    expect(new Uint8Array(await item!.files[0].blob.arrayBuffer())).toEqual(new Uint8Array([9, 8, 7, 6]));
+    setUnlocked(null, null);
+    await setSharePublicKey(null);
   });
 
   it('leaves other requests to the service worker', () => {

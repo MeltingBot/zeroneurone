@@ -21,11 +21,51 @@ import { getLocalUser, hasChosenName, setLocalUserName } from './presence';
 import { DossierView } from './DossierView';
 import { LinkEntry } from './LinkEntry';
 import { AppSettings } from './AppSettings';
+import { LockScreen } from './LockScreen';
+import { isPrompting, lockEnabled, readLock, unlockedKey } from './lockState';
 import { captureFromShare, deleteShare, dropOldShares, readShare, type SharedItem } from './shareInbox';
 import { currentRoute, navigate, type Route } from './router';
 import { primaryButton, inputClass, secondaryButton } from './ui';
 
+/**
+ * The lock in front of everything: locked at start (nothing of the dossiers
+ * readable), and covered again after the chosen time in the background. The
+ * cover leaves the app as it was underneath (a capture form in progress, a
+ * photo being taken in the camera app).
+ */
 export default function CompanionApp() {
+  const [unlocked, setUnlocked] = useState(() => !lockEnabled() || !!unlockedKey());
+  const [covered, setCovered] = useState(false);
+
+  useEffect(() => {
+    let hiddenAt: number | null = null;
+    const onVisibility = () => {
+      // The passkey prompt itself hides the page: not a time in the background
+      if (isPrompting()) return;
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+        return;
+      }
+      const lock = readLock();
+      if (lock && unlockedKey() && hiddenAt !== null && Date.now() - hiddenAt >= lock.timeoutMin * 60_000) setCovered(true);
+      hiddenAt = null;
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  if (!unlocked) return <LockScreen onUnlocked={() => setUnlocked(true)} />;
+  return (
+    <>
+      <div inert={covered || undefined}>
+        <Routes />
+      </div>
+      {covered && <LockScreen cover onUnlocked={() => setCovered(false)} />}
+    </>
+  );
+}
+
+function Routes() {
   const [route, setRoute] = useState<Route>(currentRoute);
 
   useEffect(() => {

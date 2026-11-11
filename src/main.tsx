@@ -1,7 +1,7 @@
 import './index.css'
 import { initI18n } from './i18n'
 import { appPath } from './utils/basePath'
-import { listSessions } from './companion/sessions'
+import { hasCompanionDossiers } from './companion/hasDossiers'
 
 // Two entries share this page. Paths under /m/ are the mobile companion: a
 // light page that joins a shared dossier from a phone, without the canvas,
@@ -18,7 +18,7 @@ function installedCompanion(): boolean {
   try {
     return window.matchMedia('(display-mode: standalone)').matches
       && window.matchMedia('(max-width: 767px)').matches
-      && listSessions().length > 0
+      && hasCompanionDossiers()
   } catch {
     return false
   }

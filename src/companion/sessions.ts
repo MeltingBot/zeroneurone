@@ -1,7 +1,11 @@
 /**
  * Dossiers this phone joined, kept in localStorage so the companion reopens
- * them without the link. Holds the share key: "Forget" removes it.
+ * them without the link. Holds the share key: "Forget" removes it. With the
+ * lock on, the list is sealed with the data key (lockState.ts).
  */
+
+import { lockEnabled, readLock, seal, unlockedKey, unseal, writeLock } from './lockState';
+import { SESSIONS_KEY } from './hasDossiers';
 
 export interface CompanionSession {
   dossierId: string;
@@ -12,11 +16,21 @@ export interface CompanionSession {
   joinedAt: string;
 }
 
-const STORAGE_KEY = 'zeroneurone-companion-sessions';
+const STORAGE_KEY = SESSIONS_KEY;
+
+/** Sessions when the lock is on: sealed with the data key, none while locked */
+const SEALED_KEY = 'zeroneurone-companion-sessions-sealed';
 
 export function listSessions(): CompanionSession[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw: string | null;
+    if (lockEnabled()) {
+      const key = unlockedKey();
+      const sealed = localStorage.getItem(SEALED_KEY);
+      raw = key && sealed ? unseal(sealed, key) : null;
+    } else {
+      raw = localStorage.getItem(STORAGE_KEY);
+    }
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? (parsed as CompanionSession[]) : [];
   } catch {
@@ -26,10 +40,53 @@ export function listSessions(): CompanionSession[] {
 
 function write(sessions: CompanionSession[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    const lock = readLock();
+    if (lock) {
+      const key = unlockedKey();
+      if (!key) return;
+      localStorage.setItem(SEALED_KEY, seal(JSON.stringify(sessions), key));
+      // The ids stay readable: "Forget everything" without the passkey. Ids of
+      // forgotten dossiers go once their copy is erased (pending deletions).
+      const ids = sessions.map((s) => s.dossierId);
+      writeLock({ ...lock, dossierIds: [...new Set([...ids, ...lock.dossierIds])] });
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    }
   } catch {
     // Storage unavailable (private mode): the session lasts until the tab closes
   }
+}
+
+/**
+ * Moves the session list between plain and sealed storage, when the lock is
+ * turned on (`key` given) or off (null). Checked before the old copy goes.
+ */
+export function moveSessions(sessions: CompanionSession[], key: Uint8Array | null): void {
+  if (key) {
+    const sealed = seal(JSON.stringify(sessions), key);
+    if (unseal(sealed, key) === null) throw new Error('Sealed sessions do not read back');
+    localStorage.setItem(SEALED_KEY, sealed);
+    localStorage.removeItem(STORAGE_KEY);
+  } else {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    localStorage.removeItem(SEALED_KEY);
+  }
+}
+
+/** Plain sessions (lock off, or a lock being turned on) */
+export function plainSessions(): CompanionSession[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    return Array.isArray(parsed) ? (parsed as CompanionSession[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Every trace of the sessions, sealed or not ("Forget everything") */
+export function dropAllSessions(): void {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(SEALED_KEY);
 }
 
 export function getSession(dossierId: string): CompanionSession | null {

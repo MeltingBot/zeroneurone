@@ -255,5 +255,20 @@
     "edit": "Modifica posizione",
     "remove": "Rimuovi posizione",
     "tap": "Tocca la mappa"
+  },
+  "lock": {
+    "title": "Blocco",
+    "enable": "Blocca con il telefono",
+    "disable": "Disattiva il blocco",
+    "unlock": "Sblocca",
+    "failed": "Non riuscito, riprova",
+    "unavailable": "Non disponibile su questo telefono",
+    "delay": "Ritardo",
+    "immediately": "Appena in background",
+    "after_one": "Dopo {{count}} min in background",
+    "after_other": "Dopo {{count}} min in background",
+    "forgetAll": "Cancella i dossier ZeroNeurone",
+    "forgetConfirm_one": "Cancellare {{count}} dossier da questo telefono? Resta sui computer.",
+    "forgetConfirm_other": "Cancellare {{count}} dossier da questo telefono? Restano sui computer."
   }
 }

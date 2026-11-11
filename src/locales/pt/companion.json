@@ -255,5 +255,20 @@
     "edit": "Editar posição",
     "remove": "Retirar posição",
     "tap": "Toque no mapa"
+  },
+  "lock": {
+    "title": "Bloqueio",
+    "enable": "Bloquear com o telefone",
+    "disable": "Desativar o bloqueio",
+    "unlock": "Desbloquear",
+    "failed": "Falhou, tente de novo",
+    "unavailable": "Não disponível neste telefone",
+    "delay": "Atraso",
+    "immediately": "Assim que fica em segundo plano",
+    "after_one": "Após {{count}} min em segundo plano",
+    "after_other": "Após {{count}} min em segundo plano",
+    "forgetAll": "Apagar os dossiês ZeroNeurone",
+    "forgetConfirm_one": "Apagar {{count}} dossiê deste telefone? Fica nos computadores.",
+    "forgetConfirm_other": "Apagar {{count}} dossiês deste telefone? Ficam nos computadores."
   }
 }

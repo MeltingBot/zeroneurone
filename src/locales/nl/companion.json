@@ -255,5 +255,20 @@
     "edit": "Positie bewerken",
     "remove": "Positie verwijderen",
     "tap": "Tik op de kaart"
+  },
+  "lock": {
+    "title": "Vergrendeling",
+    "enable": "Vergrendelen met de telefoon",
+    "disable": "Vergrendeling uitschakelen",
+    "unlock": "Ontgrendelen",
+    "failed": "Mislukt, probeer opnieuw",
+    "unavailable": "Niet beschikbaar op deze telefoon",
+    "delay": "Vertraging",
+    "immediately": "Zodra op de achtergrond",
+    "after_one": "Na {{count}} min op de achtergrond",
+    "after_other": "Na {{count}} min op de achtergrond",
+    "forgetAll": "ZeroNeurone-dossiers wissen",
+    "forgetConfirm_one": "{{count}} dossier van deze telefoon wissen? Het blijft op de computers.",
+    "forgetConfirm_other": "{{count}} dossiers van deze telefoon wissen? Ze blijven op de computers."
   }
 }

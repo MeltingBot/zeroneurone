@@ -255,5 +255,20 @@
     "edit": "Position bearbeiten",
     "remove": "Position entfernen",
     "tap": "Tippen Sie auf die Karte"
+  },
+  "lock": {
+    "title": "Sperre",
+    "enable": "Mit dem Telefon sperren",
+    "disable": "Sperre ausschalten",
+    "unlock": "Entsperren",
+    "failed": "Fehlgeschlagen, erneut versuchen",
+    "unavailable": "Auf diesem Telefon nicht verfügbar",
+    "delay": "Verzögerung",
+    "immediately": "Sobald im Hintergrund",
+    "after_one": "Nach {{count}} Min. im Hintergrund",
+    "after_other": "Nach {{count}} Min. im Hintergrund",
+    "forgetAll": "ZeroNeurone-Dossiers löschen",
+    "forgetConfirm_one": "{{count}} Dossier von diesem Telefon löschen? Es bleibt auf den Rechnern.",
+    "forgetConfirm_other": "{{count}} Dossiers von diesem Telefon löschen? Sie bleiben auf den Rechnern."
   }
 }

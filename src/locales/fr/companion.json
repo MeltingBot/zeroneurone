@@ -255,5 +255,20 @@
     "edit": "Modifier la position",
     "remove": "Retirer la position",
     "tap": "Touchez la carte"
+  },
+  "lock": {
+    "title": "Verrouillage",
+    "enable": "Verrouiller avec le téléphone",
+    "disable": "Désactiver le verrouillage",
+    "unlock": "Déverrouiller",
+    "failed": "Échec, réessayez",
+    "unavailable": "Non disponible sur ce téléphone",
+    "delay": "Délai",
+    "immediately": "Dès la mise en arrière-plan",
+    "after_one": "Après {{count}} min en arrière-plan",
+    "after_other": "Après {{count}} min en arrière-plan",
+    "forgetAll": "Effacer les dossiers ZeroNeurone",
+    "forgetConfirm_one": "Effacer {{count}} dossier de ce téléphone ? Il reste sur les postes.",
+    "forgetConfirm_other": "Effacer {{count}} dossiers de ce téléphone ? Ils restent sur les postes."
   }
 }

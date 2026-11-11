@@ -279,5 +279,24 @@
     "edit": "Edytuj położenie",
     "remove": "Usuń położenie",
     "tap": "Dotknij mapy"
+  },
+  "lock": {
+    "title": "Blokada",
+    "enable": "Blokuj telefonem",
+    "disable": "Wyłącz blokadę",
+    "unlock": "Odblokuj",
+    "failed": "Nie udało się, spróbuj ponownie",
+    "unavailable": "Niedostępne na tym telefonie",
+    "delay": "Opóźnienie",
+    "immediately": "Od razu w tle",
+    "after_one": "Po {{count}} min w tle",
+    "after_other": "Po {{count}} min w tle",
+    "forgetAll": "Usuń sprawy ZeroNeurone",
+    "forgetConfirm_one": "Usunąć {{count}} sprawę z tego telefonu? Zostaje na komputerach.",
+    "forgetConfirm_other": "Usunąć {{count}} spraw z tego telefonu? Zostają na komputerach.",
+    "after_few": "Po {{count}} min w tle",
+    "after_many": "Po {{count}} min w tle",
+    "forgetConfirm_few": "Usunąć {{count}} spraw z tego telefonu? Zostają na komputerach.",
+    "forgetConfirm_many": "Usunąć {{count}} spraw z tego telefonu? Zostają na komputerach."
   }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { About } from './About';
 import { Preferences } from './Preferences';
+import { LockSettings } from './LockSettings';
 import { getLocalUser, setLocalUserName } from './presence';
 import { inputClass, sectionTitle } from './ui';
 
@@ -31,6 +32,7 @@ export function AppSettings() {
         />
       </section>
       <Preferences />
+      <LockSettings />
       <About />
     </div>
   );

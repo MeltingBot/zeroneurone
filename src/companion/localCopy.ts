@@ -13,6 +13,7 @@
 import * as Y from 'yjs';
 import { EncryptedIndexeddbPersistence, readStoredUpdates } from '../services/encryption/encryptedIndexeddbPersistence';
 import { companionYdocDatabaseName, deleteIdbDatabase, ydocDatabaseName } from '../services/yjs/ydocName';
+import { unlockedKey } from './lockState';
 
 /** The desktop's Dexie database and its dossier table (src/db/database.ts) */
 const DESKTOP_DATABASE = 'zeroneurone';
@@ -77,10 +78,11 @@ async function legacyIsOurs(names: Set<string>, dossierId: string): Promise<bool
  * Brings an older copy (desktop's name) into the companion's own database.
  * Its readable updates are added to the companion copy: Yjs merges them, so
  * running it twice changes nothing. Encrypted updates (a desktop's) are left.
- * Done once per dossier. Returns true when an older copy was found.
+ * Done once per dossier (`force`: again, as when the lock is turned on and no
+ * plain copy may stay). Returns true when an older copy was found.
  */
-export async function adoptLegacyCopy(dossierId: string): Promise<boolean> {
-  if (adopted().includes(dossierId)) return false;
+export async function adoptLegacyCopy(dossierId: string, force = false): Promise<boolean> {
+  if (!force && adopted().includes(dossierId)) return false;
   const names = await databaseNames();
   if (!names?.has(ydocDatabaseName(dossierId))) {
     if (names) markAdopted(dossierId);
@@ -89,7 +91,8 @@ export async function adoptLegacyCopy(dossierId: string): Promise<boolean> {
   const { updates } = await readStoredUpdates(ydocDatabaseName(dossierId), null);
   if (updates.length > 0) {
     const doc = new Y.Doc();
-    const target = new EncryptedIndexeddbPersistence(companionYdocDatabaseName(dossierId), doc);
+    // Encrypted when the lock is on (the phone is unlocked when a dossier opens)
+    const target = new EncryptedIndexeddbPersistence(companionYdocDatabaseName(dossierId), doc, unlockedKey() ?? undefined);
     try {
       await target.whenSynced;
       // Applied after loading: each one is stored by the persistence

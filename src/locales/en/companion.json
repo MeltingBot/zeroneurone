@@ -255,5 +255,20 @@
     "edit": "Edit position",
     "remove": "Remove position",
     "tap": "Tap the map"
+  },
+  "lock": {
+    "title": "Lock",
+    "enable": "Lock with the phone",
+    "disable": "Turn the lock off",
+    "unlock": "Unlock",
+    "failed": "Failed, try again",
+    "unavailable": "Not available on this phone",
+    "delay": "Delay",
+    "immediately": "As soon as in the background",
+    "after_one": "After {{count}} min in the background",
+    "after_other": "After {{count}} min in the background",
+    "forgetAll": "Erase ZeroNeurone dossiers",
+    "forgetConfirm_one": "Erase {{count}} dossier from this phone? It stays on the computers.",
+    "forgetConfirm_other": "Erase {{count}} dossiers from this phone? They stay on the computers."
   }
 }

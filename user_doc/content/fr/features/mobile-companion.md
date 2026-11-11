@@ -109,8 +109,19 @@ Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 ## Ce téléphone
 
 {{< hint warning >}}
-**Copie non chiffrée.** Le téléphone garde une copie du dossier pour fonctionner hors réseau. Le chiffrement local du poste ne s'applique pas à cette copie : protégez le téléphone par un code de verrouillage.
+**Copie sur le téléphone.** Le téléphone garde une copie du dossier pour fonctionner hors réseau. Sans le verrouillage ci-dessous, elle n'est pas chiffrée : protégez au moins le téléphone par un code.
 {{< /hint >}}
+
+### Verrouillage
+
+**Réglages** → **Application** → **Verrouiller avec le téléphone** : le compagnon crée une passkey sur le téléphone, ouverte par Face ID, l'empreinte ou le code du téléphone. Elle chiffre la copie des dossiers, la liste des dossiers (avec leurs clés de partage) et les partages reçus d'autres applications en attente.
+
+- À l'ouverture, **Déverrouiller** redemande Face ID, l'empreinte ou le code ; rien des dossiers n'est visible avant
+- Après le **délai** choisi en arrière-plan (dès la mise en arrière-plan, 1, 5 ou 15 minutes), le compagnon se recouvre ; l'écran en cours (une capture commencée) est conservé dessous. Avec « dès la mise en arrière-plan », prendre une photo avec l'appareil photo redemande le déverrouillage au retour
+- **Désactiver le verrouillage** remet tout en clair
+- Passkey perdue (téléphone réinitialisé, passkey supprimée) : **Effacer les dossiers ZeroNeurone**, sur l'écran de verrouillage, efface tout ce que le compagnon garde ; les dossiers restent sur les postes, il suffit de rescanner leur QR code. Les modifications non envoyées sont perdues
+- Proposé seulement sur les téléphones dont la passkey fournit l'extension PRF (Chrome sur Android, Safari à partir d'iOS 18). La passkey est sauvegardée par le gestionnaire de mots de passe du téléphone (Google, iCloud) : ce compte permet aussi de déverrouiller
+- La passkey reste dans le gestionnaire de mots de passe après désactivation ; elle peut y être supprimée
 
 - **Réglages** (roue dentée en haut à droite) : **Ce dossier** montre la connexion et les modifications en attente ; **Application** règle votre nom, le thème (clair, sombre ou celui du téléphone) et la langue, et donne l'à propos. Les réglages de l'application s'ouvrent aussi par la roue dentée de l'accueil
 - **Oublier ce dossier** efface la copie et le lien du téléphone ; les modifications non envoyées sont perdues

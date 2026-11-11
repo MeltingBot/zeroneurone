@@ -255,5 +255,20 @@
     "edit": "Editatu kokapena",
     "remove": "Kendu kokapena",
     "tap": "Ukitu mapa"
+  },
+  "lock": {
+    "title": "Blokeoa",
+    "enable": "Blokeatu telefonoarekin",
+    "disable": "Desaktibatu blokeoa",
+    "unlock": "Desblokeatu",
+    "failed": "Huts egin du, saiatu berriro",
+    "unavailable": "Ez dago erabilgarri telefono honetan",
+    "delay": "Epea",
+    "immediately": "Atzeko planora pasatu bezain laster",
+    "after_one": "{{count}} min atzeko planoan egon ondoren",
+    "after_other": "{{count}} min atzeko planoan egon ondoren",
+    "forgetAll": "Ezabatu ZeroNeurone espedienteak",
+    "forgetConfirm_one": "Ezabatu espediente {{count}} telefono honetatik? Ordenagailuetan geratzen da.",
+    "forgetConfirm_other": "Ezabatu {{count}} espediente telefono honetatik? Ordenagailuetan geratzen dira."
   }
 }

@@ -757,6 +757,155 @@ test('something shared from another app becomes a capture in the dossier', async
   expect(await phone.evaluate(async () => (await import('/src/companion/shareInbox.ts')).readShare('share-1'))).toBeNull();
 });
 
+test('the lock: the phone\'s passkey encrypts what it keeps, and opens it again', async ({ browser }) => {
+  test.setTimeout(4 * 60 * 1000);
+  const desktop = await newDesktop(browser);
+  const file = join(mkdtempSync(join(tmpdir(), 'zn-companion-')), 'lock.json');
+  writeFileSync(file, buildLargeDossierJson(5));
+  await desktop.click('[data-testid="import-button"]');
+  await desktop.setInputFiles('input[type="file"]', file);
+  await desktop.waitForSelector('.react-flow__node', { timeout: 60_000 });
+  await desktop.waitForTimeout(1500);
+  const { mobileUrl, shareKey, dossierId } = await desktop.evaluate(async () => {
+    const { useSyncStore } = await import('/src/stores/syncStore.ts');
+    const { syncService } = await import('/src/services/syncService.ts');
+    const { encryptionKey } = await useSyncStore.getState().share('Verrou', true);
+    const id = syncService.getDossierId()!;
+    return { mobileUrl: await syncService.buildShareUrl(id, encryptionKey, 'Verrou', true, 'm'), shareKey: encryptionKey, dossierId: id };
+  });
+  const phone = await newPhone(browser);
+  phonePage = phone;
+  // A passkey of the phone itself, with PRF (Face ID / fingerprint stand-in)
+  const cdp = await phone.context().newCDPSession(phone);
+  await cdp.send('WebAuthn.enable');
+  const { authenticatorId } = await cdp.send('WebAuthn.addVirtualAuthenticator', {
+    options: { protocol: 'ctap2', ctap2Version: 'ctap2_1', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, hasPrf: true, automaticPresenceSimulation: true },
+  });
+  await phone.goto(mobileUrl);
+  await phone.getByRole('button', { name: 'Ouvrir sur ce téléphone' }).click();
+  await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const companionCopy = `zeroneurone-companion-ydoc-${dossierId}`;
+  const stored = () => phone.evaluate(async (name) => {
+    const { readStoredUpdates } = await import('/src/services/encryption/encryptedIndexeddbPersistence.ts');
+    const { updates, undecryptable } = await readStoredUpdates(name, null);
+    return { plain: updates.length, encrypted: undecryptable };
+  }, companionCopy);
+
+  // An offline capture still pending when the lock goes on
+  await phone.context().setOffline(true);
+  await phone.evaluate(() => window.dispatchEvent(new Event('offline')));
+  await expect(phone.getByRole('button', { name: /Hors ligne|Reconnexion/ })).toBeVisible({ timeout: 40_000 });
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
+  await phone.getByLabel('Titre').fill('Avant verrouillage');
+  await phone.getByRole('button', { name: 'Ajouter au dossier' }).click();
+  await expect(phone.getByText('1 en attente')).toBeVisible();
+  // A copy left in plain under the former database name (companion before 2.93.3)
+  await phone.evaluate(async ({ from, to }) => {
+    const open = (name: string) => new Promise<IDBDatabase>((resolve) => {
+      const req = indexedDB.open(name);
+      req.onupgradeneeded = () => { req.result.createObjectStore('updates', { autoIncrement: true }); req.result.createObjectStore('custom'); };
+      req.onsuccess = () => resolve(req.result);
+    });
+    const source = await open(from);
+    const updates = await new Promise<unknown[]>((resolve) => {
+      const req = source.transaction('updates').objectStore('updates').getAll();
+      req.onsuccess = () => resolve(req.result);
+    });
+    source.close();
+    const target = await open(to);
+    await new Promise<void>((resolve) => {
+      const tx = target.transaction('updates', 'readwrite');
+      for (const u of updates) tx.objectStore('updates').add(u);
+      tx.oncomplete = () => resolve();
+    });
+    target.close();
+  }, { from: `zeroneurone-companion-ydoc-${dossierId}`, to: `zeroneurone-ydoc-${dossierId}` });
+
+  // ── Turned on from the app settings ─────────────────────────────────────
+  await phone.getByRole('button', { name: /^Réglages/ }).click();
+  await phone.getByRole('tab', { name: 'Application' }).click();
+  await phone.getByRole('button', { name: 'Verrouiller avec le téléphone' }).click();
+  await expect(phone).toHaveURL(/\/m\/?$/, { timeout: 30_000 });
+  expect(await phone.evaluate(() => JSON.stringify({ ...localStorage }))).not.toContain(shareKey);
+  expect(await stored()).toMatchObject({ plain: 0 });
+  expect((await stored()).encrypted).toBeGreaterThan(0);
+  // No plain copy anywhere: the former-name one brought over, then erased
+  expect(await phone.evaluate(async () => {
+    const { readStoredUpdates } = await import('/src/services/encryption/encryptedIndexeddbPersistence.ts');
+    const names = (await indexedDB.databases()).map((d) => d.name ?? '').filter((n) => /^zeroneurone-(companion-)?ydoc-/.test(n));
+    let plain = 0;
+    for (const n of names) plain += (await readStoredUpdates(n, null)).updates.length;
+    return { names: names.length, plain };
+  })).toEqual({ names: 1, plain: 0 });
+
+  // ── Relaunched: locked, nothing of the dossier shown ────────────────────
+  // Back online (the dev server has no service worker to reload offline); no
+  // dossier open, so the capture stays pending until the dossier reopens
+  await phone.context().setOffline(false);
+  await phone.reload();
+  await expect(phone.getByRole('button', { name: 'Déverrouiller' })).toBeVisible();
+  await expect(phone.getByText('lock', { exact: true })).toHaveCount(0);
+  await shot(phone, '12-locked');
+  await phone.getByRole('button', { name: 'Déverrouiller' }).click();
+  await phone.getByRole('button', { name: /^lock/ }).click();
+  await expect(phone.getByText('Jean Dupont 0', { exact: true })).toBeVisible({ timeout: 30_000 });
+  // Still syncing, encrypted at rest
+  await desktop.evaluate(async () => {
+    const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    await d.createElement('Après verrouillage', { x: 0, y: 900 });
+  });
+  await phone.bringToFront();
+  await expect(phone.getByText('Après verrouillage')).toBeVisible({ timeout: 30_000 });
+  expect((await stored()).plain).toBe(0);
+  // The capture pending since before the lock, then one written locked, reach the desktop
+  await expect(phone.getByText('1 en attente')).toBeHidden({ timeout: 60_000 });
+  await phone.getByRole('button', { name: 'Nouveau', exact: true }).click();
+  await phone.getByLabel('Titre').fill('Écrit verrouillé');
+  await phone.getByRole('button', { name: 'Ajouter au dossier' }).click();
+  await expect.poll(async () => (await desktopState(desktop)).labels, { timeout: 30_000 })
+    .toEqual(expect.arrayContaining(['Avant verrouillage', 'Écrit verrouillé']));
+  expect((await stored()).plain).toBe(0);
+
+  // ── Back from the background past the delay: covered, the page kept ─────
+  await phone.getByRole('button', { name: /^Réglages/ }).click();
+  await phone.getByRole('tab', { name: 'Application' }).click();
+  await phone.getByLabel('Délai').selectOption('0');
+  await expect(phone).toHaveURL(/\/m\/d\//);
+  const visibility = (state: 'hidden' | 'visible') => phone.evaluate((v) => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => v });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, state);
+  await visibility('hidden');
+  await visibility('visible');
+  await expect(phone.getByRole('dialog', { name: 'Verrouillage' })).toBeVisible();
+  await phone.getByRole('button', { name: 'Déverrouiller' }).click();
+  await expect(phone.getByRole('dialog', { name: 'Verrouillage' })).toBeHidden();
+  await expect(phone.getByLabel('Délai')).toBeVisible();
+
+  // ── Turned off: everything back in plain ─────────────────────────────────
+  await phone.getByRole('button', { name: 'Désactiver le verrouillage' }).click();
+  await phone.getByRole('button', { name: 'Désactiver le verrouillage' }).click();
+  await expect(phone).toHaveURL(/\/m\/?$/, { timeout: 30_000 });
+  expect(await stored()).toMatchObject({ encrypted: 0 });
+  expect(await phone.evaluate(() => JSON.stringify({ ...localStorage }))).toContain(shareKey);
+
+  // ── Passkey lost: "Forget everything" without it ────────────────────────
+  await phone.getByRole('button', { name: 'Réglages' }).click();
+  await phone.getByRole('button', { name: 'Verrouiller avec le téléphone' }).click();
+  await expect(phone.getByLabel('Délai')).toBeVisible({ timeout: 30_000 });
+  await phone.goto(new URL('/m/', phone.url()).toString());
+  await cdp.send('WebAuthn.clearCredentials', { authenticatorId });
+  await phone.getByRole('button', { name: 'Déverrouiller' }).click();
+  await expect(phone.getByText('Échec, réessayez')).toBeVisible({ timeout: 30_000 });
+  await phone.getByRole('button', { name: 'Effacer les dossiers ZeroNeurone' }).click();
+  await expect(phone.getByText('Effacer 1 dossier de ce téléphone ? Il reste sur les postes.')).toBeVisible();
+  await phone.getByRole('button', { name: 'Effacer les dossiers ZeroNeurone' }).click();
+  await expect(phone.getByText('Scannez le QR code de partage ou collez le lien.')).toBeVisible({ timeout: 30_000 });
+  expect(await phone.evaluate(async (name) => (await indexedDB.databases()).some((d) => d.name === name), companionCopy)).toBe(false);
+  expect(await phone.evaluate(() => localStorage.getItem('zeroneurone-companion-lock'))).toBeNull();
+});
+
 test('a phone relaunched (app closed, reopened) syncs again both ways', async ({ browser }) => {
   test.setTimeout(3 * 60 * 1000);
   const desktop = await newDesktop(browser);

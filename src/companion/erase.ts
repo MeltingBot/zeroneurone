@@ -6,6 +6,7 @@
  */
 
 import { deleteLocalCopy } from './localCopy';
+import { dropLockedId } from './lockState';
 import { addPendingDeletion, removePendingDeletion } from './sessions';
 
 const ERASE_TIMEOUT_MS = 4000;
@@ -16,7 +17,10 @@ export async function eraseLocalCopy(dossierId: string): Promise<boolean> {
     deleteLocalCopy(dossierId, ERASE_TIMEOUT_MS).then(() => true, () => false),
     new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ERASE_TIMEOUT_MS + 500)),
   ]);
-  if (erased) removePendingDeletion(dossierId);
+  if (erased) {
+    removePendingDeletion(dossierId);
+    dropLockedId(dossierId);
+  }
   else addPendingDeletion(dossierId);
   return erased;
 }

@@ -101,8 +101,24 @@ async function decryptDEK(
 // INTERNAL HELPERS
 // ============================================================================
 
-function getOrCreateUserId(): Uint8Array<ArrayBuffer> {
-  const KEY = 'zeroneurone:webauthn-user-id';
+/**
+ * How a credential is created and asked for. The defaults are the desktop's
+ * (a security key, no user verification). The mobile companion asks for the
+ * phone's own passkey, unlocked by its biometrics or code, under another user
+ * handle: a passkey with the same handle could replace the desktop's in the
+ * same provider.
+ */
+export interface WebAuthnOptions {
+  /** The device's own authenticator (Face ID, fingerprint, code) */
+  platform?: boolean;
+  userVerification?: UserVerificationRequirement;
+  /** localStorage key of the user handle */
+  userIdKey?: string;
+  userName?: string;
+  displayName?: string;
+}
+
+function getOrCreateUserId(KEY = 'zeroneurone:webauthn-user-id'): Uint8Array<ArrayBuffer> {
   const stored = localStorage.getItem(KEY);
   if (stored) {
     const raw = atob(stored);
@@ -130,10 +146,12 @@ function toArrayBuffer(v: unknown): ArrayBuffer {
 export async function registerWebAuthnCredential(
   dek: Uint8Array,
   label: string,
-  existingCredentialIds: ArrayBuffer[] = []
+  existingCredentialIds: ArrayBuffer[] = [],
+  options: WebAuthnOptions = {},
 ): Promise<WebAuthnCredentialEntry> {
   const prfSalt = randomBytes(PRF_SALT_LENGTH);
-  const userId = getOrCreateUserId();
+  const userId = getOrCreateUserId(options.userIdKey);
+  const userVerification = options.userVerification ?? 'discouraged';
 
   const createOptions: CredentialCreationOptions = {
     publicKey: {
@@ -143,17 +161,17 @@ export async function registerWebAuthnCredential(
       },
       user: {
         id: userId,
-        name: 'zeroneurone-user',
-        displayName: 'ZeroNeurone',
+        name: options.userName ?? 'zeroneurone-user',
+        displayName: options.displayName ?? 'ZeroNeurone',
       },
       challenge: randomBytes(32),
       pubKeyCredParams: [
         { type: 'public-key', alg: -7 },
         { type: 'public-key', alg: -257 },
       ],
-      authenticatorSelection: {
-        userVerification: 'discouraged',
-      },
+      authenticatorSelection: options.platform
+        ? { authenticatorAttachment: 'platform', residentKey: 'preferred', userVerification }
+        : { userVerification },
       excludeCredentials: existingCredentialIds.map(id => ({
         type: 'public-key' as const,
         id,
@@ -187,7 +205,7 @@ export async function registerWebAuthnCredential(
         type: 'public-key',
         id: credentialId,
       }],
-      userVerification: 'discouraged',
+      userVerification,
       extensions: {
         prf: {
           eval: {
@@ -224,8 +242,10 @@ export async function registerWebAuthnCredential(
 // ============================================================================
 
 export async function unlockWithWebAuthn(
-  credentials: WebAuthnCredentialEntry[]
+  credentials: WebAuthnCredentialEntry[],
+  options: WebAuthnOptions = {},
 ): Promise<{ dek: Uint8Array; credentialId: ArrayBuffer }> {
+  const userVerification = options.userVerification ?? 'discouraged';
   if (credentials.length === 0) throw new Error('No WebAuthn credentials');
 
   const evalByCredential: Record<string, { first: ArrayBuffer }> = {};
@@ -245,7 +265,7 @@ export async function unlockWithWebAuthn(
         type: 'public-key' as const,
         id: c.credentialId,
       })),
-      userVerification: 'discouraged',
+      userVerification,
       extensions: {
         prf: { evalByCredential },
       } as AuthenticationExtensionsClientInputs,
@@ -262,7 +282,7 @@ export async function unlockWithWebAuthn(
   const prfOutput = prfResults?.first;
 
   if (!prfOutput) {
-    return unlockWithWebAuthnFallback(usedCredId, credentials);
+    return unlockWithWebAuthnFallback(usedCredId, credentials, userVerification);
   }
 
   const match = saltMap.get(usedKey);
@@ -276,7 +296,8 @@ export async function unlockWithWebAuthn(
 
 async function unlockWithWebAuthnFallback(
   credentialId: ArrayBuffer,
-  credentials: WebAuthnCredentialEntry[]
+  credentials: WebAuthnCredentialEntry[],
+  userVerification: UserVerificationRequirement,
 ): Promise<{ dek: Uint8Array; credentialId: ArrayBuffer }> {
   const key = toBase64Url(credentialId);
   const entry = credentials.find(c => toBase64Url(c.credentialId) === key);
@@ -287,7 +308,7 @@ async function unlockWithWebAuthnFallback(
       challenge: randomBytes(32),
       rpId: location.hostname,
       allowCredentials: [{ type: 'public-key', id: credentialId }],
-      userVerification: 'discouraged',
+      userVerification,
       extensions: {
         prf: { eval: { first: entry.prfSalt } },
       } as AuthenticationExtensionsClientInputs,

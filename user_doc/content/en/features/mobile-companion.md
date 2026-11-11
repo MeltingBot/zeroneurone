@@ -109,8 +109,19 @@ Tags, note, photos (tap to enlarge), details, links, comments.
 ## This phone
 
 {{< hint warning >}}
-**Unencrypted copy.** The phone keeps a copy of the dossier to work offline. The computer's local encryption does not apply to this copy: protect the phone with a lock code.
+**Copy on the phone.** The phone keeps a copy of the dossier to work offline. Without the lock below, it is not encrypted: at least protect the phone with a code.
 {{< /hint >}}
+
+### Lock
+
+**Settings** → **App** → **Lock with the phone**: the companion creates a passkey on the phone, opened by Face ID, a fingerprint or the phone's code. It encrypts the dossiers' copy, the dossier list (with their share keys) and shares from other apps waiting to be added.
+
+- On opening, **Unlock** asks for Face ID, the fingerprint or the code again; nothing of the dossiers shows before
+- After the chosen **delay** in the background (as soon as in the background, 1, 5 or 15 minutes), the companion covers itself; the screen in progress (a capture under way) is kept underneath. With "as soon as in the background", taking a photo with the camera asks to unlock again on return
+- **Turn the lock off** puts everything back in plain
+- Passkey lost (phone reset, passkey deleted): **Erase ZeroNeurone dossiers**, on the lock screen, erases everything the companion keeps; the dossiers stay on the computers, scan their QR code again. Unsent changes are lost
+- Offered only on phones whose passkey provides the PRF extension (Chrome on Android, Safari from iOS 18). The passkey is backed up by the phone's password manager (Google, iCloud): that account can unlock too
+- The passkey stays in the password manager after turning the lock off; it can be deleted there
 
 - **Settings** (gear at the top right): **This dossier** shows the connection and pending changes; **App** sets your name, the theme (light, dark or the phone's) and the language, and holds the about section. The app settings also open from the gear on the home page
 - **Forget this dossier** erases the copy and the link from the phone; unsent changes are lost

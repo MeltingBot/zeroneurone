@@ -255,5 +255,20 @@
     "edit": "Modifica la posició",
     "remove": "Treu la posició",
     "tap": "Toqueu el mapa"
+  },
+  "lock": {
+    "title": "Bloqueig",
+    "enable": "Bloqueja amb el telèfon",
+    "disable": "Desactiva el bloqueig",
+    "unlock": "Desbloqueja",
+    "failed": "Error, torneu-ho a provar",
+    "unavailable": "No disponible en aquest telèfon",
+    "delay": "Termini",
+    "immediately": "Tan bon punt passa a segon pla",
+    "after_one": "Després de {{count}} min en segon pla",
+    "after_other": "Després de {{count}} min en segon pla",
+    "forgetAll": "Esborra els dossiers ZeroNeurone",
+    "forgetConfirm_one": "Esborrar {{count}} dossier d'aquest telèfon? Es manté als ordinadors.",
+    "forgetConfirm_other": "Esborrar {{count}} dossiers d'aquest telèfon? Es mantenen als ordinadors."
   }
 }

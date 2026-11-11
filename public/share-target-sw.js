@@ -9,25 +9,65 @@
 
 const SHARE_DB = 'zeroneurone-companion-share';
 const SHARE_STORE = 'shares';
+/** With the companion's lock on: the public key shares are encrypted to */
+const KEY_STORE = 'keys';
 
 function openShareDb() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(SHARE_DB, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(SHARE_STORE, { keyPath: 'id' });
+    const request = indexedDB.open(SHARE_DB, 2);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(SHARE_STORE)) db.createObjectStore(SHARE_STORE, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(KEY_STORE)) db.createObjectStore(KEY_STORE);
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-async function keepShare(record) {
+function request(db, store, mode, run) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, mode);
+    const req = run(tx.objectStore(store));
+    tx.oncomplete = () => resolve(req ? req.result : undefined);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
+ * Encrypts the share to the companion's public key (ECDH P-256, then
+ * AES-GCM): only an unlocked companion, holding the private key, reads it.
+ */
+async function sealShare(publicJwk, meta, blobs) {
+  const curve = { name: 'ECDH', namedCurve: 'P-256' };
+  const recipient = await self.crypto.subtle.importKey('jwk', publicJwk, curve, false, []);
+  const ephemeral = await self.crypto.subtle.generateKey(curve, true, ['deriveKey']);
+  const key = await self.crypto.subtle.deriveKey(
+    { name: 'ECDH', public: recipient }, ephemeral.privateKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt'],
+  );
+  const encrypt = async (data) => {
+    const iv = self.crypto.getRandomValues(new Uint8Array(12));
+    return { iv, data: await self.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data) };
+  };
+  const files = [];
+  for (const blob of blobs) files.push(await encrypt(await blob.arrayBuffer()));
+  return {
+    epk: await self.crypto.subtle.exportKey('jwk', ephemeral.publicKey),
+    meta: await encrypt(new TextEncoder().encode(JSON.stringify(meta))),
+    files,
+  };
+}
+
+async function keepShare(share) {
   const db = await openShareDb();
   try {
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction(SHARE_STORE, 'readwrite');
-      tx.objectStore(SHARE_STORE).put(record);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+    const publicJwk = await request(db, KEY_STORE, 'readonly', (store) => store.get('public'));
+    let record = share;
+    if (publicJwk) {
+      const meta = { title: share.title, text: share.text, url: share.url, files: share.files.map((f) => ({ name: f.name, type: f.type })) };
+      record = { id: share.id, createdAt: share.createdAt, sealed: await sealShare(publicJwk, meta, share.files.map((f) => f.blob)) };
+    }
+    await request(db, SHARE_STORE, 'readwrite', (store) => { store.put(record); });
   } finally {
     db.close();
   }
