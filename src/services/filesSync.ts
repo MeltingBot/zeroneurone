@@ -16,6 +16,7 @@ import { EncryptedIndexeddbPersistence } from './encryption/encryptedIndexeddbPe
 import { createEncryptedWebSocketClass } from './encryptedWebSocket';
 import { deriveAccessToken } from './cryptoService';
 import { filesDatabaseName } from './yjs/ydocName';
+import type { WriteAccess } from './writeAccess';
 
 export interface FilesSync {
   doc: Y.Doc;
@@ -34,6 +35,8 @@ export async function openFilesSync(options: {
   /** At-rest key of the computer, when its local data is encrypted */
   dek: Uint8Array | null;
   clientTag?: string;
+  /** Write key of a signed room (read-only sharing) */
+  access?: WriteAccess | null;
 }): Promise<FilesSync> {
   const doc = new Y.Doc();
   const persistence = new EncryptedIndexeddbPersistence(filesDatabaseName(options.dossierId), doc, options.dek ?? undefined);
@@ -47,7 +50,7 @@ export async function openFilesSync(options: {
   ].filter(Boolean).join('&');
   const provider = new WebsocketProvider(options.serverUrl, `${room}?${params}`, doc, {
     // A wrong key is reported by the main document's connection
-    WebSocketPolyfill: createEncryptedWebSocketClass(options.encryptionKey, () => provider.disconnect()),
+    WebSocketPolyfill: createEncryptedWebSocketClass(options.encryptionKey, () => provider.disconnect(), options.access),
     maxBackoffTime: 30000,
     resyncInterval: -1,
   });

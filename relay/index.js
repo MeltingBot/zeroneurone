@@ -149,7 +149,7 @@ const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Relay-Features');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Relay-Features, X-Relay-Time');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -159,6 +159,8 @@ const server = createServer((req, res) => {
 
   if (req.url === '/health' || req.url === '/api/health') {
     res.setHeader('X-Relay-Features', RELAY_FEATURES);
+    // Its clock: a writer signs with it, whatever the time on its device (access.js)
+    res.setHeader('X-Relay-Time', String(Math.floor(Date.now() / 1000)));
     const totalClients = Array.from(rooms.values()).reduce((sum, r) => sum + r.size, 0);
     const metrics = {
       status: 'ok',

@@ -7,12 +7,23 @@
  */
 
 import { encrypt, decrypt, importEncryptionKey } from './cryptoService';
+import { categoryOf, readCategory, withCategory } from './messageCategory';
+import { isSignedRoom, withAccess, type WriteAccess } from './writeAccess';
 
 // Message type prefix to identify encrypted messages
 const ENCRYPTED_PREFIX = new Uint8Array([0xE2, 0xE2]); // "EE" marker
 
 /** The relay's "for one client" header (relay/forward.js): `ZNT`, tag length, tag */
 const TARGET_MAGIC = [0xff, 0x5a, 0x4e, 0x54];
+
+/** The room a connection URL opens (its last path segment) */
+function roomOf(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split('/').filter(Boolean).pop() ?? '');
+  } catch {
+    return '';
+  }
+}
 
 function withTarget(tag: string, payload: Uint8Array): ArrayBuffer {
   const tagBytes = new TextEncoder().encode(tag);
@@ -33,6 +44,8 @@ export class EncryptedWebSocket {
   private keyFailed = false;
   // Serialized send chain — each send awaits the previous one to preserve ordering
   private sendChain: Promise<void> = Promise.resolve();
+  /** A signed room (read-only sharing): every message carries its category */
+  private readonly categorized: boolean;
 
   // WebSocket-like interface
   public binaryType: BinaryType = 'arraybuffer';
@@ -41,8 +54,11 @@ export class EncryptedWebSocket {
   public onerror: ((event: Event) => void) | null = null;
   public onmessage: ((event: MessageEvent) => void) | null = null;
 
-  constructor(url: string | URL, protocols?: string | string[]) {
-    this.ws = new WebSocket(url, protocols);
+  constructor(url: string | URL, protocols?: string | string[], access?: WriteAccess | null) {
+    // The write proof is valid a few minutes: made again on every (re)connection
+    const target = access ? withAccess(String(url), access) : String(url);
+    this.categorized = isSignedRoom(roomOf(target));
+    this.ws = new WebSocket(target, protocols);
     this.ws.binaryType = 'arraybuffer';
 
     this.ws.onopen = (event) => {
@@ -83,13 +99,28 @@ export class EncryptedWebSocket {
     try {
       const t0 = performance.now();
       const data = event.data as ArrayBuffer;
-      const dataArray = new Uint8Array(data);
+      let dataArray: Uint8Array = new Uint8Array(data);
+      let category: number | null = null;
+      if (this.categorized) {
+        const read = readCategory(dataArray);
+        if (!read) {
+          console.warn('[EncryptedWS] Message without category in a signed room, dropping');
+          return;
+        }
+        category = read.category;
+        dataArray = read.body;
+      }
 
       // Check if message is encrypted (has our prefix)
       if (this.hasEncryptedPrefix(dataArray)) {
         // Remove prefix and decrypt
         const encrypted = dataArray.slice(ENCRYPTED_PREFIX.length);
         const decrypted = await decrypt(this.key, encrypted);
+        // A reader's changes passed off as presence or a request: not applied
+        if (category !== null && categoryOf(decrypted) !== category) {
+          console.warn('[EncryptedWS] Message of another category than announced, dropping');
+          return;
+        }
 
         const elapsed = performance.now() - t0;
         if (elapsed > 500) {
@@ -200,7 +231,8 @@ export class EncryptedWebSocket {
       withPrefix.set(ENCRYPTED_PREFIX, 0);
       withPrefix.set(encrypted, ENCRYPTED_PREFIX.length);
 
-      this.ws.send(target ? withTarget(target, withPrefix) : withPrefix.buffer);
+      const frame = this.categorized ? withCategory(categoryOf(dataArray), withPrefix) : withPrefix;
+      this.ws.send(target ? withTarget(target, frame) : (frame.buffer as ArrayBuffer));
       const elapsed = performance.now() - t0;
       if (elapsed > 500) {
         console.warn(`[EncryptedWS] send SLOW: ${elapsed.toFixed(0)}ms (${data.byteLength}B)`);
@@ -358,6 +390,8 @@ export class EncryptedWebSocket {
 export function createEncryptedWebSocketClass(
   encryptionKey: string | null,
   onKeyError?: (err: unknown) => void,
+  /** Write key of a signed room (read-only sharing, writeAccess.ts) */
+  access?: WriteAccess | null,
 ): typeof WebSocket {
   if (!encryptionKey) {
     // No encryption, return native WebSocket
@@ -370,7 +404,7 @@ export function createEncryptedWebSocketClass(
   // Return a class that creates encrypted WebSockets
   return class extends EncryptedWebSocket {
     constructor(url: string | URL, protocols?: string | string[]) {
-      super(url, protocols);
+      super(url, protocols, access);
       this.setEncryptionKey(key).catch((err: unknown) => {
         this.failEncryption(err);
         onKeyError?.(err);

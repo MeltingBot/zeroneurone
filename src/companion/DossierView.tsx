@@ -1011,7 +1011,7 @@ function AssetTile({ asset, ydoc, dossierId }: { asset: AssetEntry | undefined; 
         return;
       }
       setFetching(0);
-      const bytes = await requestFile(asset.id, (received, total) => setFetching(received / total));
+      const bytes = await requestFile(asset.id, asset.hash, (received, total) => setFetching(received / total));
       await cacheFile(dossierId, asset.id, asset.mimeType, bytes).catch((err: unknown) => console.warn('[Companion] file not cached:', err));
       show(new Blob([bytes as BlobPart], { type: asset.mimeType }));
     } catch (err) {

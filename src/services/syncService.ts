@@ -16,6 +16,7 @@ import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
+import { isReadOnly, setRelayClockOffset, type WriteAccess } from './writeAccess';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
 import { toBase64Url } from '../utils/base64url';
@@ -253,7 +254,8 @@ class SyncService {
   private messageHandlers = new Map<number, (decoder: decoding.Decoder) => void>();
   /** This device's relay client tag in the room: messages for it alone carry it */
   private clientTag: string | null = null;
-  private targetSupport = new Map<string, Promise<boolean>>();
+  private relayInfos = new Map<string, Promise<{ features: string[]; clockOffsetS: number | null }>>();
+  private writeRefusals = 0;
 
   /** Handles a custom message type of the dossier's room (read after the type) */
   setMessageHandler(type: number, handle: (decoder: decoding.Decoder) => void): void {
@@ -295,24 +297,60 @@ class SyncService {
     return this.websocketProvider?.ws?.bufferedAmount ?? 0;
   }
 
-  /** Whether the relay delivers messages to one client (X-Relay-Features), asked once per relay */
-  relaySupportsTargets(): Promise<boolean> {
+  /** What the relay announces on /health (features, clock), asked once per relay unless `fresh` */
+  relayInfo(fresh = false): Promise<{ features: string[]; clockOffsetS: number | null }> {
     const server = this.serverUrl;
-    let known = this.targetSupport.get(server);
+    let known = fresh ? undefined : this.relayInfos.get(server);
     if (!known) {
       const http = server.replace(/^ws(s?):\/\//, 'http$1://').replace(/\/+$/, '');
+      const asked = Date.now();
       known = fetch(`${http}/health`, { cache: 'no-store' })
-        .then((res) => (res.headers.get('X-Relay-Features') ?? '').split(/[ ,]+/).includes('targeted'))
-        .catch(() => false);
-      this.targetSupport.set(server, known);
+        .then((res) => {
+          const time = Number(res.headers.get('X-Relay-Time'));
+          return {
+            features: (res.headers.get('X-Relay-Features') ?? '').split(/[ ,]+/).filter(Boolean),
+            // Halfway through the round trip
+            clockOffsetS: Number.isFinite(time) && time > 0 ? time - (asked + Date.now()) / 2000 : null,
+          };
+        })
+        .catch(() => ({ features: [], clockOffsetS: null }));
+      this.relayInfos.set(server, known);
     }
     return known;
+  }
+
+  /** Whether the relay delivers messages to one client (X-Relay-Features) */
+  async relaySupportsTargets(): Promise<boolean> {
+    return (await this.relayInfo()).features.includes('targeted');
+  }
+
+  /** Whether the relay keeps readers from changing a dossier (read-only sharing) */
+  async relaySupportsReadOnly(): Promise<boolean> {
+    return (await this.relayInfo()).features.includes('readonly');
+  }
+
+  /** A writer signs with the relay's clock (writeAccess.ts) */
+  private async syncRelayClock(fresh = false): Promise<void> {
+    const { clockOffsetS } = await this.relayInfo(fresh);
+    if (clockOffsetS !== null) setRelayClockOffset(clockOffsetS);
   }
 
   /** The files document of the open shared dossier (filesSync.ts) */
   private files: FilesSync | null = null;
   /** Whether shared dossiers open their files document: the phone does not */
   private filesSyncEnabled = true;
+  /** Write key of a signed room (read-only sharing, writeAccess.ts), or null */
+  private writeAccess: WriteAccess | null = null;
+
+  /** The write key of the open shared dossier (signed rooms only) */
+  getWriteAccess(): WriteAccess | null {
+    return this.writeAccess;
+  }
+
+  /** Whether the open shared dossier was joined with a read link */
+  isReadOnly(): boolean {
+    return isReadOnly(this.writeAccess);
+  }
 
   setFilesSync(enabled: boolean): void {
     this.filesSyncEnabled = enabled;
@@ -336,6 +374,7 @@ class SyncService {
       asyncEnabled: this.asyncMode,
       dek: this.atRestDek,
       clientTag: await relayClientTag(filesRoomId(roomId)),
+      access: this.writeAccess,
     });
     // Another dossier opened meanwhile: this one is not wanted any more
     if (this.dossierId !== dossierId) {
@@ -426,7 +465,9 @@ class SyncService {
     dossierId: string,
     encryptionKey?: string,
     roomId?: string,
-    asyncEnabled: boolean = false
+    asyncEnabled: boolean = false,
+    /** Write key of a signed room (read-only sharing): with its seed to write */
+    access: WriteAccess | null = null,
   ): Promise<Y.Doc> {
     if (!this.isServerConfigured()) {
       throw new Error('Serveur de synchronisation non configuré');
@@ -440,6 +481,7 @@ class SyncService {
 
     this.dossierId = dossierId;
     this.encryptionKey = encryptionKey || null;
+    this.writeAccess = access;
     this.ydoc = new Y.Doc();
 
     // Set up IndexedDB persistence (for offline support, encrypted when a DEK is available)
@@ -458,6 +500,8 @@ class SyncService {
     if (encryptionKey && roomId) {
       accessToken = await deriveAccessToken(encryptionKey, roomId);
     }
+
+    if (access?.seed) await this.syncRelayClock();
 
     // Connect to the relay server
     // Uses roomId if provided (hashed), otherwise dossierId (legacy)
@@ -491,6 +535,7 @@ class SyncService {
     // This invalidates previous share links (security measure)
     const newKey = await generateEncryptionKey();
     this.encryptionKey = newKey;
+    this.writeAccess = null;
 
     // Derive hashed roomId from dossier UUID + key
     // Server cannot correlate sessions, and re-sharing creates new room
@@ -570,6 +615,7 @@ class SyncService {
 
     // Clear encryption key when stopping sharing
     this.encryptionKey = null;
+    this.writeAccess = null;
 
     this.setState({
       mode: 'local',
@@ -646,7 +692,7 @@ class SyncService {
         syncing: false,
         error: 'Clé de chiffrement invalide : vérifier le lien de partage',
       });
-    });
+    }, this.writeAccess);
 
     // Build query params for async mode and token
     const urlParams: string[] = [];
@@ -809,9 +855,28 @@ class SyncService {
       this.setState({ error: message || 'Erreur de connexion au serveur' });
     });
 
-    this.websocketProvider.on('connection-close', () => {
+    this.writeRefusals = 0;
+    this.websocketProvider.on('connection-close', (event: CloseEvent | null) => {
       // After a key error the socket's own close must not overwrite that error
       if (this.isClosing || this.keyFailed) return;
+      // Write proof refused (relay/access.js): the relay's clock asked again
+      // once, as the device's may have moved; refused again, it is said
+      if (event?.reason === 'Write proof refused') {
+        this.writeRefusals++;
+        if (this.writeRefusals === 1) {
+          void this.syncRelayClock(true);
+        } else {
+          this.keyFailed = true;
+          this.websocketProvider?.disconnect();
+          this.setState({
+            connected: false,
+            reconnecting: false,
+            syncing: false,
+            error: 'Écriture refusée par le relais : vérifier le lien de partage et l\'heure de cet appareil',
+          });
+          return;
+        }
+      }
       if (wasConnected && this.state.mode === 'shared') {
         this.setState({
           connected: false,
@@ -881,6 +946,7 @@ class SyncService {
 
       this.dossierId = null;
       this.encryptionKey = null;
+      this.writeAccess = null;
 
       this.setState({ ...DEFAULT_SYNC_STATE });
     }

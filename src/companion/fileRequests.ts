@@ -15,6 +15,7 @@ const ANSWER_TIMEOUT_MS = 15_000;
 export class FileUnavailableError extends Error {}
 
 interface Pending {
+  hash: string;
   chunks: (Uint8Array | undefined)[];
   received: number;
   total: number;
@@ -51,6 +52,11 @@ syncService.setMessageHandler(MSG_ASSET_CHUNK, (decoder) => {
   }
   clearTimeout(p.timer);
   pending.delete(chunk.assetId);
+  void assemble(p);
+});
+
+/** The file from its chunks, kept only when it is the one asked for (its SHA-256) */
+async function assemble(p: Pending): Promise<void> {
   const size = p.chunks.reduce((sum, c) => sum + (c?.length ?? 0), 0);
   const bytes = new Uint8Array(size);
   let offset = 0;
@@ -58,8 +64,15 @@ syncService.setMessageHandler(MSG_ASSET_CHUNK, (decoder) => {
     bytes.set(c!, offset);
     offset += c!.length;
   }
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  const hex = Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('');
+  if (p.hash && hex !== p.hash) {
+    console.warn('[Companion] file received does not match its fingerprint, dropped');
+    p.reject(new FileUnavailableError('Fingerprint mismatch'));
+    return;
+  }
   p.resolve(bytes);
-});
+}
 
 syncService.setMessageHandler(MSG_ASSET_MISSING, (decoder) => {
   const assetId = decodeMissing(decoder);
@@ -69,10 +82,11 @@ syncService.setMessageHandler(MSG_ASSET_MISSING, (decoder) => {
 });
 
 /**
- * Asks the computers online for an attachment. Rejects with
- * FileUnavailableError when none is online or none answers.
+ * Asks the computers online for an attachment (`hash`: its SHA-256, checked
+ * on arrival). Rejects with FileUnavailableError when none is online, none
+ * answers, or what arrives is not that file.
  */
-export function requestFile(assetId: string, onProgress?: (received: number, total: number) => void): Promise<Uint8Array> {
+export function requestFile(assetId: string, hash: string, onProgress?: (received: number, total: number) => void): Promise<Uint8Array> {
   const tag = syncService.getClientTag();
   if (!tag || syncService.getState().peerCount === 0) return Promise.reject(new FileUnavailableError('No computer online'));
   const existing = pending.get(assetId);
@@ -85,7 +99,7 @@ export function requestFile(assetId: string, onProgress?: (received: number, tot
     });
   }
   return new Promise((resolve, reject) => {
-    const p: Pending = { chunks: [], received: 0, total: 1, onProgress, resolve, reject, timer: setTimeout(() => {}, 0) };
+    const p: Pending = { hash, chunks: [], received: 0, total: 1, onProgress, resolve, reject, timer: setTimeout(() => {}, 0) };
     pending.set(assetId, p);
     rearm(assetId, p);
     if (!syncService.sendToRoom(encodeRequest({ assetId, replyTo: tag, at: Math.floor(Date.now() / 1000) }))) {
