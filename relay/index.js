@@ -18,11 +18,10 @@
 
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createHash, randomBytes } from 'crypto';
-import { createAsyncBuffer, clientTagOf } from './asyncBuffer.js';
+import { createAsyncBuffer } from './asyncBuffer.js';
 import { loadEnvFile, relayConfig } from './config.js';
-import { forward, forwardToTarget, RELAY_FEATURES, targetOf } from './forward.js';
-import { accessOf, readerMayRelay } from './access.js';
+import { RELAY_FEATURES } from './forward.js';
+import { createRoomHub } from './room.js';
 
 loadEnvFile();
 const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
@@ -51,18 +50,6 @@ if (REDIS_URL) {
 
 
 // ============================================================================
-// STATE
-// ============================================================================
-const connectionsPerIP = new Map();
-const rooms = new Map();
-const asyncRooms = new Set();
-const roomTokens = new Map();            // roomId → hashed token
-const roomLastActivity = new Map();      // roomId → timestamp (for orphan cleanup)
-const roomReconnects = new Map();        // roomId → { count, lastLog }
-let totalMessagesRelayed = 0;
-let totalConnectionsServed = 0;
-
-// ============================================================================
 // HELPERS
 // ============================================================================
 
@@ -74,69 +61,17 @@ function getClientIP(req) {
   return req.socket.remoteAddress || 'unknown';
 }
 
-function hashToken(token) {
-  return createHash('sha256').update(token).digest('hex');
-}
-
-function isValidRoomId(roomId) {
-  if (!roomId || roomId.length > LIMITS.MAX_ROOM_ID_LENGTH) return false;
-  return LIMITS.ROOM_ID_PATTERN.test(roomId);
-}
-
-function createRateLimiter() {
-  let messageCount = 0;
-  let windowStart = Date.now();
-  return {
-    check() {
-      const now = Date.now();
-      if (now - windowStart > LIMITS.RATE_WINDOW_MS) {
-        messageCount = 1;
-        windowStart = now;
-        return true;
-      }
-      messageCount++;
-      return messageCount <= LIMITS.MAX_MESSAGES_PER_WINDOW;
-    }
-  };
-}
-
 // ============================================================================
 // BUFFER STORAGE (Memory or Redis, see asyncBuffer.js)
 // ============================================================================
 
 const asyncBuffer = createAsyncBuffer({ limits: BUFFER_LIMITS, redis: redisClient });
 
-async function cleanupBuffers() {
+const hub = createRoomHub({ LIMITS, BUFFER_LIMITS, asyncBuffer });
+
+function cleanupBuffers() {
   if (redisClient) return; // Redis handles TTL
-
-  const now = Date.now();
-  let cleanedOrphans = 0;
-
-  // Messages past their age; rooms left without any
-  const { emptied, dropped } = asyncBuffer.cleanup(now);
-  for (const roomId of emptied) {
-    if (rooms.has(roomId)) continue;
-    asyncRooms.delete(roomId);
-    roomTokens.delete(roomId);
-    roomLastActivity.delete(roomId);
-  }
-
-  // Clean orphaned rooms: no connections, no buffer, stale activity
-  for (const [roomId, lastActivity] of roomLastActivity.entries()) {
-    if (rooms.has(roomId)) continue;
-    if (asyncBuffer.holds(roomId)) continue;
-    if (now - lastActivity < BUFFER_LIMITS.ORPHAN_MAX_AGE_MS) continue;
-
-    asyncRooms.delete(roomId);
-    roomTokens.delete(roomId);
-    roomLastActivity.delete(roomId);
-    roomReconnects.delete(roomId);
-    cleanedOrphans++;
-  }
-
-  if (emptied.length > 0 || dropped > 0 || cleanedOrphans > 0) {
-    console.log(`[Cleanup] Removed ${emptied.length} buffered rooms, ${dropped} messages, ${cleanedOrphans} orphaned rooms`);
-  }
+  hub.cleanup();
 }
 
 const cleanupInterval = setInterval(cleanupBuffers, 60 * 60 * 1000);
@@ -161,17 +96,14 @@ const server = createServer((req, res) => {
     res.setHeader('X-Relay-Features', RELAY_FEATURES);
     // Its clock: a writer signs with it, whatever the time on its device (access.js)
     res.setHeader('X-Relay-Time', String(Math.floor(Date.now() / 1000)));
-    const totalClients = Array.from(rooms.values()).reduce((sum, r) => sum + r.size, 0);
+    const { messagesRelayed, connectionsServed, ...counts } = hub.stats();
     const metrics = {
       status: 'ok',
       version: VERSION,
       uptime: Math.floor((Date.now() - startedAt) / 1000),
-      rooms: rooms.size,
-      asyncRooms: asyncRooms.size,
-      clients: totalClients,
-      uniqueIPs: connectionsPerIP.size,
-      messagesRelayed: totalMessagesRelayed,
-      connectionsServed: totalConnectionsServed,
+      ...counts,
+      messagesRelayed,
+      connectionsServed,
       buffer: asyncBuffer.stats(),
       storage: redisClient ? 'redis' : 'memory',
     };
@@ -195,212 +127,15 @@ const wss = new WebSocketServer({
 });
 
 wss.on('connection', (ws, req) => {
-  const clientIP = getClientIP(req);
-  totalConnectionsServed++;
-
-  // Connection limit per IP
-  const currentConnections = connectionsPerIP.get(clientIP) || 0;
-  if (currentConnections >= LIMITS.MAX_CONNECTIONS_PER_IP) {
-    console.log(`[WS] Rejected connection from ${clientIP}: too many connections`);
-    ws.close(1008, 'Too many connections');
-    return;
-  }
-  connectionsPerIP.set(clientIP, currentConnections + 1);
-
-  // Room limit
-  if (rooms.size >= LIMITS.MAX_ROOMS) {
-    console.log(`[WS] Rejected connection: too many rooms`);
-    connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
-    ws.close(1008, 'Server at capacity');
-    return;
-  }
-
-  // Parse URL
-  const url = new URL(req.url, 'http://localhost');
-  const asyncEnabled = url.searchParams.get('async') === '1';
-  const token = url.searchParams.get('token');
-  const clientTag = clientTagOf(url.searchParams, () => randomBytes(9).toString('base64url'));
-  // Messages for one client find it by this tag (forward.js)
-  ws.clientTag = clientTag;
-
-  let urlPath = url.pathname.slice(1) || 'default';
-  if (urlPath.startsWith('ws/')) urlPath = urlPath.slice(3);
-  const segments = urlPath.split('/').filter(Boolean);
-  const roomId = segments.length > 0 ? segments[segments.length - 1] : 'default';
-
-  // Room ID validation
-  if (!isValidRoomId(roomId)) {
-    console.log(`[WS] Rejected connection: invalid room ID "${roomId.slice(0, 32)}..."`);
-    connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
-    ws.close(1008, 'Invalid room ID');
-    return;
-  }
-
-  // Read-only sharing (access.js): a signed room tells writers from readers
-  const access = accessOf(roomId, url.searchParams);
-  if (access.refused) {
-    console.log(`[WS] Rejected connection to room "${roomId.slice(0, 8)}...": ${access.refused}`);
-    connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
-    ws.close(1008, 'Write proof refused');
-    return;
-  }
-  ws.reader = !access.writer;
-
-  // Token validation (hashed comparison — never stores plain text)
-  const tokenHash = token ? hashToken(token) : null;
-
-  if (roomTokens.has(roomId)) {
-    if (roomTokens.get(roomId) !== tokenHash) {
-      console.log(`[WS] Rejected connection to room "${roomId.slice(0, 8)}...": invalid token`);
-      connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
-      ws.close(1008, 'Invalid token');
-      return;
-    }
-  } else if (tokenHash) {
-    roomTokens.set(roomId, tokenHash);
-  }
-
-  // Setup room
-  if (!rooms.has(roomId)) rooms.set(roomId, new Set());
-  const room = rooms.get(roomId);
-
-  // Room size limit
-  if (room.size >= LIMITS.MAX_CLIENTS_PER_ROOM) {
-    console.log(`[WS] Rejected connection to room "${roomId.slice(0, 8)}...": room full`);
-    connectionsPerIP.set(clientIP, connectionsPerIP.get(clientIP) - 1);
-    ws.close(1008, 'Room full');
-    return;
-  }
-
-  if (asyncEnabled) asyncRooms.add(roomId);
-  room.add(ws);
-  roomLastActivity.set(roomId, Date.now());
-
-  // Hand the client, even alone, the buffered messages it has not received
-  // (its own left out). Delayed so the client is set up first (key, sync).
-  if (asyncRooms.has(roomId)) {
-    setTimeout(async () => {
-      if (ws.readyState !== WebSocket.OPEN) return;
-      const sent = await asyncBuffer.replay(roomId, clientTag, (data) => {
-        if (ws.readyState !== WebSocket.OPEN) return false;
-        ws.send(data);
-        return true;
-      });
-      if (sent > 0) {
-        console.log(`[Buffer] Sent ${sent} buffered messages to a client in room "${roomId.slice(0, 8)}..."`);
-      }
-    }, 1500);
-  }
-
-  const rateLimiter = createRateLimiter();
-  const roomIdShort = roomId.slice(0, 8) + '...';
-
-  // Throttled join logging: log first join, then summarize reconnections
-  if (room.size >= 2) {
-    console.log(`[WS] Client from ${clientIP} joined room "${roomIdShort}" (${room.size} clients${asyncRooms.has(roomId) ? ', async' : ''})`);
-    roomReconnects.delete(roomId);
-  } else {
-    const rc = roomReconnects.get(roomId) || { count: 0, lastLog: 0 };
-    rc.count++;
-    if (rc.count === 1) {
-      console.log(`[WS] Client from ${clientIP} joined room "${roomIdShort}" (1 client${asyncRooms.has(roomId) ? ', async' : ''})`);
-      rc.lastLog = Date.now();
-    } else if (Date.now() - rc.lastLog > 5 * 60_000) {
-      console.log(`[WS] Client from ${clientIP} reconnected to room "${roomIdShort}" (${rc.count} reconnections)`);
-      rc.lastLog = Date.now();
-    }
-    roomReconnects.set(roomId, rc);
-  }
+  if (!hub.join(ws, new URL(req.url, 'http://localhost'), getClientIP(req), 'WS')) return;
 
   // Keepalive ping/pong
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
-
-  // Message handling
-  ws.on('message', (data) => {
-    if (data.length > LIMITS.MAX_MESSAGE_SIZE) {
-      console.log(`[WS] Dropped oversized message from ${clientIP}: ${data.length} bytes`);
-      ws.close(1009, 'Message too large');
-      return;
-    }
-
-    if (!rateLimiter.check()) {
-      console.log(`[WS] Rate limited client ${clientIP} in room "${roomIdShort}"`);
-      return;
-    }
-
-    const currentRoom = rooms.get(roomId);
-    if (!currentRoom) return;
-
-    roomLastActivity.set(roomId, Date.now());
-
-    // A reader sends presence and requests only: its changes go nowhere
-    if (ws.reader && !readerMayRelay(targetOf(data)?.payload ?? data)) {
-      if (!ws.readerDropLogged) {
-        ws.readerDropLogged = true;
-        console.log(`[WS] Dropped a change from a reader in room "${roomIdShort}"`);
-      }
-      return;
-    }
-
-    // For one client only: delivered to it, never buffered
-    const target = targetOf(data);
-    if (target) {
-      forwardToTarget(currentRoom, ws, target, LIMITS.MAX_BUFFERED_AMOUNT, WebSocket.OPEN);
-      totalMessagesRelayed++;
-      return;
-    }
-
-    let relayed = 0;
-    currentRoom.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        // Backpressure: a client too far behind is disconnected, never left without the message
-        if (forward(client, data, LIMITS.MAX_BUFFERED_AMOUNT)) relayed++;
-      }
-    });
-
-    totalMessagesRelayed++;
-
-    if (relayed === 0) {
-      // Solo client: echo message back periodically to keep y-websocket's
-      // wsLastMessageReceived fresh (prevents 30s reconnect timeout).
-      // Messages may be encrypted so we can't inspect type — throttle to
-      // one echo every 10s to avoid bandwidth waste.
-      const now = Date.now();
-      if (ws.readyState === WebSocket.OPEN && (!ws._lastEcho || now - ws._lastEcho > 10_000)) {
-        ws.send(data);
-        ws._lastEcho = now;
-      }
-      // Buffer for async rooms
-      if (asyncRooms.has(roomId)) {
-        asyncBuffer.add(roomId, clientTag, data).catch(err => {
-          console.error(`[Buffer] Error adding message:`, err.message);
-        });
-      }
-    }
-  });
-
-  // Disconnect handling
-  ws.on('close', () => {
-    const count = connectionsPerIP.get(clientIP) || 1;
-    if (count <= 1) connectionsPerIP.delete(clientIP);
-    else connectionsPerIP.set(clientIP, count - 1);
-
-    const currentRoom = rooms.get(roomId);
-    if (currentRoom) {
-      currentRoom.delete(ws);
-      if (currentRoom.size > 0) {
-        console.log(`[WS] Client from ${clientIP} left room "${roomIdShort}" (${currentRoom.size} remaining)`);
-      }
-      if (currentRoom.size === 0) {
-        rooms.delete(roomId);
-        roomLastActivity.set(roomId, Date.now());
-      }
-    }
-  });
-
+  ws.on('message', (data) => hub.receive(ws, data));
+  ws.on('close', () => hub.leave(ws));
   ws.on('error', (err) => {
-    console.error(`[WS] Error in room "${roomIdShort}" from ${clientIP}:`, err.message);
+    console.error(`[WS] Error in room "${ws.roomId.slice(0, 8)}..." from ${ws.clientIP}:`, err.message);
   });
 });
 
@@ -469,32 +204,22 @@ async function gracefulShutdown(signal) {
   clearInterval(pingInterval);
   clearInterval(cleanupInterval);
 
-  // Close all WebSocket connections with a clean code
+  // Close every connection with a clean code
   const closePromises = [];
-  for (const [, room] of rooms) {
-    for (const client of room) {
-      if (client.readyState === WebSocket.OPEN) {
-        closePromises.push(new Promise((resolve) => {
-          client.on('close', resolve);
-          client.close(1001, 'Server shutting down');
-          setTimeout(resolve, 2000);
-        }));
-      }
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      closePromises.push(new Promise((resolve) => {
+        client.on('close', resolve);
+        setTimeout(resolve, 2000);
+      }));
     }
   }
-
+  hub.closeAll(1001, 'Server shutting down');
   if (closePromises.length > 0) {
     console.log(`[Relay] Closing ${closePromises.length} WebSocket connections...`);
     await Promise.all(closePromises);
   }
-
-  rooms.clear();
-  connectionsPerIP.clear();
   asyncBuffer.clear();
-  roomReconnects.clear();
-  asyncRooms.clear();
-  roomTokens.clear();
-  roomLastActivity.clear();
 
   // Close Redis connection
   if (redisClient) {
