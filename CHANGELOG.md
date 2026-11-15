@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.95.0
+
+### Collaboration
+
+- **Repli HTTP quand le WebSocket est bloqué** — sur un réseau qui
+  empêche le WebSocket (proxy d'entreprise, inspection TLS), la
+  collaboration passe seule, après une dizaine de secondes, par un flux
+  d'événements (SSE) et des requêtes HTTPS. Chiffrement de bout en bout,
+  lecture seule et fichiers inchangés. Choix retenu une journée par
+  relais, puis le WebSocket est de nouveau essayé.
+- **Icône ⇅** — une session connectée par le repli le signale dans
+  l'indicateur de connexion, avec une infobulle.
+- **Limites** — messages descendants encodés en texte (un tiers de
+  volume en plus) ; un proxy qui retient aussi les flux HTTP empêche le
+  repli.
+
+### Relais
+
+- **Relais à mettre à jour** (2.95.0) pour offrir le repli. Derrière
+  Apache : `flushpackets=on` sur le `ProxyPass` (guide de déploiement).
+  Copier aussi `room.js` et `sse.js` ; la liste de fichiers du guide
+  Apache, incomplète, est corrigée.
+- **Serveur tout-en-un (image combinée) aligné sur le relais autonome**
+  — code d'accès de salle gardé en empreinte et non plus en clair, écho
+  au client seul dans sa salle (plus de reconnexion toutes les 30 s),
+  nettoyage des salles abandonnées, compteurs de messages et de
+  connexions.
+
 ## 2.94.1
 
 ### Compagnon mobile
