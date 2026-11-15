@@ -654,6 +654,7 @@
   "collaboration": {
     "title": "Співпраця",
     "connected": "Підключено",
+    "connectedHttp": "Підключено через HTTP: WebSocket заблоковано в цій мережі",
     "you": "Ви",
     "others": "інших",
     "reader": "читач",

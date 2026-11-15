@@ -15,7 +15,8 @@ import { EncryptedIndexeddbPersistence } from './encryption/encryptedIndexeddbPe
 import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
-import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
+import { createEncryptedWebSocketClass, EncryptedWebSocket, type RelayTransport } from './encryptedWebSocket';
+import { rememberedTransport, rememberTransport } from './relayTransport';
 import { generateWriteAccess, isReadOnly, lockSeed, setRelayClockOffset, signedRoomId, type WriteAccess } from './writeAccess';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
@@ -28,6 +29,15 @@ import type * as decoding from 'lib0/decoding';
 const messageSync = 0;
 const messageYjsSyncStep1 = 0;
 const messageYjsUpdate = 2;
+
+/**
+ * Not connected after this long: WebSocket may be blocked on this network,
+ * the HTTP fallback is tried when the relay offers it (sseSocket.ts). The
+ * fallback's own wait is longer: its socket gives up opening after 10 s.
+ */
+const FALLBACK_AFTER_MS: Record<RelayTransport, number> = { ws: 10_000, sse: 25_000 };
+/** ws → sse → ws at most per connection: never back and forth */
+const MAX_TRANSPORT_SWITCHES = 2;
 
 // Storage key for the relay server URL (historical name, kept for saved settings)
 const STORAGE_KEY = 'zeroneurone-signaling-server';
@@ -76,6 +86,12 @@ class SyncService {
   private encryptionKey: string | null = null;
   /** The open session asked the relay to buffer messages (async mode) */
   private asyncMode = false;
+  /** How the relay is reached (WebSocket or its HTTP fallback) */
+  private transport: RelayTransport = 'ws';
+  /** Watches a connection that does not open, to try the other transport */
+  private fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Deciding whether to switch transport (asking the relay's /health) */
+  private switchingTransport = false;
 
   // Guards to suppress event handlers during teardown / page unload
   private isClosing = false;
@@ -380,6 +396,7 @@ class SyncService {
       dek: this.atRestDek,
       clientTag: await relayClientTag(filesRoomId(roomId)),
       access: this.writeAccess,
+      transport: this.transport,
     });
     // Another dossier opened meanwhile: this one is not wanted any more
     if (this.dossierId !== dossierId) {
@@ -673,11 +690,16 @@ class SyncService {
   private connectWebSocket(
     roomId: string,
     encryptionKey?: string,
-    options?: { async?: boolean; token?: string; clientTag?: string }
+    options?: { async?: boolean; token?: string; clientTag?: string },
+    /** Set when switching transport (fallback): how many switches already */
+    switched?: { transport: RelayTransport; count: number },
   ): void {
     if (!this.ydoc) {
       throw new Error('No Y.Doc available');
     }
+    this.clearFallbackTimer();
+    this.transport = switched?.transport ?? rememberedTransport(this.serverUrl);
+    const switches = switched?.count ?? 0;
 
     // Destroy existing provider if any
     if (this.websocketProvider) {
@@ -701,7 +723,7 @@ class SyncService {
         syncing: false,
         error: 'Clé de chiffrement invalide : vérifier le lien de partage',
       });
-    }, this.writeAccess);
+    }, this.writeAccess, this.transport);
 
     // Build query params for async mode and token
     const urlParams: string[] = [];
@@ -754,7 +776,25 @@ class SyncService {
     setTimeout(() => { initialGrace = false; }, 5000);
 
     // Set syncing to true while waiting for initial sync
-    this.setState({ syncing: true });
+    this.setState({ syncing: true, transport: this.transport });
+
+    // Not connected for a while (at the start, or after losing the
+    // connection): the other transport is tried, if the relay answers
+    // over HTTP and offers the fallback
+    const provider = this.websocketProvider;
+    let refused = false;
+    const watch = () => {
+      this.clearFallbackTimer();
+      if (switches >= MAX_TRANSPORT_SWITCHES) return;
+      this.fallbackTimer = setTimeout(() => {
+        this.fallbackTimer = null;
+        this.switchingTransport = true;
+        // Not switched (relay down, refused): watched again only after a later disconnection
+        void this.tryOtherTransport(provider, () => refused, roomId, encryptionKey, options, switches)
+          .finally(() => { this.switchingTransport = false; });
+      }, FALLBACK_AFTER_MS[this.transport]);
+    };
+    watch();
 
     // Listen to connection status
     this.websocketProvider.on('status', (event: { status: string }) => {
@@ -764,6 +804,8 @@ class SyncService {
 
       if (connected) {
         initialGrace = false;
+        refused = false;
+        this.clearFallbackTimer();
         this.setState({
           connected: true,
           reconnecting: false,
@@ -782,6 +824,7 @@ class SyncService {
         }, 500);
       } else {
         // Disconnected
+        if (!this.fallbackTimer) watch();
         if (wasConnected) {
           // We were connected before — enter reconnection mode (silent, y-websocket retries)
           this.setState({
@@ -857,7 +900,8 @@ class SyncService {
       // After a key error the socket's own close must not overwrite that error
       if (this.isClosing || this.keyFailed) return;
       // During initial grace period or reconnection, suppress errors — y-websocket retries automatically
-      if (initialGrace || this.state.reconnecting) return;
+      // Nor while the other transport may still be tried
+      if (initialGrace || this.state.reconnecting || this.isTryingFallback()) return;
       const message = (event && typeof event === 'object' && 'message' in event)
         ? (event as { message?: string }).message
         : 'Erreur de connexion au serveur';
@@ -868,6 +912,8 @@ class SyncService {
     this.websocketProvider.on('connection-close', (event: CloseEvent | null) => {
       // After a key error the socket's own close must not overwrite that error
       if (this.isClosing || this.keyFailed) return;
+      // Refused by the relay (token, room full, write proof): the transport works
+      if (event?.code === 1008) refused = true;
       // Write proof refused (relay/access.js): the relay's clock asked again
       // once, as the device's may have moved; refused again, it is said
       if (event?.reason === 'Write proof refused') {
@@ -902,6 +948,48 @@ class SyncService {
     });
   }
 
+  /**
+   * A connection not open yet may still switch transport: its errors wait,
+   * and so does JoinPage. Bounded: MAX_TRANSPORT_SWITCHES.
+   */
+  isTryingFallback(): boolean {
+    return this.fallbackTimer !== null || this.switchingTransport;
+  }
+
+  private clearFallbackTimer(): void {
+    if (this.fallbackTimer) clearTimeout(this.fallbackTimer);
+    this.fallbackTimer = null;
+  }
+
+  /**
+   * The connection did not open: the other transport, when the relay is
+   * reachable over HTTP and offers the fallback. Relay down, or refusing
+   * this client: nothing changes, y-websocket keeps retrying.
+   */
+  private async tryOtherTransport(
+    provider: WebsocketProvider | null,
+    wasRefused: () => boolean,
+    roomId: string,
+    encryptionKey: string | undefined,
+    options: { async?: boolean; token?: string; clientTag?: string } | undefined,
+    switches: number,
+  ): Promise<boolean> {
+    const current = () => !this.isClosing && !this.keyFailed && this.websocketProvider === provider && !this.state.connected;
+    if (!current() || wasRefused()) return false;
+    const from = this.transport;
+    const to: RelayTransport = from === 'ws' ? 'sse' : 'ws';
+    if (to === 'sse') {
+      const { features } = await this.relayInfo(true);
+      if (!features.includes('sse') || !current()) return false;
+    }
+    console.warn(`[SyncService] relay not reached by ${from} for ${FALLBACK_AFTER_MS[from] / 1000} s: trying ${to}`);
+    rememberTransport(this.serverUrl, to);
+    this.connectWebSocket(roomId, encryptionKey, options, { transport: to, count: switches + 1 });
+    // The files room follows
+    if (this.files && encryptionKey) await this.openFiles(roomId, encryptionKey);
+    return true;
+  }
+
   // ============================================================================
   // AWARENESS (Presence)
   // ============================================================================
@@ -924,6 +1012,7 @@ class SyncService {
   async close(): Promise<void> {
     // Suppress event handlers during teardown
     this.isClosing = true;
+    this.clearFallbackTimer();
     await this.closeFiles();
 
     // Disconnect and destroy WebSocket provider

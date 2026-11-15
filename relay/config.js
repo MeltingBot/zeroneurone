@@ -70,6 +70,8 @@ export function relayConfig(defaults = {}) {
     TRUST_PROXY: process.env.TRUST_PROXY === '1',
     /** Origin allowed to read /health and /metrics from a page (CORS) */
     ALLOWED_ORIGIN: process.env.ALLOWED_ORIGIN || '*',
+    /** Tests only: refuses every WebSocket, as a network that blocks it (HTTP fallback, sse.js) */
+    REFUSE_WEBSOCKET: process.env.RELAY_TEST_REFUSE_WS === '1',
     LIMITS: {
       MAX_MESSAGE_SIZE: n('MAX_MESSAGE_SIZE_MB') * MB,
       RATE_WINDOW_MS: n('RATE_WINDOW_MS'),

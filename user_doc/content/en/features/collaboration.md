@@ -14,7 +14,7 @@ Work together on a dossier in real-time with secure, end-to-end encrypted synchr
 |--------|------------|
 | **Encryption** | AES-256-GCM end-to-end |
 | **Key** | Generated locally, never sent to server |
-| **Transport** | Secure WebSocket (WSS/TLS) |
+| **Transport** | Secure WebSocket (WSS/TLS), HTTPS fallback when WebSocket is blocked |
 | **Server** | Cannot read your data |
 
 {{< hint info >}}
@@ -105,9 +105,21 @@ The toolbar displays the connection status:
 | 📴 | Local | Offline mode |
 | 🔄 | Connecting | Connection attempt |
 | 📶 | Connected | Active synchronization |
+| ⇅ | Connected over HTTP | Active synchronization through the HTTP fallback (WebSocket blocked) |
 | ⟳ | Sync | Data exchange in progress |
 | ↻ | Reconnecting | Lost connection, retrying |
 | ⚠️ | Error | Connection failure |
+
+### Network Blocking WebSocket
+
+Some networks (corporate proxy, TLS inspection) prevent WebSocket. If the connection does not succeed within about ten seconds and the relay answers, ZeroNeurone switches on its own to an HTTP fallback: it receives messages through an event stream (SSE) and sends them with HTTPS requests. End-to-end encryption and read-only sharing are unchanged; the connection icon becomes ⇅.
+
+This choice is kept for a day for that relay, then WebSocket is tried again.
+
+Limits:
+- Incoming messages are encoded as text: a third more volume, noticeable for large files
+- A proxy that also holds back HTTP streams prevents the fallback; the connection then stays failed
+- Requires an up-to-date relay (2.95.0 or later). Behind Apache, see `flushpackets=on` in the deployment guide
 
 ### File Synchronization
 

@@ -13,7 +13,7 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { EncryptedIndexeddbPersistence } from './encryption/encryptedIndexeddbPersistence';
-import { createEncryptedWebSocketClass } from './encryptedWebSocket';
+import { createEncryptedWebSocketClass, type RelayTransport } from './encryptedWebSocket';
 import { deriveAccessToken } from './cryptoService';
 import { filesDatabaseName } from './yjs/ydocName';
 import type { WriteAccess } from './writeAccess';
@@ -37,6 +37,8 @@ export async function openFilesSync(options: {
   clientTag?: string;
   /** Write key of a signed room (read-only sharing) */
   access?: WriteAccess | null;
+  /** WebSocket, or the relay's HTTP fallback: the dossier room's */
+  transport?: RelayTransport;
 }): Promise<FilesSync> {
   const doc = new Y.Doc();
   const persistence = new EncryptedIndexeddbPersistence(filesDatabaseName(options.dossierId), doc, options.dek ?? undefined);
@@ -50,7 +52,7 @@ export async function openFilesSync(options: {
   ].filter(Boolean).join('&');
   const provider = new WebsocketProvider(options.serverUrl, `${room}?${params}`, doc, {
     // A wrong key is reported by the main document's connection
-    WebSocketPolyfill: createEncryptedWebSocketClass(options.encryptionKey, () => provider.disconnect(), options.access),
+    WebSocketPolyfill: createEncryptedWebSocketClass(options.encryptionKey, () => provider.disconnect(), options.access, options.transport),
     maxBackoffTime: 30000,
     resyncInterval: -1,
   });

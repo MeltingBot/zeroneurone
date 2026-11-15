@@ -259,15 +259,19 @@ export function JoinPage() {
 
       // Wait for WebSocket connection and initial sync to complete
       await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
+        const onTimeout = () => {
           // Timeout is OK - we're connected but no peers to sync with
           const state = syncService.getState();
           if (state.connected) {
             resolve();
+          } else if (syncService.isTryingFallback()) {
+            // WebSocket may be blocked here: the HTTP fallback gets its turn
+            timeout = setTimeout(onTimeout, 5000);
           } else {
             reject(new Error(t('join.errors.connectionTimeout')));
           }
-        }, 10000); // 10 second timeout
+        };
+        let timeout = setTimeout(onTimeout, 10000); // 10 second timeout
 
         let wasConnected = false;
 

@@ -25,7 +25,7 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 # Copy relay server
-COPY index.js asyncBuffer.js config.js forward.js access.js room.js ./
+COPY index.js asyncBuffer.js config.js forward.js access.js room.js sse.js ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S zeroneurone && \

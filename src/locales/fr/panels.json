@@ -653,6 +653,7 @@
   "collaboration": {
     "title": "Collaboration",
     "connected": "Connecté",
+    "connectedHttp": "Connecté par HTTP : WebSocket bloqué sur ce réseau",
     "you": "Vous",
     "others": "autres",
     "reader": "lecteur",

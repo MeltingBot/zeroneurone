@@ -14,7 +14,7 @@ Travaillez à plusieurs sur un dossier en temps réel avec synchronisation sécu
 |--------|------------|
 | **Chiffrement** | AES-256-GCM de bout en bout |
 | **Clé** | Générée localement, jamais envoyée au serveur |
-| **Transport** | WebSocket sécurisé (WSS/TLS) |
+| **Transport** | WebSocket sécurisé (WSS/TLS), repli HTTPS si le WebSocket est bloqué |
 | **Serveur** | Ne peut pas lire vos données |
 
 {{< hint info >}}
@@ -105,9 +105,21 @@ La barre d'outils affiche l'état de la connexion :
 | 📴 | Local | Mode hors-ligne |
 | 🔄 | Connexion | Tentative de connexion |
 | 📶 | Connecté | Synchronisation active |
+| ⇅ | Connecté par HTTP | Synchronisation active par le repli HTTP (WebSocket bloqué) |
 | ⟳ | Sync | Échange de données en cours |
 | ↻ | Reconnexion | Connexion perdue, nouvelle tentative |
 | ⚠️ | Erreur | Échec de connexion |
+
+### Réseau qui bloque le WebSocket
+
+Certains réseaux (proxy d'entreprise, inspection TLS) empêchent le WebSocket. Si la connexion n'aboutit pas en une dizaine de secondes et que le relais répond, ZeroNeurone passe seul par un repli HTTP : il reçoit les messages par un flux d'événements (SSE) et les envoie par requêtes HTTPS. Le chiffrement de bout en bout et la lecture seule sont les mêmes ; l'icône de connexion devient ⇅.
+
+Ce choix est retenu une journée pour ce relais, puis le WebSocket est de nouveau essayé.
+
+Limites :
+- Les messages descendants sont encodés en texte : un tiers de volume en plus, sensible pour les gros fichiers
+- Un proxy qui retient aussi les flux HTTP empêche le repli ; la connexion reste alors en échec
+- Il faut un relais à jour (2.95.0 ou plus récent). Derrière Apache, voir `flushpackets=on` dans le guide de déploiement
 
 ### Synchronisation des fichiers
 

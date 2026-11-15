@@ -652,6 +652,7 @@
   "collaboration": {
     "title": "Samenwerking",
     "connected": "Verbonden",
+    "connectedHttp": "Verbonden via HTTP: WebSocket geblokkeerd op dit netwerk",
     "you": "U",
     "others": "anderen",
     "reader": "lezer",

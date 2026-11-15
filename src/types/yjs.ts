@@ -36,6 +36,8 @@ export interface SyncState {
   roomId: string | null;
   /** Number of connected peers */
   peerCount: number;
+  /** How the relay is reached: WebSocket, or its HTTP fallback (sseSocket.ts) */
+  transport: 'ws' | 'sse';
 }
 
 export const DEFAULT_SYNC_STATE: SyncState = {
@@ -46,6 +48,7 @@ export const DEFAULT_SYNC_STATE: SyncState = {
   error: null,
   roomId: null,
   peerCount: 0,
+  transport: 'ws',
 };
 
 // ============================================================================

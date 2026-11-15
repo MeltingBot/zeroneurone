@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Wifi, WifiOff, RefreshCw, AlertCircle, X, RotateCcw, Download } from 'lucide-react';
+import { Wifi, WifiOff, ArrowDownUp, RefreshCw, AlertCircle, X, RotateCcw, Download } from 'lucide-react';
 import { useSyncStore } from '../../stores';
 import type { MediaSyncProgress } from '../../stores/syncStore';
 import { Modal, Button } from '../common';
@@ -67,7 +67,7 @@ function MediaSyncBadge({ progress }: { progress: MediaSyncProgress }) {
 
 export function SyncStatusIndicator() {
   const { t } = useTranslation('panels');
-  const { mode, connected, syncing, reconnecting, error, unshare, mediaSyncProgress } = useSyncStore(useShallow((s) => ({ mode: s.mode, connected: s.connected, syncing: s.syncing, reconnecting: s.reconnecting, error: s.error, unshare: s.unshare, mediaSyncProgress: s.mediaSyncProgress })));
+  const { mode, connected, syncing, reconnecting, error, transport, unshare, mediaSyncProgress } = useSyncStore(useShallow((s) => ({ mode: s.mode, connected: s.connected, syncing: s.syncing, reconnecting: s.reconnecting, error: s.error, transport: s.transport, unshare: s.unshare, mediaSyncProgress: s.mediaSyncProgress })));
   const [showWarning, setShowWarning] = useState(false);
 
   const handleDisconnect = () => {
@@ -114,8 +114,11 @@ export function SyncStatusIndicator() {
     );
   } else if (connected) {
     connectionStatus = (
-      <div className="flex items-center gap-1 px-2 py-1 text-xs text-success" title={t('collaboration.connected')}>
-        <Wifi size={14} />
+      <div
+        className="flex items-center gap-1 px-2 py-1 text-xs text-success"
+        title={transport === 'sse' ? t('collaboration.connectedHttp') : t('collaboration.connected')}
+      >
+        {transport === 'sse' ? <ArrowDownUp size={14} /> : <Wifi size={14} />}
         <button
           onClick={handleDisconnect}
           className="ml-1 p-0.5 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-error transition-colors"

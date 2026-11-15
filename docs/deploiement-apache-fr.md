@@ -131,7 +131,8 @@ machine et à exposer via Apache.
 ```bash
 sudo apt install nodejs npm
 sudo mkdir -p /opt/zeroneurone-relay
-sudo cp relay/index.js relay/package.json /opt/zeroneurone-relay/
+sudo cp relay/index.js relay/asyncBuffer.js relay/config.js relay/forward.js \
+  relay/access.js relay/room.js relay/sse.js relay/package.json /opt/zeroneurone-relay/
 cd /opt/zeroneurone-relay && sudo npm install --omit=dev
 ```
 
@@ -164,9 +165,14 @@ sudo a2enmod proxy proxy_http
 Dans le vhost HTTPS (pas dans le `.htaccess`) :
 
 ```apache
-ProxyPass        /Zeroneurone-relay/ http://127.0.0.1:4444/ upgrade=websocket
+ProxyPass        /Zeroneurone-relay/ http://127.0.0.1:4444/ upgrade=websocket flushpackets=on
 ProxyPassReverse /Zeroneurone-relay/ http://127.0.0.1:4444/
+# Repli HTTP (réseaux qui bloquent le WebSocket) : flux SSE ni compressé ni retenu
+SetEnvIf Request_URI "^/Zeroneurone-relay/.*sse/" no-gzip
 ```
+
+`flushpackets=on` laisse passer chaque message du flux de repli dès son
+envoi ; sans lui, Apache peut le retenir et le repli ne s'ouvre pas.
 
 Dans ZeroNeurone, l'adresse du serveur de collaboration à saisir est alors
 `wss://serveur.exemple/Zeroneurone-relay`.

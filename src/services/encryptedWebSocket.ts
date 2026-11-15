@@ -9,6 +9,14 @@
 import { encrypt, decrypt, importEncryptionKey } from './cryptoService';
 import { categoryOf, readCategory, withCategory } from './messageCategory';
 import { isSignedRoom, withAccess, type WriteAccess } from './writeAccess';
+import { SseSocket } from './sseSocket';
+
+/** How a connection reaches the relay: WebSocket, or its HTTP fallback (sseSocket.ts) */
+export type RelayTransport = 'ws' | 'sse';
+
+function socketClass(transport: RelayTransport): typeof WebSocket {
+  return transport === 'sse' ? (SseSocket as unknown as typeof WebSocket) : WebSocket;
+}
 
 // Message type prefix to identify encrypted messages
 const ENCRYPTED_PREFIX = new Uint8Array([0xE2, 0xE2]); // "EE" marker
@@ -54,11 +62,17 @@ export class EncryptedWebSocket {
   public onerror: ((event: Event) => void) | null = null;
   public onmessage: ((event: MessageEvent) => void) | null = null;
 
-  constructor(url: string | URL, protocols?: string | string[], access?: WriteAccess | null) {
+  constructor(
+    url: string | URL,
+    protocols?: string | string[],
+    access?: WriteAccess | null,
+    transport: RelayTransport = 'ws',
+  ) {
     // The write proof is valid a few minutes: made again on every (re)connection
     const target = access ? withAccess(String(url), access) : String(url);
     this.categorized = isSignedRoom(roomOf(target));
-    this.ws = new WebSocket(target, protocols);
+    const Socket = socketClass(transport);
+    this.ws = new Socket(target, protocols);
     this.ws.binaryType = 'arraybuffer';
 
     this.ws.onopen = (event) => {
@@ -392,10 +406,11 @@ export function createEncryptedWebSocketClass(
   onKeyError?: (err: unknown) => void,
   /** Write key of a signed room (read-only sharing, writeAccess.ts) */
   access?: WriteAccess | null,
+  transport: RelayTransport = 'ws',
 ): typeof WebSocket {
   if (!encryptionKey) {
-    // No encryption, return native WebSocket
-    return WebSocket;
+    // No encryption: the transport itself
+    return socketClass(transport);
   }
 
   // Capture key for closure
@@ -404,7 +419,7 @@ export function createEncryptedWebSocketClass(
   // Return a class that creates encrypted WebSockets
   return class extends EncryptedWebSocket {
     constructor(url: string | URL, protocols?: string | string[]) {
-      super(url, protocols, access);
+      super(url, protocols, access, transport);
       this.setEncryptionKey(key).catch((err: unknown) => {
         this.failEncryption(err);
         onKeyError?.(err);

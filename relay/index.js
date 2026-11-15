@@ -22,9 +22,10 @@ import { createAsyncBuffer } from './asyncBuffer.js';
 import { loadEnvFile, relayConfig } from './config.js';
 import { RELAY_FEATURES } from './forward.js';
 import { createRoomHub } from './room.js';
+import { createSseRoutes } from './sse.js';
 
 loadEnvFile();
-const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig();
+const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS, REFUSE_WEBSOCKET } = relayConfig();
 
 const VERSION = '2.94.1';
 const startedAt = Date.now();
@@ -68,6 +69,7 @@ function getClientIP(req) {
 const asyncBuffer = createAsyncBuffer({ limits: BUFFER_LIMITS, redis: redisClient });
 
 const hub = createRoomHub({ LIMITS, BUFFER_LIMITS, asyncBuffer });
+const sse = createSseRoutes({ hub, LIMITS, getClientIP });
 
 function cleanupBuffers() {
   if (redisClient) return; // Redis handles TTL
@@ -82,7 +84,7 @@ const cleanupInterval = setInterval(cleanupBuffers, 60 * 60 * 1000);
 
 const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Expose-Headers', 'X-Relay-Features, X-Relay-Time');
 
@@ -112,6 +114,9 @@ const server = createServer((req, res) => {
     return;
   }
 
+  // HTTP fallback for networks that block WebSocket (sse.js)
+  if (sse.handle(req, res)) return;
+
   res.writeHead(404);
   res.end();
 });
@@ -124,6 +129,8 @@ const wss = new WebSocketServer({
   server,
   maxPayload: LIMITS.MAX_MESSAGE_SIZE,
   perMessageDeflate: false,
+  // Tests only: a network that blocks WebSocket, to exercise the fallback
+  verifyClient: () => !REFUSE_WEBSOCKET,
 });
 
 wss.on('connection', (ws, req) => {
@@ -204,7 +211,7 @@ async function gracefulShutdown(signal) {
   clearInterval(pingInterval);
   clearInterval(cleanupInterval);
 
-  // Close every connection with a clean code
+  // Close every connection with a clean code (HTTP fallback streams too)
   const closePromises = [];
   for (const client of wss.clients) {
     if (client.readyState === WebSocket.OPEN) {

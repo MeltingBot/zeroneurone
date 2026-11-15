@@ -565,6 +565,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         error: state.error,
         roomId: state.roomId,
         peerCount: state.peerCount,
+        transport: state.transport,
       });
 
       // Reset awareness when disconnected or leaving shared mode

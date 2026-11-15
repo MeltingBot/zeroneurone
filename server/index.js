@@ -29,11 +29,12 @@ import { createAsyncBuffer } from '../relay/asyncBuffer.js';
 import { loadEnvFile, relayConfig } from '../relay/config.js';
 import { RELAY_FEATURES } from '../relay/forward.js';
 import { createRoomHub } from '../relay/room.js';
+import { createSseRoutes } from '../relay/sse.js';
 
 // Settings from the environment or a .env file (relay/config.js, every one
 // listed in relay/.env.example); this server keeps its own defaults
 loadEnvFile();
-const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS } = relayConfig({
+const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS, REFUSE_WEBSOCKET } = relayConfig({
   PORT: 3000,
   MAX_CONNECTIONS_PER_IP: 10,
   BUFFER_MAX_MSGS: 10_000,
@@ -181,8 +182,9 @@ function getClientIP(req) {
 
 const asyncBuffer = createAsyncBuffer({ limits: BUFFER_LIMITS, redis: redisClient });
 
-// Rooms of the relay (relay/room.js)
+// Rooms shared by WebSocket and the HTTP fallback (relay/room.js, relay/sse.js)
 const hub = createRoomHub({ LIMITS, BUFFER_LIMITS, asyncBuffer });
+const sse = createSseRoutes({ hub, LIMITS, getClientIP });
 
 /** Old buffered messages, orphaned rooms (memory mode only, Redis uses TTL) */
 function cleanupBuffers() {
@@ -216,7 +218,7 @@ function setupWebSocketRelay(wss) {
 const server = createServer((req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Expose-Headers', 'X-Relay-Features, X-Relay-Time');
 
@@ -241,6 +243,9 @@ const server = createServer((req, res) => {
     return;
   }
 
+  // HTTP fallback for networks that block WebSocket (relay/sse.js)
+  if (sse.handle(req, res)) return;
+
   // Serve static files
   serveStatic(req, res);
 });
@@ -250,6 +255,8 @@ const wss = new WebSocketServer({
   server,
   maxPayload: LIMITS.MAX_MESSAGE_SIZE,
   perMessageDeflate: false, // Disable compression for binary data reliability
+  // Tests only: a network that blocks WebSocket, to exercise the fallback
+  verifyClient: () => !REFUSE_WEBSOCKET,
 });
 setupWebSocketRelay(wss);
 
@@ -283,7 +290,7 @@ server.listen(PORT, HOST, () => {
 process.on('SIGTERM', () => {
   console.log('[Server] SIGTERM received, shutting down...');
 
-  // Close every connection
+  // Close every connection (HTTP fallback streams too)
   hub.closeAll(1001, 'Server shutting down');
   asyncBuffer.clear();
 
