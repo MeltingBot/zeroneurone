@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
 import i18next from 'i18next';
 import { scaledLinkWidth } from '../../utils/linkWidthScale';
@@ -9,6 +9,7 @@ import { arrowPolygon, computeEdgeRoute, type OrthogonalGeometry } from '../../u
 import { mergeEmptySegments, segmentAxis, snapPosition, splitSegment, storedRoute, type SegmentAxis } from '../../utils/orthogonalBends';
 import { snapBend, storedBendPoints, type Point } from '../../utils/freeBends';
 import { LinkBundleTooltip, type BundleItem } from './LinkBundleTooltip';
+import { jumpedPath, publishEdgeLine, subscribeLineJumps } from './lineJumpRegistry';
 
 /** Segments shorter than this get no handle (steps of the automatic route, cut steps). */
 const MIN_HANDLE_SEGMENT = 24;
@@ -24,6 +25,8 @@ function segmentMiddle(geometry: OrthogonalGeometry, index: number) {
   const y = (a.y + b.y) / 2;
   return { x, y, axis, along: axis === 'h' ? x : y, length: Math.abs(axis === 'h' ? b.x - a.x : b.y - a.y) };
 }
+
+const noSubscription = () => () => {};
 
 /** Handles the route was drawn between, kept with it (auto anchors would turn them). */
 export interface RouteHandles {
@@ -444,7 +447,18 @@ function CustomEdgeComponent(props: EdgeProps) {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }); // re-bound each render: saveBends reads the current handles
-  const edgePath = route.path;
+  // Dossier setting: horizontal segments jump over the vertical ones of the other right-angle links
+  const linkJumps = useDossierStore((s) => s.currentDossier?.settings?.linkJumps === true);
+  const jumpLine = linkJumps && isOrthogonal ? route.polyline ?? null : null;
+  // Each render: publishing an unchanged line is a no-op
+  useEffect(() => {
+    publishEdgeLine(id, jumpLine);
+  });
+  useEffect(() => () => publishEdgeLine(id, null), [id]);
+  const edgePath = useSyncExternalStore(
+    jumpLine ? subscribeLineJumps : noSubscription,
+    () => (jumpLine ? jumpedPath(id, jumpLine) : route.path),
+  );
   const { x: sourceX, y: sourceY } = route.sourcePoint;
   const { x: targetX, y: targetY } = route.targetPoint;
   // Label and drag handle share the same anchor

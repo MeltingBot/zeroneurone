@@ -617,6 +617,8 @@
     "linkCurves": "Криві",
     "linkStraight": "Прямі",
     "linkOrthogonal": "Прямі кути",
+    "linkJumps": "Містки на перетинах",
+    "linkCrossings": "Перетини",
     "linkAnchor": "Прив'язка",
     "linkAnchorManual": "Ручна",
     "linkAnchorAuto": "Автоматична",

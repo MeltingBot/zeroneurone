@@ -1,5 +1,5 @@
 ==============================================================================
-ZeroNeurone 2.95.0 — Licences des composants tiers
+ZeroNeurone 2.95.1 — Licences des composants tiers
 ==============================================================================
 
 ZeroNeurone est distribué sous licence MIT (voir le fichier LICENSE).
@@ -129,7 +129,7 @@ Sommaire
   jszip@3.10.1 — (MIT OR GPL-3.0-or-later)
   kdbush@4.1.0 — ISC
   lib0@0.2.119 — MIT
-  libphonenumber-js@1.13.15 — MIT
+  libphonenumber-js@1.13.16 — MIT
   lie@3.3.0 — MIT
   longest-streak@3.1.0 — MIT
   lucide-react@0.562.0 — ISC
@@ -239,7 +239,7 @@ Sommaire
   y-protocols@1.0.7 — MIT
   y-websocket@3.0.0 — MIT
   yjs@13.6.31 — MIT
-  zeroneurone-app@2.95.0 — MIT
+  zeroneurone-app@2.95.1 — MIT
   zustand@5.0.14 — MIT
   zwitch@2.0.4 — MIT
 
@@ -5172,7 +5172,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-libphonenumber-js@1.13.15
+libphonenumber-js@1.13.16
 ==============================================================================
 
 Licence déclarée : MIT
@@ -8665,7 +8665,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-zeroneurone-app@2.95.0
+zeroneurone-app@2.95.1
 ==============================================================================
 
 Licence déclarée : MIT

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
@@ -8,10 +8,75 @@ import { useDossierStore, useViewStore, useHistoryStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
 import type { View } from '../../types';
 
+/** Icons drawn as Lucide draws (24 grid, 2 px stroke): none of these exist in Lucide. */
+function DrawnIcon({ size, children }: { size: number; children: ReactNode }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+/** A line jumping over another one. */
+function LineJumpIcon({ size }: { size: number }) {
+  return (
+    <DrawnIcon size={size}>
+      <path d="M12 4v17" />
+      <path d="M2 16h5a5 5 0 0 1 10 0h5" />
+    </DrawnIcon>
+  );
+}
+
+/** Two elements (the bars) joined by a line per link, by one line, or by one line each way. */
+function MultiplicityIcon({ mode, size }: { mode: 'multiple' | 'single' | 'directed'; size: number }) {
+  return (
+    <DrawnIcon size={size}>
+      <path d="M3 5v14" />
+      <path d="M21 5v14" />
+      {mode === 'multiple' && <path d="M7 8h10M7 12h10M7 16h10" />}
+      {mode === 'single' && <path d="M7 12h10" />}
+      {mode === 'directed' && <path d="M7 9h10l-3-3M17 15H7l3 3" />}
+    </DrawnIcon>
+  );
+}
+
+/** A small titled group of option buttons. */
+function OptionGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <span className="text-[10px] text-text-tertiary">{label}</span>
+      <div className="flex gap-1">{children}</div>
+    </div>
+  );
+}
+
+/** An icon option: its name in the tooltip, accent when chosen. */
+function OptionButton({ active, title, onClick, children }: {
+  active: boolean; title: string; onClick: () => void; children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      aria-pressed={active}
+      className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
+        active ? 'bg-accent text-white' : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 type TagDisplayMode = 'none' | 'icons' | 'labels' | 'both';
 type TagDisplaySize = 'small' | 'medium' | 'large';
 
-const TAG_MODE_OPTIONS: { value: TagDisplayMode; labelKey: string; icon: React.ReactNode }[] = [
+const TAG_MODE_OPTIONS: { value: TagDisplayMode; labelKey: string; icon: ReactNode }[] = [
   { value: 'none', labelKey: 'hidden', icon: <EyeOff size={14} /> },
   { value: 'icons', labelKey: 'icons', icon: <Grid2X2 size={14} /> },
   { value: 'labels', labelKey: 'labels', icon: <Type size={14} /> },
@@ -39,6 +104,7 @@ export function ViewsPanel() {
     setLinkAnchorMode,
     setLinkCurveMode,
     setLinkMultiplicity,
+    setLinkJumps,
     setSizeByDegree,
   } = useDossierStore(
     useShallow((s) => ({
@@ -54,6 +120,7 @@ export function ViewsPanel() {
       setLinkAnchorMode: s.setLinkAnchorMode,
       setLinkCurveMode: s.setLinkCurveMode,
       setLinkMultiplicity: s.setLinkMultiplicity,
+      setLinkJumps: s.setLinkJumps,
       setSizeByDegree: s.setSizeByDegree,
     })),
   );
@@ -72,6 +139,7 @@ export function ViewsPanel() {
   const linkAnchorMode = settings?.linkAnchorMode ?? 'auto';
   const linkCurveMode = settings?.linkCurveMode ?? 'curved';
   const linkMultiplicity = settings?.linkMultiplicity ?? 'multiple';
+  const linkJumps = settings?.linkJumps === true;
   const sizeByDegree = currentDossier?.settings?.sizeByDegree === true;
 
   // Get all unique property keys from elements and links
@@ -268,98 +336,50 @@ export function ViewsPanel() {
             <span>{t('views.links')}</span>
           </div>
 
-          {/* Curve mode + Anchor mode in a row */}
-          <div className="flex gap-4 pl-4">
-            {/* Curve mode */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-text-tertiary">{t('views.linkShape')}</span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setLinkCurveMode('curved')}
-                  title={t('views.linkCurves')}
-                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
-                    linkCurveMode === 'curved'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  <Spline size={14} />
-                </button>
-                <button
-                  onClick={() => setLinkCurveMode('straight')}
-                  title={t('views.linkStraight')}
-                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
-                    linkCurveMode === 'straight'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  <Minus size={14} />
-                </button>
-                <button
-                  onClick={() => setLinkCurveMode('orthogonal')}
-                  title={t('views.linkOrthogonal')}
-                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
-                    linkCurveMode === 'orthogonal'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  <CornerDownRight size={14} />
-                </button>
-              </div>
-            </div>
+          {/* Shape, anchors, several links between two elements, crossings: icon groups with tooltips */}
+          <div className="flex flex-wrap gap-x-4 gap-y-3 pl-4">
+            <OptionGroup label={t('views.linkShape')}>
+              <OptionButton active={linkCurveMode === 'curved'} title={t('views.linkCurves')} onClick={() => setLinkCurveMode('curved')}>
+                <Spline size={14} />
+              </OptionButton>
+              <OptionButton active={linkCurveMode === 'straight'} title={t('views.linkStraight')} onClick={() => setLinkCurveMode('straight')}>
+                <Minus size={14} />
+              </OptionButton>
+              <OptionButton active={linkCurveMode === 'orthogonal'} title={t('views.linkOrthogonal')} onClick={() => setLinkCurveMode('orthogonal')}>
+                <CornerDownRight size={14} />
+              </OptionButton>
+            </OptionGroup>
 
-            {/* Anchor mode */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-text-tertiary">{t('views.linkAnchor')}</span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setLinkAnchorMode('manual')}
-                  title={t('views.linkAnchorManual')}
-                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
-                    linkAnchorMode === 'manual'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  <Hand size={14} />
-                </button>
-                <button
-                  onClick={() => setLinkAnchorMode('auto')}
-                  title={t('views.linkAnchorAuto')}
-                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
-                    linkAnchorMode === 'auto'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  <Sparkles size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
+            <OptionGroup label={t('views.linkAnchor')}>
+              <OptionButton active={linkAnchorMode === 'manual'} title={t('views.linkAnchorManual')} onClick={() => setLinkAnchorMode('manual')}>
+                <Hand size={14} />
+              </OptionButton>
+              <OptionButton active={linkAnchorMode === 'auto'} title={t('views.linkAnchorAuto')} onClick={() => setLinkAnchorMode('auto')}>
+                <Sparkles size={14} />
+              </OptionButton>
+            </OptionGroup>
 
-          {/* Several links between two elements: each drawn, or merged into one line */}
-          <div className="space-y-1.5 pl-4">
-            <span className="text-[10px] text-text-tertiary">{t('views.linkMultiplicity')}</span>
-            <div className="flex gap-1">
+            <OptionGroup label={t('views.linkMultiplicity')}>
               {(['multiple', 'single', 'directed'] as const).map((mode) => (
-                <button
+                <OptionButton
                   key={mode}
+                  active={linkMultiplicity === mode}
+                  title={`${t(`views.multiplicity.${mode}`)} — ${t(`views.multiplicity.${mode}Hint`)}`}
                   onClick={() => setLinkMultiplicity(mode)}
-                  title={t(`views.multiplicity.${mode}Hint`)}
-                  aria-pressed={linkMultiplicity === mode}
-                  className={`h-7 px-2 text-xs rounded transition-colors ${
-                    linkMultiplicity === mode
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
                 >
-                  {t(`views.multiplicity.${mode}`)}
-                </button>
+                  <MultiplicityIcon mode={mode} size={14} />
+                </OptionButton>
               ))}
-            </div>
+            </OptionGroup>
+
+            {/* Right-angle links only: small arcs where they cross */}
+            {linkCurveMode === 'orthogonal' && (
+              <OptionGroup label={t('views.linkCrossings')}>
+                <OptionButton active={linkJumps} title={t('views.linkJumps')} onClick={() => setLinkJumps(!linkJumps)}>
+                  <LineJumpIcon size={14} />
+                </OptionButton>
+              </OptionGroup>
+            )}
           </div>
         </div>
 

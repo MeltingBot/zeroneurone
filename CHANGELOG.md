@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.95.1
+
+### Liens
+
+- **Ponts aux croisements** — en courbure orthogonale, option qui fait
+  franchir par un petit arc les segments verticaux des autres liens.
+  Désactivée par défaut ; reprise dans les exports SVG/PDF et le rapport
+  interactif.
+- **Réglages des liens en icônes** — forme, ancrage, liens multiples et
+  croisements sur une rangée de boutons-icônes, nom au survol.
+
 ## 2.95.0
 
 ### Collaboration

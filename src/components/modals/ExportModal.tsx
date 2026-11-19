@@ -321,6 +321,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Same default as the canvas
       linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
       linkCurveMode: settings?.linkCurveMode ?? 'curved',
+      linkJumps: settings?.linkJumps,
       assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
       linkLabelWrap: currentDossier.options?.linkLabelWrap,
       linkMultiplicity: settings?.linkMultiplicity,

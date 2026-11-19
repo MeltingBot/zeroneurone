@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeEdgeRoute, computeHandleSlots, type EdgeCurveMode, type EdgeRouteInput } from './edgeRouting';
+import { computeEdgeRoute, computeHandleSlots, lineJumpPath, verticalSegments, withLineJumps, type EdgeCurveMode, type EdgeRouteInput } from './edgeRouting';
 
 const ZERO = { x: 0, y: 0 };
 
@@ -85,5 +85,38 @@ describe('computeEdgeRoute', () => {
     expect(end).toEqual({ x: 384, y: 12 }); // 16 px arrow before the target handle
     expect(corner.y).toBe(end.y);
     expect(400 - corner.x).toBeGreaterThanOrEqual(28); // arrow + 12 px of line
+  });
+});
+
+describe('line jumps', () => {
+  const horizontal = [{ x: 0, y: 50 }, { x: 100, y: 50 }];
+
+  it('keeps the plain polyline without crossings', () => {
+    expect(lineJumpPath(horizontal, [])).toBe('M 0 50 L 100 50');
+  });
+
+  it('draws an arc over a crossing vertical segment, above the line', () => {
+    expect(lineJumpPath(horizontal, [{ x: 40, y1: 0, y2: 100 }])).toBe('M 0 50 L 35 50 A 5 5 0 0 1 45 50 L 100 50');
+    // Right to left: same arc, swept the other way to stay above
+    expect(lineJumpPath([...horizontal].reverse(), [{ x: 40, y1: 0, y2: 100 }])).toBe('M 100 50 L 45 50 A 5 5 0 0 0 35 50 L 0 50');
+  });
+
+  it('ignores T junctions, crossings at a corner, and merges close crossings', () => {
+    expect(lineJumpPath(horizontal, [{ x: 40, y1: 50, y2: 100 }])).toBe('M 0 50 L 100 50');
+    expect(lineJumpPath(horizontal, [{ x: 3, y1: 0, y2: 100 }])).toBe('M 0 50 L 100 50');
+    expect(lineJumpPath(horizontal, [{ x: 40, y1: 0, y2: 100 }, { x: 46, y1: 0, y2: 100 }]))
+      .toBe('M 0 50 L 35 50 A 8 5 0 0 1 51 50 L 100 50');
+  });
+
+  it('only horizontal segments jump, over the other routes', () => {
+    expect(verticalSegments([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 30 }])).toEqual([{ x: 10, y1: 0, y2: 30 }]);
+    const base = { sourceHandleId: 'source-right', targetHandleId: 'target-left', curveMode: 'orthogonal' as EdgeCurveMode,
+      parallelIndex: 0, parallelCount: 1, sourceSlot: 0, targetSlot: 0, offset: { x: 0, y: 0 }, hasStartArrow: false, hasEndArrow: false };
+    // A: horizontal, then down, then horizontal; B: a straight horizontal line crossing A's vertical
+    const a = computeEdgeRoute({ ...base, sourceX: 0, sourceY: 0, targetX: 200, targetY: 100 });
+    const b = computeEdgeRoute({ ...base, sourceX: 0, sourceY: 50, targetX: 200, targetY: 50 });
+    const [ja, jb] = withLineJumps([{ route: a }, { route: b }]);
+    expect(ja.route.path).toBe(a.path);
+    expect(jb.route.path).toContain('A 5 5 0 0 1 105 50');
   });
 });

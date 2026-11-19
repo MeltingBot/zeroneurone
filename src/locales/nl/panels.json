@@ -615,6 +615,8 @@
     "linkCurves": "Curven",
     "linkStraight": "Recht",
     "linkOrthogonal": "Rechte hoeken",
+    "linkJumps": "Bruggen bij kruisingen",
+    "linkCrossings": "Kruisingen",
     "linkAnchor": "Verankering",
     "linkAnchorManual": "Handmatig",
     "linkAnchorAuto": "Automatisch",

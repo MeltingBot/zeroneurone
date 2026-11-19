@@ -615,6 +615,8 @@
     "linkCurves": "Curves",
     "linkStraight": "Straight",
     "linkOrthogonal": "Right angles",
+    "linkJumps": "Jumps at crossings",
+    "linkCrossings": "Crossings",
     "linkAnchor": "Anchor",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automatic",

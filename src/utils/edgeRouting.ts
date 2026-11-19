@@ -175,6 +175,8 @@ export interface EdgeRoute {
   orthogonal?: OrthogonalGeometry;
   /** Straight mode: the line as drawn, for its handles */
   free?: FreeGeometry;
+  /** Orthogonal mode: the line as drawn (ends shortened for the arrows), for line jumps */
+  polyline?: Point[];
 }
 
 export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
@@ -215,6 +217,7 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
   let adjustable = false;
   let orthogonal: OrthogonalGeometry | undefined;
   let free: FreeGeometry | undefined;
+  let polyline: Point[] | undefined;
 
   if (curveMode === 'straight' && input.bendPoints && input.bendPoints.length > 0) {
     // Bend points placed by hand: a line through them, arrows on the end segments
@@ -432,11 +435,12 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
     const adjustedSourceY = sourceY + (hasStartArrow ? arrowLength * Math.sin(startAngle) : 0);
     const adjustedTargetX = targetX - (hasEndArrow ? arrowLength * Math.cos(endAngle) : 0);
     const adjustedTargetY = targetY - (hasEndArrow ? arrowLength * Math.sin(endAngle) : 0);
-    path = [
-      `M ${adjustedSourceX} ${adjustedSourceY}`,
-      ...waypoints.map(wp => `L ${wp.x} ${wp.y}`),
-      `L ${adjustedTargetX} ${adjustedTargetY}`,
-    ].join(' ');
+    polyline = [
+      { x: adjustedSourceX, y: adjustedSourceY },
+      ...waypoints,
+      { x: adjustedTargetX, y: adjustedTargetY },
+    ];
+    path = lineJumpPath(polyline, []);
 
     // The route as segments, for its handles: as stored when drawn by hand, else read from the line
     const points = [{ x: sourceX, y: sourceY }, ...waypoints, { x: targetX, y: targetY }];
@@ -519,7 +523,110 @@ export function computeEdgeRoute(input: EdgeRouteInput): EdgeRoute {
     adjustable,
     orthogonal,
     free,
+    polyline,
   };
+}
+
+// ============================================================================
+// LINE JUMPS
+// ============================================================================
+
+/** Radius of the small arc a horizontal segment draws over a vertical one it crosses. */
+export const LINE_JUMP_RADIUS = 5;
+
+/** A vertical segment of a right-angle line, top to bottom. */
+export interface VerticalSegment {
+  x: number;
+  y1: number;
+  y2: number;
+}
+
+/** The vertical segments of a right-angle line (those other lines jump over). */
+export function verticalSegments(points: Point[]): VerticalSegment[] {
+  const segments: VerticalSegment[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    if (Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) >= 0.01) {
+      segments.push({ x: a.x, y1: Math.min(a.y, b.y), y2: Math.max(a.y, b.y) });
+    }
+  }
+  return segments;
+}
+
+/**
+ * SVG path of a right-angle line whose horizontal segments jump over the vertical segments of
+ * other lines they cross: a small arc above the crossing. Crossings closer than an arc merge into
+ * one wider arc; a line ending on the other one (T junction) or a crossing too close to a corner
+ * gets none. Without crossings, the plain polyline.
+ */
+export function lineJumpPath(line: Point[], crossed: VerticalSegment[], radius = LINE_JUMP_RADIUS): string {
+  if (line.length === 0) return '';
+  // Corners on a straight run (an automatic route whose steps have no length) would cut a
+  // crossing in two: one segment per run
+  const points = crossed.length > 0 ? straightRuns(line) : line;
+  const parts = [`M ${points[0].x} ${points[0].y}`];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    if (crossed.length > 0 && Math.abs(a.y - b.y) < 0.01 && Math.abs(a.x - b.x) > 2 * radius) {
+      const dir = b.x > a.x ? 1 : -1;
+      const lo = Math.min(a.x, b.x) + radius;
+      const hi = Math.max(a.x, b.x) - radius;
+      const xs = [...new Set(
+        crossed.filter((v) => v.x > lo && v.x < hi && v.y1 < a.y - 0.5 && v.y2 > a.y + 0.5).map((v) => v.x),
+      )].sort((p, q) => dir * (p - q));
+      const spans: { start: number; end: number }[] = [];
+      for (const x of xs) {
+        const start = x - dir * radius;
+        const end = x + dir * radius;
+        const last = spans[spans.length - 1];
+        if (last && dir * (start - last.end) < 2) last.end = end;
+        else spans.push({ start, end });
+      }
+      // From left to right the arc goes over the top clockwise, from right to left anticlockwise
+      const sweep = dir > 0 ? 1 : 0;
+      for (const { start, end } of spans) {
+        parts.push(`L ${start} ${a.y}`, `A ${Math.abs(end - start) / 2} ${radius} 0 0 ${sweep} ${end} ${a.y}`);
+      }
+    }
+    parts.push(`L ${b.x} ${b.y}`);
+  }
+  return parts.join(' ');
+}
+
+/** The polyline without its repeated points and the corners on a straight run. */
+function straightRuns(line: Point[]): Point[] {
+  const points: Point[] = [];
+  const same = (p: number, q: number) => Math.abs(p - q) < 0.01;
+  for (const p of line) {
+    const last = points[points.length - 1];
+    if (last && same(last.x, p.x) && same(last.y, p.y)) continue;
+    const before = points[points.length - 2];
+    // Same line, same way (a route turning back on itself keeps its corner)
+    const onRun = before && (
+      (same(before.x, last.x) && same(last.x, p.x) && (last.y - before.y) * (p.y - last.y) > 0)
+      || (same(before.y, last.y) && same(last.y, p.y) && (last.x - before.x) * (p.x - last.x) > 0));
+    if (onRun) {
+      points[points.length - 1] = p;
+    } else {
+      points.push(p);
+    }
+  }
+  return points;
+}
+
+/** Gives the orthogonal routes their line jumps: horizontal segments jump over vertical ones. */
+export function withLineJumps<T extends { route: EdgeRoute }>(routed: T[]): T[] {
+  const verticals = routed.flatMap(({ route }, owner) =>
+    (route.polyline ? verticalSegments(route.polyline) : []).map((segment) => ({ segment, owner })));
+  return routed.map((item, index) => {
+    const { polyline } = item.route;
+    if (!polyline) return item;
+    const crossed = verticals.filter((v) => v.owner !== index).map((v) => v.segment);
+    const path = lineJumpPath(polyline, crossed);
+    return path === item.route.path ? item : { ...item, route: { ...item.route, path } };
+  });
 }
 
 /** Arrowhead triangle with its tip at (tipX, tipY), pointing along `angle`. */

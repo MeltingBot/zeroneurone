@@ -615,6 +615,8 @@
     "linkCurves": "Corbes",
     "linkStraight": "Rectes",
     "linkOrthogonal": "Angles rectes",
+    "linkJumps": "Ponts als encreuaments",
+    "linkCrossings": "Encreuaments",
     "linkAnchor": "Ancoratge",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automàtic",

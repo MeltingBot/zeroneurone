@@ -369,6 +369,8 @@ export interface DossierSettings {
   linkAnchorMode?: 'auto' | 'manual';
   /** Link curve mode: straight lines, curved bezier, or orthogonal (right angles) */
   linkCurveMode?: 'straight' | 'curved' | 'orthogonal';
+  /** Right-angle links: a small arc where a horizontal segment crosses a vertical one */
+  linkJumps?: boolean;
   /** Elements drawn larger the more links they have (display only, this device). */
   sizeByDegree?: boolean;
   /**

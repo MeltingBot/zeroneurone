@@ -615,6 +615,8 @@
     "linkCurves": "Kurbak",
     "linkStraight": "Zuzenak",
     "linkOrthogonal": "Angelu zuzenak",
+    "linkJumps": "Zubiak gurutzaguneetan",
+    "linkCrossings": "Gurutzaguneak",
     "linkAnchor": "Ainguratzea",
     "linkAnchorManual": "Eskuzkoa",
     "linkAnchorAuto": "Automatikoa",

@@ -2,7 +2,7 @@ import type { Element, Link, Position, ElementSize } from '../types';
 import { GROUP_TINT } from '../types';
 import { bundleLine, bundleLinks, type LinkBundle, type LinkMultiplicity } from '../utils/linkBundles';
 import { safeColor, escapeXml } from '../utils/escapeHtml';
-import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
+import { arrowPolygon, computeEdgeRoute, computeHandleSlots, withLineJumps, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
 import { isLightColor } from '../utils/themeColors';
 
@@ -13,6 +13,8 @@ import { isLightColor } from '../utils/themeColors';
 interface SVGExportSettings {
   linkAnchorMode: 'auto' | 'manual';
   linkCurveMode: 'straight' | 'curved' | 'orthogonal';
+  /** Dossier setting: right-angle links jump over the ones they cross */
+  linkJumps?: boolean;
   /** Map of assetId → base64 data URL for embedding media in SVG nodes */
   assetDataUrls?: Map<string, string>;
   /** Dossier option: link labels wrap past this many characters. */
@@ -474,7 +476,7 @@ export interface RoutedLink {
 export function computeLinkRoutes(
   links: Link[],
   layout: NodeLayout,
-  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode' | 'linkMultiplicity'>
+  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode' | 'linkMultiplicity' | 'linkJumps'>
 ): RoutedLink[] {
   const { positions, dimensions } = layout;
   const placed: { link: Link; sourceHandle: string; targetHandle: string; parallelIndex: number; parallelCount: number }[] = [];
@@ -516,7 +518,7 @@ export function computeLinkRoutes(
     positions
   );
 
-  return placed.map(({ link, sourceHandle, targetHandle, parallelIndex, parallelCount }) => {
+  const routed = placed.map(({ link, sourceHandle, targetHandle, parallelIndex, parallelCount }) => {
     const sourcePoint = getConnectionPoint(positions.get(link.fromId)!, dimensions.get(link.fromId)!, sourceHandle);
     const targetPoint = getConnectionPoint(positions.get(link.toId)!, dimensions.get(link.toId)!, targetHandle);
     const direction = link.direction ?? (link.directed ? 'forward' : 'none');
@@ -544,6 +546,7 @@ export function computeLinkRoutes(
     });
     return { link, route, hasStartArrow, hasEndArrow };
   });
+  return settings.linkJumps && settings.linkCurveMode === 'orthogonal' ? withLineJumps(routed) : routed;
 }
 
 // ============================================================================

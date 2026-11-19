@@ -617,6 +617,8 @@
     "linkCurves": "Krzywe",
     "linkStraight": "Proste",
     "linkOrthogonal": "Kąty proste",
+    "linkJumps": "Mostki na skrzyżowaniach",
+    "linkCrossings": "Skrzyżowania",
     "linkAnchor": "Zakotwiczenie",
     "linkAnchorManual": "Ręczne",
     "linkAnchorAuto": "Automatyczne",

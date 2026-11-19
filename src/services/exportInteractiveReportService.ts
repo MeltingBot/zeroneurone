@@ -112,7 +112,7 @@ function parseElementReferences(html: string): string {
 function generateGraphSVG(
   elements: Element[],
   links: Link[],
-  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkLabelWrap?: number },
+  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkJumps?: boolean; linkLabelWrap?: number },
   thumbnails: Record<string, string> = {},
   noElementsLabel = 'No elements'
 ): string {
@@ -416,6 +416,7 @@ export async function exportInteractiveReport(
       // Same defaults as the canvas
       linkAnchorMode: dossier.settings?.linkAnchorMode ?? 'manual',
       linkCurveMode: dossier.settings?.linkCurveMode ?? 'curved',
+      linkJumps: dossier.settings?.linkJumps,
       linkLabelWrap: dossier.options?.linkLabelWrap,
     },
     thumbnails,
