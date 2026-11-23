@@ -29,14 +29,24 @@
         <img src="/logo.png" alt="ZeroNeurone" width="80" height="80" />
         <div style="font-size: 18px; font-weight: 600; color: #111827;">ZeroNeurone</div>
         <div style="font-size: 11px; color: #9ca3af;">v%APP_VERSION%</div>
-        <div style="
+        <div id="splash-spinner" style="
           width: 20px; height: 20px;
-          border: 2px solid #2563eb;
+          border: 2px solid #e07a5f;
           border-top-color: transparent;
           border-radius: 50%;
           animation: splash-spin 0.8s linear infinite;
           margin-top: 8px;
         "></div>
+        <!-- Progression du chargement des plugins (pilotée par bootDesktop) -->
+        <div id="splash-progress" style="display: none; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px;">
+          <div style="width: 160px; height: 2px; background: #e8e3db;">
+            <div id="splash-progress-bar" style="width: 0; height: 100%; background: #e07a5f;"></div>
+          </div>
+          <div id="splash-progress-label" style="
+            font-size: 11px; color: #9a948d;
+            max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          "></div>
+        </div>
       </div>
       <style>
         @keyframes splash-spin { to { transform: rotate(360deg); } }

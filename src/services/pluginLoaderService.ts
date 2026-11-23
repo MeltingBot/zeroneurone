@@ -45,6 +45,13 @@ function rewriteBareImports(source: string): string {
     .replace(/from\s*["']dexie["']/g, `from "${dexieShimUrl}"`);
 }
 
+/** Plugin loading progress, reported to the boot splash */
+export interface PluginLoadProgress {
+  done: number;
+  total: number;
+  name: string | null;
+}
+
 /**
  * Load external plugins from /plugins/manifest.json.
  *
@@ -65,8 +72,15 @@ function rewriteBareImports(source: string): string {
  * `skipIds`: plugin ids to ignore — used by plugin dev modes where the
  * workspace version already registered itself and the compiled copy in
  * /plugins/ would otherwise load twice.
+ *
+ * `onProgress`: called before each plugin registers (`name` = that plugin)
+ * and once at the end (`done === total`, `name` = null). Not called when
+ * there is no plugin to load.
  */
-export async function loadExternalPlugins(skipIds: string[] = []): Promise<void> {
+export async function loadExternalPlugins(
+  skipIds: string[] = [],
+  onProgress?: (progress: PluginLoadProgress) => void,
+): Promise<void> {
   let manifest: PluginManifestV2;
 
   try {
@@ -91,18 +105,26 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
     );
   }
 
-  let loaded = 0;
-
-  for (const entry of manifest.plugins) {
+  const entries = manifest.plugins.filter((entry) => {
     if (!entry.id || !entry.file) {
       console.warn(`[ZN] Plugin entry missing id or file, skipping:`, entry);
-      continue;
+      return false;
     }
-
     if (skipIds.includes(entry.id)) {
       console.info(`[ZN] Plugin "${entry.id}" skipped (workspace version active)`);
-      continue;
+      return false;
     }
+    return true;
+  });
+
+  // Files are downloaded in parallel; registration stays sequential, in
+  // manifest order (a plugin may rely on one registered before it).
+  const downloads = entries.map((entry) => downloadPlugin(entry.file));
+
+  let loaded = 0;
+
+  for (const [index, entry] of entries.entries()) {
+    onProgress?.({ done: index, total: entries.length, name: entry.name || entry.id });
 
     const required = entry.required === true;
     if (required) markPluginRequired(entry.id);
@@ -111,13 +133,14 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
     };
 
     try {
-      const fileRes = await fetch(appPath(`/plugins/${entry.file}`));
-      if (!fileRes.ok) {
-        console.warn(`[ZN] Plugin "${entry.id}": ${entry.file} returned ${fileRes.status}`);
+      const download = await downloads[index];
+      if ('error' in download) throw download.error;
+      if ('status' in download) {
+        console.warn(`[ZN] Plugin "${entry.id}": ${entry.file} returned ${download.status}`);
         failRequired('missing');
         continue;
       }
-      const source = await fileRes.text();
+      const { source } = download;
 
       // Verify integrity
       if (!await verifyIntegrity(source, entry.integrity, entry.id)) {
@@ -180,8 +203,23 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
     }
   }
 
+  onProgress?.({ done: entries.length, total: entries.length, name: null });
+
   if (loaded > 0) {
     console.info(`[ZN] Loaded ${loaded} external plugin(s)`);
+  }
+}
+
+type PluginDownload = { source: string } | { status: number } | { error: unknown };
+
+/** Fetches a plugin file; never rejects, so pending downloads raise no unhandled rejection */
+async function downloadPlugin(file: string): Promise<PluginDownload> {
+  try {
+    const res = await fetch(appPath(`/plugins/${file}`));
+    if (!res.ok) return { status: res.status };
+    return { source: await res.text() };
+  } catch (error) {
+    return { error };
   }
 }
 

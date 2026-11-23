@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.95.2
+
+### Démarrage
+
+- **Progression du chargement des plugins** — l'écran de démarrage affiche
+  une barre et le plugin en cours (« SpotNeurone 4/5 ») au lieu de la roue.
+- **Plugins téléchargés en parallèle** — l'enregistrement reste dans
+  l'ordre du manifest ; démarrage plus court avec plusieurs plugins.
+
 ## 2.95.1
 
 ### Liens

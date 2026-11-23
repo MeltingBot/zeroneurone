@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
-import { loadExternalPlugins } from './services/pluginLoaderService'
+import { loadExternalPlugins, type PluginLoadProgress } from './services/pluginLoaderService'
 import { getRequiredPluginFailures } from './plugins/requiredPlugins'
 import { RequiredPluginsBlocked } from './components/common/RequiredPluginsBlocked'
 import { db } from './db/database'
@@ -20,6 +20,19 @@ async function createDatabaseFirst(): Promise<void> {
   } catch (err) {
     console.warn('[ZN] Early database creation failed', err)
   }
+}
+
+// Plugin loading shown in the HTML splash of index.html (React is not mounted
+// yet, so the DOM is updated directly). The render replaces the splash.
+function showPluginProgress({ done, total, name }: PluginLoadProgress): void {
+  const box = document.getElementById('splash-progress')
+  const bar = document.getElementById('splash-progress-bar')
+  const label = document.getElementById('splash-progress-label')
+  if (!box || !bar || !label) return
+  document.getElementById('splash-spinner')?.style.setProperty('display', 'none')
+  box.style.display = 'flex'
+  bar.style.width = `${total > 0 ? (done / total) * 100 : 100}%`
+  label.textContent = name ? `${name} ${done + 1}/${total}` : `${done}/${total}`
 }
 
 // Volume benchmark on a build (`vite build --mode bench`, see
@@ -52,7 +65,7 @@ export function bootDesktop(i18nReady: Promise<unknown>): Promise<void> {
   return Promise.all([i18nReady, createDatabaseFirst()])
   // Wrapped: loadExternalPlugins now takes an optional skipIds array, and
   // passing it as a .then callback handed it the i18n instance instead.
-  .then(() => loadExternalPlugins())
+  .then(() => loadExternalPlugins([], showPluginProgress))
   .then(() => {
     // A plugin the host requires is missing: the app does not start without it
     const failures = getRequiredPluginFailures()
