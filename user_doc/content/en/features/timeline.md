@@ -236,7 +236,7 @@ The export icon in the toolbar offers three formats:
 | **SVG — visible range** | The timeline drawn as on screen, over the period shown |
 | **SVG — whole period** | The timeline from the first to the last event, at least 1,600 px wide |
 
-The temporal filter is respected: only visible events are exported. The SVG keeps the mode shown (scatter or swimlanes), the lane order and the collapsed lanes, and every row and lane (not only those on screen). It is a vector drawing, sharp in print and editable in Inkscape or Illustrator. Thumbnails are drawn as their shape and initial, without images. In anonymous mode, no label nor initial is written.
+The temporal filter is respected: only visible events are exported. The SVG keeps the mode shown (scatter or swimlanes), the lane order and the collapsed lanes, and every row and lane (not only those on screen). It is a vector drawing, sharp in print and editable in Inkscape or Illustrator. Thumbnails are drawn as their shape and initial, without images. In anonymous mode, no label, initial nor lane name is written (on screen either).
 
 An event without an end date runs until today: it shows in any range after its start.
 

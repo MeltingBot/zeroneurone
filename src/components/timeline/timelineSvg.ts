@@ -190,7 +190,10 @@ function swimlaneSvg(input: TimelineSvgInput, dateToX: (d: Date) => number): { b
     parts.push(`<rect x="0" y="${top}" width="${SWIMLANE_LABEL_WIDTH}" height="${lane.height}" fill="${bg}"/>`);
     parts.push(`<line x1="${SWIMLANE_LABEL_WIDTH}" y1="${top}" x2="${SWIMLANE_LABEL_WIDTH}" y2="${top + lane.height}" stroke="${C.border}" stroke-width="1"/>`);
     const count = lane.collapsed ? ` (${lane.itemCount})` : '';
-    parts.push(`<text x="8" y="${top + lane.height / 2}" dominant-baseline="middle" font-size="11" font-weight="500" ${FONT} fill="${lane.collapsed ? C.textSecondary : C.text}">${escapeXml(fitText(lane.label, SWIMLANE_LABEL_WIDTH - 16 - count.length * CHAR_PX[11], 11) + count)}</text>`);
+    // A lane is named after an element, a tag or a source: hidden in anonymous mode too
+    parts.push(anonymous
+      ? labelSvg(lane.label, 8, top + lane.height / 2, 11, C.text, true)
+      : `<text x="8" y="${top + lane.height / 2}" dominant-baseline="middle" font-size="11" font-weight="500" ${FONT} fill="${lane.collapsed ? C.textSecondary : C.text}">${escapeXml(fitText(lane.label, SWIMLANE_LABEL_WIDTH - 16 - count.length * CHAR_PX[11], 11) + count)}</text>`);
   });
   return { body: parts.join('\n'), height: AXIS_HEIGHT + Math.max(layout.totalHeight, 44) };
 }

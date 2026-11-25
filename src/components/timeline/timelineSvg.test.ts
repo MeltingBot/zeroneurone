@@ -68,6 +68,13 @@ describe('buildTimelineSVG', () => {
     expect(doc.querySelector('clipPath#tl-lanes')).not.toBeNull();
   });
 
+  it('writes no lane name in anonymous mode', () => {
+    const lanes = [{ key: 'l1', label: 'Alice Martin', items: [item('a', 'Appel', new Date(2020, 3, 1), new Date(2020, 4, 1))] }];
+    const svg = buildTimelineSVG(base({ mode: 'swimlane', lanes, anonymous: true }));
+    expect(svg).not.toContain('Alice');
+    expect(svg).not.toContain('Appel');
+  });
+
   it('widens the drawing for labels written after the last items', () => {
     const svg = buildTimelineSVG(base({ items: [item('a', 'Un libellé assez long pour dépasser', new Date(2020, 11, 20))] }));
     const width = Number(parse(svg).documentElement.getAttribute('width'));

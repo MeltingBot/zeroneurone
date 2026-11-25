@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.95.5
+
+### Timeline
+
+- **Mode anonyme et couloirs** — le nom des couloirs (élément, tag ou
+  source) est masqué en mode anonyme, à l'écran et dans l'export SVG, qui
+  l'écrivait encore.
+
 ## 2.95.4
 
 ### Timeline

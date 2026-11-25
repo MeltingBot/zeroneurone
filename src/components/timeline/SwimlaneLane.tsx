@@ -121,14 +121,19 @@ export function SwimlaneLane({
         >
           <CollapseIcon size={12} />
         </button>
-        <span
-          className={`text-xs font-medium truncate px-1 ${
-            lane.collapsed ? 'text-text-secondary' : 'text-text-primary'
-          }`}
-          title={lane.label}
-        >
-          {lane.label}
-        </span>
+        {/* A lane is named after an element, a tag or a source: hidden in anonymous mode */}
+        {anonymousMode ? (
+          <span className="inline-block bg-text-primary rounded-sm h-3 mx-1" style={{ width: '4em' }} />
+        ) : (
+          <span
+            className={`text-xs font-medium truncate px-1 ${
+              lane.collapsed ? 'text-text-secondary' : 'text-text-primary'
+            }`}
+            title={lane.label}
+          >
+            {lane.label}
+          </span>
+        )}
         {lane.collapsed && (
           <span className="text-[10px] text-text-tertiary shrink-0">
             {lane.itemCount}
