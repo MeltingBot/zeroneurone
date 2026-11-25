@@ -325,9 +325,11 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
       linkLabelWrap: currentDossier.options?.linkLabelWrap,
       linkMultiplicity: settings?.linkMultiplicity,
+      // A redacted drawing writes no dates on the links, as the anonymous mode of the canvas
+      linkDatesLanguage: settings?.showLinkDates && !redact ? i18n.language : undefined,
       background,
     });
-  }, [currentDossier, elements, links, redact]);
+  }, [currentDossier, elements, links, redact, i18n.language]);
 
   const handleExportSvg = useCallback(async () => {
     if (!currentDossier) return;

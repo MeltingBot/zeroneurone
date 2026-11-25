@@ -149,15 +149,16 @@ Créez des modèles de propriétés pour accélérer la saisie :
 2. Cochez les propriétés à afficher comme badges
 
 
-### Extraire une propriete en element
+### Extraire une propriété en élément
 
-Transformez une propriete en un element autonome sur le canvas :
+Transformez une propriété en un élément autonome sur le canvas :
 
-1. Survolez la propriete dans le panneau de detail
-2. Cliquez sur l'icone **↗** (Extraire en element)
-3. Un nouvel element est cree avec le nom de la propriete, relie a l'element source
+1. Survolez la propriété dans le panneau de détail
+2. Cliquez sur l'icône **↗** (Extraire en élément)
+3. Un nouvel élément est créé avec la **valeur** de la propriété, relié à l'élément source
+4. Le **nom** de la propriété devient le libellé du lien et un tag du nouvel élément (`Email` : `Alice —Email→ alice@exemple.fr`, tag `Email`)
 
-L'operation est reversible avec **Ctrl+Z**.
+Une propriété géographique donne sa position au nouvel élément, une propriété date sa date. La propriété est retirée de l'élément source. L'opération est réversible avec **Ctrl+Z**.
 
 ---
 

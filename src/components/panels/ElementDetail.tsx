@@ -599,7 +599,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
       }
 
       const newElement = await createElement(label, position, options);
-      const newLink = await createLink(element.id, newElement.id, withDossierLinkDefaults(useDossierStore.getState().currentDossier));
+      // The property name labels the relation (and stays a tag of the new element)
+      const newLink = await createLink(element.id, newElement.id, {
+        ...withDossierLinkDefaults(useDossierStore.getState().currentDossier),
+        label: property.key,
+      });
 
       // Remove the extracted property from the source element
       const remaining = (element.properties || []).filter(

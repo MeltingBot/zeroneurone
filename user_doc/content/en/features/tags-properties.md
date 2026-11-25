@@ -155,9 +155,10 @@ Turn a property into a standalone element on the canvas:
 
 1. Hover over the property in the detail panel
 2. Click the **↗** icon (Extract to element)
-3. A new element is created with the property name, linked to the source element
+3. A new element is created with the property **value**, linked to the source element
+4. The property **name** becomes the link label and a tag of the new element (`Email`: `Alice —Email→ alice@example.com`, tag `Email`)
 
-This operation is undoable with **Ctrl+Z**.
+A geo property gives the new element its position, a date property its date. The property is removed from the source element. This operation is undoable with **Ctrl+Z**.
 
 ---
 

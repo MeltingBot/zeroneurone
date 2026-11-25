@@ -226,9 +226,19 @@ Quand un filtre est actif, le compteur affiche "X / Y événements" pour indique
 
 ---
 
-## Export CSV
+## Export
 
-Cliquez sur l'icône de téléchargement dans la barre d'outils pour exporter les événements de la timeline en CSV. Le filtre temporel est respecté : seuls les événements visibles sont exportés.
+L'icône d'export de la barre d'outils propose trois formats :
+
+| Choix | Résultat |
+|-------|----------|
+| **Exporter en CSV** | Les événements de la timeline, un par ligne (dates, type, libellé, couleur) |
+| **SVG — plage visible** | La timeline dessinée telle qu'à l'écran, sur la période affichée |
+| **SVG — toute la période** | La timeline du premier au dernier événement, sur au moins 1 600 px de large |
+
+Le filtre temporel est respecté : seuls les événements visibles sont exportés. Le SVG reprend le mode affiché (dispersion ou couloirs), l'ordre des couloirs et ceux qui sont repliés, toutes les lignes et tous les couloirs (pas seulement ceux à l'écran). C'est un dessin vectoriel, net à l'impression et modifiable dans Inkscape ou Illustrator. Les vignettes y sont dessinées en forme et initiale, sans les images. En mode anonyme, aucun libellé ni initiale n'est écrit.
+
+Un événement sans date de fin court jusqu'à aujourd'hui : il apparaît donc dans toute plage postérieure à son début.
 
 ---
 

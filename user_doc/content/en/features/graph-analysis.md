@@ -183,6 +183,8 @@ On the canvas, only the links forming the cycles glow, with animated dashes. Wit
 
 Clicking an **element** in the list highlights its cycle, centres the view on it and gives it a stronger glow, so you can spot where it sits in the loop at a glance. Clicking elsewhere on the row goes back to the cycle alone.
 
+The select button, at the end of each cycle and each path, selects its elements **and its links**, as for a cluster: you can then group, hide or bulk edit them. A second click deselects them.
+
 Each cycle is listed once (equivalent rotations and traversal directions are deduplicated). By default the search is **undirected**: the loop exists regardless of link direction.
 
 Check **Respect link direction** to keep only **directed circuits** — each link must be crossed in its own direction (A→B→C→A following the arrows). This is the relevant mode for financial circuits or flows. A `forward` link is only crossable from source to target, a `backward` link only the other way; **undirected** (or bidirectional) links stay crossable both ways and therefore do not block a circuit.

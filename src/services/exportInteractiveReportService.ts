@@ -17,6 +17,7 @@ import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
+import { linkDatesLabel } from '../utils/linkDates';
 import { replaceReportRefs, stripReportRefs } from '../utils/reportRefs';
 import { createSlugger } from '../utils/slugify';
 
@@ -108,11 +109,25 @@ function parseElementReferences(html: string): string {
 }
 
 
+/** Start/end dates under a link's label, as on the canvas (dossier setting "link dates") */
+function linkDatesSvg(
+  link: Link,
+  x: number,
+  y: number,
+  settings: { linkLabelWrap?: number; linkDatesLanguage?: string },
+): string {
+  const dates = settings.linkDatesLanguage ? linkDatesLabel(link, settings.linkDatesLanguage) : null;
+  if (!dates) return '';
+  const lines = link.label ? wrapLabelLines(link.label, settings.linkLabelWrap).length : 0;
+  const datesY = y + (lines > 0 ? (lines * 15) / 2 + 6 : 0);
+  return `<text x="${x}" y="${datesY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-dates" font-size="9">${escapeXml(dates)}</text>`;
+}
+
 // Generate SVG for the graph: same layout and link routing as the canvas and the SVG export
 function generateGraphSVG(
   elements: Element[],
   links: Link[],
-  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkJumps?: boolean; linkLabelWrap?: number },
+  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkJumps?: boolean; linkLabelWrap?: number; linkDatesLanguage?: string },
   thumbnails: Record<string, string> = {},
   noElementsLabel = 'No elements'
 ): string {
@@ -183,6 +198,7 @@ function generateGraphSVG(
         <path d="${route.path}" fill="none" stroke="${color}" stroke-width="${thickness}" stroke-dasharray="${strokeDasharray}" stroke-linecap="round" />
         ${arrows}
         ${link.label ? `<text x="${route.labelX}" y="${route.labelY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-label" font-size="12">${svgLabelTspans(wrapLabelLines(link.label, routeSettings.linkLabelWrap), route.labelX, route.labelY, 15, escapeXml)}</text>` : ''}
+        ${linkDatesSvg(link, route.labelX, route.labelY, routeSettings)}
       </g>
     `;
   }
@@ -418,6 +434,7 @@ export async function exportInteractiveReport(
       linkCurveMode: dossier.settings?.linkCurveMode ?? 'curved',
       linkJumps: dossier.settings?.linkJumps,
       linkLabelWrap: dossier.options?.linkLabelWrap,
+      linkDatesLanguage: dossier.settings?.showLinkDates ? i18next.language : undefined,
     },
     thumbnails,
     i18nStrings.noElements

@@ -183,6 +183,8 @@ Sur le canvas, seuls les liens qui forment les cycles sont lumineux, parcourus p
 
 Un clic sur un **élément** dans la liste met en évidence son cycle, centre la vue sur lui et lui donne une lueur plus forte : on repère d'un coup d'œil où il se trouve dans la boucle. Un clic ailleurs sur la ligne revient au cycle seul.
 
+Le bouton de sélection, au bout de chaque cycle et de chaque chemin, sélectionne ses éléments **et ses liens**, comme pour un cluster : on peut ensuite les grouper, les masquer ou les modifier en masse. Un second clic les désélectionne.
+
 Chaque cycle n'est listé qu'une fois (les rotations et le sens de parcours équivalents sont dédupliqués). Par défaut la recherche est **non orientée** : la boucle existe indépendamment du sens des liens.
 
 Cochez **Respecter le sens des liens** pour ne garder que les **circuits dirigés** — chaque lien doit être franchi dans son sens (A→B→C→A en suivant les flèches). C'est le mode pertinent pour les circuits financiers ou les flux. Un lien `forward` n'est franchissable que de la source vers la cible, un lien `backward` que dans l'autre sens ; les liens **sans direction** (ou bidirectionnels) restent franchissables dans les deux sens et ne bloquent donc pas un circuit.

@@ -5,6 +5,7 @@ import { safeColor, escapeXml } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, withLineJumps, type EdgeRoute } from '../utils/edgeRouting';
 import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
 import { isLightColor } from '../utils/themeColors';
+import { linkDatesLabel } from '../utils/linkDates';
 
 // ============================================================================
 // TYPES
@@ -23,6 +24,8 @@ interface SVGExportSettings {
   background?: string | null;
   /** Dossier option: several links between two elements drawn as one line */
   linkMultiplicity?: LinkMultiplicity;
+  /** Dossier setting "link dates": language the dates are written in; absent = no dates */
+  linkDatesLanguage?: string;
 }
 
 interface NodeDimensions {
@@ -396,7 +399,8 @@ function buildEdgeSVG(
   hasStartArrow: boolean,
   hasEndArrow: boolean,
   labelWrap?: number,
-  bundle?: LinkBundle
+  bundle?: LinkBundle,
+  datesLanguage?: string
 ): string {
   const color = resolveColor(link.visual.color);
   const thickness = link.visual.thickness ?? 2;
@@ -420,8 +424,16 @@ function buildEdgeSVG(
   }
 
   // Label
+  const labelLines = link.label ? wrapLabelLines(link.label, labelWrap) : [];
   if (link.label) {
-    parts.push(`    <text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${svgLabelTspans(wrapLabelLines(link.label, labelWrap), geometry.labelX, geometry.labelY, 15, escapeXml)}</text>`);
+    parts.push(`    <text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${svgLabelTspans(labelLines, geometry.labelX, geometry.labelY, 15, escapeXml)}</text>`);
+  }
+
+  // Start/end dates under the label, as on the canvas (a merged line has none)
+  const dates = datesLanguage && !bundle ? linkDatesLabel(link, datesLanguage) : null;
+  if (dates) {
+    const datesY = geometry.labelY + (labelLines.length > 0 ? (labelLines.length * 15) / 2 + 6 : 0);
+    parts.push(`    <text x="${geometry.labelX}" y="${datesY}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#6b6560" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${escapeXml(dates)}</text>`);
   }
 
   // Merged line: no hover on paper, so the labels of its links are written on it, each behind
@@ -578,7 +590,7 @@ export function buildSVGExport(
   const drawnLinks = shown.map((l) => { const b = bundles.get(l.id); return b ? bundleLine(b) : l; });
   const edgeSvgs = computeLinkRoutes(drawnLinks, layout, settings)
     .map(({ link, route, hasStartArrow, hasEndArrow }) =>
-      buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap, bundles.get(link.id)));
+      buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap, bundles.get(link.id), settings.linkDatesLanguage));
 
   const assetDataUrls = settings.assetDataUrls;
   const groupSvgs = groups.map(g => buildGroupSVG(g, positionsMap.get(g.id)!, dimensionsMap.get(g.id)!));

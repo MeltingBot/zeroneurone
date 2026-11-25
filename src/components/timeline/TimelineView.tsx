@@ -21,9 +21,13 @@ import { formatItemDates, itemTooltip } from './timelineDates';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { buildTimelineItems, type TimelineItem } from './timelineItems';
 import { ItemThumbnail } from './ItemThumbnail';
-import { exportTimelineToCSV, CAUSAL_COLORS, getDensityColor } from './timelineOutput';
+import { exportTimelineToCSV, exportTimelineToSVG, CAUSAL_COLORS, getDensityColor } from './timelineOutput';
+import { buildTimelineSVG } from './timelineSvg';
+import { SWIMLANE_LABEL_WIDTH } from './useSwimlaneLayout';
+import { DropdownMenu, DropdownItem } from '../common/DropdownMenu';
 import { useTimelineNavigation } from './useTimelineNavigation';
-import { ROW_HEIGHT, ROW_GAP, fitZoom, clipSpan, axisStepForZoom, MINUTE_STEP_SIZE } from './timelineConstants';
+import { ROW_HEIGHT, ROW_GAP, fitZoom, clipSpan } from './timelineConstants';
+import { computeAxisLabels } from './timelineAxis';
 import { useShallow } from 'zustand/react/shallow';
 
 // Scatter mode: a bar too short for its content shows it just after the bar
@@ -31,6 +35,10 @@ import { useShallow } from 'zustand/react/shallow';
 const OUTSIDE_LABEL_GAP = 6;
 const LABEL_CHAR_PX = 6.5;
 const DENSITY_HEIGHT = 20;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** SVG export of the whole period: drawn at least this wide, with a margin at each end */
+const EXPORT_ALL_WIDTH = 1600;
+const EXPORT_EDGE = 24;
 
 // Zoom presets (pixels per day) with approximate visible range at 800px width
 const ZOOM_PRESETS = [
@@ -443,110 +451,48 @@ export function TimelineView() {
     return containerRef.current?.clientWidth || 800;
   }, []);
 
-  // Generate axis labels based on zoom level
-  const axisLabels = useMemo(() => {
-    const labels: { x: number; label: string; isMain: boolean }[] = [];
-    const containerWidth = getContainerWidth();
-    const viewEnd = xToDate(containerWidth);
-
-    // Pixel-based step selection for smooth transitions: the smallest time
-    // unit whose labels fit between two ticks
-    const step = axisStepForZoom(zoom);
-    const minuteSize = MINUTE_STEP_SIZE[step];
-    const format: Intl.DateTimeFormatOptions = step === 'day' || step === 'week'
-      ? { day: 'numeric', month: 'short' }
-      : step === 'month' ? { month: 'short' } : { year: 'numeric' };
-
-    const current = new Date(viewStart);
-
-    // Align to step boundary
-    if (minuteSize) {
-      current.setMinutes(Math.floor(current.getMinutes() / minuteSize) * minuteSize, 0, 0);
-    } else if (step === 'hour') {
-      current.setMinutes(0, 0, 0);
-    } else if (step === 'hour6') {
-      current.setHours(Math.floor(current.getHours() / 6) * 6, 0, 0, 0);
-    } else if (step === 'century') {
-      current.setFullYear(Math.floor(current.getFullYear() / 100) * 100);
-      current.setMonth(0, 1);
-      current.setHours(0, 0, 0, 0);
-    } else if (step === 'decade') {
-      current.setFullYear(Math.floor(current.getFullYear() / 10) * 10);
-      current.setMonth(0, 1);
-      current.setHours(0, 0, 0, 0);
-    } else if (step === 'year') {
-      current.setMonth(0, 1);
-      current.setHours(0, 0, 0, 0);
-    } else if (step === 'month') {
-      current.setDate(1);
-      current.setHours(0, 0, 0, 0);
-    } else if (step === 'week') {
-      const dayOfWeek = current.getDay();
-      const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      current.setDate(current.getDate() + daysToMonday);
-      current.setHours(0, 0, 0, 0);
-    } else {
-      current.setHours(0, 0, 0, 0);
-    }
-
-    while (current <= viewEnd) {
-      const x = dateToX(current);
-      if (x >= -50 && x <= containerWidth + 50) {
-        const isMain = step === 'century' ||
-                       (step === 'decade' && current.getFullYear() % 100 === 0) ||
-                       step === 'year' ||
-                       (step === 'month' && current.getMonth() === 0) ||
-                       (step === 'week' && current.getDate() <= 7) ||
-                       (step === 'day' && (current.getDate() === 1 || current.getDay() === 1)) ||
-                       (step === 'hour6' && current.getHours() === 0) ||
-                       (step === 'hour' && current.getHours() % 6 === 0) ||
-                       (minuteSize !== undefined && current.getMinutes() === 0);
-        // For year/decade/century: use getFullYear() directly to show negative years (BC)
-        // For hour steps: show date at midnight ticks, time otherwise
-        const locale = dateLocale(i18n.language);
-        let label: string;
-        if (step === 'century' || step === 'decade' || step === 'year' || (step === 'month' && isMain)) {
-          label = String(current.getFullYear());
-        } else if (minuteSize) {
-          // Minutes: the date at midnight, the hour on the hour, else hh:mm
-          label = isMain && current.getHours() === 0
-            ? current.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
-            : `${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}`;
-        } else if (step === 'hour' || step === 'hour6') {
-          label = isMain
-            ? current.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
-            : `${String(current.getHours()).padStart(2, '0')}:00`;
-        } else {
-          label = current.toLocaleDateString(locale, format);
-        }
-        labels.push({ x, label, isMain });
-      }
-
-      if (minuteSize) {
-        current.setMinutes(current.getMinutes() + minuteSize);
-      } else if (step === 'hour') {
-        current.setHours(current.getHours() + 1);
-      } else if (step === 'hour6') {
-        current.setHours(current.getHours() + 6);
-      } else if (step === 'century') {
-        current.setFullYear(current.getFullYear() + 100);
-      } else if (step === 'decade') {
-        current.setFullYear(current.getFullYear() + 10);
-      } else if (step === 'year') {
-        current.setFullYear(current.getFullYear() + 1);
-      } else if (step === 'month') {
-        current.setMonth(current.getMonth() + 1);
-      } else if (step === 'week') {
-        current.setDate(current.getDate() + 7);
-      } else {
-        current.setDate(current.getDate() + 1);
-      }
-    }
-
-    return labels;
-  }, [viewStart, zoom, dateToX, xToDate, getContainerWidth, i18n.language]);
+  // Axis labels of the view (shared with the SVG export)
+  const axisLabels = useMemo(
+    () => computeAxisLabels(viewStart, zoom, containerWidth, i18n.language),
+    [viewStart, zoom, containerWidth, i18n.language]
+  );
 
   const todayX = useMemo(() => dateToX(new Date()), [dateToX]);
+
+  const exportBaseName = useCallback(
+    () => `${currentDossier?.name || 'timeline'}_timeline_${toLocalDateKey(new Date())}`,
+    [currentDossier?.name],
+  );
+
+  // Vector SVG of the timeline as drawn: the span on screen, or the whole period of the items shown
+  const exportSvg = useCallback((span: 'visible' | 'all') => {
+    const swimlane = timelineMode === 'swimlane';
+    let start = viewStart;
+    let scale = zoom;
+    let width = getContainerWidth();
+    if (span === 'all') {
+      const shown = swimlane ? swimlaneItems : displayedItems;
+      const min = Math.min(...shown.map((i) => i.start.getTime()));
+      const max = Math.max(...shown.map((i) => (i.end ?? i.start).getTime()));
+      width = Math.max(width, EXPORT_ALL_WIDTH);
+      // The swimlane label column covers the start of the span: the period begins after it
+      const leftPad = (swimlane ? SWIMLANE_LABEL_WIDTH : 0) + EXPORT_EDGE;
+      scale = fitZoom(width - leftPad - EXPORT_EDGE, (max - min) / DAY_MS);
+      start = new Date(min - (leftPad / scale) * DAY_MS);
+    }
+    const svg = buildTimelineSVG({
+      mode: swimlane ? 'swimlane' : 'scatter',
+      items: itemsWithRows,
+      lanes: swimlaneLanes,
+      collapsedLanes,
+      viewStart: start,
+      zoom: scale,
+      width,
+      language: i18n.language,
+      anonymous: anonymousMode,
+    });
+    exportTimelineToSVG(svg, `${exportBaseName()}.svg`);
+  }, [timelineMode, viewStart, zoom, getContainerWidth, swimlaneItems, displayedItems, itemsWithRows, swimlaneLanes, collapsedLanes, i18n.language, anonymousMode, exportBaseName]);
 
   // Density heatmap — adaptive bucket size based on zoom
   const densityData = useMemo(() => {
@@ -837,18 +783,39 @@ export function TimelineView() {
               {t('timeline.filter')}
             </button>
             <div className="w-px h-4 bg-border-default mx-1" />
-            <button
-              onClick={() => {
-                const name = currentDossier?.name || 'timeline';
-                const date = toLocalDateKey(new Date());
-                exportTimelineToCSV(filteredItems, `${name}_timeline_${date}.csv`);
-              }}
-              disabled={filteredItems.length === 0}
-              className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              title={t('timeline.exportCSV')}
-            >
-              <Upload size={16} />
-            </button>
+            {filteredItems.length === 0 ? (
+              <button
+                disabled
+                className="p-1.5 text-text-secondary rounded opacity-50 cursor-not-allowed"
+                title={t('timeline.export')}
+                aria-label={t('timeline.export')}
+              >
+                <Upload size={16} />
+              </button>
+            ) : (
+              <DropdownMenu
+                trigger={
+                  <button
+                    className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
+                    title={t('timeline.export')}
+                    aria-label={t('timeline.export')}
+                    data-testid="timeline-export"
+                  >
+                    <Upload size={16} />
+                  </button>
+                }
+              >
+                <DropdownItem onClick={() => exportTimelineToCSV(filteredItems, `${exportBaseName()}.csv`)} data-testid="timeline-export-csv">
+                  {t('timeline.exportCSV')}
+                </DropdownItem>
+                <DropdownItem onClick={() => exportSvg('visible')} data-testid="timeline-export-svg-visible">
+                  {t('timeline.exportSvgVisible')}
+                </DropdownItem>
+                <DropdownItem onClick={() => exportSvg('all')} data-testid="timeline-export-svg-all">
+                  {t('timeline.exportSvgAll')}
+                </DropdownItem>
+              </DropdownMenu>
+            )}
           </>
         }
       />

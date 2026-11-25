@@ -39,124 +39,135 @@ export function useSwimlaneLayout(
   collapsedKeys?: Set<string>,
   containerWidth?: number,
 ): { lanes: LaneLayout[]; totalHeight: number } {
-  return useMemo(() => {
-    const result: LaneLayout[] = [];
-    let yOffset = 0;
+  return useMemo(
+    () => computeSwimlaneLayout(lanes, dateToX, collapsedKeys, containerWidth),
+    [lanes, dateToX, collapsedKeys, containerWidth],
+  );
+}
 
-    // Derive zoom level (px per day) from dateToX to decide link display mode
-    const refA = new Date(2000, 0, 1);
-    const refB = new Date(2000, 0, 2);
-    const pxPerDay = dateToX(refB) - dateToX(refA);
-    const linksDetailed = pxPerDay >= SWIMLANE_LINK_ZOOM_THRESHOLD;
+/** Lanes stacked top to bottom, items packed in rows inside each lane (view and SVG export) */
+export function computeSwimlaneLayout(
+  lanes: LaneGroup[],
+  dateToX: (date: Date) => number,
+  collapsedKeys?: Set<string>,
+  containerWidth?: number,
+): { lanes: LaneLayout[]; totalHeight: number } {
+  const result: LaneLayout[] = [];
+  let yOffset = 0;
 
-    for (const lane of lanes) {
-      const items = lane.items as TimelineItem[];
-      const isCollapsed = collapsedKeys?.has(lane.key) ?? false;
+  // Derive zoom level (px per day) from dateToX to decide link display mode
+  const refA = new Date(2000, 0, 1);
+  const refB = new Date(2000, 0, 2);
+  const pxPerDay = dateToX(refB) - dateToX(refA);
+  const linksDetailed = pxPerDay >= SWIMLANE_LINK_ZOOM_THRESHOLD;
 
-      if (isCollapsed) {
-        result.push({
-          key: lane.key,
-          label: lane.label,
-          yOffset,
-          height: SWIMLANE_COLLAPSED_HEIGHT,
-          rowCount: 0,
-          items: [],
-          collapsed: true,
-          itemCount: items.length,
-        });
-        yOffset += SWIMLANE_COLLAPSED_HEIGHT;
-        continue;
-      }
+  for (const lane of lanes) {
+    const items = lane.items as TimelineItem[];
+    const isCollapsed = collapsedKeys?.has(lane.key) ?? false;
 
-      const sorted = [...items].sort(
-        (a, b) => a.start.getTime() - b.start.getTime(),
-      );
-
-      // Collision stacking
-      const rowEnds: number[] = [];
-      const layoutItems: LayoutItem[] = [];
-
-      // Track the max height in each row for mixed element/link rows
-      const rowMaxHeights: number[] = [];
-
-      // Clip bounds for collision stacking: items extending far beyond the viewport
-      // don't need to block entire rows. We use a generous buffer around the viewport.
-      const clipLeft = containerWidth != null ? -containerWidth : -Infinity;
-      const clipRight = containerWidth != null ? containerWidth * 2 : Infinity;
-
-      for (const item of sorted) {
-        const x = dateToX(item.start);
-        const isLink = item.type === 'link';
-        const width = item.end
-          ? Math.max(MIN_ITEM_WIDTH, dateToX(item.end) - x)
-          : MIN_ITEM_WIDTH;
-        // Clipped x/width for collision stacking (items far offscreen don't hog rows)
-        const cx = Math.max(clipLeft, x);
-        const cw = Math.min(clipRight, x + width) - cx;
-
-        // Links: compact (8px) at low zoom, full height (28px) when zoomed in enough
-        const h = isLink
-          ? (linksDetailed ? SWIMLANE_ITEM_HEIGHT : SWIMLANE_LINK_HEIGHT_COMPACT)
-          : SWIMLANE_ITEM_HEIGHT;
-
-        if (cw <= 0) {
-          // Item entirely outside clip range — still include it but don't stack
-          layoutItems.push({ item, row: 0, rowY: 0, x, width, itemHeight: h });
-          continue;
-        }
-
-        // Find first row where item fits (using clipped bounds)
-        let row = -1;
-        for (let r = 0; r < rowEnds.length; r++) {
-          if (rowEnds[r] + MIN_GAP_PX <= cx) {
-            row = r;
-            break;
-          }
-        }
-        if (row === -1) {
-          row = rowEnds.length;
-          rowEnds.push(0);
-          rowMaxHeights.push(0);
-        }
-        rowEnds[row] = cx + cw;
-        rowMaxHeights[row] = Math.max(rowMaxHeights[row], h);
-
-        // Drawn clipped too: browsers cap layout lengths, a long period
-        // crossing the view at a fine zoom would be drawn off screen
-        layoutItems.push({ item, row, rowY: 0, x: cx, width: cw, itemHeight: h });
-      }
-
-      const rowCount = Math.max(1, rowEnds.length);
-      // Compute per-row y offsets using actual row heights
-      let contentHeight = 0;
-      const rowYOffsets: number[] = [];
-      for (let r = 0; r < rowCount; r++) {
-        rowYOffsets.push(contentHeight);
-        const rh = rowMaxHeights[r] || SWIMLANE_ITEM_HEIGHT;
-        contentHeight += rh + (r < rowCount - 1 ? SWIMLANE_ROW_GAP : 0);
-      }
-      for (const li of layoutItems) {
-        li.rowY = rowYOffsets[li.row];
-      }
-      const height = Math.max(
-        SWIMLANE_MIN_LANE_HEIGHT,
-        contentHeight + 2 * SWIMLANE_LANE_PADDING,
-      );
-
+    if (isCollapsed) {
       result.push({
         key: lane.key,
         label: lane.label,
         yOffset,
-        height,
-        rowCount,
-        items: layoutItems,
-        collapsed: false,
+        height: SWIMLANE_COLLAPSED_HEIGHT,
+        rowCount: 0,
+        items: [],
+        collapsed: true,
         itemCount: items.length,
       });
-
-      yOffset += height;
+      yOffset += SWIMLANE_COLLAPSED_HEIGHT;
+      continue;
     }
 
-    return { lanes: result, totalHeight: yOffset };
-  }, [lanes, dateToX, collapsedKeys, containerWidth]);
+    const sorted = [...items].sort(
+      (a, b) => a.start.getTime() - b.start.getTime(),
+    );
+
+    // Collision stacking
+    const rowEnds: number[] = [];
+    const layoutItems: LayoutItem[] = [];
+
+    // Track the max height in each row for mixed element/link rows
+    const rowMaxHeights: number[] = [];
+
+    // Clip bounds for collision stacking: items extending far beyond the viewport
+    // don't need to block entire rows. We use a generous buffer around the viewport.
+    const clipLeft = containerWidth != null ? -containerWidth : -Infinity;
+    const clipRight = containerWidth != null ? containerWidth * 2 : Infinity;
+
+    for (const item of sorted) {
+      const x = dateToX(item.start);
+      const isLink = item.type === 'link';
+      const width = item.end
+        ? Math.max(MIN_ITEM_WIDTH, dateToX(item.end) - x)
+        : MIN_ITEM_WIDTH;
+      // Clipped x/width for collision stacking (items far offscreen don't hog rows)
+      const cx = Math.max(clipLeft, x);
+      const cw = Math.min(clipRight, x + width) - cx;
+
+      // Links: compact (8px) at low zoom, full height (28px) when zoomed in enough
+      const h = isLink
+        ? (linksDetailed ? SWIMLANE_ITEM_HEIGHT : SWIMLANE_LINK_HEIGHT_COMPACT)
+        : SWIMLANE_ITEM_HEIGHT;
+
+      if (cw <= 0) {
+        // Item entirely outside clip range — still include it but don't stack
+        layoutItems.push({ item, row: 0, rowY: 0, x, width, itemHeight: h });
+        continue;
+      }
+
+      // Find first row where item fits (using clipped bounds)
+      let row = -1;
+      for (let r = 0; r < rowEnds.length; r++) {
+        if (rowEnds[r] + MIN_GAP_PX <= cx) {
+          row = r;
+          break;
+        }
+      }
+      if (row === -1) {
+        row = rowEnds.length;
+        rowEnds.push(0);
+        rowMaxHeights.push(0);
+      }
+      rowEnds[row] = cx + cw;
+      rowMaxHeights[row] = Math.max(rowMaxHeights[row], h);
+
+      // Drawn clipped too: browsers cap layout lengths, a long period
+      // crossing the view at a fine zoom would be drawn off screen
+      layoutItems.push({ item, row, rowY: 0, x: cx, width: cw, itemHeight: h });
+    }
+
+    const rowCount = Math.max(1, rowEnds.length);
+    // Compute per-row y offsets using actual row heights
+    let contentHeight = 0;
+    const rowYOffsets: number[] = [];
+    for (let r = 0; r < rowCount; r++) {
+      rowYOffsets.push(contentHeight);
+      const rh = rowMaxHeights[r] || SWIMLANE_ITEM_HEIGHT;
+      contentHeight += rh + (r < rowCount - 1 ? SWIMLANE_ROW_GAP : 0);
+    }
+    for (const li of layoutItems) {
+      li.rowY = rowYOffsets[li.row];
+    }
+    const height = Math.max(
+      SWIMLANE_MIN_LANE_HEIGHT,
+      contentHeight + 2 * SWIMLANE_LANE_PADDING,
+    );
+
+    result.push({
+      key: lane.key,
+      label: lane.label,
+      yOffset,
+      height,
+      rowCount,
+      items: layoutItems,
+      collapsed: false,
+      itemCount: items.length,
+    });
+
+    yOffset += height;
+  }
+
+  return { lanes: result, totalHeight: yOffset };
 }

@@ -1,4 +1,4 @@
-/** Timeline colours (density, causal gaps) and its CSV export */
+/** Timeline colours (density, causal gaps) and its CSV and SVG exports */
 
 import { toLocalDateKey } from '../../utils/dates';
 import { type TimelineItem } from './timelineItems';
@@ -26,6 +26,12 @@ export function exportTimelineToCSV(items: TimelineItem[], filename: string): vo
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   downloadBlob(blob, filename);
   emitExport('timeline-csv');
+}
+
+/** Download the timeline drawn as SVG (see timelineSvg.ts) */
+export function exportTimelineToSVG(svg: string, filename: string): void {
+  downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), filename);
+  emitExport('timeline-svg');
 }
 
 /** Gap between two causally linked events: short, medium, long */

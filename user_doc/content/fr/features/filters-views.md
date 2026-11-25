@@ -171,12 +171,15 @@ Le panneau **Vues** contrôle aussi l'affichage général :
 | **Courbure** | Droit, courbe, orthogonal |
 | **Liens multiples** | Éclatés, un seul, un par sens |
 | **Croisements** | Ponts aux croisements (angles droits seulement) |
+| **Dates** | Début et fin de la relation sous le libellé |
 
 Chaque option est une icône ; son nom s'affiche au survol.
 
 **Liens multiples** règle l'affichage de plusieurs liens entre deux mêmes éléments, comme la multiplicité des connexions d'Analyst's Notebook. **Éclatés** (par défaut) dessine chaque lien. **Un seul** les réunit en une ligne, quel que soit leur sens ; **Un par sens** en dessine une par sens. La ligne réunie porte les flèches de ses liens, sans libellé : au survol, la liste de ses liens s'affiche, chaque libellé précédé de la couleur de son lien. Un clic la sélectionne avec tous ses liens (modification en masse, suppression). Dans ces deux modes, les liens qui quittent un même côté d'un élément partent aussi d'un même point : une seule ligne sort de l'élément, puis bifurque vers chaque destination. Les liens restent distincts dans le dossier : seul l'affichage change, ainsi que les exports SVG et PDF. Sur papier, pas de survol : dans ces exports, la ligne réunie porte la liste de ses libellés, chacun précédé de la couleur de son lien.
 
 **Croisements**, en courbure orthogonale : là où un segment horizontal croise le segment vertical d'un autre lien, il le franchit par un petit pont. Rien quand un lien ne fait que toucher l'autre, ni tout près d'un angle. Désactivé par défaut ; repris dans les exports SVG et PDF et dans le rapport interactif.
+
+**Dates** écrit sous le libellé de chaque lien la période de la relation : `12 mars 2019 → 05 janv. 2020`, à la précision saisie (année, mois, jour, heure) et précédée de `~` si elle est approximative. Une borne inconnue s'écrit `…` (`12 mars 2019 → …` pour une relation toujours en cours). Un lien sans date n'affiche rien. Les dates sont masquées en mode anonyme, dans un export caviardé et sur une ligne qui réunit plusieurs liens. Désactivé par défaut ; repris dans les exports SVG et PDF et dans le rapport interactif.
 
 
 ---

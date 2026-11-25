@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.95.4
+
+### Timeline
+
+- **Export SVG** — le bouton d'export propose CSV, SVG de la plage visible
+  ou SVG de toute la période : dessin vectoriel du mode affiché (dispersion
+  ou couloirs), toutes lignes et tous couloirs, sans libellé en mode anonyme.
+
+### Exports
+
+- **Dates des liens dans les exports** — avec l'option de vue « Dates »,
+  début et fin des relations écrits dans les exports SVG et PDF et dans le
+  rapport interactif ; masqués dans un export caviardé.
+
+### Propriétés
+
+- **Extraction en élément** — le nom de la propriété devient le libellé du
+  lien vers le nouvel élément (il reste aussi son tag).
+
 ## 2.95.3
 
 ### Canvas

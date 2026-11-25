@@ -135,3 +135,21 @@ describe('resolveExportColor', () => {
     expect(resolveExportColor('red;background:url(x)', '#123456')).toBe('#123456');
   });
 });
+
+describe('svgExportService link dates', () => {
+  const nodes = [makeNode('a', 0), makeNode('b', 400)];
+  const dated = makeLink('l1', { dateRange: { start: new Date(2019, 2, 12), end: null } });
+  const settings = { linkAnchorMode: 'auto', linkCurveMode: 'straight' } as const;
+
+  it('writes the dates under the label when the option is on', () => {
+    expect(buildSVGExport(nodes, [dated], settings)).not.toContain('12 mars 2019');
+    const svg = buildSVGExport(nodes, [dated], { ...settings, linkDatesLanguage: 'fr' });
+    expect(svg).toContain('12 mars 2019 → …');
+  });
+
+  it('writes nothing for an undated link or a merged line', () => {
+    expect(buildSVGExport(nodes, [makeLink('l1')], { ...settings, linkDatesLanguage: 'fr' })).not.toContain('font-size="9"');
+    const merged = buildSVGExport(nodes, [dated, makeLink('l2', { dateRange: dated.dateRange })], { ...settings, linkDatesLanguage: 'fr', linkMultiplicity: 'single' });
+    expect(merged).not.toContain('12 mars 2019');
+  });
+});

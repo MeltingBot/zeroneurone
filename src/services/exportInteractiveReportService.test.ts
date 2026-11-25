@@ -257,6 +257,25 @@ describe('exportInteractiveReport graph', () => {
     });
   }
 
+  it('writes the link dates under the label when the option is on', async () => {
+    const elements = [
+      makeElement({ id: A, label: 'A', position: { x: 0, y: 0 } }),
+      makeElement({ id: B, label: 'B', position: { x: 600, y: 0 } }),
+    ];
+    const dated = { ...makeLink('l1'), dateRange: { start: new Date(2019, 2, 12), end: new Date(2020, 0, 5) } };
+    const datesOf = async (showLinkDates: boolean) => {
+      const blob = await exportInteractiveReport(
+        { ...DOSSIER, settings: { showLinkDates } } as unknown as Dossier, makeReport('text'), elements, [dated, makeLink('l2')], []
+      );
+      const doc = new DOMParser().parseFromString(await blob.text(), 'text/html');
+      return Array.from(doc.querySelectorAll('#graph-svg .link-dates')).map((t) => t.textContent);
+    };
+    expect(await datesOf(false)).toEqual([]);
+    const dates = await datesOf(true);
+    expect(dates).toHaveLength(1);
+    expect(dates[0]).toMatch(/2019.* → .*2020/);
+  });
+
   it('places elements by their top-left corner, as on the canvas', async () => {
     const svg = await graph({});
     const node = svg.querySelector(`.node[data-element-id="${A}"] rect`)!;

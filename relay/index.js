@@ -27,7 +27,7 @@ import { createSseRoutes } from './sse.js';
 loadEnvFile();
 const { PORT, HOST, REDIS_URL, TRUST_PROXY, ALLOWED_ORIGIN, LIMITS, BUFFER_LIMITS, REFUSE_WEBSOCKET } = relayConfig();
 
-const VERSION = '2.95.3';
+const VERSION = '2.95.4';
 const startedAt = Date.now();
 
 // ============================================================================
