@@ -402,6 +402,9 @@
     "ofmFiord": "Kontrastreich",
     "timeZoneHint": "Zeitzone",
     "exportCSV": "Als CSV exportieren",
+    "export": "Exportieren",
+    "exportSVG": "Als SVG exportieren",
+    "exportError": "SVG-Export fehlgeschlagen",
     "zonePolygon": "Polygon",
     "zoneCircle": "Kreis",
     "zoneSquare": "Quadrat"

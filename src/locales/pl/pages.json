@@ -406,6 +406,9 @@
     "ofmFiord": "Wysoki kontrast",
     "timeZoneHint": "Strefa czasowa",
     "exportCSV": "Eksportuj do CSV",
+    "export": "Eksportuj",
+    "exportSVG": "Eksportuj do SVG",
+    "exportError": "Eksport SVG nie powiódł się",
     "zonePolygon": "Wielokąt",
     "zoneCircle": "Okrąg",
     "zoneSquare": "Kwadrat"

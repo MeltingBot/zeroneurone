@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.95.6
+
+### Carte
+
+- **Export SVG** — le bouton d'export propose CSV ou SVG : la carte telle
+  qu'à l'écran, fond de carte intégré en image, zones, liens, marqueurs,
+  clusters et libellés en vectoriel, crédits du fond de carte écrits sur la
+  carte ; sans libellé en mode anonyme.
+
 ## 2.95.5
 
 ### Timeline

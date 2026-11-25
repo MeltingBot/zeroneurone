@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Supercluster from 'supercluster';
-import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore, toast } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds } from '../../utils/filterUtils';
@@ -22,6 +22,9 @@ import { toMinuteStart, eventInterval, overlaps, navigatorWindow, closestDateInd
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { TemporalEventsPopover } from '../common/TemporalEventsPopover';
 import { toLocalDateKey } from '../../utils/dates';
+import { DropdownMenu, DropdownItem } from '../common/DropdownMenu';
+import { buildMapSVG } from './mapSvg';
+import { captureMapSvgInput } from './mapSvgCapture';
 import { useHoverPopover } from '../../hooks/useHoverPopover';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { useFocusElementEvent } from '../../hooks/useFocusElementEvent';
@@ -888,6 +891,29 @@ export function MapView() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isDrawingZone, editingZoneId, selectedElementIds, handleDeleteSelected]);
 
+  const mapExportBaseName = useCallback(
+    () => `${currentDossier?.name || 'map'}_carte_${toLocalDateKey(new Date())}`,
+    [currentDossier?.name],
+  );
+
+  // The map as on screen, in SVG: basemap as an image, the rest as vectors
+  const handleExportSvg = useCallback(async () => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      const input = await captureMapSvgInput(
+        map,
+        { markers: markersRef.current, clusters: clusterMarkersRef.current, linkLabels: linkLabelMarkersRef.current },
+        { anonymous: anonymousMode, hideMedia },
+      );
+      downloadBlob(new Blob([buildMapSVG(input)], { type: 'image/svg+xml' }), `${mapExportBaseName()}.svg`);
+      emitExport('map-svg');
+    } catch (err) {
+      console.error('Map SVG export failed:', err);
+      toast.error(t('map.exportError'));
+    }
+  }, [anonymousMode, hideMedia, mapExportBaseName, t]);
+
   // Register capture handler for report screenshots
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
@@ -1268,18 +1294,36 @@ export function MapView() {
               <Maximize2 size={14} />
             </button>
             <div className="w-px h-4 bg-border-default mx-1" />
-            <button
-              onClick={() => {
-                const name = currentDossier?.name || 'map';
-                const date = toLocalDateKey(new Date());
-                exportMapToCSV(geoElements, `${name}_carte_${date}.csv`);
-              }}
-              disabled={geoElements.length === 0}
-              className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              title={t('map.exportCSV')}
-            >
-              <Upload size={16} />
-            </button>
+            {geoElements.length === 0 ? (
+              <button
+                disabled
+                className="p-1.5 text-text-secondary rounded opacity-50 cursor-not-allowed"
+                title={t('map.export')}
+                aria-label={t('map.export')}
+              >
+                <Upload size={16} />
+              </button>
+            ) : (
+              <DropdownMenu
+                trigger={
+                  <button
+                    className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
+                    title={t('map.export')}
+                    aria-label={t('map.export')}
+                    data-testid="map-export"
+                  >
+                    <Upload size={16} />
+                  </button>
+                }
+              >
+                <DropdownItem onClick={() => exportMapToCSV(geoElements, `${mapExportBaseName()}.csv`)} data-testid="map-export-csv">
+                  {t('map.exportCSV')}
+                </DropdownItem>
+                <DropdownItem onClick={handleExportSvg} data-testid="map-export-svg">
+                  {t('map.exportSVG')}
+                </DropdownItem>
+              </DropdownMenu>
+            )}
           </>
         }
       />

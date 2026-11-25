@@ -239,7 +239,7 @@ Les éléments sont datés par leurs événements, leur période et leurs propri
 | **Sélection** | Zoomer sur les éléments sélectionnés |
 | **Zone** | Dessiner une zone (polygone, cercle ou carré) |
 | **Ajuster** | Ajuster la vue pour voir tous les marqueurs |
-| **Export CSV** | Exporter les données de la carte en CSV |
+| **Export** | Exporter la carte en CSV ou en SVG |
 
 ---
 
@@ -247,7 +247,18 @@ Les éléments sont datés par leurs événements, leur période et leurs propri
 
 ### Export CSV
 
-Cliquez sur l'icône de téléchargement dans la barre d'outils pour exporter les éléments géolocalisés en CSV.
+Icône d'export de la barre d'outils → **Exporter en CSV** : les éléments géolocalisés, un par ligne.
+
+### Export SVG
+
+Icône d'export de la barre d'outils → **Exporter en SVG** : la carte telle qu'à l'écran (cadrage, zoom, clusters, filtres).
+
+- Le **fond de carte** est intégré comme une image, à la résolution de l'écran.
+- Les **zones**, **liens** (couleur, pointillés, flèches), **marqueurs**, **clusters** et **libellés** sont dessinés en vectoriel : nets à l'impression et modifiables dans Inkscape ou Illustrator.
+- Les **crédits du fond de carte** (OpenStreetMap, OpenFreeMap, Esri) sont écrits en bas à droite, comme à l'écran : gardez-les si vous diffusez la carte.
+- En mode anonyme, aucun libellé n'est écrit ; avec les médias masqués, les images des marqueurs sont omises.
+
+Les badges d'événements du mode temporel et les éléments sans position ne sont pas repris.
 
 ### Export GeoJSON
 

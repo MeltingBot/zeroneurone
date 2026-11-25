@@ -406,6 +406,9 @@
     "ofmFiord": "Висока контрастність",
     "timeZoneHint": "Часовий пояс",
     "exportCSV": "Експортувати в CSV",
+    "export": "Експорт",
+    "exportSVG": "Експорт у SVG",
+    "exportError": "Не вдалося експортувати SVG",
     "zonePolygon": "Многокутник",
     "zoneCircle": "Коло",
     "zoneSquare": "Квадрат"

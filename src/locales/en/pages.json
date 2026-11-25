@@ -404,7 +404,10 @@
     "ofmDark": "Dark",
     "ofmFiord": "High contrast",
     "timeZoneHint": "Time zone",
-    "exportCSV": "Export to CSV"
+    "exportCSV": "Export to CSV",
+    "export": "Export",
+    "exportSVG": "Export to SVG",
+    "exportError": "SVG export failed"
   },
   "timeline": {
     "noTemporalData": "No temporal data",

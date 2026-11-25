@@ -402,6 +402,9 @@
     "ofmFiord": "Hoog contrast",
     "timeZoneHint": "Tijdzone",
     "exportCSV": "Exporteren naar CSV",
+    "export": "Exporteren",
+    "exportSVG": "Exporteren als SVG",
+    "exportError": "SVG-export mislukt",
     "zonePolygon": "Veelhoek",
     "zoneCircle": "Cirkel",
     "zoneSquare": "Vierkant"

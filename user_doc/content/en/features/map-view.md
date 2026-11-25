@@ -238,7 +238,7 @@ Elements are dated by their events, their period and the date properties kept in
 | **Selection** | Zoom to selected elements |
 | **Zone** | Draw a zone (polygon, circle or square) |
 | **Fit** | Adjust view to see all markers |
-| **Export CSV** | Export map data as CSV |
+| **Export** | Export the map as CSV or SVG |
 
 ---
 
@@ -246,7 +246,18 @@ Elements are dated by their events, their period and the date properties kept in
 
 ### CSV Export
 
-Click the download icon in the toolbar to export geolocated elements as CSV.
+Toolbar export icon → **Export to CSV**: the geolocated elements, one per row.
+
+### SVG Export
+
+Toolbar export icon → **Export to SVG**: the map as on screen (framing, zoom, clusters, filters).
+
+- The **basemap** is embedded as an image, at screen resolution.
+- **Zones**, **links** (colour, dashes, arrows), **markers**, **clusters** and **labels** are drawn as vectors: sharp in print and editable in Inkscape or Illustrator.
+- The **basemap credits** (OpenStreetMap, OpenFreeMap, Esri) are written in the bottom right corner, as on screen: keep them if you share the map.
+- In anonymous mode, no label is written; with media hidden, marker images are left out.
+
+Temporal mode event badges and elements without a position are not included.
 
 ### GeoJSON Export
 
