@@ -8,7 +8,8 @@ import {
   Loader2,
   ChevronRight,
   ChevronDown,
-  MousePointer2,
+  CheckSquare,
+  SquareDashed,
   EyeOff,
   Eye,
   Filter,
@@ -38,6 +39,7 @@ import { PathConstraintsEditor } from './insights/PathConstraintsEditor';
 import { RolesSection } from './insights/RolesSection';
 import { readPathConstraints, writePathConstraints } from '../../utils/pathConstraintsStorage';
 import type { PathConstraints } from '../../services/graph/constrainedPaths';
+import type { CycleLink } from '../../services/insightsService';
 
 /** Says a path result went through the constraints, so a missing path is read as such */
 function ConstrainedMark() {
@@ -55,7 +57,7 @@ export function InsightsPanel() {
   const dossierId = useDossierStore((s) => s.currentDossier?.id ?? null);
   const evaluationModel = useDossierStore((s) => getEvaluationModel(s.currentDossier));
   const pushAction = useHistoryStore((s) => s.pushAction);
-  const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectElements: s.selectElements, clearSelection: s.clearSelection, selectedElementIds: s.selectedElementIds })));
+  const { selectElement, selectElements, selectBoth, clearSelection, selectedElementIds, selectedLinkIds } = useSelectionStore(useShallow((s) => ({ selectElement: s.selectElement, selectElements: s.selectElements, selectBoth: s.selectBoth, clearSelection: s.clearSelection, selectedElementIds: s.selectedElementIds, selectedLinkIds: s.selectedLinkIds })));
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore(useShallow((s) => ({ hideElements: s.hideElements, hiddenElementIds: s.hiddenElementIds, showElement: s.showElement, setFilters: s.setFilters, clearFilters: s.clearFilters })));
   const {
     clusters,
@@ -302,6 +304,46 @@ export function InsightsPanel() {
     },
     [selectedElementIds]
   );
+
+  /** A path or a cycle: its elements and the links it walks */
+  const routeLinkIds = (steps: CycleLink[][]) => [...new Set(steps.flat().map((l) => l.linkId))];
+
+  const isRouteSelected = useCallback(
+    (elementIds: string[], linkIds: string[]) =>
+      areAllSelected(elementIds) && linkIds.every((id) => selectedLinkIds.has(id)),
+    [areAllSelected, selectedLinkIds]
+  );
+
+  /** Selects a path or a cycle (elements and links), or clears it when already selected */
+  const toggleRouteSelection = useCallback(
+    (elementIds: string[], linkIds: string[]) => {
+      if (isRouteSelected(elementIds, linkIds)) clearSelection();
+      else selectBoth(elementIds, linkIds);
+    },
+    [isRouteSelected, clearSelection, selectBoth]
+  );
+
+  /** Select / deselect button of a path or cycle row */
+  const renderRouteSelect = (elementIds: string[], linkIds: string[]) => {
+    const selected = isRouteSelected(elementIds, linkIds);
+    const label = selected ? t('insights.clusters.actions.deselect') : t('insights.clusters.actions.select');
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleRouteSelection(elementIds, linkIds);
+        }}
+        title={label}
+        aria-label={label}
+        aria-pressed={selected}
+        className="ml-auto p-1 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary"
+        data-testid="route-select"
+      >
+        {selected ? <SquareDashed size={12} /> : <CheckSquare size={12} />}
+      </button>
+    );
+  };
 
   // Find the group that contains all cluster elements (if any)
   const getClusterGroupId = useCallback(
@@ -695,6 +737,7 @@ export function InsightsPanel() {
                               )}
                             </span>
                           ))}
+                          {renderRouteSelect(result.path, routeLinkIds(result.steps))}
                         </div>
                       ))}
                     </div>
@@ -704,9 +747,12 @@ export function InsightsPanel() {
                 {/* Path results — shortest path mode: single route */}
                 {pathResults.length > 0 && !allPathsMode && (
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded">
-                    <div className="text-xs text-accent font-medium mb-1">
-                      {t('insights.paths.pathFound', { count: pathResults[0].length })}
-                      {pathConstrained && <ConstrainedMark />}
+                    <div className="flex items-center text-xs text-accent font-medium mb-1">
+                      <span>
+                        {t('insights.paths.pathFound', { count: pathResults[0].length })}
+                        {pathConstrained && <ConstrainedMark />}
+                      </span>
+                      {renderRouteSelect(pathResults[0].path, routeLinkIds(pathResults[0].steps))}
                     </div>
                     <div className="flex flex-wrap items-center gap-1 text-xs text-text-secondary">
                       {pathResults[0].path.map((nodeId, idx) => (
@@ -827,6 +873,7 @@ export function InsightsPanel() {
                               </span>
                             );
                           })}
+                          {renderRouteSelect(result.cycle, routeLinkIds([result.links]))}
                         </div>
                       ))}
                     </div>
@@ -909,7 +956,7 @@ export function InsightsPanel() {
                       {/* Actions */}
                       <div className="flex flex-wrap gap-1 mt-2">
                         <ActionButton
-                          icon={areAllSelected(cluster.elementIds) ? <X size={10} /> : <MousePointer2 size={10} />}
+                          icon={areAllSelected(cluster.elementIds) ? <SquareDashed size={10} /> : <CheckSquare size={10} />}
                           label={areAllSelected(cluster.elementIds) ? t('insights.clusters.actions.deselect') : t('insights.clusters.actions.select')}
                           onClick={() => {
                             if (areAllSelected(cluster.elementIds)) {
@@ -1030,7 +1077,7 @@ export function InsightsPanel() {
 
                   <div className="flex gap-1">
                     <ActionButton
-                      icon={<MousePointer2 size={10} />}
+                      icon={<CheckSquare size={10} />}
                       label={t('insights.bridges.selectAll')}
                       onClick={handleSelectBridges}
                     />
@@ -1089,7 +1136,7 @@ export function InsightsPanel() {
 
                   <div className="flex gap-1">
                     <ActionButton
-                      icon={<MousePointer2 size={10} />}
+                      icon={<CheckSquare size={10} />}
                       label={t('insights.isolated.selectAll')}
                       onClick={handleSelectIsolated}
                     />

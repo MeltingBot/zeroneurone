@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.95.3
+
+### Canvas
+
+- **Dates sur les liens** — option de vue (Vues → Liaisons → Dates) :
+  début et fin de la relation écrits sous le libellé du lien
+  (« 12 mars 2019 → 05 janv. 2020 », borne ouverte en « … »).
+
+### Analyse
+
+- **Sélection des cycles et des chemins** — chaque cycle et chaque chemin
+  se sélectionne (éléments et liens) comme un cluster.
+- **Icônes de sélection** — mêmes icônes que ZNQuery dans tout le panneau.
+
 ## 2.95.2
 
 ### Démarrage

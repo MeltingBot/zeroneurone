@@ -232,6 +232,7 @@ interface DossierState {
   setSizeByDegree: (enabled: boolean) => Promise<void>;
   setLinkMultiplicity: (mode: 'multiple' | 'single' | 'directed') => Promise<void>;
   setLinkJumps: (enabled: boolean) => Promise<void>;
+  setShowLinkDates: (enabled: boolean) => Promise<void>;
 
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
@@ -3210,6 +3211,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     await dossierRepository.update(currentDossier.id, { settings });
     set((state) => (state.currentDossier?.id === currentDossier.id
       ? { currentDossier: { ...state.currentDossier, settings: { ...state.currentDossier.settings, linkJumps: enabled } } }
+      : state));
+  },
+
+  setShowLinkDates: async (enabled: boolean) => {
+    const { currentDossier } = get();
+    if (!currentDossier) return;
+    const settings = { ...currentDossier.settings, showLinkDates: enabled };
+    await dossierRepository.update(currentDossier.id, { settings });
+    set((state) => (state.currentDossier?.id === currentDossier.id
+      ? { currentDossier: { ...state.currentDossier, settings: { ...state.currentDossier.settings, showLinkDates: enabled } } }
       : state));
   },
 

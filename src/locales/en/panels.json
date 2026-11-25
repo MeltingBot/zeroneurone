@@ -617,6 +617,8 @@
     "linkOrthogonal": "Right angles",
     "linkJumps": "Jumps at crossings",
     "linkCrossings": "Crossings",
+    "linkDates": "Dates",
+    "linkDatesHint": "Start and end dates on links",
     "linkAnchor": "Anchor",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automatic",

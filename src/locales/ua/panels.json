@@ -619,6 +619,8 @@
     "linkOrthogonal": "Прямі кути",
     "linkJumps": "Містки на перетинах",
     "linkCrossings": "Перетини",
+    "linkDates": "Дати",
+    "linkDatesHint": "Дати початку та кінця на зв'язках",
     "linkAnchor": "Прив'язка",
     "linkAnchorManual": "Ручна",
     "linkAnchorAuto": "Автоматична",

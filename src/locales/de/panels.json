@@ -617,6 +617,8 @@
     "linkOrthogonal": "Rechtwinklig",
     "linkJumps": "Brücken an Kreuzungen",
     "linkCrossings": "Kreuzungen",
+    "linkDates": "Daten",
+    "linkDatesHint": "Anfangs- und Enddatum auf den Verbindungen",
     "linkAnchor": "Verankerung",
     "linkAnchorManual": "Manuell",
     "linkAnchorAuto": "Automatisch",

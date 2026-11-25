@@ -833,6 +833,7 @@ export function Canvas() {
   const linkMultiplicity = useDossierStore(
     (state) => state.currentDossier?.settings?.linkMultiplicity ?? 'multiple'
   );
+  const showLinkDates = useDossierStore((state) => state.currentDossier?.settings?.showLinkDates === true);
   const displayedProperties = useMemo(
     () => currentDossier?.settings?.displayedProperties ?? [],
     [currentDossier?.settings?.displayedProperties]
@@ -1652,6 +1653,7 @@ export function Canvas() {
     propertyDateLocale,
     language: i18n.language,
     displayedProperties,
+    showLinkDates,
     editingLinkId,
     stopEditing,
     remoteUsersByLink,

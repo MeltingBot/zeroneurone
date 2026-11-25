@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
-  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight, Scaling
+  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight, Scaling, CalendarRange
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useHistoryStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
@@ -105,6 +105,7 @@ export function ViewsPanel() {
     setLinkCurveMode,
     setLinkMultiplicity,
     setLinkJumps,
+    setShowLinkDates,
     setSizeByDegree,
   } = useDossierStore(
     useShallow((s) => ({
@@ -121,6 +122,7 @@ export function ViewsPanel() {
       setLinkCurveMode: s.setLinkCurveMode,
       setLinkMultiplicity: s.setLinkMultiplicity,
       setLinkJumps: s.setLinkJumps,
+      setShowLinkDates: s.setShowLinkDates,
       setSizeByDegree: s.setSizeByDegree,
     })),
   );
@@ -140,6 +142,7 @@ export function ViewsPanel() {
   const linkCurveMode = settings?.linkCurveMode ?? 'curved';
   const linkMultiplicity = settings?.linkMultiplicity ?? 'multiple';
   const linkJumps = settings?.linkJumps === true;
+  const showLinkDates = settings?.showLinkDates === true;
   const sizeByDegree = currentDossier?.settings?.sizeByDegree === true;
 
   // Get all unique property keys from elements and links
@@ -370,6 +373,12 @@ export function ViewsPanel() {
                   <MultiplicityIcon mode={mode} size={14} />
                 </OptionButton>
               ))}
+            </OptionGroup>
+
+            <OptionGroup label={t('views.linkDates')}>
+              <OptionButton active={showLinkDates} title={t('views.linkDatesHint')} onClick={() => setShowLinkDates(!showLinkDates)}>
+                <CalendarRange size={14} />
+              </OptionButton>
             </OptionGroup>
 
             {/* Right-angle links only: small arcs where they cross */}

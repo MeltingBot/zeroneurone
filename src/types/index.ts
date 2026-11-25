@@ -371,6 +371,8 @@ export interface DossierSettings {
   linkCurveMode?: 'straight' | 'curved' | 'orthogonal';
   /** Right-angle links: a small arc where a horizontal segment crosses a vertical one */
   linkJumps?: boolean;
+  /** Start/end dates of each link written on its line (display only). */
+  showLinkDates?: boolean;
   /** Elements drawn larger the more links they have (display only, this device). */
   sizeByDegree?: boolean;
   /**

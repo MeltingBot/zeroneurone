@@ -617,6 +617,8 @@
     "linkOrthogonal": "Angelu zuzenak",
     "linkJumps": "Zubiak gurutzaguneetan",
     "linkCrossings": "Gurutzaguneak",
+    "linkDates": "Datak",
+    "linkDatesHint": "Hasiera- eta amaiera-datak loturetan",
     "linkAnchor": "Ainguratzea",
     "linkAnchorManual": "Eskuzkoa",
     "linkAnchorAuto": "Automatikoa",

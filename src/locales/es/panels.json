@@ -617,6 +617,8 @@
     "linkOrthogonal": "Ángulos rectos",
     "linkJumps": "Puentes en los cruces",
     "linkCrossings": "Cruces",
+    "linkDates": "Fechas",
+    "linkDatesHint": "Fechas de inicio y fin en los vínculos",
     "linkAnchor": "Anclaje",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automático",

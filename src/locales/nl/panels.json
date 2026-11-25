@@ -617,6 +617,8 @@
     "linkOrthogonal": "Rechte hoeken",
     "linkJumps": "Bruggen bij kruisingen",
     "linkCrossings": "Kruisingen",
+    "linkDates": "Datums",
+    "linkDatesHint": "Begin- en einddatum op de koppelingen",
     "linkAnchor": "Verankering",
     "linkAnchorManual": "Handmatig",
     "linkAnchorAuto": "Automatisch",

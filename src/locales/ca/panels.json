@@ -617,6 +617,8 @@
     "linkOrthogonal": "Angles rectes",
     "linkJumps": "Ponts als encreuaments",
     "linkCrossings": "Encreuaments",
+    "linkDates": "Dates",
+    "linkDatesHint": "Dates d'inici i de fi als vincles",
     "linkAnchor": "Ancoratge",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automàtic",

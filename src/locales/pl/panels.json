@@ -619,6 +619,8 @@
     "linkOrthogonal": "Kąty proste",
     "linkJumps": "Mostki na skrzyżowaniach",
     "linkCrossings": "Skrzyżowania",
+    "linkDates": "Daty",
+    "linkDatesHint": "Daty początku i końca na powiązaniach",
     "linkAnchor": "Zakotwiczenie",
     "linkAnchorManual": "Ręczne",
     "linkAnchorAuto": "Automatyczne",

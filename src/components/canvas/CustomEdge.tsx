@@ -77,6 +77,8 @@ interface CustomEdgeData {
   showConfidenceIndicator?: boolean;
   confidenceBadge?: EvaluationBadge | null;
   displayedPropertyValues?: { key: string; value: string }[];
+  // Start/end dates written under the label (dossier option, null when hidden or undated)
+  datesLabel?: string | null;
   // Remote user presence (passed from Canvas level)
   remoteLinkSelectors?: RemoteLinkPresence[];
   fontSize?: FontSize;
@@ -140,6 +142,9 @@ function CustomEdgeComponent(props: EdgeProps) {
   const labelLineHeight = Math.round(labelFontSize * 1.25);
   // What sits under the label (badge, properties) moves down past its extra lines
   const labelBelow = label ? 12 + ((labelLines.length - 1) * labelLineHeight) / 2 : 0;
+  // Dates line, under the label; anonymous mode hides it with the label
+  const datesLabel = anonymousMode ? null : edgeData?.datesLabel ?? null;
+  const datesBelow = datesLabel ? 14 : 0;
 
   const sourceSlot = edgeData?.sourceSlot ?? 0;
   const targetSlot = edgeData?.targetSlot ?? 0;
@@ -616,9 +621,29 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
+      {/* Start/end dates */}
+      {datesLabel && (
+        <text
+          x={controlHandleX}
+          y={controlHandleY + labelBelow}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={9}
+          style={{
+            fill: themeMode === 'dark' ? '#c9c2b8' : '#6b6560',
+            stroke: themeMode === 'dark' ? '#3d3833' : '#ffffff',
+            strokeWidth: 3,
+            paintOrder: 'stroke fill',
+          }}
+          data-testid="link-dates"
+        >
+          {datesLabel}
+        </text>
+      )}
+
       {/* Confidence / grading indicator */}
       {confidenceBadge && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow})`}>
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + datesBelow})`}>
           <rect
             x={-18}
             y={-8}
@@ -646,7 +671,7 @@ function CustomEdgeComponent(props: EdgeProps) {
 
       {/* Displayed properties */}
       {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + (confidenceBadge ? 18 : 0)})`}>
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + datesBelow + (confidenceBadge ? 18 : 0)})`}>
           {displayedPropertyValues.slice(0, 2).map(({ key, value }, index) => {
             const displayValue = value.length > 15 ? value.slice(0, 15) + '...' : value;
             const displayText = `${key}: ${displayValue}`;
@@ -905,6 +930,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.confidenceBadge?.text !== nextData.confidenceBadge?.text) return false;
   if (prevData.confidenceBadge?.muted !== nextData.confidenceBadge?.muted) return false;
   if (prevData.fontSize !== nextData.fontSize) return false;
+  if (prevData.datesLabel !== nextData.datesLabel) return false;
 
   // Compare displayed properties
   const prevDisplayedProps = prevData.displayedPropertyValues ?? [];
