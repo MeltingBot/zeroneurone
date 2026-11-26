@@ -509,6 +509,11 @@
   "synthesis": {
     "title": "Створити синтез",
     "reportTitle": "Заголовок синтезу",
+    "scope": "Обсяг",
+    "scopeAll": "Уся справа",
+    "scopeSelection": "Виділення ({{count}})",
+    "scopeTab": "Вкладка",
+    "scopeLinked": "Пов'язані елементи",
     "contentToInclude": "Вміст для включення",
     "includeDescription": "Опис справа",
     "includeSummary": "Статистичний підсумок",
@@ -530,7 +535,7 @@
     "sortByConfidence": "Достовірність",
     "jsonDescription": "JSON+: структуровані дані з аналізом графу",
     "jsonTooltip": "Структурований JSON експорт зі збагаченими даними",
-    "print": "Друкувати",
+    "print": "Друкувати / PDF",
     "capture": {
       "preparing": "Підготовка знімків...",
       "viewsAdjusted": "Види налаштовуються для показу всіх елементів",
@@ -583,6 +588,7 @@
       "linkType": "Тип зв'язку",
       "fileType": "Тип",
       "filename": "Файл",
+      "attachedTo": "Прикріплено до",
       "size": "Розмір",
       "noTag": "Без тегу",
       "unknown": "Невідомо",

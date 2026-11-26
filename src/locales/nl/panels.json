@@ -67,7 +67,10 @@
       "retentionFrom": "Tellen vanaf",
       "retentionFromCreated": "Aanmaak",
       "retentionFromClosed": "Afsluiting",
-      "retentionStartsAtClosure": "De termijn begint bij de afsluiting."
+      "retentionStartsAtClosure": "De termijn begint bij de afsluiting.",
+      "unusedFiles": "Ongebruikte bestanden",
+      "unusedFilesErase": "Wissen",
+      "unusedFilesConfirm": "Deze bestanden wissen?"
     },
     "placeholders": {
       "name": "Naam van het dossier",
@@ -616,9 +619,9 @@
     "linkStraight": "Recht",
     "linkOrthogonal": "Rechte hoeken",
     "linkJumps": "Bruggen bij kruisingen",
-    "linkCrossings": "Kruisingen",
-    "linkDates": "Datums",
+    "linkShow": "Tonen",
     "linkDatesHint": "Begin- en einddatum op de koppelingen",
+    "linkFilesHint": "Bijlagen bij verbindingen",
     "linkAnchor": "Verankering",
     "linkAnchorManual": "Handmatig",
     "linkAnchorAuto": "Automatisch",

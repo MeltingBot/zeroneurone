@@ -58,6 +58,7 @@ export function redactExport(input: RedactableExport): RedactableExport {
     notes: '',
     source: '',
     properties: [],
+    assetIds: [],
   }));
 
   return {

@@ -67,7 +67,10 @@
       "retentionFrom": "Comptar des de",
       "retentionFromCreated": "La creació",
       "retentionFromClosed": "El tancament",
-      "retentionStartsAtClosure": "El termini començarà en el tancament."
+      "retentionStartsAtClosure": "El termini començarà en el tancament.",
+      "unusedFiles": "Fitxers sense ús",
+      "unusedFilesErase": "Esborra",
+      "unusedFilesConfirm": "Vols esborrar aquests fitxers?"
     },
     "placeholders": {
       "name": "Nom de l'expedient",
@@ -616,9 +619,9 @@
     "linkStraight": "Rectes",
     "linkOrthogonal": "Angles rectes",
     "linkJumps": "Ponts als encreuaments",
-    "linkCrossings": "Encreuaments",
-    "linkDates": "Dates",
+    "linkShow": "Mostrar",
     "linkDatesHint": "Dates d'inici i de fi als vincles",
+    "linkFilesHint": "Fitxers adjunts als enllaços",
     "linkAnchor": "Ancoratge",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automàtic",

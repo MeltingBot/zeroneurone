@@ -67,7 +67,10 @@
       "retentionFrom": "Zählen ab",
       "retentionFromCreated": "Erstellung",
       "retentionFromClosed": "Abschluss",
-      "retentionStartsAtClosure": "Die Frist beginnt mit dem Abschluss."
+      "retentionStartsAtClosure": "Die Frist beginnt mit dem Abschluss.",
+      "unusedFiles": "Ungenutzte Dateien",
+      "unusedFilesErase": "Löschen",
+      "unusedFilesConfirm": "Diese Dateien löschen?"
     },
     "placeholders": {
       "name": "Name der Akte",
@@ -616,9 +619,9 @@
     "linkStraight": "Gerade",
     "linkOrthogonal": "Rechtwinklig",
     "linkJumps": "Brücken an Kreuzungen",
-    "linkCrossings": "Kreuzungen",
-    "linkDates": "Daten",
+    "linkShow": "Anzeigen",
     "linkDatesHint": "Anfangs- und Enddatum auf den Verbindungen",
+    "linkFilesHint": "Anhänge an Verbindungen",
     "linkAnchor": "Verankerung",
     "linkAnchorManual": "Manuell",
     "linkAnchorAuto": "Automatisch",

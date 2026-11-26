@@ -67,7 +67,10 @@
       "retentionFrom": "Рахувати від",
       "retentionFromCreated": "Створення",
       "retentionFromClosed": "Закриття",
-      "retentionStartsAtClosure": "Строк почнеться із закриттям."
+      "retentionStartsAtClosure": "Строк почнеться із закриттям.",
+      "unusedFiles": "Невикористані файли",
+      "unusedFilesErase": "Стерти",
+      "unusedFilesConfirm": "Стерти ці файли?"
     },
     "placeholders": {
       "name": "Назва справа",
@@ -618,9 +621,9 @@
     "linkStraight": "Прямі",
     "linkOrthogonal": "Прямі кути",
     "linkJumps": "Містки на перетинах",
-    "linkCrossings": "Перетини",
-    "linkDates": "Дати",
+    "linkShow": "Показати",
     "linkDatesHint": "Дати початку та кінця на зв'язках",
+    "linkFilesHint": "Файли, прикріплені до зв’язків",
     "linkAnchor": "Прив'язка",
     "linkAnchorManual": "Ручна",
     "linkAnchorAuto": "Автоматична",

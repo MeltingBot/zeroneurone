@@ -38,6 +38,7 @@ import {
 } from '../db/repositories';
 import { fileService } from '../services/fileService';
 import { sameLinkContent } from '../utils/mergePreview';
+import { isAssetInHistory, isAssetReferenced } from '../utils/assetReferences';
 import { syncService } from '../services/syncService';
 import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
 import { assertNoPluginLock, refuseWrite, retentionExpiresAt, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
@@ -200,10 +201,20 @@ interface DossierState {
 
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
+  /** Detaches the file; it leaves the dossier only when nothing else uses it. */
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
   /** Sends the open dossier's files to the Y.Doc; called when it starts being shared. */
   uploadAssetsForSharing: () => Promise<void>;
   reorderAssets: (elementId: ElementId, assetIds: string[]) => Promise<void>;
+  /**
+   * Erases the dossier's files nothing uses any more (those of deleted elements
+   * and links, kept for an undo), on the user's request: all of them, or those
+   * named. Returns how many.
+   */
+  eraseUnusedAssets: (assetIds?: string[]) => Promise<number>;
+  addLinkAsset: (linkId: LinkId, file: File) => Promise<Asset>;
+  removeLinkAsset: (linkId: LinkId, assetId: string) => Promise<void>;
+  reorderLinkAssets: (linkId: LinkId, assetIds: string[]) => Promise<void>;
   clearAssetText: (assetId: string) => Promise<void>;
   extractAssetText: (assetId: string) => Promise<void>;
 
@@ -233,6 +244,7 @@ interface DossierState {
   setLinkMultiplicity: (mode: 'multiple' | 'single' | 'directed') => Promise<void>;
   setLinkJumps: (enabled: boolean) => Promise<void>;
   setShowLinkDates: (enabled: boolean) => Promise<void>;
+  setShowLinkFiles: (enabled: boolean) => Promise<void>;
 
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
@@ -861,6 +873,203 @@ function warnSkippedEntry(kind: string, id: string, err: unknown): void {
  */
 function dossierYDoc(dossierId: string | null | undefined): Y.Doc | null {
   return syncService.getYDocFor(dossierId);
+}
+
+// ============================================================================
+// ASSET OWNERS - elements and links carry files the same way
+// ============================================================================
+
+type AssetOwner = { kind: 'element'; id: ElementId } | { kind: 'link'; id: LinkId };
+type StoreGet = () => DossierState;
+type StoreSet = (fn: (state: DossierState) => Partial<DossierState>) => void;
+
+function ownerYMap(ydoc: Y.Doc, owner: AssetOwner): Y.Map<unknown> | undefined {
+  const maps = getYMaps(ydoc);
+  return (owner.kind === 'element' ? maps.elements : maps.links).get(owner.id) as Y.Map<unknown> | undefined;
+}
+
+/** The owner's files as the Y.Doc holds them (a plain array) */
+function ownerYAssetIds(ymap: Y.Map<unknown>): string[] {
+  const current = ymap.get('assetIds');
+  return Array.isArray(current) ? current : [];
+}
+
+/** Writes the owner's file list in Zustand, so the panel follows at once */
+function setOwnerAssetIdsInState(set: StoreSet, owner: AssetOwner, assetIds: string[]): void {
+  set((state) => owner.kind === 'element'
+    ? { elements: state.elements.map((el) => (el.id === owner.id ? { ...el, assetIds } : el)) }
+    : { links: state.links.map((lk) => (lk.id === owner.id ? { ...lk, assetIds } : lk)) });
+}
+
+async function attachAsset(get: StoreGet, set: StoreSet, owner: AssetOwner, file: File): Promise<Asset> {
+  const { currentDossier } = get();
+  assertWritable(get);
+  if (!currentDossier) {
+    throw new Error('No dossier loaded');
+  }
+
+  // Shared-mode size policies:
+  //  - Hard cap at 50 MB: the file is saved locally but NOT broadcast to peers.
+  //  - Warning at 10 MB: file syncs but the user is told it may be slow.
+  const syncState = syncService.getState();
+  const isShared = syncState.mode === 'shared';
+  const exceedsSharedCap = isShared && file.size > MAX_SHARED_ASSET_SIZE;
+  if (exceedsSharedCap) {
+    toast.warning(
+      i18next.t('pages:dossier.toast.assetTooLargeToShare', {
+        size: formatBytes(file.size, i18next.language),
+        max: formatBytes(MAX_SHARED_ASSET_SIZE, i18next.language),
+      }),
+      10000,
+    );
+  } else if (isShared && file.size > 10 * 1024 * 1024) {
+    toast.warning(
+      i18next.t('pages:dossier.toast.assetLargeToShare', { size: formatBytes(file.size, i18next.language) }),
+      6000,
+    );
+  }
+
+  const asset = await fileService.saveAsset(currentDossier.id, file);
+
+  // Owner's assetIds in the Y.Doc
+  const ydoc = dossierYDoc(get().currentDossier?.id);
+  let ownerAssetIds: string[] | null = null;
+  if (ydoc) {
+    const ymap = ownerYMap(ydoc, owner);
+    if (ymap) {
+      const current = ownerYAssetIds(ymap);
+      ownerAssetIds = current.includes(asset.id) ? current : [...current, asset.id];
+      if (ownerAssetIds !== current) ymap.set('assetIds', ownerAssetIds);
+    }
+  }
+
+  // Update Zustand + Dexie immediately so the UI shows the thumbnail
+  localOpPending = true;
+  set((state) => ({
+    assets: state.assets.some((a) => a.id === asset.id)
+      ? state.assets.map((a) => (a.id === asset.id ? asset : a))
+      : [...state.assets, asset],
+  }));
+  if (ownerAssetIds) setOwnerAssetIdsInState(set, owner, ownerAssetIds);
+  const persisted = owner.kind === 'element'
+    ? elementRepository.addAsset(owner.id, asset.id)
+    : linkRepository.addAsset(owner.id, asset.id);
+  persisted.catch((err) => onPersistFailure(err, `${owner.kind}.addAsset`));
+
+  // Push the asset binary to the Y.Doc as chunks so peers receive it
+  // progressively (one WS message per chunk). Only when shared: a local
+  // dossier keeps the file in OPFS alone, and sharing it sends the files
+  // then (uploadMissingAssets). Skip when over the shared-mode hard cap —
+  // the file stays local but other peers won't see it.
+  if (ydoc && isShared && !exceedsSharedCap) {
+    const syncStore = useSyncStore.getState();
+    // Pre-register so the progress badge appears immediately
+    syncStore.registerMediaAsset(asset.id, asset.filename, asset.size);
+    file.arrayBuffer().then(async (arrayBuffer) => {
+      try {
+        await pushSharedAsset(
+          ydoc,
+          asset,
+          arrayBuffer,
+          (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
+        );
+        syncStore.markMediaAssetDone(asset.id);
+      } catch {
+        syncStore.markMediaAssetFailed(asset.id);
+      }
+    }).catch(() => {
+      syncStore.markMediaAssetFailed(asset.id);
+    });
+  }
+
+  emitPluginEvent('asset:created', currentDossier.id, asset.id);
+  return asset;
+}
+
+/**
+ * Detaches a file from its owner. The file itself leaves the dossier, and this
+ * device, only when nothing else uses it: the same file (same hash) is stored
+ * once, and may sit on other elements and links, be an element's image or be
+ * cited by a source. Nor while an undo may bring back what held it: this
+ * device's history, and in a shared dossier those of the collaborators.
+ */
+async function detachAsset(get: StoreGet, set: StoreSet, owner: AssetOwner, assetId: string): Promise<void> {
+  assertWritable(get);
+  const ydoc = dossierYDoc(get().currentDossier?.id);
+  let ownerAssetIds: string[] | null = null;
+  if (ydoc) {
+    const ymap = ownerYMap(ydoc, owner);
+    if (ymap) {
+      ownerAssetIds = ownerYAssetIds(ymap).filter((id) => id !== assetId);
+      ymap.set('assetIds', ownerAssetIds);
+    }
+  }
+  if (!ownerAssetIds) {
+    const inState = owner.kind === 'element'
+      ? get().elements.find((el) => el.id === owner.id)?.assetIds
+      : get().links.find((lk) => lk.id === owner.id)?.assetIds;
+    ownerAssetIds = (inState ?? []).filter((id) => id !== assetId);
+  }
+  setOwnerAssetIdsInState(set, owner, ownerAssetIds);
+
+  const persisted = owner.kind === 'element'
+    ? elementRepository.removeAsset(owner.id, assetId)
+    : linkRepository.removeAsset(owner.id, assetId);
+  await persisted.catch((err) => onPersistFailure(err, `${owner.kind}.removeAsset`));
+
+  const { elements, links } = get();
+  const asset = get().assets.find((a) => a.id === assetId);
+  if (isAssetReferenced(asset ?? { id: assetId }, elements, links)) return;
+  // A deleted element or link that an undo can bring back still holds it: kept
+  // (stored, not exported) so it comes back with them
+  const { past, future } = useHistoryStore.getState();
+  if (isAssetInHistory(assetId, [...past, ...future])) return;
+  // Shared dossier: a collaborator's undo, which this device cannot see, may
+  // still need it. Kept (out of exports) until erased on request (eraseUnusedAssets).
+  if (syncService.getState().mode === 'shared') return;
+
+  await eraseAsset(get, set, asset ?? { id: assetId });
+}
+
+/**
+ * Erases a file nothing uses any more: from the Y.Doc (and so from the other
+ * devices of a shared dossier), from Zustand, and from this device (its record
+ * and its bytes), else a reload would bring it back and an export would carry it.
+ */
+async function eraseAsset(get: StoreGet, set: StoreSet, asset: Pick<Asset, 'id'> & Partial<Asset>): Promise<void> {
+  const ydoc = dossierYDoc(get().currentDossier?.id);
+  if (ydoc) {
+    getYMaps(ydoc).assets.delete(asset.id);
+    // Its bytes in the files document too
+    const files = syncService.getFilesDoc();
+    if (files) files.transact(() => getYMaps(files).assets.delete(asset.id));
+  }
+  set((state) => ({
+    assets: state.assets.filter((a) => a.id !== asset.id),
+  }));
+  // Its record is read again when Zustand did not hold it (still loading)
+  const stored = asset.opfsPath ? asset as Asset : await db.assets.get(asset.id).catch(() => undefined);
+  if (stored) await fileService.deleteAsset(stored).catch((err) => onPersistFailure(err, 'asset.delete'));
+
+  const dossierId = get().currentDossier?.id;
+  // Its record is gone by now: the event carries what a plugin needs to recognise it
+  if (dossierId) emitPluginEvent('asset:deleted', dossierId, asset.id, asset.filename ? { filename: asset.filename, hash: asset.hash } : undefined);
+}
+
+/** Sets the owner's file list as is (reordering) */
+async function setOwnerAssetIds(get: StoreGet, set: StoreSet, owner: AssetOwner, assetIds: string[]): Promise<void> {
+  assertWritable(get);
+  const ydoc = dossierYDoc(get().currentDossier?.id);
+  if (ydoc) {
+    ownerYMap(ydoc, owner)?.set('assetIds', assetIds);
+  }
+
+  const persisted = owner.kind === 'element'
+    ? elementRepository.update(owner.id, { assetIds })
+    : linkRepository.update(owner.id, { assetIds });
+  await persisted.catch((err) => onPersistFailure(err, `${owner.kind}.update(assets)`));
+
+  setOwnerAssetIdsInState(set, owner, assetIds);
 }
 
 /** The shown dossier's Y.Doc (see dossierYDoc), for stores that write into it */
@@ -2429,21 +2638,23 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       linksToDelete.push(r.id);
     }
 
-    // What a kept link ends with: the tags of both, the notes of both when
+    // What a kept link ends with: the tags and files of both, the notes of both when
     // they differ (label, dates and properties are the same by definition)
-    const mergedLinkFields = new Map<string, Pick<Link, 'notes' | 'tags'>>();
+    const mergedLinkFields = new Map<string, Pick<Link, 'notes' | 'tags' | 'assetIds'>>();
     for (const [keepId, dupeIds] of linksToMergeInto) {
       const keep = links.find(l => l.id === keepId);
       if (!keep) continue;
       let notes = keep.notes;
       let tags = keep.tags;
+      let assetIds = keep.assetIds ?? [];
       for (const dupeId of dupeIds) {
         const dupe = links.find(l => l.id === dupeId);
         if (!dupe) continue;
         if (dupe.notes && dupe.notes !== notes) notes = notes ? `${notes}\n---\n${dupe.notes}` : dupe.notes;
         tags = [...new Set([...tags, ...dupe.tags])];
+        assetIds = [...new Set([...assetIds, ...(dupe.assetIds ?? [])])];
       }
-      mergedLinkFields.set(keepId, { notes, tags });
+      mergedLinkFields.set(keepId, { notes, tags, assetIds });
     }
 
     // Snapshot everything the merge is about to change, so the caller can make
@@ -2592,88 +2803,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // ASSETS - Via OPFS (unchanged)
   // ============================================================================
 
-  addAsset: async (elementId: ElementId, file: File) => {
-    const { currentDossier } = get();
-    assertWritable(get);
-    if (!currentDossier) {
-      throw new Error('No dossier loaded');
-    }
+  addAsset: (elementId: ElementId, file: File) => attachAsset(get, set, { kind: 'element', id: elementId }, file),
 
-    // Shared-mode size policies:
-    //  - Hard cap at 50 MB: the file is saved locally but NOT broadcast to peers.
-    //  - Warning at 10 MB: file syncs but the user is told it may be slow.
-    const syncState = syncService.getState();
-    const isShared = syncState.mode === 'shared';
-    const exceedsSharedCap = isShared && file.size > MAX_SHARED_ASSET_SIZE;
-    if (exceedsSharedCap) {
-      toast.warning(
-        i18next.t('pages:dossier.toast.assetTooLargeToShare', {
-          size: formatBytes(file.size, i18next.language),
-          max: formatBytes(MAX_SHARED_ASSET_SIZE, i18next.language),
-        }),
-        10000,
-      );
-    } else if (isShared && file.size > 10 * 1024 * 1024) {
-      toast.warning(
-        i18next.t('pages:dossier.toast.assetLargeToShare', { size: formatBytes(file.size, i18next.language) }),
-        6000,
-      );
-    }
-
-    const asset = await fileService.saveAsset(currentDossier.id, file);
-
-    // Update element's assetIds in Y.Doc
-    const ydoc = dossierYDoc(get().currentDossier?.id);
-    if (ydoc) {
-      const { elements: elementsMap } = getYMaps(ydoc);
-      const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
-      if (ymap) {
-        const currentAssetIds = ymap.get('assetIds') || [];
-        const assetIdsArray = Array.isArray(currentAssetIds) ? currentAssetIds : [];
-        if (!assetIdsArray.includes(asset.id)) {
-          ymap.set('assetIds', [...assetIdsArray, asset.id]);
-        }
-      }
-    }
-
-    // Update Zustand + Dexie immediately so the UI shows the thumbnail
-    localOpPending = true;
-    set((state) => ({
-      assets: state.assets.some((a) => a.id === asset.id)
-        ? state.assets.map((a) => (a.id === asset.id ? asset : a))
-        : [...state.assets, asset],
-    }));
-    elementRepository.addAsset(elementId, asset.id).catch((err) => onPersistFailure(err, 'element.addAsset'));
-
-    // Push the asset binary to the Y.Doc as chunks so peers receive it
-    // progressively (one WS message per chunk). Only when shared: a local
-    // dossier keeps the file in OPFS alone, and sharing it sends the files
-    // then (uploadMissingAssets). Skip when over the shared-mode hard cap —
-    // the file stays local but other peers won't see it.
-    if (ydoc && isShared && !exceedsSharedCap) {
-      const syncStore = useSyncStore.getState();
-      // Pre-register so the progress badge appears immediately
-      syncStore.registerMediaAsset(asset.id, asset.filename, asset.size);
-      file.arrayBuffer().then(async (arrayBuffer) => {
-        try {
-          await pushSharedAsset(
-            ydoc,
-            asset,
-            arrayBuffer,
-            (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
-          );
-          syncStore.markMediaAssetDone(asset.id);
-        } catch {
-          syncStore.markMediaAssetFailed(asset.id);
-        }
-      }).catch(() => {
-        syncStore.markMediaAssetFailed(asset.id);
-      });
-    }
-
-    emitPluginEvent('asset:created', currentDossier.id, asset.id);
-    return asset;
-  },
+  addLinkAsset: (linkId: LinkId, file: File) => attachAsset(get, set, { kind: 'link', id: linkId }, file),
 
   uploadAssetsForSharing: async () => {
     const ydoc = dossierYDoc(get().currentDossier?.id);
@@ -2681,36 +2813,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     await uploadMissingAssets(ydoc, get().assets);
   },
 
-  removeAsset: async (elementId: ElementId, assetId: string) => {
-    // Update element in Y.Doc
-    assertWritable(get);
-    const ydoc = dossierYDoc(get().currentDossier?.id);
-    if (ydoc) {
-      const { elements: elementsMap, assets: assetsMap } = getYMaps(ydoc);
-      const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
-      if (ymap) {
-        // assetIds is stored as plain array, not Y.Array
-        const currentAssetIds = ymap.get('assetIds') || [];
-        const assetIdsArray = Array.isArray(currentAssetIds) ? currentAssetIds : [];
-        ymap.set('assetIds', assetIdsArray.filter((id: string) => id !== assetId));
-      }
+  removeAsset: (elementId: ElementId, assetId: string) => detachAsset(get, set, { kind: 'element', id: elementId }, assetId),
 
-      assetsMap.delete(assetId);
-      // Its bytes in the files document too
-      const files = syncService.getFilesDoc();
-      if (files) files.transact(() => getYMaps(files).assets.delete(assetId));
-    }
-
-    // Also update Dexie
-    await elementRepository.removeAsset(elementId, assetId).catch((err) => onPersistFailure(err, 'element.removeAsset'));
-
-    set((state) => ({
-      assets: state.assets.filter((a) => a.id !== assetId),
-    }));
-
-    const dossierId = get().currentDossier?.id;
-    if (dossierId) emitPluginEvent('asset:deleted', dossierId, assetId);
-  },
+  removeLinkAsset: (linkId: LinkId, assetId: string) => detachAsset(get, set, { kind: 'link', id: linkId }, assetId),
 
   clearAssetText: async (assetId: string) => {
     await fileService.clearAssetText(assetId);
@@ -2734,26 +2839,18 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }));
   },
 
-  reorderAssets: async (elementId: ElementId, assetIds: string[]) => {
-    // Update element in Y.Doc
+  reorderAssets: (elementId: ElementId, assetIds: string[]) => setOwnerAssetIds(get, set, { kind: 'element', id: elementId }, assetIds),
+
+  reorderLinkAssets: (linkId: LinkId, assetIds: string[]) => setOwnerAssetIds(get, set, { kind: 'link', id: linkId }, assetIds),
+
+  eraseUnusedAssets: async (assetIds?: string[]) => {
     assertWritable(get);
-    const ydoc = dossierYDoc(get().currentDossier?.id);
-    if (ydoc) {
-      const { elements: elementsMap } = getYMaps(ydoc);
-      const ymap = elementsMap.get(elementId) as Y.Map<unknown> | undefined;
-      if (ymap) {
-        ymap.set('assetIds', assetIds);
-      }
-    }
-
-    // Also update Dexie
-    await elementRepository.update(elementId, { assetIds }).catch((err) => onPersistFailure(err, 'element.update(assets)'));
-
-    set((state) => ({
-      elements: state.elements.map((el) =>
-        el.id === elementId ? { ...el, assetIds } : el
-      ),
-    }));
+    const { assets, elements, links } = get();
+    const only = assetIds ? new Set(assetIds) : null;
+    // Checked again here: a file may have been attached again since it was listed
+    const unused = assets.filter((a) => (!only || only.has(a.id)) && !isAssetReferenced(a, elements, links));
+    for (const asset of unused) await eraseAsset(get, set, asset);
+    return unused.length;
   },
 
   // ============================================================================
@@ -3221,6 +3318,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     await dossierRepository.update(currentDossier.id, { settings });
     set((state) => (state.currentDossier?.id === currentDossier.id
       ? { currentDossier: { ...state.currentDossier, settings: { ...state.currentDossier.settings, showLinkDates: enabled } } }
+      : state));
+  },
+
+  setShowLinkFiles: async (enabled: boolean) => {
+    const { currentDossier } = get();
+    if (!currentDossier) return;
+    const settings = { ...currentDossier.settings, showLinkFiles: enabled };
+    await dossierRepository.update(currentDossier.id, { settings });
+    set((state) => (state.currentDossier?.id === currentDossier.id
+      ? { currentDossier: { ...state.currentDossier, settings: { ...state.currentDossier.settings, showLinkFiles: enabled } } }
       : state));
   },
 

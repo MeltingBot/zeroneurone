@@ -25,6 +25,7 @@ function rehydrateLink(link: Link): Link {
       end: link.dateRange.end ? new Date(link.dateRange.end) : null,
     } : null,
     curveOffset,
+    assetIds: Array.isArray(link.assetIds) ? link.assetIds : [],
     createdAt: new Date(link.createdAt),
     updatedAt: new Date(link.updatedAt),
   };
@@ -54,6 +55,7 @@ function createDefaultLink(
     dateRange: null,
     visual: { ...DEFAULT_LINK_VISUAL },
     curveOffset: { x: 0, y: 0 },
+    assetIds: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -133,6 +135,23 @@ export const linkRepository = {
     });
 
     await db.dossiers.update(link.dossierId, {
+      updatedAt: new Date(),
+    });
+  },
+
+  async addAsset(id: LinkId, assetId: string): Promise<void> {
+    const link = await db.links.get(id);
+    if (!link) return;
+    const current = link.assetIds ?? [];
+    if (current.includes(assetId)) return;
+    await db.links.update(id, { assetIds: [...current, assetId], updatedAt: new Date() });
+  },
+
+  async removeAsset(id: LinkId, assetId: string): Promise<void> {
+    const link = await db.links.get(id);
+    if (!link) return;
+    await db.links.update(id, {
+      assetIds: (link.assetIds ?? []).filter((a) => a !== assetId),
       updatedAt: new Date(),
     });
   },

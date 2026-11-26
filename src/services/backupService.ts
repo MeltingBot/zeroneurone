@@ -370,6 +370,9 @@ class BackupService {
           dossierId: newDossierId,
           fromId: newFromId,
           toId: newToId,
+          assetIds: (link.assetIds || [])
+            .map((oldId: AssetId) => assetIdMap.get(oldId))
+            .filter((id): id is AssetId => id !== undefined),
           date: link.date ? new Date(link.date) : null,
           createdAt: new Date(link.createdAt),
           updatedAt: new Date(link.updatedAt),

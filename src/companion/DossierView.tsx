@@ -875,31 +875,42 @@ function LinkRow({ link, self, other, onOpen, s }: {
     : link.direction === 'both' ? '↔'
       : (link.direction === 'forward') === outgoing ? '→' : '←';
   if (editing) return <LinkEditor link={link} outgoing={outgoing} other={other} s={s} onDone={() => setEditing(false)} />;
+  const assetIds = link.assetIds ?? [];
   return (
-    <li className="flex items-center">
-      <button
-        type="button"
-        disabled={!other}
-        className="flex-1 min-w-0 min-h-12 flex items-center gap-2 pl-3 pr-1 py-2 text-left active:bg-bg-secondary disabled:opacity-60"
-        onClick={() => other && onOpen(other.id)}
-      >
-        <span className="text-text-tertiary text-sm w-4 text-center">{arrow}</span>
-        <span className="flex-1 min-w-0">
-          <span className="block text-sm truncate">{other?.label || t('element.untitled')}</span>
-          {link.label && <span className="block text-xs text-text-tertiary truncate">{link.label}</span>}
-        </span>
-        {other && <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />}
-      </button>
-      {!s.data.locked && (
+    <li>
+      <div className="flex items-center">
         <button
           type="button"
-          className="w-11 h-12 flex items-center justify-center text-text-tertiary flex-shrink-0"
-          onClick={() => setEditing(true)}
-          aria-label={t('links.edit')}
-          title={t('links.edit')}
+          disabled={!other}
+          className="flex-1 min-w-0 min-h-12 flex items-center gap-2 pl-3 pr-1 py-2 text-left active:bg-bg-secondary disabled:opacity-60"
+          onClick={() => other && onOpen(other.id)}
         >
-          <Pencil size={16} />
+          <span className="text-text-tertiary text-sm w-4 text-center">{arrow}</span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm truncate">{other?.label || t('element.untitled')}</span>
+            {link.label && <span className="block text-xs text-text-tertiary truncate">{link.label}</span>}
+          </span>
+          {other && <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />}
         </button>
+        {!s.data.locked && (
+          <button
+            type="button"
+            className="w-11 h-12 flex items-center justify-center text-text-tertiary flex-shrink-0"
+            onClick={() => setEditing(true)}
+            aria-label={t('links.edit')}
+            title={t('links.edit')}
+          >
+            <Pencil size={16} />
+          </button>
+        )}
+      </div>
+      {/* Files attached to the link (a deed for a sale…) */}
+      {assetIds.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 px-3 pb-3">
+          {assetIds.map((id) => (
+            <AssetTile key={id} asset={s.data.assets.get(id)} ydoc={s.ydoc} dossierId={s.dossierId} />
+          ))}
+        </div>
       )}
     </li>
   );

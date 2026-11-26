@@ -53,9 +53,7 @@ function fieldText(field: string, target: Element | Link, comments: Comment[], a
         ? (target.events ?? []).map((e) => [e.label, e.description, e.source].filter(Boolean).join(' — ')).join(' · ')
         : '';
     case 'extractedText':
-      return 'assetIds' in target
-        ? target.assetIds.map((id) => assets.get(id)?.extractedText ?? '').filter(Boolean).join(' · ')
-        : '';
+      return (target.assetIds ?? []).map((id) => assets.get(id)?.extractedText ?? '').filter(Boolean).join(' · ');
     default: return '';
   }
 }

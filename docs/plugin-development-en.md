@@ -642,7 +642,7 @@ Each device emits the actions done on it: a change received from a collaborator 
 | `element:tagAdded` / `element:tagRemoved` | elementId | Tag added / removed | `tagName` |
 | `element:merged` | kept element | Merge | `mergedIds` |
 | `link:created` / `link:updated` / `link:deleted` | linkId | Link created / changed / deleted | as for elements |
-| `asset:created` / `asset:deleted` | assetId | File attached / deleted | |
+| `asset:created` / `asset:deleted` | assetId | File attached (to an element or a link) / erased from the dossier: `asset:deleted` fires once nothing uses it, its record already gone | `asset:deleted`: `filename`, `hash` |
 | `comment:created` / `resolved` / `unresolved` / `deleted` | commentId | Comment | `targetId` |
 | `tag:renamed` | — | Tag renamed across the dossier | `from`, `to`, `elements`, `links` |
 | `report:updated` | — | Report edited (typing in one section is merged) | `action`, `sectionId` |
@@ -1469,6 +1469,8 @@ Only the members declared in `types/plugin-api.d.ts` are stable. The stores expo
 | `pluginData.setGlobal(key, value)` | Write global data |
 | `pluginData.removeGlobal(key)` | Delete global data |
 | `pluginId` | The plugin's ID (from manifest) |
+
+> **Dossier files** — add a file with the `dossierStore`'s `addAsset(elementId, file)` or `addLinkAsset(linkId, file)`, which attach it to an element or a link. A file nothing uses (no element, link, image or `asset:<hash>` source) shows in the "Unused files" list (dossier panel, Retention section) and can be erased by the user. A plugin must therefore not keep a file in `db.assets` without attaching it: its own data belongs in `pluginData`.
 
 **Services (export, import, navigation):**
 

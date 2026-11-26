@@ -142,6 +142,17 @@ describe('buildObsidianVault', () => {
     expect(file(out, 'Elements/Groupe.md')).toContain('## Members\n\n- [[A]]');
   });
 
+  it('links the files of a link from both relation lines', () => {
+    const assets = [{ id: 'deed', filename: 'acte.pdf' }] as Asset[];
+    const out = buildObsidianVault({
+      dossier, labels, assets,
+      elements: [el('a', 'A'), el('b', 'B')],
+      links: [link('l1', 'a', 'b', { label: 'Vente', assetIds: ['deed'] })],
+    });
+    expect(file(out, 'Elements/A.md')).toContain('Vente [[B]] · [[attachments/acte.pdf]]');
+    expect(file(out, 'Elements/B.md')).toContain('[[A]] · [[attachments/acte.pdf]]');
+  });
+
   it('builds one canvas per tab with arrows, labels and groups first', () => {
     const tabs = [
       { id: 't2', name: 'Second', order: 1, memberElementIds: ['a'] },

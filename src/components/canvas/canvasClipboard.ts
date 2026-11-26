@@ -67,6 +67,8 @@ export function cloneClipboardForPaste(
       dossierId: dossierId as Link['dossierId'],
       fromId: oldToNewIdMap.get(link.fromId)!,
       toId: oldToNewIdMap.get(link.toId)!,
+      // Files stay in their dossier, as for elements
+      assetIds: crossDossier ? [] : link.assetIds,
       createdAt: now,
       updatedAt: now,
     }))

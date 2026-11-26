@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Sintesia sortu",
     "reportTitle": "Sintesiaren izenburua",
+    "scope": "Esparrua",
+    "scopeAll": "Espediente osoa",
+    "scopeSelection": "Hautapena ({{count}})",
+    "scopeTab": "Fitxa",
+    "scopeLinked": "Lotutako elementuak",
     "contentToInclude": "Sartu beharreko edukia",
     "includeDescription": "Espedienteren deskribapena",
     "includeSummary": "Laburpen estatistikoa",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Konfiantza",
     "jsonDescription": "JSON+: datu egituratuak grafo analisiarekin",
     "jsonTooltip": "JSON esportazio egituratua datu aberastuekin",
-    "print": "Inprimatu",
+    "print": "Inprimatu / PDF",
     "capture": {
       "preparing": "Kapturak prestatzen...",
       "viewsAdjusted": "Ikuspegiak doitzen dira elementu guztiak erakusteko",
@@ -567,6 +572,7 @@
       "linkType": "Lotura mota",
       "fileType": "Mota",
       "filename": "Fitxategia",
+      "attachedTo": "Honi erantsia",
       "size": "Tamaina",
       "noTag": "Etiketarik gabe",
       "unknown": "Ezezaguna",

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
+import { Paperclip } from 'lucide-react';
 import i18next from 'i18next';
 import { scaledLinkWidth } from '../../utils/linkWidthScale';
 import { useDossierStore, useUIStore } from '../../stores';
@@ -79,6 +80,8 @@ interface CustomEdgeData {
   displayedPropertyValues?: { key: string; value: string }[];
   // Start/end dates written under the label (dossier option, null when hidden or undated)
   datesLabel?: string | null;
+  // Number of files attached to the link (0: no indicator)
+  attachmentCount?: number;
   // Remote user presence (passed from Canvas level)
   remoteLinkSelectors?: RemoteLinkPresence[];
   fontSize?: FontSize;
@@ -145,6 +148,10 @@ function CustomEdgeComponent(props: EdgeProps) {
   // Dates line, under the label; anonymous mode hides it with the label
   const datesLabel = anonymousMode ? null : edgeData?.datesLabel ?? null;
   const datesBelow = datesLabel ? 14 : 0;
+  // Files attached: a count on the badge row, beside the grading when both show
+  const attachmentCount = edgeData?.attachmentCount ?? 0;
+  const badgeRowBelow = confidenceBadge || attachmentCount > 0 ? 18 : 0;
+  const badgeGap = confidenceBadge && attachmentCount > 0 ? 20 : 0;
 
   const sourceSlot = edgeData?.sourceSlot ?? 0;
   const targetSlot = edgeData?.targetSlot ?? 0;
@@ -643,7 +650,7 @@ function CustomEdgeComponent(props: EdgeProps) {
 
       {/* Confidence / grading indicator */}
       {confidenceBadge && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + datesBelow})`}>
+        <g transform={`translate(${controlHandleX - badgeGap}, ${controlHandleY + labelBelow + datesBelow})`}>
           <rect
             x={-18}
             y={-8}
@@ -669,9 +676,40 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
+      {/* Attached files */}
+      {attachmentCount > 0 && (
+        <g
+          transform={`translate(${controlHandleX + badgeGap}, ${controlHandleY + labelBelow + datesBelow})`}
+          data-testid="link-attachments"
+        >
+          <title>{i18next.t('panels:detail.sections.files')}</title>
+          <rect
+            x={-14}
+            y={-8}
+            width={28}
+            height={16}
+            rx={3}
+            fill={themeMode === 'dark' ? '#3d3833' : '#fffdf9'}
+            stroke={themeMode === 'dark' ? '#6b6560' : '#e8e3db'}
+            strokeWidth={1}
+          />
+          <Paperclip x={-11} y={-5} width={10} height={10} color={themeMode === 'dark' ? '#c9c2b8' : '#6b6560'} />
+          <text
+            x={5}
+            y={0}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={9}
+            fill={themeMode === 'dark' ? '#ffffff' : '#3d3833'}
+          >
+            {attachmentCount}
+          </text>
+        </g>
+      )}
+
       {/* Displayed properties */}
       {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + datesBelow + (confidenceBadge ? 18 : 0)})`}>
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + datesBelow + badgeRowBelow})`}>
           {displayedPropertyValues.slice(0, 2).map(({ key, value }, index) => {
             const displayValue = value.length > 15 ? value.slice(0, 15) + '...' : value;
             const displayText = `${key}: ${displayValue}`;
@@ -931,6 +969,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.confidenceBadge?.muted !== nextData.confidenceBadge?.muted) return false;
   if (prevData.fontSize !== nextData.fontSize) return false;
   if (prevData.datesLabel !== nextData.datesLabel) return false;
+  if (prevData.attachmentCount !== nextData.attachmentCount) return false;
 
   // Compare displayed properties
   const prevDisplayedProps = prevData.displayedPropertyValues ?? [];

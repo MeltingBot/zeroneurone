@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Generar síntesis",
     "reportTitle": "Título de la síntesis",
+    "scope": "Alcance",
+    "scopeAll": "Expediente completo",
+    "scopeSelection": "Selección ({{count}})",
+    "scopeTab": "Pestaña",
+    "scopeLinked": "Elementos vinculados",
     "contentToInclude": "Contenido a incluir",
     "includeDescription": "Descripción de el expediente",
     "includeSummary": "Resumen estadístico",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Confianza",
     "jsonDescription": "JSON+: datos estructurados con análisis del grafo",
     "jsonTooltip": "Exportación JSON estructurada con datos enriquecidos",
-    "print": "Imprimir",
+    "print": "Imprimir / PDF",
     "capture": {
       "preparing": "Preparando capturas...",
       "viewsAdjusted": "Las vistas se ajustan para mostrar todos los elementos",
@@ -567,6 +572,7 @@
       "linkType": "Tipo de enlace",
       "fileType": "Tipo",
       "filename": "Archivo",
+      "attachedTo": "Adjunto a",
       "size": "Tamaño",
       "noTag": "Sin tag",
       "unknown": "Desconocido",

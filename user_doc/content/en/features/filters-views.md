@@ -170,16 +170,19 @@ The **Views** panel also controls general display:
 | **Anchor** | Auto, center, edges |
 | **Curve** | Straight, curved, orthogonal |
 | **Multiple links** | Separate, single, one per direction |
-| **Crossings** | Jumps at crossings (right angles only) |
-| **Dates** | Start and end of the relation under the label |
+| **Show** | Dates, jumps at crossings (right angles only), attached files |
 
 Each option is an icon; its name shows on hover.
 
 **Multiple links** sets how several links between the same two elements are drawn, as Analyst's Notebook's connection multiplicity. **Separate** (default) draws each link. **Single** merges them into one line, whatever their direction; **One per direction** draws one per direction. The merged line carries the arrows of its links, without a label: on hover, the list of its links shows, each label behind the colour of its link. A click selects it with all its links (bulk edit, deletion). In both modes, the links leaving the same side of an element also start from one point: a single line comes out of the element, then branches off to each end. The links stay apart in the dossier: only the display changes, as do the SVG and PDF exports. Paper has no hover: in these exports, the merged line carries the list of its labels, each behind the colour of its link.
 
-**Crossings**, with the orthogonal curve: where a horizontal segment crosses the vertical segment of another link, it jumps over it with a small arc. None where a link only touches the other, nor right next to a corner. Off by default; kept in the SVG and PDF exports and in the interactive report.
+**Show** gathers what the lines carry; each button turns on or off with a click.
+
+**Jumps**, with the orthogonal curve: where a horizontal segment crosses the vertical segment of another link, it jumps over it with a small arc. None where a link only touches the other, nor right next to a corner. Off by default; kept in the SVG and PDF exports and in the interactive report.
 
 **Dates** writes the period of the relation under each link's label: `Mar 12, 2019 → Jan 05, 2020`, at the precision entered (year, month, day, time) and behind `~` when approximate. An unknown bound reads `…` (`Mar 12, 2019 → …` for a relation still going on). An undated link shows nothing. The dates are hidden in anonymous mode, in a redacted export and on a line merging several links. Off by default; kept in the SVG and PDF exports and in the interactive report.
+
+**Files** shows under a link's label a paperclip and the number of [files attached]({{< relref "attachments" >}}) to that link. On by default; kept in the interactive report.
 
 
 ---

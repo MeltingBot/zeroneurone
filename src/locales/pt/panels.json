@@ -67,7 +67,10 @@
       "retentionFrom": "Contar desde",
       "retentionFromCreated": "A criação",
       "retentionFromClosed": "O encerramento",
-      "retentionStartsAtClosure": "O prazo começará no encerramento."
+      "retentionStartsAtClosure": "O prazo começará no encerramento.",
+      "unusedFiles": "Ficheiros não utilizados",
+      "unusedFilesErase": "Apagar",
+      "unusedFilesConfirm": "Apagar estes ficheiros?"
     },
     "placeholders": {
       "name": "Nome do dossiê",
@@ -616,9 +619,9 @@
     "linkStraight": "Retas",
     "linkOrthogonal": "Ângulos retos",
     "linkJumps": "Pontes nos cruzamentos",
-    "linkCrossings": "Cruzamentos",
-    "linkDates": "Datas",
+    "linkShow": "Mostrar",
     "linkDatesHint": "Datas de início e fim nas ligações",
+    "linkFilesHint": "Ficheiros anexados às ligações",
     "linkAnchor": "Ancoragem",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automático",

@@ -388,6 +388,8 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
           l.confidence !== null && l.confidence !== undefined ? `${l.confidence} %` : '',
           formatEvaluation(l.evaluation),
           l.source ? sourceLine(l.source) : '',
+          // Files attached to the link: links to their copy in the vault (not embeds, on a list line)
+          ...(l.assetIds ?? []).map((id) => assetPaths.get(id)).filter((p): p is string => !!p).map((p) => `[[${p}]]`),
         ].filter(Boolean);
         const label = l.label.trim() ? `${l.label.trim()} ` : '';
         const other = elementsMap.get(rel.otherId)!;

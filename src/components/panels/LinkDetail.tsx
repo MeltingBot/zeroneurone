@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, Paperclip } from 'lucide-react';
 import { useDossierStore, useHistoryStore, useUIStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Evaluation, Property, PropertyDefinition, FontSize } from '../../types';
 import { getModelScale } from '../../utils/evaluation';
@@ -13,6 +13,7 @@ import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { DEFAULT_COLORS, LINE_WIDTHS } from '../../types';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
+import { AssetsPanel } from './AssetsPanel';
 import { CopyableId } from './CopyableId';
 import { dateFromInputKeys, dateInputKeys } from '../../utils/dates';
 import { TimeZoneButton } from '../common/TimeZoneButton';
@@ -75,6 +76,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
   const linkComments = comments.filter(c => c.targetId === link.id);
   const unresolvedCommentCount = linkComments.filter(c => !c.resolved).length;
+  const assetCount = link.assetIds?.length ?? 0;
 
   const [label, setLabel] = useState(link.label);
   const [notes, setNotes] = useState(link.notes);
@@ -763,6 +765,21 @@ export function LinkDetail({ link }: LinkDetailProps) {
         defaultOpen={unresolvedCommentCount > 0}
       >
         <CommentsSection targetId={link.id} targetType="link" />
+      </AccordionSection>
+
+      {/* Files */}
+      <AccordionSection
+        id="assets"
+        title={t('detail.sections.files')}
+        icon={<Paperclip size={12} />}
+        badge={assetCount > 0 ? (
+          <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">
+            {assetCount}
+          </span>
+        ) : undefined}
+        defaultOpen={false}
+      >
+        <AssetsPanel link={link} />
       </AccordionSection>
 
       {/* Timestamps (read-only) */}

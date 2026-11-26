@@ -1074,6 +1074,10 @@ export class ImportService {
         toId: newToId,
         properties: importedProperties(importedLink.properties, exactDates),
         evaluation: sanitizeEvaluation(importedLink.evaluation),
+        // Files: those imported with the archive, under their new ids
+        assetIds: (importedLink.assetIds || [])
+          .map((oldId: AssetId) => assetIdMap.get(oldId))
+          .filter((id): id is AssetId => id !== undefined),
         date: importedLink.date ? new Date(importedLink.date) : null,
         // Handle direction with backwards compatibility
         direction: importedLink.direction || (importedLink.directed ? 'forward' : 'none'),

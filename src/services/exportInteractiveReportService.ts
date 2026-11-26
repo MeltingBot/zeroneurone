@@ -123,11 +123,32 @@ function linkDatesSvg(
   return `<text x="${x}" y="${datesY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-dates" font-size="9">${escapeXml(dates)}</text>`;
 }
 
+const PAPERCLIP_PATH = 'm16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551';
+
+/** Paperclip and count under a link's label (and dates), when files are attached to it */
+function linkFilesSvg(
+  link: Link,
+  x: number,
+  y: number,
+  settings: { linkLabelWrap?: number; linkDatesLanguage?: string; showLinkFiles?: boolean },
+): string {
+  const count = settings.showLinkFiles === false ? 0 : link.assetIds?.length ?? 0;
+  if (count === 0) return '';
+  const lines = link.label ? wrapLabelLines(link.label, settings.linkLabelWrap).length : 0;
+  const hasDates = !!settings.linkDatesLanguage && !!linkDatesLabel(link, settings.linkDatesLanguage);
+  const badgeY = y + (lines > 0 ? (lines * 15) / 2 + 8 : 0) + (hasDates ? 14 : 0);
+  return `<g class="link-files" transform="translate(${x}, ${badgeY})">`
+    + `<rect x="-14" y="-8" width="28" height="16" rx="3" class="link-files-bg" stroke-width="1" />`
+    + `<svg x="-11" y="-5" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${PAPERCLIP_PATH}" /></svg>`
+    + `<text x="5" y="0" text-anchor="middle" dominant-baseline="middle" class="svg-text" font-size="9">${count}</text>`
+    + `</g>`;
+}
+
 // Generate SVG for the graph: same layout and link routing as the canvas and the SVG export
 function generateGraphSVG(
   elements: Element[],
   links: Link[],
-  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkJumps?: boolean; linkLabelWrap?: number; linkDatesLanguage?: string },
+  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkJumps?: boolean; linkLabelWrap?: number; linkDatesLanguage?: string; showLinkFiles?: boolean },
   thumbnails: Record<string, string> = {},
   noElementsLabel = 'No elements'
 ): string {
@@ -199,6 +220,7 @@ function generateGraphSVG(
         ${arrows}
         ${link.label ? `<text x="${route.labelX}" y="${route.labelY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-label" font-size="12">${svgLabelTspans(wrapLabelLines(link.label, routeSettings.linkLabelWrap), route.labelX, route.labelY, 15, escapeXml)}</text>` : ''}
         ${linkDatesSvg(link, route.labelX, route.labelY, routeSettings)}
+        ${linkFilesSvg(link, route.labelX, route.labelY, routeSettings)}
       </g>
     `;
   }
@@ -350,8 +372,8 @@ async function generateThumbnails(assets: Asset[]): Promise<Record<string, strin
   return thumbnails;
 }
 
-// Build element details HTML for tooltip/panel
-function buildElementDetails(elements: Element[], thumbnails: Record<string, string>): string {
+// Build element and link details HTML for tooltip/panel
+function buildElementDetails(elements: Element[], thumbnails: Record<string, string>, links: Link[] = [], assets: Asset[] = []): string {
   const details: Record<string, string> = {};
 
   for (const el of elements) {
@@ -385,6 +407,25 @@ function buildElementDetails(elements: Element[], thumbnails: Record<string, str
 
     html += '</div>';
     details[el.id] = html;
+  }
+
+  // Links carrying files: their label, notes and files (images as thumbnails, others by name)
+  const labels = new Map(elements.map((el) => [el.id, el.label]));
+  const assetById = new Map(assets.map((a) => [a.id, a]));
+  for (const link of links) {
+    if (!link.assetIds?.length) continue;
+    const ends = `${labels.get(link.fromId) || '?'} ${link.directed ? '→' : '↔'} ${labels.get(link.toId) || '?'}`;
+    let html = `<div class="element-detail"><h4>${escapeXml(link.label || ends)}</h4>`;
+    if (link.label) html += `<div class="notes">${escapeXml(ends)}</div>`;
+    if (link.notes) html += `<div class="notes">${markdownToHtml(link.notes)}</div>`;
+    const names: string[] = [];
+    for (const assetId of link.assetIds) {
+      if (thumbnails[assetId]) html += `<img src="${thumbnails[assetId]}" class="thumbnail" alt="Asset" />`;
+      else if (assetById.has(assetId)) names.push(assetById.get(assetId)!.filename);
+    }
+    if (names.length > 0) html += `<ul class="files">${names.map((n) => `<li>${escapeXml(n)}</li>`).join('')}</ul>`;
+    html += '</div>';
+    details[link.id] = html;
   }
 
   // Embedded in an inline <script>, so plain JSON.stringify is not enough.
@@ -435,6 +476,7 @@ export async function exportInteractiveReport(
       linkJumps: dossier.settings?.linkJumps,
       linkLabelWrap: dossier.options?.linkLabelWrap,
       linkDatesLanguage: dossier.settings?.showLinkDates ? i18next.language : undefined,
+      showLinkFiles: dossier.settings?.showLinkFiles !== false,
     },
     thumbnails,
     i18nStrings.noElements
@@ -460,7 +502,7 @@ export async function exportInteractiveReport(
   }
 
   // Element details for tooltips
-  const elementDetails = buildElementDetails(elements, thumbnails);
+  const elementDetails = buildElementDetails(elements, thumbnails, links, assets);
 
   // Stats
   const groupCount = elements.filter((e) => e.isGroup).length;
@@ -601,6 +643,9 @@ main{display:flex;flex:1;overflow:hidden}
 #graph-svg{width:100%;height:100%}
 #graph-svg .svg-text{fill:var(--text-primary)}
 #graph-svg .svg-text-secondary{fill:var(--text-secondary)}
+#graph-svg .link-files-bg{fill:var(--bg-primary);stroke:var(--border-default)}
+#graph-svg .link-files svg{color:var(--text-secondary)}
+#graph-svg .link.highlighted .link-files path{stroke:currentColor;stroke-width:2}
 #graph-svg .link-label{paint-order:stroke fill;stroke:var(--bg-primary);stroke-width:3px}
 #graph-svg .node:hover{filter:brightness(1.1)}
 #graph-svg .node.highlighted circle,#graph-svg .node.highlighted rect,#graph-svg .node.highlighted polygon,#graph-svg .node.highlighted ellipse{stroke:var(--accent);stroke-width:3}
@@ -617,6 +662,7 @@ main{display:flex;flex:1;overflow:hidden}
 #element-tooltip .properties dd{margin-bottom:4px}
 #element-tooltip .notes{font-size:12px;color:var(--text-secondary);border-top:1px solid var(--border-default);padding-top:8px;margin-top:8px}
 #element-tooltip .thumbnail{max-width:100%;margin-top:8px;border-radius:4px}
+#element-tooltip .files{margin:8px 0 0;padding-left:16px;font-size:12px}
 #search-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:flex-start;justify-content:center;padding-top:15vh}
 #search-overlay.visible{display:flex}
 #search-box{background:var(--bg-primary);border:1px solid var(--border-default);border-radius:8px;width:400px;max-width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2);overflow:hidden}
@@ -711,6 +757,7 @@ Q('#zoom-out').addEventListener('click',function(){zoom(0.8)});
 Q('#zoom-reset').addEventListener('click',function(){vb.x=ivb.x;vb.y=ivb.y;vb.width=ivb.width;vb.height=ivb.height});
 function getNodeCenter(nd){var dx=nd.dataset.x,dy=nd.dataset.y;if(dx&&dy)return{x:parseFloat(dx),y:parseFloat(dy)};var sh=nd.querySelector('circle,rect,polygon,ellipse');if(!sh)return null;if(sh.tagName==='circle'||sh.tagName==='ellipse')return{x:parseFloat(sh.getAttribute('cx')),y:parseFloat(sh.getAttribute('cy'))};if(sh.tagName==='rect')return{x:parseFloat(sh.getAttribute('x'))+parseFloat(sh.getAttribute('width'))/2,y:parseFloat(sh.getAttribute('y'))+parseFloat(sh.getAttribute('height'))/2};if(sh.tagName==='polygon'){var pts=sh.getAttribute('points').split(' '),co=pts.map(function(p){return p.split(',').map(Number)}),ax=co.reduce(function(s,c){return s+c[0]},0)/co.length,ay=co.reduce(function(s,c){return s+c[1]},0)/co.length;return{x:ax,y:ay}}return null}
 QA('#graph-svg .node').forEach(function(nd){nd.addEventListener('click',function(e){e.stopPropagation();var eid=nd.dataset.elementId;QA('#graph-svg .node,#graph-svg .group').forEach(function(n){n.classList.remove('highlighted')});nd.classList.add('highlighted');var refs=QA('.element-ref[data-element-id="'+eid+'"]');if(refs.length>0){refs[0].scrollIntoView({behavior:'smooth',block:'center'});QA('.element-ref').forEach(function(r){r.classList.remove('highlighted')});refs.forEach(function(r){r.classList.add('highlighted')})}showTooltip(eid,e.clientX,e.clientY)})});
+QA('#graph-svg .link').forEach(function(lk){lk.addEventListener('click',function(e){var lid=lk.dataset.linkId;if(!elementDetails[lid])return;e.stopPropagation();QA('#graph-svg .node,#graph-svg .group,#graph-svg .link').forEach(function(n){n.classList.remove('highlighted')});lk.classList.add('highlighted');showTooltip(lid,e.clientX,e.clientY)})});
 QA('.element-ref').forEach(function(ref){ref.addEventListener('click',function(e){e.preventDefault();var eid=ref.dataset.elementId;if(window.innerWidth<=768){QA('#mobile-tabs .tab').forEach(function(t){t.classList.remove('active')});Q('#mobile-tabs [data-tab="graph"]').classList.add('active');mainEl.setAttribute('data-active-tab','graph')}QA('.element-ref').forEach(function(r){r.classList.remove('highlighted')});ref.classList.add('highlighted');QA('#graph-svg .node,#graph-svg .group,#graph-svg .link').forEach(function(n){n.classList.remove('highlighted')});var nd=Q('#graph-svg .node[data-element-id="'+eid+'"]');if(nd){nd.classList.add('highlighted');var c=getNodeCenter(nd);if(c)focusOnPoint(c.x,c.y,2);return}var gr=Q('#graph-svg .group[data-element-id="'+eid+'"]');if(gr){gr.classList.add('highlighted');var gx=gr.dataset.x,gy=gr.dataset.y;if(gx&&gy)focusOnPoint(parseFloat(gx),parseFloat(gy),1.5);return}var lk=Q('#graph-svg .link[data-link-id="'+eid+'"]');if(lk){lk.classList.add('highlighted');var lx=lk.dataset.x,ly=lk.dataset.y;if(lx&&ly)focusOnPoint(parseFloat(lx),parseFloat(ly),2)}})});
 function showTooltip(eid,x,y){var det=elementDetails[eid];if(!det){tooltip.classList.remove('visible');return}tooltip.innerHTML=det;tooltip.classList.add('visible');var r=container.getBoundingClientRect(),l=x-r.left+10,t=y-r.top+10;if(l+300>r.width)l=r.width-310;if(t+tooltip.offsetHeight>r.height)t=y-r.top-tooltip.offsetHeight-10;tooltip.style.left=l+'px';tooltip.style.top=t+'px'}
 D.addEventListener('click',function(e){if(!e.target.closest('.node')&&!e.target.closest('#element-tooltip'))tooltip.classList.remove('visible')});

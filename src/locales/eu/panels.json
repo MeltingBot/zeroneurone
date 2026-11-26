@@ -67,7 +67,10 @@
       "retentionFrom": "Noiztik zenbatu",
       "retentionFromCreated": "Sorreratik",
       "retentionFromClosed": "Itxieratik",
-      "retentionStartsAtClosure": "Epea itxieran hasiko da."
+      "retentionStartsAtClosure": "Epea itxieran hasiko da.",
+      "unusedFiles": "Erabili gabeko fitxategiak",
+      "unusedFilesErase": "Ezabatu",
+      "unusedFilesConfirm": "Fitxategi hauek ezabatu?"
     },
     "placeholders": {
       "name": "Espedienteren izena",
@@ -616,9 +619,9 @@
     "linkStraight": "Zuzenak",
     "linkOrthogonal": "Angelu zuzenak",
     "linkJumps": "Zubiak gurutzaguneetan",
-    "linkCrossings": "Gurutzaguneak",
-    "linkDates": "Datak",
+    "linkShow": "Erakutsi",
     "linkDatesHint": "Hasiera- eta amaiera-datak loturetan",
+    "linkFilesHint": "Loturei erantsitako fitxategiak",
     "linkAnchor": "Ainguratzea",
     "linkAnchorManual": "Eskuzkoa",
     "linkAnchorAuto": "Automatikoa",

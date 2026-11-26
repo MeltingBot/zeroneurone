@@ -80,7 +80,7 @@ class SearchService {
       this.currentDossierId = dossierId;
     }
 
-    this.buildAssetTextMap(elements, assets);
+    this.buildAssetTextMap([...elements, ...links], assets);
     this.buildCommentTextMap(comments);
 
     let sliceStart = performance.now();
@@ -127,7 +127,7 @@ class SearchService {
       this.pendingSync = [elements, links, assets, comments];
       return;
     }
-    this.buildAssetTextMap(elements, assets);
+    this.buildAssetTextMap([...elements, ...links], assets);
     this.buildCommentTextMap(comments);
     const currentIds = new Set<string>();
 
@@ -170,10 +170,11 @@ class SearchService {
    * Index or re-index a single link
    */
   indexLink(link: Link): void {
+    const assetText = this.assetTextMap.get(link.id) || '';
     const commentText = this.commentTextMap.get(link.id) || '';
     const previous = this.indexedFrom.get(link.id);
-    if (previous && previous.source === link && previous.commentText === commentText) return;
-    this.indexDocument(this.linkToDocument(link), link, '', commentText);
+    if (previous && previous.source === link && previous.assetText === assetText && previous.commentText === commentText) return;
+    this.indexDocument(this.linkToDocument(link), link, assetText, commentText);
   }
 
   /** (Re-)index a document, unless its content is what is already indexed. */
@@ -271,18 +272,19 @@ class SearchService {
     }
   }
 
-  private buildAssetTextMap(elements: Element[], assets: Asset[]): void {
+  /** Text extracted from the files of each element and link, by owner id */
+  private buildAssetTextMap(owners: readonly (Element | Link)[], assets: Asset[]): void {
     this.assetTextMap.clear();
     if (assets.length === 0) return;
     const assetById = new Map(assets.map((a) => [a.id, a]));
-    for (const element of elements) {
-      if (!element.assetIds?.length) continue;
+    for (const owner of owners) {
+      if (!owner.assetIds?.length) continue;
       const texts: string[] = [];
-      for (const assetId of element.assetIds) {
+      for (const assetId of owner.assetIds) {
         const asset = assetById.get(assetId);
         if (asset?.extractedText) texts.push(asset.extractedText);
       }
-      if (texts.length > 0) this.assetTextMap.set(element.id, texts.join(' '));
+      if (texts.length > 0) this.assetTextMap.set(owner.id, texts.join(' '));
     }
   }
 
@@ -316,7 +318,7 @@ class SearchService {
       properties: link.properties
         .map((p) => this.formatPropertyForIndex(p))
         .join(' '),
-      extractedText: '',
+      extractedText: this.assetTextMap.get(link.id) || '',
       comments: this.commentTextMap.get(link.id) || '',
       events: '',
     };

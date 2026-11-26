@@ -1,5 +1,56 @@
 # Changelog
 
+## 2.96.0
+
+### Fichiers sur les liens
+
+- **Fichiers joints à un lien** — un lien a sa section **Fichiers**,
+  comme un élément : glisser-déposer, bouton, collage (Ctrl+V avec le
+  lien sélectionné). Pour un document qui prouve la relation elle-même :
+  acte de vente, ordre de virement, relevé d'appel.
+- **Sur le canvas** — un trombone et le nombre de fichiers sous le
+  libellé du lien.
+- **Partout** — recherche (texte extrait), synthèse (colonne des liens
+  et liste des fichiers), rapport interactif (clic sur le trombone),
+  export Obsidian (ligne de la relation reliée à `attachments/`),
+  compagnon mobile, archive ZIP, sauvegardes, fusion d'éléments,
+  annuler/rétablir.
+
+### Vues
+
+- **Groupe « Afficher » des liaisons** — dates, ponts aux croisements
+  (liens orthogonaux) et fichiers des liens, en boutons à bascule.
+
+### Fichiers
+
+- **Fichier partagé** — un même fichier joint à plusieurs éléments ou
+  liens : le retirer de l'un le laisse aux autres (il était effacé
+  pour tous).
+- **Effacement réel** — un fichier que plus rien n'utilise est effacé du
+  navigateur et ne revient plus au rechargement. Il est gardé tant
+  qu'une annulation peut le rendre, ou dans un dossier partagé.
+- **Exports** — les fichiers que plus rien n'utilise ne partent plus
+  dans l'archive ZIP ni dans l'export Obsidian.
+- **Fichiers inutilisés** — liste dans la section Rétention du panneau
+  du dossier : nom, taille, aperçu, sélection multiple, effacement
+  après confirmation.
+
+### Synthèse
+
+- **Périmètre** — dossier entier, un onglet ou la sélection, avec
+  ou sans les éléments liés. La fenêtre s'ouvre sur la sélection en
+  cours, sinon sur l'onglet ouvert.
+- **Imprimer / PDF** — le bouton d'impression porte ce nom ; la doc
+  indique « Enregistrer au format PDF ».
+
+### Extensions
+
+- **`asset:deleted`** — porte `filename` et `hash` dans sa `meta`, et
+  part quand plus rien n'utilise le fichier.
+- **Doc** — un plugin attache ses fichiers à un élément ou un lien
+  (`addAsset`, `addLinkAsset`) : un fichier non attaché apparaît dans
+  les fichiers inutilisés.
+
 ## 2.95.6
 
 ### Carte

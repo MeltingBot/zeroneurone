@@ -67,7 +67,10 @@
       "retentionFrom": "Contar desde",
       "retentionFromCreated": "La creación",
       "retentionFromClosed": "El cierre",
-      "retentionStartsAtClosure": "El plazo empezará en el cierre."
+      "retentionStartsAtClosure": "El plazo empezará en el cierre.",
+      "unusedFiles": "Archivos sin uso",
+      "unusedFilesErase": "Borrar",
+      "unusedFilesConfirm": "¿Borrar estos archivos?"
     },
     "placeholders": {
       "name": "Nombre de el expediente",
@@ -616,9 +619,9 @@
     "linkStraight": "Rectas",
     "linkOrthogonal": "Ángulos rectos",
     "linkJumps": "Puentes en los cruces",
-    "linkCrossings": "Cruces",
-    "linkDates": "Fechas",
+    "linkShow": "Mostrar",
     "linkDatesHint": "Fechas de inicio y fin en los vínculos",
+    "linkFilesHint": "Archivos adjuntos en los enlaces",
     "linkAnchor": "Anclaje",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automático",

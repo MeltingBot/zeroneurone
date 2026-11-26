@@ -1,8 +1,8 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Settings, Calendar, Timer, Gauge, SlidersHorizontal } from 'lucide-react';
+import { FileText, Settings, Calendar, Timer, Gauge, SlidersHorizontal, Eye, File as FileIcon, Image as ImageIcon } from 'lucide-react';
 import { useDossierStore } from '../../stores';
-import type { Dossier, EvaluationModel, Property, PropertyDefinition } from '../../types';
+import type { Asset, Dossier, EvaluationModel, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
@@ -12,6 +12,10 @@ import { activeTimeZoneLabel, dateLocale } from '../../utils/dates';
 import { findLegacyUtcMidnightDates, type LegacyDateFixes } from '../../utils/legacyDates';
 import { LABEL_WRAP_DEFAULT, LABEL_WRAP_MAX, LABEL_WRAP_MIN } from '../../utils/wrapLabel';
 import { retentionExpiresAt } from '../../utils/dossierLock';
+import { referencedAssets } from '../../utils/assetReferences';
+import { formatBytes } from '../../utils/formatBytes';
+import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
+import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { useShallow } from 'zustand/react/shallow';
 
 interface DossierDetailProps {
@@ -658,6 +662,8 @@ function RetentionSection({ dossier }: { dossier: Dossier }) {
           </>
         )}
 
+        <UnusedFiles />
+
         {(hasChanges || savedDays != null) && (
           <div className="flex gap-2">
             {hasChanges && (
@@ -689,6 +695,116 @@ function RetentionSection({ dossier }: { dossier: Dossier }) {
         )}
       </div>
     </AccordionSection>
+  );
+}
+
+/**
+ * Files nothing uses any more (those of deleted elements and links, kept so an
+ * undo brings them back): left out of exports, erased here on request.
+ */
+function UnusedFiles() {
+  const { t } = useTranslation('panels');
+  const { t: tCommon, i18n } = useTranslation('common');
+  const { assets, elements, links, isReadOnly, eraseUnusedAssets } = useDossierStore(useShallow((s) => ({
+    assets: s.assets, elements: s.elements, links: s.links, isReadOnly: s.isReadOnly || s.isShareReadOnly, eraseUnusedAssets: s.eraseUnusedAssets,
+  })));
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState(false);
+  const [preview, setPreview] = useState<Asset | null>(null);
+  const unused = useMemo(() => {
+    const used = new Set(referencedAssets(assets, elements, links).map((a) => a.id));
+    return assets.filter((a) => !used.has(a.id));
+  }, [assets, elements, links]);
+  // Only files still unused stay selected (one may be attached again meanwhile)
+  const chosen = unused.filter((a) => selected.has(a.id));
+  const allChosen = chosen.length === unused.length;
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = chosen.length > 0 && !allChosen;
+  }, [chosen.length, allChosen]);
+  if (unused.length === 0) return null;
+
+  const total = unused.reduce((sum, a) => sum + a.size, 0);
+  const toggle = (id: string, on: boolean) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (on) next.add(id); else next.delete(id);
+    return next;
+  });
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.unusedFiles')}</label>
+      <div className="border border-border-default rounded">
+        <label className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary border-b border-border-default">
+          <input
+            ref={selectAllRef}
+            type="checkbox"
+            checked={allChosen}
+            onChange={(e) => setSelected(e.target.checked ? new Set(unused.map((a) => a.id)) : new Set())}
+            disabled={isReadOnly}
+            className="rounded border-border-default"
+            aria-label={tCommon('actions.selectAll')}
+          />
+          <span className="flex-1">{tCommon('actions.selectAll')}</span>
+          <span className="text-text-tertiary">{unused.length} · {formatBytes(total, i18n.language)}</span>
+        </label>
+        <ul className="max-h-48 overflow-y-auto py-0.5">
+          {unused.map((asset) => {
+            const thumb = asset.thumbnailDataUrl;
+            const Icon = asset.mimeType.startsWith('image/') ? ImageIcon : asset.mimeType === 'application/pdf' ? FileText : FileIcon;
+            return (
+              <li key={asset.id} className="group flex items-center gap-1.5 px-2 py-0.5 text-xs text-text-primary hover:bg-bg-secondary">
+                <label className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(asset.id)}
+                    onChange={(e) => toggle(asset.id, e.target.checked)}
+                    disabled={isReadOnly}
+                    className="rounded border-border-default"
+                  />
+                  <span className="w-5 h-5 flex-shrink-0 rounded bg-bg-tertiary flex items-center justify-center overflow-hidden">
+                    {thumb ? <img src={thumb} alt="" className="w-full h-full object-cover" /> : <Icon size={12} className="text-text-tertiary" />}
+                  </span>
+                  <span className="flex-1 min-w-0 truncate" title={asset.filename}>{asset.filename}</span>
+                </label>
+                <span className="text-text-tertiary">{formatBytes(asset.size, i18n.language)}</span>
+                <button
+                  type="button"
+                  onClick={() => setPreview(asset)}
+                  className="p-0.5 text-text-tertiary hover:text-text-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  title={t('detail.files.preview')}
+                  aria-label={t('detail.files.preview')}
+                >
+                  <Eye size={12} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {!isReadOnly && (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          disabled={chosen.length === 0}
+          className="w-full px-3 py-1.5 text-sm font-medium text-text-secondary bg-bg-secondary border border-border-default hover:bg-bg-tertiary rounded transition-colors disabled:opacity-50 disabled:hover:bg-bg-secondary"
+        >
+          {chosen.length > 0 ? `${t('dossier.labels.unusedFilesErase')} (${chosen.length})` : t('dossier.labels.unusedFilesErase')}
+        </button>
+      )}
+      <ConfirmDeleteModal
+        isOpen={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={async () => {
+          await eraseUnusedAssets(chosen.map((a) => a.id));
+          setSelected(new Set());
+        }}
+        title={t('dossier.labels.unusedFiles')}
+        message={t('dossier.labels.unusedFilesConfirm')}
+        confirmLabel={t('dossier.labels.unusedFilesErase')}
+      />
+      {preview && <AssetPreviewModal asset={preview} onClose={() => setPreview(null)} />}
+    </div>
   );
 }
 

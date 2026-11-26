@@ -30,6 +30,12 @@ function plainOrthogonalRoute(route: unknown): OrthogonalRoute | null {
   return { first, positions: [...positions] };
 }
 
+/** Attached file ids as a plain array (a Y.Array, should a peer write one); none when absent. */
+function plainAssetIds(raw: unknown): string[] {
+  const list = raw instanceof Y.Array ? raw.toArray() : raw;
+  return Array.isArray(list) ? list.filter((id): id is string => typeof id === 'string') : [];
+}
+
 export function linkToYMap(link: Link): Y.Map<unknown> {
   const map = new Y.Map();
 
@@ -85,6 +91,9 @@ export function linkToYMap(link: Link): Y.Map<unknown> {
     : null);
   map.set('orthogonalRoute', plainOrthogonalRoute(link.orthogonalRoute));
   map.set('bendPoints', plainBendPoints(link.bendPoints));
+
+  // Attached files as plain array
+  map.set('assetIds', plainAssetIds(link.assetIds));
 
   // Metadata
   map.set('_meta', {
@@ -214,6 +223,7 @@ export function yMapToLink(ymap: Y.Map<unknown>): Link {
     orthogonalOffset,
     orthogonalRoute,
     bendPoints,
+    assetIds: plainAssetIds(ymap.get('assetIds')),
     createdAt,
     updatedAt,
   };
@@ -331,6 +341,10 @@ export function updateLinkYMap(
 
     if (changes.bendPoints !== undefined) {
       ymap.set('bendPoints', plainBendPoints(changes.bendPoints));
+    }
+
+    if (changes.assetIds !== undefined) {
+      ymap.set('assetIds', plainAssetIds(changes.assetIds));
     }
 
     // Always update updatedAt

@@ -21,6 +21,18 @@ Toolbar → **Synthesis** button (document icon)
 
 Customize the generated document title. By default, the dossier name is used.
 
+### Scope
+
+The synthesis covers the **whole dossier**, a **tab**, or the canvas **selection** (offered when there is one).
+
+- The links kept are those between the kept elements. A selected link brings its two elements, a group its children.
+- **Linked elements** adds the direct neighbours of these elements and the links to them, like the ghosts of a tab. Two neighbours are not joined to each other in the synthesis.
+- Attached files, statistics and graph analysis only cover this scope.
+
+{{< hint warning >}}
+The window opens on the current selection when there is one, otherwise on the open tab. Check the scope before generating a synthesis of the whole dossier.
+{{< /hint >}}
+
 ### Content to include
 
 Select sections to include in the synthesis:
@@ -96,9 +108,9 @@ Useful for:
 - Programmatic analysis
 - Structured archiving
 
-### Print
+### Print / PDF
 
-Opens a print window with the formatted HTML document.
+Opens a print window with the formatted HTML document. For a PDF, choose **Save as PDF** as the printer: the text stays selectable and searchable in the PDF.
 
 ---
 

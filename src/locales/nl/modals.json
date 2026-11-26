@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Synthese genereren",
     "reportTitle": "Titel van de samenvatting",
+    "scope": "Bereik",
+    "scopeAll": "Heel dossier",
+    "scopeSelection": "Selectie ({{count}})",
+    "scopeTab": "Tabblad",
+    "scopeLinked": "Gekoppelde elementen",
     "contentToInclude": "Op te nemen inhoud",
     "includeDescription": "Beschrijving van het dossier",
     "includeSummary": "Statistische samenvatting",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Betrouwbaarheid",
     "jsonDescription": "JSON+: gestructureerde gegevens met graafanalyse",
     "jsonTooltip": "Gestructureerde JSON-export met verrijkte gegevens",
-    "print": "Afdrukken",
+    "print": "Afdrukken / PDF",
     "capture": {
       "preparing": "Opnames voorbereiden...",
       "viewsAdjusted": "Weergaven worden aangepast om alle elementen te tonen",
@@ -567,6 +572,7 @@
       "linkType": "Type verbinding",
       "fileType": "Type",
       "filename": "Bestand",
+      "attachedTo": "Gekoppeld aan",
       "size": "Grootte",
       "noTag": "Geen tag",
       "unknown": "Onbekend",

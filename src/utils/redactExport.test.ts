@@ -31,6 +31,7 @@ const links = [{
   id: 'l1', fromId: 'e1', toId: 'e2', label: `${SECRET} link`, notes: `${SECRET} n`, source: `${SECRET} s`,
   tags: ['Appel'], properties: [{ key: 'k', value: `${SECRET} p` }], direction: 'forward',
   date: new Date(2026, 3, 4), dateRange: null, visual: { color: '#000', style: 'solid', thickness: 2 },
+  assetIds: ['a1'],
 }] as unknown as Link[];
 
 const full = {
@@ -60,6 +61,7 @@ describe('redactExport', () => {
       expect(el.assetIds).toEqual([]);
       expect(el.visual.image).toBeNull();
     }
+    for (const link of out.links) expect(link.assetIds).toEqual([]);
     expect(out.assets).toEqual([]);
     expect(out.report).toBeNull();
   });

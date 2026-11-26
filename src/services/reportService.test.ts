@@ -160,3 +160,38 @@ describe('reportService HTML output hardening', () => {
     expect(html).toContain(good);
   });
 });
+
+describe('reportService — files attached to links', () => {
+  const dossier = { id: 'd1', name: 'Enquête', createdAt: new Date(), updatedAt: new Date() } as never;
+  const el = (id: string, label: string) => ({
+    id, dossierId: 'd1', label, tags: [], properties: [], assetIds: [], events: [], notes: '',
+    position: { x: 0, y: 0 }, visual: { color: '#888', shape: 'rectangle' }, createdAt: new Date(), updatedAt: new Date(),
+  }) as never;
+  const link = {
+    id: 'l1', dossierId: 'd1', fromId: 'a', toId: 'b', label: 'Vente', notes: '', directed: true, tags: [],
+    properties: [], assetIds: ['deed'], createdAt: new Date(), updatedAt: new Date(),
+  } as never;
+  const deed = {
+    id: 'deed', dossierId: 'd1', filename: 'acte.pdf', mimeType: 'application/pdf', size: 4096, hash: 'h',
+    opfsPath: 'x', thumbnailDataUrl: null, extractedText: null, createdAt: new Date(),
+  } as never;
+  const options = {
+    title: 'Rapport', includeDescription: false, includeSummary: false, includeElements: false, includeLinks: true,
+    includeInsights: false, includeTimeline: false, includeProperties: false, includeFiles: true, includeFiches: false,
+    groupElementsByTag: false, sortElementsBy: 'label', tableFormat: false,
+  } as never;
+  const render = (format: 'html' | 'markdown') =>
+    reportService.generate(format, dossier, [el('a', 'Vendeur'), el('b', 'Acheteur')], [link], [deed], options, 'fr');
+
+  it('lists them with the link they belong to, in HTML', () => {
+    const html = render('html');
+    expect(html).toContain('acte.pdf');
+    expect(html).toContain('Vendeur → Acheteur (Vente) - 4.0 Ko');
+  });
+
+  it('lists them with the link they belong to, in Markdown', () => {
+    const md = render('markdown');
+    expect(md).toContain('| Vendeur | Acheteur | → | Vente | - | acte.pdf |');
+    expect(md).toContain('| Vendeur → Acheteur (Vente) | acte.pdf | application/pdf | 4.0 Ko |');
+  });
+});

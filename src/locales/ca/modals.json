@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Generar síntesi",
     "reportTitle": "Títol de la síntesi",
+    "scope": "Abast",
+    "scopeAll": "Expedient sencer",
+    "scopeSelection": "Selecció ({{count}})",
+    "scopeTab": "Pestanya",
+    "scopeLinked": "Elements vinculats",
     "contentToInclude": "Contingut a incloure",
     "includeDescription": "Descripció de l'expedient",
     "includeSummary": "Resum estadístic",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Confiança",
     "jsonDescription": "JSON+: dades estructurades amb anàlisi del graf",
     "jsonTooltip": "Exportació JSON estructurada amb dades enriquides",
-    "print": "Imprimir",
+    "print": "Imprimir / PDF",
     "capture": {
       "preparing": "Preparant captures...",
       "viewsAdjusted": "Les vistes s'ajusten per mostrar tots els elements",
@@ -567,6 +572,7 @@
       "linkType": "Tipus d'enllaç",
       "fileType": "Tipus",
       "filename": "Fitxer",
+      "attachedTo": "Adjunt a",
       "size": "Mida",
       "noTag": "Sense etiqueta",
       "unknown": "Desconegut",

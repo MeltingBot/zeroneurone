@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useId } from 'react';
+import { useState, useCallback, useRef, useEffect, useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, FileText, Download, Printer, FileCode, Camera, Loader, Braces } from 'lucide-react';
 import {
@@ -7,7 +7,8 @@ import {
   type ReportOptions,
   DEFAULT_REPORT_OPTIONS,
 } from '../../services/reportService';
-import { useDossierStore, useViewStore, useUIStore } from '../../stores';
+import { useDossierStore, useViewStore, useUIStore, useTabStore, useSelectionStore } from '../../stores';
+import { scopeReportData, type ReportScope } from '../../services/reportScope';
 import { useShallow } from 'zustand/react/shallow';
 import type { DisplayMode } from '../../types';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -27,7 +28,28 @@ interface ScreenshotOptions {
 export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   const { t, i18n } = useTranslation('modals');
   const evaluationModel = useEvaluationModel();
-  const { currentDossier, elements, links, assets } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, assets: s.assets })));
+  const { currentDossier, elements: allElements, links: allLinks, assets: allAssets } = useDossierStore(useShallow((s) => ({ currentDossier: s.currentDossier, elements: s.elements, links: s.links, assets: s.assets })));
+  const { tabs, activeTabId } = useTabStore(useShallow((s) => ({ tabs: s.tabs, activeTabId: s.activeTabId })));
+  const { selectedElementIds, selectedLinkIds } = useSelectionStore(useShallow((s) => ({ selectedElementIds: s.selectedElementIds, selectedLinkIds: s.selectedLinkIds })));
+  const selectionCount = selectedElementIds.size + selectedLinkIds.size;
+
+  // What the synthesis covers: 'all', 'selection' or a tab id
+  const [scopeKey, setScopeKey] = useState<string>('all');
+  const [includeLinked, setIncludeLinked] = useState(false);
+  // Chosen on opening, from the selection or the tab open at that moment
+  const [wasOpen, setWasOpen] = useState(false);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setScopeKey(selectionCount > 0 ? 'selection' : activeTabId ?? 'all');
+  }
+
+  const { elements, links, assets } = useMemo(() => {
+    const tab = tabs.find((tb) => tb.id === scopeKey);
+    const scope: ReportScope = scopeKey === 'selection' && selectionCount > 0
+      ? { kind: 'selection', elementIds: [...selectedElementIds], linkIds: [...selectedLinkIds] }
+      : tab ? { kind: 'tab', tab } : { kind: 'all' };
+    return scopeReportData({ elements: allElements, links: allLinks, assets: allAssets }, scope, includeLinked);
+  }, [scopeKey, includeLinked, tabs, selectedElementIds, selectedLinkIds, selectionCount, allElements, allLinks, allAssets]);
   const { displayMode, setDisplayMode } = useViewStore(useShallow((s) => ({ displayMode: s.displayMode, setDisplayMode: s.setDisplayMode })));
   const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore(useShallow((s) => ({ captureView: s.captureView, captureHandlers: s.captureHandlers, themeMode: s.themeMode, setThemeMode: s.setThemeMode })));
 
@@ -242,6 +264,42 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
               className="w-full px-3 py-2 text-sm border border-border-default rounded bg-bg-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
               disabled={isGenerating}
             />
+          </div>
+
+          {/* Scope */}
+          <div className="mb-4">
+            <label htmlFor={`${titleId}-scope`} className="block text-xs font-medium text-text-secondary mb-1">
+              {t('synthesis.scope')}
+            </label>
+            <div className="flex items-center gap-3">
+              <select
+                id={`${titleId}-scope`}
+                value={scopeKey}
+                onChange={(e) => setScopeKey(e.target.value)}
+                className="flex-1 min-w-0 px-2 py-1 text-sm border border-border-default rounded bg-bg-primary"
+                disabled={isGenerating}
+              >
+                <option value="all">{t('synthesis.scopeAll')}</option>
+                {selectionCount > 0 && (
+                  <option value="selection">{t('synthesis.scopeSelection', { count: selectionCount })}</option>
+                )}
+                {tabs.map((tb) => (
+                  <option key={tb.id} value={tb.id}>{tb.name || t('synthesis.scopeTab')}</option>
+                ))}
+              </select>
+              {scopeKey !== 'all' && (
+                <label className="flex items-center gap-2 text-sm shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={includeLinked}
+                    onChange={(e) => setIncludeLinked(e.target.checked)}
+                    className="rounded border-border-default"
+                    disabled={isGenerating}
+                  />
+                  <span className="text-text-primary">{t('synthesis.scopeLinked')}</span>
+                </label>
+              )}
+            </div>
           </div>
 
           {/* Content options */}

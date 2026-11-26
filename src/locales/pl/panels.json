@@ -67,7 +67,10 @@
       "retentionFrom": "Licz od",
       "retentionFromCreated": "Utworzenia",
       "retentionFromClosed": "Zamknięcia",
-      "retentionStartsAtClosure": "Okres rozpocznie się w chwili zamknięcia."
+      "retentionStartsAtClosure": "Okres rozpocznie się w chwili zamknięcia.",
+      "unusedFiles": "Nieużywane pliki",
+      "unusedFilesErase": "Usuń",
+      "unusedFilesConfirm": "Usunąć te pliki?"
     },
     "placeholders": {
       "name": "Nazwa teczki",
@@ -618,9 +621,9 @@
     "linkStraight": "Proste",
     "linkOrthogonal": "Kąty proste",
     "linkJumps": "Mostki na skrzyżowaniach",
-    "linkCrossings": "Skrzyżowania",
-    "linkDates": "Daty",
+    "linkShow": "Pokaż",
     "linkDatesHint": "Daty początku i końca na powiązaniach",
+    "linkFilesHint": "Pliki dołączone do powiązań",
     "linkAnchor": "Zakotwiczenie",
     "linkAnchorManual": "Ręczne",
     "linkAnchorAuto": "Automatyczne",

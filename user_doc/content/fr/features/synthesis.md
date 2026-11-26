@@ -21,6 +21,18 @@ Barre d'outils → Bouton **Synthèse** (icône document)
 
 Personnalisez le titre du document généré. Par défaut, le nom du dossier est utilisé.
 
+### Périmètre
+
+La synthèse porte sur le **dossier entier**, sur un **onglet**, ou sur la **sélection** du canvas (proposée quand il y en a une).
+
+- Les liens retenus sont ceux entre les éléments retenus. Un lien sélectionné apporte ses deux éléments, un groupe ses enfants.
+- **Éléments liés** ajoute les voisins directs de ces éléments et les liens vers eux, comme les fantômes d'un onglet. Deux voisins ne sont pas reliés entre eux dans la synthèse.
+- Les fichiers joints, les statistiques et l'analyse du graphe ne portent que sur ce périmètre.
+
+{{< hint warning >}}
+La fenêtre s'ouvre sur la sélection en cours s'il y en a une, sinon sur l'onglet ouvert. Vérifiez le périmètre avant de générer une synthèse du dossier entier.
+{{< /hint >}}
+
 ### Contenu à inclure
 
 Sélectionnez les sections à inclure dans la synthèse :
@@ -96,9 +108,9 @@ Utile pour :
 - Analyse programmatique
 - Archivage structuré
 
-### Imprimer
+### Imprimer / PDF
 
-Ouvre une fenêtre d'impression avec le document HTML formaté.
+Ouvre une fenêtre d'impression avec le document HTML formaté. Pour un PDF, choisir **Enregistrer au format PDF** comme imprimante : le texte reste sélectionnable et la recherche fonctionne dans le PDF.
 
 ---
 

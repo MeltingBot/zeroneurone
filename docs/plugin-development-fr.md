@@ -642,7 +642,7 @@ Chaque poste emet les actions faites sur lui : une modification recue d'un colla
 | `element:tagAdded` / `element:tagRemoved` | elementId | Tag ajoute / retire | `tagName` |
 | `element:merged` | element garde | Fusion | `mergedIds` |
 | `link:created` / `link:updated` / `link:deleted` | linkId | Lien cree / modifie / supprime | comme les elements |
-| `asset:created` / `asset:deleted` | assetId | Fichier attache / supprime | |
+| `asset:created` / `asset:deleted` | assetId | Fichier attache (a un element ou un lien) / efface du dossier : `asset:deleted` part quand plus rien ne l'utilise, sa fiche est deja effacee | `asset:deleted` : `filename`, `hash` |
 | `comment:created` / `resolved` / `unresolved` / `deleted` | commentId | Commentaire | `targetId` |
 | `tag:renamed` | — | Tag renomme dans tout le dossier | `from`, `to`, `elements`, `links` |
 | `report:updated` | — | Rapport modifie (les saisies d'une section sont regroupees) | `action`, `sectionId` |
@@ -1469,6 +1469,8 @@ Seuls les membres declares dans `types/plugin-api.d.ts` sont stables. Les stores
 | `pluginData.setGlobal(key, value)` | Ecrire une donnee globale |
 | `pluginData.removeGlobal(key)` | Supprimer une donnee globale |
 | `pluginId` | L'ID du plugin (depuis le manifeste) |
+
+> **Fichiers du dossier** — ajouter un fichier avec `addAsset(elementId, file)` ou `addLinkAsset(linkId, file)` du `dossierStore`, qui l'attache a un element ou un lien. Un fichier que rien n'utilise (ni element, ni lien, ni image, ni source `asset:<hash>`) apparait dans la liste « Fichiers inutilisés » (panneau du dossier, section Retention) et peut etre efface par l'utilisateur. Un plugin ne doit donc pas garder de fichier dans `db.assets` sans l'attacher : ses donnees propres vont dans `pluginData`.
 
 **Services (export, import, navigation) :**
 

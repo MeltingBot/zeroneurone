@@ -37,6 +37,27 @@ function attach(link: Link): { ydoc: Y.Doc; ymap: Y.Map<unknown> } {
   return { ydoc, ymap };
 }
 
+describe('linkMapper — attached files', () => {
+  it('round-trips the files in their order', () => {
+    const { ymap } = attach(makeLink({ assetIds: ['f2', 'f1'] }));
+    expect(yMapToLink(ymap).assetIds).toEqual(['f2', 'f1']);
+  });
+
+  it('reads a link written before links carried files as having none', () => {
+    const { ymap } = attach(makeLink());
+    ymap.delete('assetIds');
+    expect(yMapToLink(ymap).assetIds).toEqual([]);
+  });
+
+  it('updates the list, and leaves it when the change does not name it', () => {
+    const { ydoc, ymap } = attach(makeLink({ assetIds: ['f1'] }));
+    updateLinkYMap(ymap, { assetIds: ['f1', 'f2'] }, ydoc);
+    expect(yMapToLink(ymap).assetIds).toEqual(['f1', 'f2']);
+    updateLinkYMap(ymap, { label: 'Vente' }, ydoc);
+    expect(yMapToLink(ymap).assetIds).toEqual(['f1', 'f2']);
+  });
+});
+
 describe('linkMapper — route offsets', () => {
   it('keeps the right-angle offset apart from the curve offset', () => {
     const { ymap } = attach(makeLink({ curveOffset: { x: 5, y: 6 }, orthogonalOffset: { x: -20, y: 30 } }));

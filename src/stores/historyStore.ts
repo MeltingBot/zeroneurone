@@ -363,8 +363,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         break;
 
       case 'add-asset':
-        // Undo asset attachment: detach + remove the asset
-        if (action.undo.snapshot?.elementId && action.undo.snapshot?.assetId) {
+        // Undo asset attachment: detach it (the file leaves the dossier when nothing else uses it)
+        if (action.undo.snapshot?.linkId && action.undo.snapshot?.assetId) {
+          await store.removeLinkAsset(action.undo.snapshot.linkId, action.undo.snapshot.assetId);
+        } else if (action.undo.snapshot?.elementId && action.undo.snapshot?.assetId) {
           await store.removeAsset(action.undo.snapshot.elementId, action.undo.snapshot.assetId);
         }
         break;
@@ -396,6 +398,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
               notes: before.notes,
               tags: before.tags,
               properties: before.properties,
+              assetIds: before.assetIds ?? [],
             });
           }
         }
@@ -646,7 +649,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
       case 'add-asset':
         // Redo asset attachment: re-add the file (saveAsset dedups by hash → same id)
-        if (action.redo.snapshot?.elementId && action.redo.snapshot?.file) {
+        if (action.redo.snapshot?.linkId && action.redo.snapshot?.file) {
+          await store.addLinkAsset(action.redo.snapshot.linkId, action.redo.snapshot.file);
+        } else if (action.redo.snapshot?.elementId && action.redo.snapshot?.file) {
           await store.addAsset(action.redo.snapshot.elementId, action.redo.snapshot.file);
         }
         break;

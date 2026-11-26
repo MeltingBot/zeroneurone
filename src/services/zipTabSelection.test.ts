@@ -6,8 +6,8 @@ type Data = Pick<ExportData, 'elements' | 'links' | 'tabs' | 'assets'>;
 
 const el = (id: string, over: Record<string, unknown> = {}) =>
   ({ id, label: id, assetIds: [], source: '', parentGroupId: null, childIds: [], ...over }) as unknown as ExportData['elements'][number];
-const link = (id: string, fromId: string, toId: string) =>
-  ({ id, fromId, toId, source: '' }) as unknown as ExportData['links'][number];
+const link = (id: string, fromId: string, toId: string, assetIds: string[] = []) =>
+  ({ id, fromId, toId, source: '', assetIds }) as unknown as ExportData['links'][number];
 const tab = (id: string, name: string, order: number, memberElementIds: string[]) =>
   ({ id, name, order, memberElementIds, excludedElementIds: [] }) as unknown as NonNullable<ExportData['tabs']>[number];
 const asset = (id: string) => ({ id, filename: `${id}.pdf`, mimeType: 'application/pdf', size: 1, archivePath: `assets/${id}.pdf` });
@@ -38,6 +38,14 @@ describe('selectZipTabs', () => {
     expect(out.links.map((l) => l.id)).toEqual(['ab']);
     expect(out.tabs?.map((t) => t.id)).toEqual(['t1']);
     expect(out.assets?.map((a) => a.id)).toEqual(['f1']);
+  });
+
+  it('keeps the files of the kept links', () => {
+    const data = archive();
+    data.links[0] = link('ab', 'a', 'b', ['f3']);
+    data.assets = [...(data.assets ?? []), asset('f3')];
+    const out = selectZipTabs(data, { tabIds: ['t1'], includeUnassigned: false });
+    expect(out.assets?.map((a) => a.id)).toEqual(['f1', 'f3']);
   });
 
   it('adds the elements in no tab when asked', () => {

@@ -67,7 +67,10 @@
       "retentionFrom": "Compter depuis",
       "retentionFromCreated": "La création",
       "retentionFromClosed": "La clôture",
-      "retentionStartsAtClosure": "La durée commencera à la clôture."
+      "retentionStartsAtClosure": "La durée commencera à la clôture.",
+      "unusedFiles": "Fichiers inutilisés",
+      "unusedFilesErase": "Effacer",
+      "unusedFilesConfirm": "Effacer ces fichiers ?"
     },
     "placeholders": {
       "name": "Nom du dossier",
@@ -617,9 +620,9 @@
     "linkStraight": "Droites",
     "linkOrthogonal": "Angles droits",
     "linkJumps": "Ponts aux croisements",
-    "linkCrossings": "Croisements",
-    "linkDates": "Dates",
+    "linkShow": "Afficher",
     "linkDatesHint": "Dates de début et de fin sur les liens",
+    "linkFilesHint": "Fichiers joints sur les liens",
     "linkAnchor": "Ancrage",
     "linkAnchorManual": "Manuel",
     "linkAnchorAuto": "Automatique",

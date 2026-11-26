@@ -5,7 +5,7 @@ weight: 7
 
 # Attachments
 
-Attach documents, images, and files to your elements to enrich your documentation.
+Attach documents, images, and files to your elements, and to your links, to enrich your documentation.
 
 
 ## Supported Formats
@@ -43,6 +43,21 @@ Attach documents, images, and files to your elements to enrich your documentatio
 3. **Ctrl+V**: the image is attached to the element
 
 > Any file addition (paste, drag-and-drop, button) can be undone with **Ctrl+Z**; **Ctrl+Y** redoes it.
+
+
+### Files on a link
+
+A document may prove the relationship itself rather than either party: the deed of a sale, a transfer order, a call record. Select the link: its detail panel also has a **Files** section, with the same drag-and-drop, button and paste (**Ctrl+V** with the link selected).
+
+- On the canvas, a paperclip followed by the number of files shows under the link label (hidden from the **Views** panel, **Links** section, **Show** group).
+- Text extracted from a link's files is indexed: search (Ctrl+K) finds the link.
+- They appear in the synthesis (links table and attached files list), in the interactive report (clicking a link's paperclip shows its files), in the Obsidian export (the relation line points to their copy in `attachments/`) and on the mobile companion (under the link, on the sheet of each of its two elements).
+- A link's files have no canvas thumbnail and no metadata import (that metadata fills an element's properties and position).
+- When two elements are merged and two identical links of theirs become one, the kept link keeps the files of both.
+
+{{< hint info >}}
+**Link or element?** A relationship between two parties, proven by a document: a file on the link is enough. A transaction with several parties (seller, buyer, notary, property) or several documents is better shown as a "Sale of …" element linked to each of them.
+{{< /hint >}}
 
 
 ---
@@ -86,15 +101,23 @@ Other formats display an icon and allow download.
 | **Download** | Save to your machine |
 | **Extract text** | Run or re-run text content extraction |
 | **Clear text** | Remove extracted text from the index |
-| **Delete** | Remove file from element |
+| **Delete** | Remove file from element or link |
 
 
 ### Shared Files
 
-The same file can be attached to multiple elements:
+The same file can be attached to multiple elements and links:
 
 - The file is stored only once (deduplication)
-- Deleting from one element doesn't delete from others
+- Removing it from one element or link leaves it on the others
+- Once nothing uses it (no element, link, element image or source citing it), removing it **erases** it from the browser: it does not come back on reload and no longer goes into exports
+- Exceptions: if a deleted element or link that carried it can still come back with **Ctrl+Z**, or if the dossier is shared (a collaborator's undo may need it), the file stays stored, without going into exports; see **Unused files** below
+
+### Unused files
+
+The files of deleted elements and links stay stored in the browser so that an undo (**Ctrl+Z**) brings them back. They go into no export, but they are not erased on their own, even after a reload.
+
+To erase them: dossier panel, **Retention** section, **Unused files** list (name, size, preview on hover, total at the top). Tick the files to erase, or **Select all**, then **Erase** and confirm. An undo will no longer bring them back, yours or a collaborator's in a shared dossier. The list only shows when there are some.
 
 ---
 
@@ -205,7 +228,7 @@ Extracted text is automatically indexed in the search engine. A Ctrl+K search fo
 
 ### ZIP Export
 
-The **ZIP** export includes all attached files:
+The **ZIP** export includes the files attached to elements and links. Files nothing uses anymore (those of a deleted element or link, kept so the deletion can be undone) are left out:
 
 ```
 dossier.zip
@@ -232,7 +255,7 @@ ZIP import automatically restores attached files.
 
 ### Matching
 
-Files are reassociated to elements via their identifier in the JSON.
+Files are reassociated to elements and links via their identifier in the JSON.
 
 ---
 

@@ -373,6 +373,8 @@ export interface DossierSettings {
   linkJumps?: boolean;
   /** Start/end dates of each link written on its line (display only). */
   showLinkDates?: boolean;
+  /** Paperclip and count of the files attached to a link, under its label (display only; shown when absent). */
+  showLinkFiles?: boolean;
   /** Elements drawn larger the more links they have (display only, this device). */
   sizeByDegree?: boolean;
   /**
@@ -464,6 +466,11 @@ export interface Link {
    * (utils/freeBends). Null or absent: a straight line.
    */
   bendPoints?: { x: number; y: number }[] | null;
+  /**
+   * Files attached to the link (a deed for a sale, a transfer order…), in their display order.
+   * Absent on links written before links carried files: read as none.
+   */
+  assetIds?: AssetId[];
   createdAt: Date;
   updatedAt: Date;
 }

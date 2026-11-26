@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Gerar síntese",
     "reportTitle": "Título da síntese",
+    "scope": "Âmbito",
+    "scopeAll": "Dossiê inteiro",
+    "scopeSelection": "Seleção ({{count}})",
+    "scopeTab": "Separador",
+    "scopeLinked": "Elementos ligados",
     "contentToInclude": "Conteúdo a incluir",
     "includeDescription": "Descrição do dossiê",
     "includeSummary": "Resumo estatístico",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Confiança",
     "jsonDescription": "JSON+: dados estruturados com análise do grafo",
     "jsonTooltip": "Exportação JSON estruturada com dados enriquecidos",
-    "print": "Imprimir",
+    "print": "Imprimir / PDF",
     "capture": {
       "preparing": "A preparar capturas...",
       "viewsAdjusted": "As vistas são ajustadas para mostrar todos os elementos",
@@ -567,6 +572,7 @@
       "linkType": "Tipo de ligação",
       "fileType": "Tipo",
       "filename": "Ficheiro",
+      "attachedTo": "Anexado a",
       "size": "Tamanho",
       "noTag": "Sem tag",
       "unknown": "Desconhecido",

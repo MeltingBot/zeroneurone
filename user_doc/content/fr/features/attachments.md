@@ -5,7 +5,7 @@ weight: 7
 
 # Fichiers joints
 
-Attachez des documents, images et fichiers à vos éléments pour enrichir votre documentation.
+Attachez des documents, images et fichiers à vos éléments, et à vos liens, pour enrichir votre documentation.
 
 
 ## Formats supportés
@@ -43,6 +43,21 @@ Attachez des documents, images et fichiers à vos éléments pour enrichir votre
 3. **Ctrl+V** : l'image est attachée à l'élément
 
 > Tout ajout de fichier (collage, glisser-déposer, bouton) est annulable avec **Ctrl+Z** ; **Ctrl+Y** le rétablit.
+
+
+### Fichiers sur un lien
+
+Une pièce peut prouver la relation elle-même plutôt que l'une des deux parties : l'acte de vente d'une transaction, un ordre de virement, un relevé d'appels. Sélectionnez le lien : son panneau de détail a lui aussi une section **Fichiers**, avec le même glisser-déposer, le même bouton et le même collage (**Ctrl+V** avec le lien sélectionné).
+
+- Sur le canvas, un trombone suivi du nombre de fichiers s'affiche sous le libellé du lien (à masquer dans le panneau **Vues**, section **Liaisons**, groupe **Afficher**).
+- Le texte extrait des fichiers d'un lien est indexé : la recherche (Ctrl+K) retrouve le lien.
+- Ils figurent dans la synthèse (tableau des liens et liste des fichiers joints), dans le rapport interactif (un clic sur le trombone d'un lien affiche ses fichiers), dans l'export Obsidian (la ligne de relation pointe vers leur copie dans `attachments/`) et sur le compagnon mobile (sous le lien, dans la fiche de chacun de ses deux éléments).
+- Les fichiers d'un lien n'ont ni miniature sur le canvas ni import de métadonnées (ces métadonnées alimentent les propriétés et la position d'un élément).
+- Quand deux éléments sont fusionnés et que deux de leurs liens identiques n'en font plus qu'un, le lien conservé garde les fichiers des deux.
+
+{{< hint info >}}
+**Lien ou élément ?** Une relation entre deux parties, prouvée par une pièce : un fichier sur le lien suffit. Une transaction à plusieurs parties (vendeur, acheteur, notaire, bien) ou portant plusieurs pièces se représente mieux par un élément « Vente du … » relié à chacune.
+{{< /hint >}}
 
 
 ---
@@ -85,15 +100,23 @@ Les autres formats affichent une icône et permettent le téléchargement.
 | **Télécharger** | Sauvegarder sur votre machine |
 | **Extraire le texte** | Lancer ou relancer l'extraction du contenu textuel |
 | **Effacer le texte** | Supprimer le texte extrait de l'index |
-| **Supprimer** | Retirer le fichier de l'élément |
+| **Supprimer** | Retirer le fichier de l'élément ou du lien |
 
 
 ### Fichiers partagés
 
-Un même fichier peut être attaché à plusieurs éléments :
+Un même fichier peut être attaché à plusieurs éléments et liens :
 
 - Le fichier n'est stocké qu'une fois (déduplication)
-- Supprimer d'un élément ne supprime pas des autres
+- Le retirer d'un élément ou d'un lien le laisse sur les autres
+- Quand plus rien ne l'utilise (ni élément, ni lien, ni image d'élément, ni source qui le cite), le retirer l'**efface** du navigateur : il ne revient pas au rechargement et ne part plus dans les exports
+- Exceptions : si un élément ou un lien supprimé qui le portait peut encore revenir par **Ctrl+Z**, ou si le dossier est partagé (l'annulation d'un collaborateur peut en avoir besoin), le fichier reste stocké, sans partir dans les exports ; voir **Fichiers inutilisés** ci-dessous
+
+### Fichiers inutilisés
+
+Les fichiers des éléments et liens supprimés restent stockés dans le navigateur pour qu'une annulation (**Ctrl+Z**) les ramène. Ils ne partent dans aucun export, mais ils ne sont pas effacés d'eux-mêmes, même après un rechargement.
+
+Pour les effacer : panneau du dossier, section **Rétention**, liste **Fichiers inutilisés** (nom, taille, aperçu au survol, total en tête). Cochez les fichiers à effacer, ou **Tout sélectionner**, puis **Effacer** et confirmer. Une annulation ne les ramènera plus, ni la vôtre ni celle d'un collaborateur dans un dossier partagé. La liste n'apparaît que s'il y en a.
 
 ---
 
@@ -204,7 +227,7 @@ Le texte extrait est automatiquement indexe dans le moteur de recherche. Un Ctrl
 
 ### Export ZIP
 
-L'export **ZIP** inclut tous les fichiers joints :
+L'export **ZIP** inclut les fichiers joints aux éléments et aux liens. Les fichiers que plus rien n'utilise (ceux d'un élément ou d'un lien supprimé, gardés pour pouvoir annuler la suppression) n'y figurent pas :
 
 ```
 enquete.zip
@@ -231,7 +254,7 @@ L'import ZIP restaure automatiquement les fichiers joints.
 
 ### Correspondance
 
-Les fichiers sont réassociés aux éléments via leur identifiant dans le JSON.
+Les fichiers sont réassociés aux éléments et aux liens via leur identifiant dans le JSON.
 
 ---
 

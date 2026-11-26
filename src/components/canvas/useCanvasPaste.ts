@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
-import { useViewStore, useUIStore, useClipboardStore, toast } from '../../stores';
+import { useViewStore, useUIStore, useClipboardStore, useSelectionStore, toast } from '../../stores';
 import type { Element, Link } from '../../types';
 import { isMappableJson } from '../../utils/jsonMapping';
 import { isMermaidFlowchart } from '../../services/importMermaid';
@@ -250,10 +250,11 @@ export function useCanvasPaste({
 
       // PRIORITY 1: External files (no internal marker means user copied externally)
       if (files.length > 0) {
-        // If an element is selected, let AssetsPanel handle the paste
-        // (it will add the file to the selected element instead of creating a new one)
+        // If an element is selected, or a single link (its detail panel shows),
+        // let AssetsPanel handle the paste: it adds the file to the selection
+        // instead of creating a new element
         const selectedIds = getSelectedElementIds();
-        if (selectedIds.length > 0) {
+        if (selectedIds.length > 0 || useSelectionStore.getState().selectedLinkIds.size === 1) {
           return; // AssetsPanel will handle this via its own paste listener
         }
 

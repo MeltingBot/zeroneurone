@@ -4,7 +4,7 @@ import { File, Image, ImageOff, FileText, FileX2, X, Download, Eye, GripVertical
 import { useDossierStore, useHistoryStore } from '../../stores';
 import { toast } from '../../stores';
 import { useUIStore, type MetadataImportBatch } from '../../stores/uiStore';
-import type { Element, Asset } from '../../types';
+import type { Element, Link, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { generateUUID } from '../../utils';
@@ -16,18 +16,21 @@ import { emitExport } from '../../plugins/pluginEventBus';
 import { isEmlFile } from '../../utils/fileTypes';
 import { useShallow } from 'zustand/react/shallow';
 
-interface AssetsPanelProps {
-  element: Element;
-}
+/** The files of an element, or of a link (no metadata import nor canvas thumbnail there) */
+type AssetsPanelProps = { element: Element; link?: never } | { link: Link; element?: never };
 
-export function AssetsPanel({ element }: AssetsPanelProps) {
+export function AssetsPanel({ element, link }: AssetsPanelProps) {
   const { t } = useTranslation(['panels', 'modals']);
-  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText, updateElement } = useDossierStore(useShallow((s) => ({ assets: s.assets, addAsset: s.addAsset, removeAsset: s.removeAsset, reorderAssets: s.reorderAssets, clearAssetText: s.clearAssetText, extractAssetText: s.extractAssetText, updateElement: s.updateElement })));
+  const { assets, addAsset, removeAsset, reorderAssets, addLinkAsset, removeLinkAsset, reorderLinkAssets, clearAssetText, extractAssetText, updateElement } = useDossierStore(useShallow((s) => ({ assets: s.assets, addAsset: s.addAsset, removeAsset: s.removeAsset, reorderAssets: s.reorderAssets, addLinkAsset: s.addLinkAsset, removeLinkAsset: s.removeLinkAsset, reorderLinkAssets: s.reorderLinkAssets, clearAssetText: s.clearAssetText, extractAssetText: s.extractAssetText, updateElement: s.updateElement })));
   const pushAction = useHistoryStore((s) => s.pushAction);
 
+  const ownerId = element ? element.id : link.id;
+  const ownerAssetIds = (element ? element.assetIds : link.assetIds) ?? [];
+
   // Per-element toggle: hide attached media on the canvas node, keeping the label.
-  const hideMedia = element.visual.hideMedia === true;
+  const hideMedia = element?.visual.hideMedia === true;
   const handleToggleHideMedia = useCallback(() => {
+    if (!element) return;
     const next = !hideMedia;
     updateElement(element.id, { visual: { hideMedia: next } });
     pushAction({
@@ -35,21 +38,22 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       undo: { elementId: element.id, changes: { visual: { hideMedia } as Element['visual'] } },
       redo: { elementId: element.id, changes: { visual: { hideMedia: next } as Element['visual'] } },
     });
-  }, [element.id, hideMedia, updateElement, pushAction]);
+  }, [element, hideMedia, updateElement, pushAction]);
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
 
   // Attach an asset and record it in history so it can be undone (Ctrl+Z removes the asset).
   const addAssetWithHistory = useCallback(
     async (file: File): Promise<Asset> => {
-      const asset = await addAsset(element.id, file);
+      const asset = element ? await addAsset(ownerId, file) : await addLinkAsset(ownerId, file);
+      const owner = element ? { elementId: ownerId } : { linkId: ownerId };
       pushAction({
         type: 'add-asset',
-        undo: { snapshot: { elementId: element.id, assetId: asset.id } },
-        redo: { snapshot: { elementId: element.id, file } },
+        undo: { snapshot: { ...owner, assetId: asset.id } },
+        redo: { snapshot: { ...owner, file } },
       });
       return asset;
     },
-    [addAsset, element.id, pushAction]
+    [addAsset, addLinkAsset, element, ownerId, pushAction]
   );
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
@@ -62,14 +66,16 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
   const [dragOverAssetId, setDragOverAssetId] = useState<string | null>(null);
   const dragCounter = useRef(0);
 
-  // Get assets for this element, preserving order from assetIds
-  const elementAssets = element.assetIds
+  // Get assets for this element or link, preserving order from assetIds
+  const elementAssets = ownerAssetIds
     .map((id) => assets.find((a) => a.id === id))
     .filter((a): a is Asset => a !== undefined);
 
-  // Extract metadata from a file and queue for import if found
+  // Extract metadata from a file and queue for import if found (elements only:
+  // the import fills an element's properties and position)
   const extractAndQueueMetadata = useCallback(
     async (file: File, batch?: MetadataImportBatch) => {
+      if (!element) return false;
       try {
         const buffer = await file.arrayBuffer();
         const metadata = await metadataService.extractMetadata(file, buffer);
@@ -89,7 +95,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         return false;
       }
     },
-    [element.id, element.label, pushMetadataImport]
+    [element, pushMetadataImport]
   );
 
   const handlePaste = useCallback(
@@ -207,11 +213,11 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
 
   const handleConfirmRemove = useCallback(
     async () => {
-      if (deleteAssetId) {
-        await removeAsset(element.id, deleteAssetId);
-      }
+      if (!deleteAssetId) return;
+      if (element) await removeAsset(ownerId, deleteAssetId);
+      else await removeLinkAsset(ownerId, deleteAssetId);
     },
-    [element.id, deleteAssetId, removeAsset]
+    [element, ownerId, deleteAssetId, removeAsset, removeLinkAsset]
   );
 
   const handleClearText = useCallback(
@@ -286,21 +292,22 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       }
 
       // Reorder: move draggingAssetId to the position of targetAssetId
-      const currentOrder = [...element.assetIds];
+      const currentOrder = [...ownerAssetIds];
       const dragIndex = currentOrder.indexOf(draggingAssetId);
       const dropIndex = currentOrder.indexOf(targetAssetId);
 
       if (dragIndex !== -1 && dropIndex !== -1) {
         currentOrder.splice(dragIndex, 1);
         currentOrder.splice(dropIndex, 0, draggingAssetId);
-        reorderAssets(element.id, currentOrder);
+        if (element) reorderAssets(ownerId, currentOrder);
+        else reorderLinkAssets(ownerId, currentOrder);
       }
 
       setDraggingAssetId(null);
       setDragOverAssetId(null);
       dragCounter.current = 0;
     },
-    [draggingAssetId, element.id, element.assetIds, reorderAssets]
+    [draggingAssetId, element, ownerId, ownerAssetIds, reorderAssets, reorderLinkAssets]
   );
 
   const handleReorderDragEnd = useCallback(() => {
@@ -363,6 +370,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
               key={asset.id}
               asset={asset}
               index={index}
+              showFirstMarker={!!element}
               onRemove={() => handleRemove(asset.id)}
               onClearText={asset.extractedText ? () => handleClearText(asset.id) : undefined}
               onExtractText={
@@ -373,7 +381,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
                   : undefined
               }
               isExtracting={extractingAssetId === asset.id}
-              onExtractMetadata={() => handleExtractMetadata(asset)}
+              onExtractMetadata={element ? () => handleExtractMetadata(asset) : undefined}
               isExtractingMetadata={extractingMetadataId === asset.id}
               onDownload={() => handleDownload(asset)}
               onPreview={() => setPreviewAsset(asset)}
@@ -390,7 +398,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       )}
 
       {/* Per-element toggle: hide media on the canvas node, keep the label */}
-      {elementAssets.some((a) => a.thumbnailDataUrl) && (
+      {element && elementAssets.some((a) => a.thumbnailDataUrl) && (
         <button
           type="button"
           onClick={handleToggleHideMedia}
@@ -433,11 +441,13 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
 interface AssetItemProps {
   asset: Asset;
   index: number;
+  /** Marks the first file, the one an element shows on the canvas */
+  showFirstMarker: boolean;
   onRemove: () => void;
   onClearText?: () => void;
   onExtractText?: () => void;
   isExtracting: boolean;
-  onExtractMetadata: () => void;
+  onExtractMetadata?: () => void;
   isExtractingMetadata: boolean;
   onDownload: () => void;
   onPreview: () => void;
@@ -453,6 +463,7 @@ interface AssetItemProps {
 function AssetItem({
   asset,
   index,
+  showFirstMarker,
   onRemove,
   onClearText,
   onExtractText,
@@ -527,7 +538,7 @@ function AssetItem({
             <Icon size={16} className="text-text-tertiary" />
           )}
           {/* First asset indicator */}
-          {index === 0 && (
+          {showFirstMarker && index === 0 && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" title={tPanels('detail.files.defaultThumbnail')} />
           )}
         </div>
@@ -570,15 +581,17 @@ function AssetItem({
               <Eye size={14} />
             </button>
           )}
-          <button
-            onClick={onExtractMetadata}
-            disabled={isExtractingMetadata}
-            data-testid="extract-metadata"
-            className="p-1 text-text-tertiary hover:text-text-primary disabled:opacity-40"
-            title={tPanels('detail.files.extractMetadata')}
-          >
-            <Info size={14} className={isExtractingMetadata ? 'animate-pulse' : ''} />
-          </button>
+          {onExtractMetadata && (
+            <button
+              onClick={onExtractMetadata}
+              disabled={isExtractingMetadata}
+              data-testid="extract-metadata"
+              className="p-1 text-text-tertiary hover:text-text-primary disabled:opacity-40"
+              title={tPanels('detail.files.extractMetadata')}
+            >
+              <Info size={14} className={isExtractingMetadata ? 'animate-pulse' : ''} />
+            </button>
+          )}
           <button
             onClick={onDownload}
             className="p-1 text-text-tertiary hover:text-text-primary"

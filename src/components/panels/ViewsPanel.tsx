@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
-  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight, Scaling, CalendarRange
+  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight, Scaling, CalendarRange, Paperclip
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useHistoryStore } from '../../stores';
 import { useShallow } from 'zustand/react/shallow';
@@ -106,6 +106,7 @@ export function ViewsPanel() {
     setLinkMultiplicity,
     setLinkJumps,
     setShowLinkDates,
+    setShowLinkFiles,
     setSizeByDegree,
   } = useDossierStore(
     useShallow((s) => ({
@@ -123,6 +124,7 @@ export function ViewsPanel() {
       setLinkMultiplicity: s.setLinkMultiplicity,
       setLinkJumps: s.setLinkJumps,
       setShowLinkDates: s.setShowLinkDates,
+      setShowLinkFiles: s.setShowLinkFiles,
       setSizeByDegree: s.setSizeByDegree,
     })),
   );
@@ -143,6 +145,7 @@ export function ViewsPanel() {
   const linkMultiplicity = settings?.linkMultiplicity ?? 'multiple';
   const linkJumps = settings?.linkJumps === true;
   const showLinkDates = settings?.showLinkDates === true;
+  const showLinkFiles = settings?.showLinkFiles !== false;
   const sizeByDegree = currentDossier?.settings?.sizeByDegree === true;
 
   // Get all unique property keys from elements and links
@@ -375,20 +378,20 @@ export function ViewsPanel() {
               ))}
             </OptionGroup>
 
-            <OptionGroup label={t('views.linkDates')}>
+            {/* What the lines carry: dates, arcs where right-angle links cross, attached files */}
+            <OptionGroup label={t('views.linkShow')}>
               <OptionButton active={showLinkDates} title={t('views.linkDatesHint')} onClick={() => setShowLinkDates(!showLinkDates)}>
                 <CalendarRange size={14} />
               </OptionButton>
-            </OptionGroup>
-
-            {/* Right-angle links only: small arcs where they cross */}
-            {linkCurveMode === 'orthogonal' && (
-              <OptionGroup label={t('views.linkCrossings')}>
+              {linkCurveMode === 'orthogonal' && (
                 <OptionButton active={linkJumps} title={t('views.linkJumps')} onClick={() => setLinkJumps(!linkJumps)}>
                   <LineJumpIcon size={14} />
                 </OptionButton>
-              </OptionGroup>
-            )}
+              )}
+              <OptionButton active={showLinkFiles} title={t('views.linkFilesHint')} onClick={() => setShowLinkFiles(!showLinkFiles)}>
+                <Paperclip size={14} />
+              </OptionButton>
+            </OptionGroup>
           </div>
         </div>
 

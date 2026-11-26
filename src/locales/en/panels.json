@@ -67,7 +67,10 @@
       "retentionFrom": "Count from",
       "retentionFromCreated": "Creation",
       "retentionFromClosed": "Closure",
-      "retentionStartsAtClosure": "The period will start at closure."
+      "retentionStartsAtClosure": "The period will start at closure.",
+      "unusedFiles": "Unused files",
+      "unusedFilesErase": "Erase",
+      "unusedFilesConfirm": "Erase these files?"
     },
     "placeholders": {
       "name": "Dossier name",
@@ -616,9 +619,9 @@
     "linkStraight": "Straight",
     "linkOrthogonal": "Right angles",
     "linkJumps": "Jumps at crossings",
-    "linkCrossings": "Crossings",
-    "linkDates": "Dates",
+    "linkShow": "Show",
     "linkDatesHint": "Start and end dates on links",
+    "linkFilesHint": "Files attached to links",
     "linkAnchor": "Anchor",
     "linkAnchorManual": "Manual",
     "linkAnchorAuto": "Automatic",

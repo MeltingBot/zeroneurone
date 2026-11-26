@@ -67,7 +67,10 @@
       "retentionFrom": "Conta da",
       "retentionFromCreated": "La creazione",
       "retentionFromClosed": "La chiusura",
-      "retentionStartsAtClosure": "Il periodo inizierà alla chiusura."
+      "retentionStartsAtClosure": "Il periodo inizierà alla chiusura.",
+      "unusedFiles": "File inutilizzati",
+      "unusedFilesErase": "Cancella",
+      "unusedFilesConfirm": "Cancellare questi file?"
     },
     "placeholders": {
       "name": "Nome delil fascicolo",
@@ -617,9 +620,9 @@
     "linkStraight": "Diritte",
     "linkOrthogonal": "Angoli retti",
     "linkJumps": "Ponti agli incroci",
-    "linkCrossings": "Incroci",
-    "linkDates": "Date",
+    "linkShow": "Mostra",
     "linkDatesHint": "Date di inizio e fine sui collegamenti",
+    "linkFilesHint": "File allegati ai collegamenti",
     "linkAnchor": "Ancoraggio",
     "linkAnchorManual": "Manuale",
     "linkAnchorAuto": "Automatico",

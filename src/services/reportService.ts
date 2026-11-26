@@ -172,7 +172,8 @@ class ReportService {
 
     // Count total events and files
     const totalEvents = allEvents.length;
-    const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0);
+    const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0)
+      + links.reduce((sum, lk) => sum + (lk.assetIds?.length ?? 0), 0);
 
     let html = `<!DOCTYPE html>
 <html lang="${locale}">
@@ -423,17 +424,19 @@ class ReportService {
       html += `  <section>
     <h2>${this.t('links')} (${links.length})</h2>
     <table>
-      <tr><th>${this.t('from')}</th><th>${this.t('to')}</th><th>${this.t('type')}</th><th>${this.t('label')}</th><th>${this.t('notes')}</th></tr>
+      <tr><th>${this.t('from')}</th><th>${this.t('to')}</th><th>${this.t('type')}</th><th>${this.t('label')}</th><th>${this.t('notes')}</th>${options.includeFiles ? `<th>${this.t('files')}</th>` : ''}</tr>
       ${links.map(link => {
         const fromEl = elements.find(e => e.id === link.fromId);
         const toEl = elements.find(e => e.id === link.toId);
         const arrow = link.directed ? '→' : '↔';
+        const files = this.ownerAssets(link.assetIds, assets);
         return `<tr>
         <td>${escapeHtml(fromEl?.label || '?')}</td>
         <td>${escapeHtml(toEl?.label || '?')}</td>
         <td>${arrow}</td>
         <td>${link.label ? escapeHtml(link.label) : '-'}</td>
         <td class="markdown-content">${link.notes ? this.markdownToHTML(link.notes) : '-'}</td>
+        ${options.includeFiles ? `<td class="file-list">${files.length > 0 ? files.map(a => escapeHtml(a.filename)).join('<br>') : '-'}</td>` : ''}
       </tr>`;
       }).join('\n      ')}
     </table>
@@ -446,8 +449,12 @@ class ReportService {
     <h2>${this.t('attachedFiles')} (${totalFiles})</h2>
     <div class="media-grid">\n`;
 
-      for (const el of elements) {
-        for (const assetId of el.assetIds) {
+      const owners = [
+        ...elements.map(el => ({ caption: el.label, assetIds: el.assetIds })),
+        ...links.map(lk => ({ caption: this.linkCaption(lk, elements), assetIds: lk.assetIds ?? [] })),
+      ];
+      for (const owner of owners) {
+        for (const assetId of owner.assetIds) {
           const asset = assets.find(a => a.id === assetId);
           if (!asset) continue;
           const sizeKB = (asset.size / 1024).toFixed(1);
@@ -460,7 +467,7 @@ class ReportService {
           html += `      <div class="media-item">
         ${hasPreview ? `<img src="${thumb}" alt="${escapeHtml(asset.filename)}" />` : `<div style="width:100pt;height:60pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:8pt;color:var(--color-secondary)">${asset.mimeType.split('/')[0].toUpperCase()}</div>`}
         <div class="media-name">${escapeHtml(asset.filename)}</div>
-        <div style="font-size:7pt;color:var(--color-secondary)">${escapeHtml(el.label)} - ${sizeKB} Ko</div>
+        <div style="font-size:7pt;color:var(--color-secondary)">${escapeHtml(owner.caption)} - ${sizeKB} Ko</div>
       </div>\n`;
         }
       }
@@ -629,7 +636,8 @@ class ReportService {
     ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const totalEvents = allEvents.length;
-    const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0);
+    const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0)
+      + links.reduce((sum, lk) => sum + (lk.assetIds?.length ?? 0), 0);
 
     let md = `# ${title}\n\n`;
     md += `*${this.t('generatedOn', { date: new Date().toLocaleDateString(dateLocale(locale)), time: new Date().toLocaleTimeString(dateLocale(locale)) })}*\n\n`;
@@ -740,13 +748,15 @@ class ReportService {
     // Links
     if (options.includeLinks && links.length > 0) {
       md += `## ${this.t('links')} (${links.length})\n\n`;
-      md += `| ${this.t('from')} | ${this.t('to')} | ${this.t('type')} | ${this.t('label')} | ${this.t('notes')} |\n`;
-      md += `|----|------|------|-------|-------|\n`;
+      const linkFiles = options.includeFiles;
+      md += `| ${this.t('from')} | ${this.t('to')} | ${this.t('type')} | ${this.t('label')} | ${this.t('notes')} |${linkFiles ? ` ${this.t('files')} |` : ''}\n`;
+      md += `|----|------|------|-------|-------|${linkFiles ? '-------|' : ''}\n`;
       for (const link of links) {
         const fromEl = elements.find(e => e.id === link.fromId);
         const toEl = elements.find(e => e.id === link.toId);
         const arrow = link.directed ? '→' : '↔';
-        md += `| ${fromEl?.label || '?'} | ${toEl?.label || '?'} | ${arrow} | ${link.label || '-'} | ${link.notes || '-'} |\n`;
+        const files = linkFiles ? ` ${this.ownerAssets(link.assetIds, assets).map(a => a.filename).join(', ') || '-'} |` : '';
+        md += `| ${fromEl?.label || '?'} | ${toEl?.label || '?'} | ${arrow} | ${link.label || '-'} | ${link.notes || '-'} |${files}\n`;
       }
       md += `\n`;
     }
@@ -754,14 +764,18 @@ class ReportService {
     // Files
     if (options.includeFiles && totalFiles > 0) {
       md += `## ${this.t('attachedFiles')} (${totalFiles})\n\n`;
-      md += `| ${this.t('element')} | ${this.t('filename')} | ${this.t('fileType')} | ${this.t('size')} |\n`;
+      md += `| ${this.t('attachedTo')} | ${this.t('filename')} | ${this.t('fileType')} | ${this.t('size')} |\n`;
       md += `|---------|---------|------|--------|\n`;
-      for (const el of elements) {
-        for (const assetId of el.assetIds) {
+      const owners = [
+        ...elements.map(el => ({ caption: el.label, assetIds: el.assetIds })),
+        ...links.map(lk => ({ caption: this.linkCaption(lk, elements), assetIds: lk.assetIds ?? [] })),
+      ];
+      for (const owner of owners) {
+        for (const assetId of owner.assetIds) {
           const asset = assets.find(a => a.id === assetId);
           if (asset) {
             const sizeKB = (asset.size / 1024).toFixed(1);
-            md += `| ${el.label} | ${asset.filename} | ${asset.mimeType} | ${sizeKB} Ko |\n`;
+            md += `| ${owner.caption} | ${asset.filename} | ${asset.mimeType} | ${sizeKB} Ko |\n`;
           }
         }
       }
@@ -947,6 +961,7 @@ class ReportService {
         totalEvents: allEvents.length,
         elementsWithGeo: elements.filter(el => el.geo || el.events.some(ev => ev.geo)).length,
         elementsWithFiles: elements.filter(el => el.assetIds.length > 0).length,
+        linksWithFiles: links.filter(lk => (lk.assetIds?.length ?? 0) > 0).length,
         allTags: [...new Set(elements.flatMap(el => el.tags))],
       },
       elements: elements.map(el => ({
@@ -992,6 +1007,7 @@ class ReportService {
             return acc;
           }, {} as Record<string, unknown>),
           dateRange: link.dateRange || null,
+          fileCount: link.assetIds?.length ?? 0,
         };
       }),
       timeline: allEvents,
@@ -1071,6 +1087,20 @@ class ReportService {
 
     const blob = new Blob([content], { type: mimeType });
     downloadBlob(blob, filename + extension);
+  }
+
+  /** A link named by its ends, as in the files lists: "A → B (label)" */
+  private linkCaption(link: Link, elements: Element[]): string {
+    const from = elements.find(e => e.id === link.fromId)?.label || '?';
+    const to = elements.find(e => e.id === link.toId)?.label || '?';
+    return `${from} ${link.directed ? '→' : '↔'} ${to}${link.label ? ` (${link.label})` : ''}`;
+  }
+
+  /** The files of an element or link, in their order */
+  private ownerAssets(assetIds: string[] | undefined, assets: Asset[]): Asset[] {
+    return (assetIds ?? [])
+      .map(id => assets.find(a => a.id === id))
+      .filter((a): a is Asset => a !== undefined);
   }
 
   private sortElements(elements: Element[], sortBy: ReportOptions['sortElementsBy']): Element[] {

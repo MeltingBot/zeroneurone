@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Generate summary",
     "reportTitle": "Summary title",
+    "scope": "Scope",
+    "scopeAll": "Whole dossier",
+    "scopeSelection": "Selection ({{count}})",
+    "scopeTab": "Tab",
+    "scopeLinked": "Linked elements",
     "contentToInclude": "Content to include",
     "includeDescription": "Dossier description",
     "includeSummary": "Statistical summary",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Confidence",
     "jsonDescription": "JSON+: structured data with graph analysis",
     "jsonTooltip": "Structured JSON export with enriched data",
-    "print": "Print",
+    "print": "Print / PDF",
     "capture": {
       "preparing": "Preparing captures...",
       "viewsAdjusted": "Views are adjusted to display all elements",
@@ -567,6 +572,7 @@
       "linkType": "Link type",
       "fileType": "Type",
       "filename": "File",
+      "attachedTo": "Attached to",
       "size": "Size",
       "noTag": "No tag",
       "unknown": "Unknown",

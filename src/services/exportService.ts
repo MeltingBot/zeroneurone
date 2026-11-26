@@ -15,6 +15,7 @@ import { formatDateForExport, formatPreciseDateKey, parsePropertyDate, toLocalDa
 import { buildObsidianVault, toVaultBasename, type ObsidianLabels } from './exportObsidian';
 import { emitExport } from '../plugins/pluginEventBus';
 import { replaceReportRefs } from '../utils/reportRefs';
+import { referencedAssets } from '../utils/assetReferences';
 import { downloadBlob } from '../utils/download';
 import { escapeXml } from '../utils/escapeHtml';
 import { escapeCsvField } from '../utils/csv';
@@ -205,6 +206,9 @@ class ExportService {
     options: { pluginHooks?: boolean } = {}
   ): Promise<Blob> {
     const zip = new JSZip();
+    // Only the files still in use: those left behind by a deleted element or
+    // link stay stored (an undo brings them back) but do not leave with the dossier
+    assets = referencedAssets(assets, elements, links);
 
     // Prepare asset metadata and add files to ZIP
     const assetsMeta: ExportedAssetMeta[] = [];
@@ -306,6 +310,7 @@ class ExportService {
     // The vault is a folder inside the ZIP: unzipping gives one folder to open as a vault
     const zip = new JSZip();
     const vault = zip.folder(toVaultBasename(dossier.name, labels.untitled))!;
+    assets = referencedAssets(assets, elements, links); // as for a ZIP: files still in use only
     const { files, assetPaths } = buildObsidianVault({ dossier, elements, links, tabs, report, assets, labels, folderByTag });
 
     for (const file of files) {

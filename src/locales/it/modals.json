@@ -493,6 +493,11 @@
   "synthesis": {
     "title": "Genera sintesi",
     "reportTitle": "Titolo della sintesi",
+    "scope": "Ambito",
+    "scopeAll": "Intero fascicolo",
+    "scopeSelection": "Selezione ({{count}})",
+    "scopeTab": "Scheda",
+    "scopeLinked": "Elementi collegati",
     "contentToInclude": "Contenuto da includere",
     "includeDescription": "Descrizione delil fascicolo",
     "includeSummary": "Riepilogo statistico",
@@ -514,7 +519,7 @@
     "sortByConfidence": "Affidabilità",
     "jsonDescription": "JSON+: dati strutturati con analisi del grafo",
     "jsonTooltip": "Esportazione JSON strutturata con dati arricchiti",
-    "print": "Stampa",
+    "print": "Stampa / PDF",
     "capture": {
       "preparing": "Preparazione catture...",
       "viewsAdjusted": "Le viste vengono regolate per mostrare tutti gli elementi",
@@ -567,6 +572,7 @@
       "linkType": "Tipo di collegamento",
       "fileType": "Tipo",
       "filename": "File",
+      "attachedTo": "Allegato a",
       "size": "Dimensione",
       "noTag": "Senza tag",
       "unknown": "Sconosciuto",

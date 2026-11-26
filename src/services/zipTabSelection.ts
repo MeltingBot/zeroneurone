@@ -107,11 +107,11 @@ export function selectZipTabs<T extends Pick<ExportData, 'elements' | 'links' | 
   const elements = data.elements.filter((el) => keep.has(el.id));
   const links = data.links.filter((l) => keep.has(l.fromId) && keep.has(l.toId));
 
-  // Files: those the kept elements carry. A source pointing at a file names it
+  // Files: those the kept elements and links carry. A source pointing at a file names it
   // by its hash, unknown before import: then every file is kept.
   let assets = data.assets;
   if (assets && !elements.some((el) => hasAssetSource(el.source)) && !links.some((l) => hasAssetSource(l.source))) {
-    const used = new Set(elements.flatMap((el) => el.assetIds ?? []));
+    const used = new Set([...elements, ...links].flatMap((owner) => owner.assetIds ?? []));
     assets = assets.filter((a) => used.has(a.id));
   }
 

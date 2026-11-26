@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type MiniSearch from 'minisearch';
 import { searchService, SEARCH_INDEX_TASK } from './searchService';
-import type { Asset, Element, SearchDocument } from '../types';
+import type { Asset, Element, Link, SearchDocument } from '../types';
 
 function element(i: number, changes: Partial<Element> = {}): Element {
   return {
@@ -49,6 +49,18 @@ describe('searchService.syncIncremental', () => {
     const asset = { id: 'a1', extractedText: 'procès-verbal Bérénice' } as Asset;
     searchService.syncIncremental(withAsset, [], [asset]);
     expect(searchService.search('Bérénice').map((r) => r.id)).toEqual(['el-3']);
+  });
+
+  it('indexes the text of the files attached to a link', () => {
+    const link = {
+      id: 'lk-1', dossierId: 'd', fromId: 'el-1', toId: 'el-2', label: 'Vente', notes: '', tags: [],
+      properties: [], assetIds: ['a2'],
+    } as unknown as Link;
+    searchService.syncIncremental(elements, [link], []);
+    expect(searchService.search('Mirabeau')).toEqual([]);
+    const deed = { id: 'a2', extractedText: 'acte notarié rue Mirabeau' } as Asset;
+    searchService.syncIncremental(elements, [link], [deed]);
+    expect(searchService.search('Mirabeau').map((r) => r.id)).toEqual(['lk-1']);
   });
 
   it('removes deleted elements and indexes new ones', () => {

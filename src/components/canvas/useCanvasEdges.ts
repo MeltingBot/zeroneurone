@@ -81,6 +81,8 @@ export interface CanvasEdgesParams {
   displayedProperties: string[];
   /** Start/end dates written on the lines (Views panel option) */
   showLinkDates: boolean;
+  /** Paperclip and count of the files attached to a link (Views panel) */
+  showLinkFiles: boolean;
   editingLinkId: string | null;
   stopEditing: SelectionStore['stopEditing'];
   remoteUsersByLink: Map<string, { name: string; color: string; isEditing?: boolean }[]>;
@@ -125,6 +127,7 @@ export function useCanvasEdges({
   language,
   displayedProperties,
   showLinkDates,
+  showLinkFiles,
   editingLinkId,
   stopEditing,
   remoteUsersByLink,
@@ -260,7 +263,8 @@ export function useCanvasEdges({
           && cd?._dateLocale === propertyDateLocale
           // The properties shown under labels (Views panel): ticking one redraws the links
           && cd?._displayedProperties === displayedProperties
-          && cd?._showLinkDates === showLinkDates;
+          && cd?._showLinkDates === showLinkDates
+          && cd?._showLinkFiles === showLinkFiles;
         if (linkUnchanged && globalsUnchanged) {
           const sameVisuals = cached.selected === isSelected
             && cd?.isDimmed === isLinkDimmed
@@ -335,6 +339,8 @@ export function useCanvasEdges({
         );
         // A merged line has no label of its own, nor dates
         (edge.data as { datesLabel?: string | null }).datesLabel = showLinkDates && !bundle ? linkDatesLabel(link, language) : null;
+        // Files attached to the link: a count beside the grading badge (a merged line has none of its own)
+        (edge.data as { attachmentCount?: number }).attachmentCount = bundle || !showLinkFiles ? 0 : (link.assetIds?.length ?? 0);
         const routeCallbacks = edge.data as Partial<Pick<EdgeCallbacks, 'onOrthogonalRouteChange' | 'onBendPointsChange'>>;
         routeCallbacks.onOrthogonalRouteChange = edgeCbs.onOrthogonalRouteChange;
         routeCallbacks.onBendPointsChange = edgeCbs.onBendPointsChange;
@@ -348,6 +354,7 @@ export function useCanvasEdges({
       edgeData._dateLocale = propertyDateLocale;
       edgeData._displayedProperties = displayedProperties;
       edgeData._showLinkDates = showLinkDates;
+      edgeData._showLinkFiles = showLinkFiles;
       edgeData.isHighlighted = isLinkHighlighted;
       edgeData.flow = flow;
       // The links of a merged line: selected together, their labels shown on hover
@@ -374,7 +381,7 @@ export function useCanvasEdges({
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overviewActive, linkVisualContext, links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, linkMultiplicity, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, showLinkDates, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, showUndated, propertyDateLocale, viewHiddenIds]);
+  }, [overviewActive, linkVisualContext, links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, linkMultiplicity, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, showLinkDates, showLinkFiles, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, showUndated, propertyDateLocale, viewHiddenIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Only the edges not already on screen are added in batches; those already
