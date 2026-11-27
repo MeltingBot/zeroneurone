@@ -95,8 +95,14 @@ export function nextThemePreference(pref: ThemePreference, system: ThemeMode = s
   return pref === system ? 'system' : system;
 }
 
-// Capture handler type - each view registers a function that fits content and returns screenshot
-export type CaptureHandler = () => Promise<string | null>;
+/** A view captured for the synthesis: the graph as a PNG data URL, the map and timeline as SVG markup */
+export interface CaptureResult {
+  format: 'png' | 'svg';
+  data: string;
+}
+
+// Capture handler type - each view registers a function that fits content and returns its capture
+export type CaptureHandler = () => Promise<CaptureResult | null>;
 
 interface UIState {
   // Modal
@@ -190,7 +196,7 @@ interface UIState {
   // Actions - Capture
   registerCaptureHandler: (mode: DisplayMode, handler: CaptureHandler) => void;
   unregisterCaptureHandler: (mode: DisplayMode) => void;
-  captureView: (mode: DisplayMode) => Promise<string | null>;
+  captureView: (mode: DisplayMode) => Promise<CaptureResult | null>;
 
   // Actions - Modal
   openModal: (type: ModalType, data?: unknown) => void;

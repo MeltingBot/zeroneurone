@@ -227,47 +227,6 @@ export function TimelineView() {
     loadThumbnails();
   }, [items]);
 
-  // Register capture handler for report screenshots
-  useEffect(() => {
-    const captureHandler = async (): Promise<string | null> => {
-      if (!containerRef.current || items.length === 0) {
-        return null;
-      }
-
-      const containerWidth = containerRef.current.clientWidth || 800;
-      const timeRangeMs = timeBounds.max.getTime() - timeBounds.min.getTime();
-      const timeRangeDays = timeRangeMs / (24 * 60 * 60 * 1000);
-
-      // Calculate zoom to fit, with some padding
-      const targetZoom = fitZoom(containerWidth - 100, timeRangeDays);
-
-      setZoom(targetZoom);
-      setViewStart(timeBounds.min);
-
-      // Wait longer for render to complete
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const element = document.querySelector('[data-report-capture="timeline"]') as HTMLElement;
-      if (!element) {
-        return null;
-      }
-
-      try {
-        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
-        const { toPng } = await import('html-to-image');
-        return await toPng(element, {
-          backgroundColor: '#faf8f5',
-          pixelRatio: 2,
-          skipFonts: true,
-        });
-      } catch {
-        return null;
-      }
-    };
-
-    registerCaptureHandler('timeline', captureHandler);
-    return () => unregisterCaptureHandler('timeline');
-  }, [items, timeBounds, registerCaptureHandler, unregisterCaptureHandler, setZoom, setViewStart]);
 
   const filteredItems = useMemo(() => {
     if (!filterStartDate && !filterEndDate) return items;
@@ -465,8 +424,9 @@ export function TimelineView() {
   );
 
   // Vector SVG of the timeline as drawn: the span on screen, or the whole period of the items shown
-  const exportSvg = useCallback((span: 'visible' | 'all') => {
+  const buildSvg = useCallback((span: 'visible' | 'all'): string | null => {
     const swimlane = timelineMode === 'swimlane';
+    if ((swimlane ? swimlaneItems : displayedItems).length === 0) return null;
     let start = viewStart;
     let scale = zoom;
     let width = getContainerWidth();
@@ -480,7 +440,7 @@ export function TimelineView() {
       scale = fitZoom(width - leftPad - EXPORT_EDGE, (max - min) / DAY_MS);
       start = new Date(min - (leftPad / scale) * DAY_MS);
     }
-    const svg = buildTimelineSVG({
+    return buildTimelineSVG({
       mode: swimlane ? 'swimlane' : 'scatter',
       items: itemsWithRows,
       lanes: swimlaneLanes,
@@ -491,8 +451,23 @@ export function TimelineView() {
       language: i18n.language,
       anonymous: anonymousMode,
     });
-    exportTimelineToSVG(svg, `${exportBaseName()}.svg`);
-  }, [timelineMode, viewStart, zoom, getContainerWidth, swimlaneItems, displayedItems, itemsWithRows, swimlaneLanes, collapsedLanes, i18n.language, anonymousMode, exportBaseName]);
+  }, [timelineMode, viewStart, zoom, getContainerWidth, swimlaneItems, displayedItems, itemsWithRows, swimlaneLanes, collapsedLanes, i18n.language, anonymousMode]);
+
+  const exportSvg = useCallback((span: 'visible' | 'all') => {
+    const svg = buildSvg(span);
+    if (svg) exportTimelineToSVG(svg, `${exportBaseName()}.svg`);
+  }, [buildSvg, exportBaseName]);
+
+  // The synthesis captures the whole period of the items shown, in SVG
+  const buildSvgRef = useRef(buildSvg);
+  useEffect(() => { buildSvgRef.current = buildSvg; }, [buildSvg]);
+  useEffect(() => {
+    registerCaptureHandler('timeline', async () => {
+      const data = buildSvgRef.current('all');
+      return data ? { format: 'svg', data } : null;
+    });
+    return () => unregisterCaptureHandler('timeline');
+  }, [registerCaptureHandler, unregisterCaptureHandler]);
 
   // Density heatmap — adaptive bucket size based on zoom
   const densityData = useMemo(() => {

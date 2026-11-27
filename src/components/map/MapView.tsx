@@ -4,6 +4,7 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore, toast } from '../../stores';
+import type { CaptureResult } from '../../stores/uiStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds } from '../../utils/filterUtils';
@@ -589,6 +590,8 @@ export function MapView() {
     return points;
   }, [showDensity, densitySource, densityPerElement, effectiveGeoElements, effectiveDimmedIds, elements, isOnMap, temporalMode, selectedDate, periodWindow]);
 
+  // Synthesis capture under way: markers are not gathered in clusters
+  const [captureUnclustered, setCaptureUnclustered] = useState(false);
   const { geoElementById } = useMapMarkers({
     mapRef,
     markersRef,
@@ -618,6 +621,7 @@ export function MapView() {
     editingZoneId,
     eventZoneIds,
     showDensity,
+    unclustered: captureUnclustered,
     anonymousMode,
     hideMedia,
     showCommentBadges,
@@ -914,48 +918,58 @@ export function MapView() {
     }
   }, [anonymousMode, hideMedia, mapExportBaseName, t]);
 
-  // Register capture handler for report screenshots
+  // The synthesis captures the map in SVG, framed on the places shown (the
+  // elements outside its scope are hidden by then, so these are its places),
+  // every marker on its own so that none is lost in a cluster
+  const captureSvgRef = useRef<() => Promise<CaptureResult | null>>(async () => null);
   useEffect(() => {
-    const captureHandler = async (): Promise<string | null> => {
-      if (!mapRef.current) return null;
-
-      if (geoElements.length > 0) {
-        const coords = geoElements.map(el => [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] as [number, number]);
-        const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
-        mapRef.current.fitBounds(bounds, { padding: 50, animate: false });
-        mapRef.current.resize();
-        await new Promise(resolve => setTimeout(resolve, 200));
-        mapRef.current.resize();
-      }
-
-      // Wait for tiles
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Capture: combine WebGL canvas + HTML overlays
-      const container = document.querySelector('[data-report-capture="map"]') as HTMLElement;
-      if (!container) return null;
-
-      try {
-        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
-        const { toPng } = await import('html-to-image');
-        return await toPng(container, {
-          backgroundColor: '#e5e3df',
-          pixelRatio: 2,
-          skipFonts: true,
+    captureSvgRef.current = async () => {
+      const map = mapRef.current;
+      if (!map) return null;
+      // Framing before the map has loaded can be lost: wait for it
+      if (!map.loaded()) {
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 8000);
+          map.once('load', () => { clearTimeout(timer); resolve(); });
         });
-      } catch {
-        // Fallback: just the WebGL canvas
-        try {
-          return mapRef.current.getCanvas().toDataURL('image/png');
-        } catch {
-          return null;
-        }
+      }
+      setCaptureUnclustered(true);
+      map.resize();
+      const coords: [number, number][] = [];
+      for (const el of geoElements) {
+        if (isGeoPolygon(el.geo)) coords.push(...el.geo.coordinates);
+        else { const c = getGeoCenter(el.geo); coords.push([c.lng, c.lat]); }
+      }
+      if (coords.length > 0) {
+        const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+        map.fitBounds(bounds, { padding: 60, animate: false, maxZoom: 15 });
+      }
+      // Wait for the tiles of the new frame, then for the markers to follow
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 6000);
+        map.once('idle', () => { clearTimeout(timer); resolve(); });
+        map.triggerRepaint();
+      });
+      await new Promise(resolve => setTimeout(resolve, 300));
+      try {
+        const input = await captureMapSvgInput(
+          map,
+          { markers: markersRef.current, clusters: clusterMarkersRef.current, linkLabels: linkLabelMarkersRef.current },
+          { anonymous: anonymousMode, hideMedia },
+        );
+        return { format: 'svg', data: buildMapSVG(input) };
+      } catch (err) {
+        console.warn('Map capture failed:', err);
+        return null;
+      } finally {
+        setCaptureUnclustered(false);
       }
     };
-
-    registerCaptureHandler('map', captureHandler);
+  }, [geoElements, anonymousMode, hideMedia]);
+  useEffect(() => {
+    registerCaptureHandler('map', () => captureSvgRef.current());
     return () => unregisterCaptureHandler('map');
-  }, [geoElements, registerCaptureHandler, unregisterCaptureHandler]);
+  }, [registerCaptureHandler, unregisterCaptureHandler]);
 
   const handleToggleTemporal = () => {
     if (!temporalMode && eventDates.length > 0) {

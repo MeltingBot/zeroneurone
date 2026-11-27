@@ -47,3 +47,14 @@ describe('scopeReportData', () => {
     expect(ids(scopeReportData(data, { kind: 'tab', tab }, true).elements)).toEqual(['A', 'B', 'C']);
   });
 });
+
+describe('scopeReportData — elements of the scope itself', () => {
+  it('names them when linked elements were added', () => {
+    const out = scopeReportData(data, { kind: 'selection', elementIds: ['B'], linkIds: [] }, true);
+    expect(out.primaryElementIds).toEqual(['B']);
+  });
+
+  it('names none otherwise', () => {
+    expect(scopeReportData(data, { kind: 'selection', elementIds: ['B'], linkIds: [] }).primaryElementIds).toBeUndefined();
+  });
+});
