@@ -117,7 +117,10 @@ The same file can be attached to multiple elements and links:
 
 The files of deleted elements and links stay stored in the browser so that an undo (**Ctrl+Z**) brings them back. They go into no export, but they are not erased on their own, even after a reload.
 
-To erase them: dossier panel, **Retention** section, **Unused files** list (name, size, preview on hover, total at the top). Tick the files to erase, or **Select all**, then **Erase** and confirm. An undo will no longer bring them back, yours or a collaborator's in a shared dossier. The list only shows when there are some.
+To restore or erase them: dossier panel, **Retention** section, **Unused files** list (name, size, preview on hover, total at the top). Tick files, or **Select all**, then use the icons at the top of the list:
+
+- **Restore**: creates one element per file at the centre of the view, with the file attached and its name as label; **Ctrl+Z** removes them and puts the files back in the list
+- **Erase** (bin), then confirm. An undo will no longer bring them back, yours or a collaborator's in a shared dossier. The list only shows when there are some.
 
 ---
 

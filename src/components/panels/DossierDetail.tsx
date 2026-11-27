@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Settings, Calendar, Timer, Gauge, SlidersHorizontal, Eye, File as FileIcon, Image as ImageIcon } from 'lucide-react';
-import { useDossierStore } from '../../stores';
+import { FileText, Settings, Calendar, Timer, Gauge, SlidersHorizontal, Eye, File as FileIcon, Image as ImageIcon, ArchiveRestore, Trash2 } from 'lucide-react';
+import { useDossierStore, useHistoryStore, useViewStore } from '../../stores';
 import type { Asset, Dossier, EvaluationModel, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -700,14 +700,17 @@ function RetentionSection({ dossier }: { dossier: Dossier }) {
 
 /**
  * Files nothing uses any more (those of deleted elements and links, kept so an
- * undo brings them back): left out of exports, erased here on request.
+ * undo brings them back): left out of exports, erased here on request, or
+ * restored as new elements (one per file) at the centre of the canvas view.
  */
 function UnusedFiles() {
   const { t } = useTranslation('panels');
   const { t: tCommon, i18n } = useTranslation('common');
-  const { assets, elements, links, isReadOnly, eraseUnusedAssets } = useDossierStore(useShallow((s) => ({
-    assets: s.assets, elements: s.elements, links: s.links, isReadOnly: s.isReadOnly || s.isShareReadOnly, eraseUnusedAssets: s.eraseUnusedAssets,
+  const { assets, elements, links, isReadOnly, eraseUnusedAssets, createElement } = useDossierStore(useShallow((s) => ({
+    assets: s.assets, elements: s.elements, links: s.links, isReadOnly: s.isReadOnly || s.isShareReadOnly,
+    eraseUnusedAssets: s.eraseUnusedAssets, createElement: s.createElement,
   })));
+  const [restoring, setRestoring] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
   const [preview, setPreview] = useState<Asset | null>(null);
@@ -731,6 +734,33 @@ function UnusedFiles() {
     return next;
   });
 
+  const restore = async () => {
+    setRestoring(true);
+    try {
+      // Centre of the canvas view (the canvas fills the window less the side panel)
+      const { viewport } = useViewStore.getState();
+      const base = {
+        x: (-viewport.x + window.innerWidth / 2) / viewport.zoom,
+        y: (-viewport.y + window.innerHeight / 2) / viewport.zoom,
+      };
+      const created = [];
+      for (const [i, asset] of chosen.entries()) {
+        const label = asset.filename.replace(/\.[^/.]+$/, '');
+        created.push(await createElement(label, { x: base.x + i * 80, y: base.y + i * 20 }, { assetIds: [asset.id] }));
+      }
+      if (created.length > 0) {
+        useHistoryStore.getState().pushAction({
+          type: 'create-elements',
+          undo: {},
+          redo: { elements: created, elementIds: created.map((e) => e.id) },
+        });
+      }
+      setSelected(new Set());
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   return (
     <div className="space-y-1.5">
       <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.unusedFiles')}</label>
@@ -747,6 +777,30 @@ function UnusedFiles() {
           />
           <span className="flex-1">{tCommon('actions.selectAll')}</span>
           <span className="text-text-tertiary">{unused.length} · {formatBytes(total, i18n.language)}</span>
+          {!isReadOnly && (
+            <>
+              <button
+                type="button"
+                onClick={restore}
+                disabled={chosen.length === 0 || restoring}
+                className="p-0.5 text-text-tertiary hover:text-text-primary disabled:opacity-40 disabled:hover:text-text-tertiary"
+                title={chosen.length > 0 ? `${t('dossier.labels.unusedFilesRestore')} (${chosen.length})` : t('dossier.labels.unusedFilesRestore')}
+                aria-label={t('dossier.labels.unusedFilesRestore')}
+              >
+                <ArchiveRestore size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(true)}
+                disabled={chosen.length === 0 || restoring}
+                className="p-0.5 text-text-tertiary hover:text-error disabled:opacity-40 disabled:hover:text-text-tertiary"
+                title={chosen.length > 0 ? `${t('dossier.labels.unusedFilesErase')} (${chosen.length})` : t('dossier.labels.unusedFilesErase')}
+                aria-label={t('dossier.labels.unusedFilesErase')}
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
         </label>
         <ul className="max-h-48 overflow-y-auto py-0.5">
           {unused.map((asset) => {
@@ -782,16 +836,6 @@ function UnusedFiles() {
           })}
         </ul>
       </div>
-      {!isReadOnly && (
-        <button
-          type="button"
-          onClick={() => setConfirming(true)}
-          disabled={chosen.length === 0}
-          className="w-full px-3 py-1.5 text-sm font-medium text-text-secondary bg-bg-secondary border border-border-default hover:bg-bg-tertiary rounded transition-colors disabled:opacity-50 disabled:hover:bg-bg-secondary"
-        >
-          {chosen.length > 0 ? `${t('dossier.labels.unusedFilesErase')} (${chosen.length})` : t('dossier.labels.unusedFilesErase')}
-        </button>
-      )}
       <ConfirmDeleteModal
         isOpen={confirming}
         onClose={() => setConfirming(false)}

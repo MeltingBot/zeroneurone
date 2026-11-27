@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "Die Frist beginnt mit dem Abschluss.",
       "unusedFiles": "Ungenutzte Dateien",
       "unusedFilesErase": "Löschen",
+      "unusedFilesRestore": "Wiederherstellen",
       "unusedFilesConfirm": "Diese Dateien löschen?"
     },
     "placeholders": {

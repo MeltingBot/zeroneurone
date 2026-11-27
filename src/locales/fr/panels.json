@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "La durée commencera à la clôture.",
       "unusedFiles": "Fichiers inutilisés",
       "unusedFilesErase": "Effacer",
+      "unusedFilesRestore": "Restaurer",
       "unusedFilesConfirm": "Effacer ces fichiers ?"
     },
     "placeholders": {

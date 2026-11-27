@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "Epea itxieran hasiko da.",
       "unusedFiles": "Erabili gabeko fitxategiak",
       "unusedFilesErase": "Ezabatu",
+      "unusedFilesRestore": "Berreskuratu",
       "unusedFilesConfirm": "Fitxategi hauek ezabatu?"
     },
     "placeholders": {

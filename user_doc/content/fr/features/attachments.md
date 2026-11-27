@@ -116,7 +116,10 @@ Un même fichier peut être attaché à plusieurs éléments et liens :
 
 Les fichiers des éléments et liens supprimés restent stockés dans le navigateur pour qu'une annulation (**Ctrl+Z**) les ramène. Ils ne partent dans aucun export, mais ils ne sont pas effacés d'eux-mêmes, même après un rechargement.
 
-Pour les effacer : panneau du dossier, section **Rétention**, liste **Fichiers inutilisés** (nom, taille, aperçu au survol, total en tête). Cochez les fichiers à effacer, ou **Tout sélectionner**, puis **Effacer** et confirmer. Une annulation ne les ramènera plus, ni la vôtre ni celle d'un collaborateur dans un dossier partagé. La liste n'apparaît que s'il y en a.
+Pour les restaurer ou les effacer : panneau du dossier, section **Rétention**, liste **Fichiers inutilisés** (nom, taille, aperçu au survol, total en tête). Cochez des fichiers, ou **Tout sélectionner**, puis utilisez les icônes en tête de liste :
+
+- **Restaurer** : crée un élément par fichier au centre de la vue, le fichier joint et le nom du fichier en libellé ; **Ctrl+Z** les retire et remet les fichiers dans la liste
+- **Effacer** (corbeille), puis confirmer. Une annulation ne les ramènera plus, ni la vôtre ni celle d'un collaborateur dans un dossier partagé. La liste n'apparaît que s'il y en a.
 
 ---
 

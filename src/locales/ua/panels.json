@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "Строк почнеться із закриттям.",
       "unusedFiles": "Невикористані файли",
       "unusedFilesErase": "Стерти",
+      "unusedFilesRestore": "Відновити",
       "unusedFilesConfirm": "Стерти ці файли?"
     },
     "placeholders": {
