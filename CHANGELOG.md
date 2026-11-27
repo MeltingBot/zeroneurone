@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.96.1
+
+### Synthèse
+
+- **Ordre des rubriques** — flèches haut/bas, ordre mémorisé ;
+  « Ordre par défaut » le rétablit.
+- **Export DOCX** — même contenu que l'HTML, vignettes des fichiers,
+  pied de page sur chaque page, liens internes vers les fiches.
+- **Captures de la carte et de la timeline** — en SVG, limitées au
+  périmètre (onglet, sélection). La carte est cadrée sur les lieux du
+  périmètre, sans regroupement des marqueurs.
+- **Sélection d'abord** — avec « Éléments liés », les éléments du
+  périmètre viennent en premier, puis « Éléments liés » et « Fiches
+  liées ».
+- **Fiches détaillées** — fichiers joints en tête de fiche.
+- **Mise en page** — une rubrique par page, une fiche par page (DOCX et
+  impression), liens vers les fiches (HTML et DOCX).
+- **Modèle** — enregistrer les options pour les synthèses suivantes,
+  revenir aux options par défaut.
+- **Mention d'origine** — « Synthèse générée par ZeroNeurone » et lien
+  zeroneurone.com en fin de document et en pied de page.
+- **Fenêtre** — deux colonnes ; bloquée pendant la génération, avec
+  barre de progression.
+
 ## 2.96.0
 
 ### Fichiers sur les liens

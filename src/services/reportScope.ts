@@ -16,6 +16,11 @@ export interface ScopedReportData {
   assets: Asset[];
 }
 
+export interface ScopedReport extends ScopedReportData {
+  /** The elements the scope itself holds, when linked elements were added to them */
+  primaryElementIds?: string[];
+}
+
 /**
  * The elements of the scope (a selected link brings its two ends, a group its
  * children), with, when asked, the elements directly linked to them; the links
@@ -26,7 +31,7 @@ export function scopeReportData(
   data: ScopedReportData,
   scope: ReportScope,
   includeLinked = false,
-): ScopedReportData {
+): ScopedReport {
   if (scope.kind === 'all') return data;
 
   const keep = new Set<string>();
@@ -61,5 +66,7 @@ export function scopeReportData(
   const elements = data.elements.filter((el) => keep.has(el.id));
   const links = data.links.filter((link) => keep.has(link.fromId) && keep.has(link.toId)
     && (core.has(link.fromId) || core.has(link.toId)));
-  return { elements, links, assets: referencedAssets(data.assets, elements, links) };
+  const scoped: ScopedReport = { elements, links, assets: referencedAssets(data.assets, elements, links) };
+  if (includeLinked) scoped.primaryElementIds = elements.filter((el) => core.has(el.id)).map((el) => el.id);
+  return scoped;
 }

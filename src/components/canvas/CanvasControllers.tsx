@@ -9,6 +9,7 @@ import { ZoomIn, ZoomOut, Maximize2, RotateCcw } from 'lucide-react';
 import { isExportedNode, withLayersAt } from './overview/exportLayers';
 
 import { useSelectionStore, useViewStore, useUIStore } from '../../stores';
+import type { CaptureResult } from '../../stores/uiStore';
 import { useShallow } from 'zustand/react/shallow';
 
 // Capture handler for report screenshots - must be inside ReactFlowProvider
@@ -17,7 +18,7 @@ export function CanvasCaptureHandler() {
   const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore(useShallow((s) => ({ registerCaptureHandler: s.registerCaptureHandler, unregisterCaptureHandler: s.unregisterCaptureHandler })));
 
   useEffect(() => {
-    const captureHandler = async (): Promise<string | null> => {
+    const captureHandler = async (): Promise<CaptureResult | null> => {
 
       // Fit view to show all elements
       // The overview layer hides every node: count them
@@ -34,12 +35,13 @@ export function CanvasCaptureHandler() {
       try {
         // Loaded on demand: PNG capture is not on the main path.
         const { toPng } = await import('html-to-image');
-        return await withLayersAt(3, () => toPng(element, {
+        const data = await withLayersAt(3, () => toPng(element, {
           backgroundColor: '#faf8f5',
           filter: isExportedNode,
           pixelRatio: 3,
           skipFonts: true,
         }));
+        return { format: 'png', data };
       } catch (error) {
         console.error('Canvas capture failed:', error);
         return null;

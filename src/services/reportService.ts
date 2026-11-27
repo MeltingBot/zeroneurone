@@ -36,6 +36,29 @@ const SANITIZE_CONFIG = {
 
 export type ReportFormat = 'html' | 'markdown' | 'extended-json';
 
+/** The parts of a synthesis, which the user can reorder */
+export const REPORT_SECTIONS = [
+  'description', 'summary', 'graph', 'map', 'timelineView', 'insights',
+  'timeline', 'elements', 'links', 'files', 'fiches',
+] as const;
+export type ReportSection = typeof REPORT_SECTIONS[number];
+
+/** A stored order made valid: unknown or repeated parts dropped, missing ones added at the end */
+export function normalizeSectionOrder(order: unknown): ReportSection[] {
+  const known = new Set<string>(REPORT_SECTIONS);
+  const out: ReportSection[] = [];
+  if (Array.isArray(order)) {
+    for (const s of order) {
+      if (typeof s === 'string' && known.has(s) && !out.includes(s as ReportSection)) out.push(s as ReportSection);
+    }
+  }
+  for (const s of REPORT_SECTIONS) if (!out.includes(s)) out.push(s);
+  return out;
+}
+
+/** Where the synthesis says it comes from */
+export const ZERONEURONE_URL = 'https://zeroneurone.com';
+
 export interface ReportOptions {
   title: string;
   includeDescription: boolean;
@@ -50,10 +73,23 @@ export interface ReportOptions {
   groupElementsByTag: boolean;
   sortElementsBy: 'label' | 'date' | 'confidence';
   tableFormat: boolean;  // Use tables instead of cards/lists
-  // Screenshots (data URLs provided by modal)
+  /** Order of the parts (a part left out of the options is skipped) */
+  sectionOrder: ReportSection[];
+  /** Each part on a new page (DOCX and printing) */
+  pageBreaks: boolean;
+  /** Element names lead to their detailed sheet (HTML and DOCX) */
+  ficheLinks: boolean;
+  /** Each detailed sheet on a new page (DOCX and printing) */
+  fichePerPage: boolean;
+  /**
+   * Elements the scope itself holds, when elements linked to them were added:
+   * they come first in the lists and sheets, the linked ones after.
+   */
+  primaryElementIds?: readonly string[];
+  // Captures provided by the modal: the graph as a PNG data URL, map and timeline as SVG markup
   canvasScreenshot?: string | null;
-  mapScreenshot?: string | null;
-  timelineScreenshot?: string | null;
+  mapSvg?: string | null;
+  timelineSvg?: string | null;
 }
 
 export const DEFAULT_REPORT_OPTIONS: ReportOptions = {
@@ -70,11 +106,28 @@ export const DEFAULT_REPORT_OPTIONS: ReportOptions = {
   groupElementsByTag: false,
   sortElementsBy: 'label',
   tableFormat: true,
+  sectionOrder: [...REPORT_SECTIONS],
+  pageBreaks: true,
+  ficheLinks: true,
+  fichePerPage: false,
 };
+
+/** Whether an element has a detailed sheet: one with nothing to show gets none */
+export function hasFiche(el: Element): boolean {
+  return el.properties.length > 0 || el.events.length > 0 || Boolean(el.notes) || el.assetIds.length > 0;
+}
+
+/** Anchor of an element's detailed sheet, usable as an HTML id and a Word bookmark name */
+export function ficheAnchor(id: string): string {
+  return `fiche_${id.replace(/[^A-Za-z0-9]/g, '')}`.slice(0, 40);
+}
 
 class ReportService {
   /** Evaluation model of the dossier being reported (set by generate) */
   private evaluationModel: EvaluationModel = 'zeroneurone';
+
+  /** Elements whose name leads to their sheet in the report being written (set by generate) */
+  private ficheIds: ReadonlySet<string> = new Set();
 
   /** Column/field title for the confidence or the grading */
   private evaluationTitle(): string {
@@ -117,6 +170,7 @@ class ReportService {
     }
 
     this.evaluationModel = getEvaluationModel(dossier);
+    this.ficheIds = this.linkedFicheIds(elements, options);
 
     if (options.includeInsights && elements.length > 0) {
       insightsService.buildGraph(elements, links);
@@ -143,6 +197,43 @@ class ReportService {
     }
 
     return result;
+  }
+
+  /**
+   * Generate the report as a Word document. The `docx` library is loaded only
+   * here, on demand. The texts follow the current language of the app.
+   */
+  async generateDocx(
+    dossier: Dossier,
+    elements: Element[],
+    links: Link[],
+    assets: Asset[],
+    options: ReportOptions,
+    language?: string
+  ): Promise<Blob> {
+    this.evaluationModel = getEvaluationModel(dossier);
+    if (options.includeInsights && elements.length > 0) {
+      insightsService.buildGraph(elements, links);
+    }
+    const sorted = this.sortElements(elements, options.sortElementsBy);
+    const { renderReportDocx } = await import('./reportDocx');
+    return renderReportDocx({
+      dossier,
+      title: options.title || dossier.name,
+      locale: language || i18next.language || 'fr',
+      elements,
+      links,
+      assets,
+      options,
+      sorted,
+      insights: options.includeInsights && elements.length > 0 ? insightsService.computeInsights() : null,
+      t: (key, opts) => this.t(key, opts),
+      evaluationTitle: () => this.evaluationTitle(),
+      evaluationText: (item) => this.evaluationText(item),
+      groupByTags: (list) => this.groupByTags(list),
+      splitPrimary: (list) => this.splitPrimary(list, options),
+      tagCount: Object.keys(this.getTagCounts(elements)).length,
+    });
   }
 
   /**
@@ -211,6 +302,8 @@ class ReportService {
     h1 { font-size: 18pt; margin-bottom: 4pt; color: var(--color-primary); }
     h2 { font-size: 13pt; margin: 16pt 0 8pt; padding-bottom: 4pt; border-bottom: 1.5pt solid var(--color-primary); }
     h3 { font-size: 11pt; margin: 12pt 0 6pt; color: var(--color-secondary); }
+    h4 { font-size: 10pt; margin: 10pt 0 4pt; color: var(--color-secondary); }
+    h3.linked-heading { margin-top: 16pt; padding-top: 6pt; border-top: 0.5pt solid var(--color-border); color: #111827; }
     p { margin-bottom: 8pt; }
     .meta { color: var(--color-secondary); font-size: 9pt; margin-bottom: 12pt; }
     .description { background: var(--color-bg); padding: 8pt; margin-bottom: 12pt; border-left: 3pt solid var(--color-primary); }
@@ -251,14 +344,21 @@ class ReportService {
     .fiche-table { width: 100%; margin-bottom: 8pt; font-size: 9pt; }
     .fiche-table th { text-align: left; font-size: 8pt; text-transform: uppercase; color: var(--color-secondary); padding: 4pt 6pt; }
     .fiche-table td:first-child { width: 100pt; font-weight: 500; color: var(--color-secondary); }
+    .generated-by { margin-top: 24pt; padding-top: 6pt; border-top: 0.5pt solid var(--color-border); font-size: 8pt; color: var(--color-secondary); text-align: center; }
+    .generated-by a { color: var(--color-secondary); }
+    a.fiche-link { color: inherit; text-decoration: underline; text-decoration-color: var(--color-border); text-underline-offset: 2pt; }
+    a.fiche-link:hover { text-decoration-color: currentColor; }
+    /* Every printed page names its origin, where the browser draws page margins */
+    @page { margin: 15mm 12mm 18mm; @bottom-center { content: "${this.cssString(`${this.t('generatedBy')} - ${ZERONEURONE_URL.replace('https://', '')}`)}"; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 8pt; color: #6b7280; } }
     @media print {
-      body { max-width: 210mm; padding: 10mm; }
+      body { max-width: 210mm; padding: 0; }
       table { break-inside: avoid; }
       .insight-box { break-inside: avoid; }
       .fiche { break-inside: avoid; }
       h2 { break-after: avoid; }
       .screenshot-section { break-inside: avoid; }
       .screenshot-section img { max-width: 100%; }
+      .page-break, .new-page { break-before: page; }
     }
   </style>
 </head>
@@ -269,17 +369,22 @@ class ReportService {
   </header>
 `;
 
-    // Description
-    if (options.includeDescription && dossier.description) {
-      html += `  <div class="description markdown-content">${this.markdownToHTML(dossier.description)}</div>\n`;
-    }
+    // Each part, written in the order the user chose
+    const parts: Record<ReportSection, () => string> = {
+      description: () => {
+        let out = '';
+        if (options.includeDescription && dossier.description) {
+          out += `  <div class="description markdown-content">${this.markdownToHTML(dossier.description)}</div>\n`;
+        }
+        return out;
+      },
+      summary: () => {
+        let out = '';
+        if (options.includeSummary) {
+          const geoElements = elements.filter(el => el.geo || el.events.some(ev => ev.geo));
+          const tagCounts = this.getTagCounts(elements);
 
-    // Summary
-    if (options.includeSummary) {
-      const geoElements = elements.filter(el => el.geo || el.events.some(ev => ev.geo));
-      const tagCounts = this.getTagCounts(elements);
-
-      html += `  <section class="summary">
+          out += `  <section class="summary">
     <div class="summary-grid">
       <div class="summary-item">
         <div class="summary-value">${elements.length}</div>
@@ -307,202 +412,257 @@ class ReportService {
       </div>
     </div>
   </section>\n`;
-    }
-
-    // Canvas screenshot section (map/timeline will have separate export system)
-    if (options.canvasScreenshot) {
-      html += `  <section class="screenshot-section">
+        }
+        return out;
+      },
+      graph: () => {
+        let out = '';
+        if (options.canvasScreenshot) {
+          out += `  <section class="screenshot-section">
     <h2>${this.t('graphView')}</h2>
     <img src="${options.canvasScreenshot}" alt="${this.t('graphView')}" style="width:100%;height:auto;border:1px solid var(--color-border);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1)" />
   </section>\n`;
-    }
-
-    // Insights
-    if (options.includeInsights && insights) {
-      html += `  <section>
+        }
+        return out;
+      },
+      map: () => this.svgSectionHTML(this.t('mapView'), options.mapSvg),
+      timelineView: () => this.svgSectionHTML(this.t('timelineView'), options.timelineSvg),
+      insights: () => {
+        let out = '';
+        if (options.includeInsights && insights) {
+          out += `  <section>
     <h2>${this.t('graphAnalysis')}</h2>\n`;
 
-      if (insights.clusters.length > 1) {
-        html += `    <div class="insight-box">
+          if (insights.clusters.length > 1) {
+            out += `    <div class="insight-box">
       <div class="insight-title">${this.t('clustersIdentified')} (${insights.clusters.length})</div>
       <table>
         <tr><th>${this.t('cluster')}</th><th>${this.t('nbElements')}</th><th>${this.t('elements')}</th></tr>
         ${insights.clusters.map(c => {
-          const clusterElements = c.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
-          const more = c.elementIds.length > 5 ? ` (+${c.elementIds.length - 5})` : '';
-          return `<tr><td>${c.id}</td><td>${c.elementIds.length}</td><td>${clusterElements.map(l => escapeHtml(l)).join(', ')}${more}</td></tr>`;
-        }).join('\n        ')}
+              const clusterElements = c.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
+              const more = c.elementIds.length > 5 ? ` (+${c.elementIds.length - 5})` : '';
+              return `<tr><td>${c.id}</td><td>${c.elementIds.length}</td><td>${clusterElements.map(l => escapeHtml(l)).join(', ')}${more}</td></tr>`;
+            }).join('\n        ')}
       </table>
     </div>\n`;
-      }
+          }
 
-      if (insights.centrality.length > 0) {
-        const topCentral = insights.centrality.slice(0, 10);
-        html += `    <div class="insight-box">
+          if (insights.centrality.length > 0) {
+            const topCentral = insights.centrality.slice(0, 10);
+            out += `    <div class="insight-box">
       <div class="insight-title">${this.t('centralElements')} (top ${topCentral.length})</div>
       <table>
         <tr><th>${this.t('element')}</th><th>${this.t('centralityScore')}</th><th>${this.t('connections')}</th></tr>
         ${topCentral.map(c => {
-          const el = elements.find(e => e.id === c.elementId);
-          const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
-          return `<tr><td>${escapeHtml(el?.label || this.t('unknown'))}</td><td>${c.score.toFixed(3)}</td><td>${connectionCount}</td></tr>`;
-        }).join('\n        ')}
+              const el = elements.find(e => e.id === c.elementId);
+              const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
+              return `<tr><td>${escapeHtml(el?.label || this.t('unknown'))}</td><td>${c.score.toFixed(3)}</td><td>${connectionCount}</td></tr>`;
+            }).join('\n        ')}
       </table>
     </div>\n`;
-      }
+          }
 
-      if (insights.bridges.length > 0) {
-        html += `    <div class="insight-box">
+          if (insights.bridges.length > 0) {
+            out += `    <div class="insight-box">
       <div class="insight-title">${this.t('bridgeElements')} (${insights.bridges.length})</div>
       <p style="font-size:9pt;color:var(--color-secondary)">${this.t('bridgeDescription')}</p>
       <ul class="insight-list">
         ${insights.bridges.slice(0, 10).map(id => {
-          const el = elements.find(e => e.id === id);
-          return `<li>${escapeHtml(el?.label || this.t('unknown'))}</li>`;
-        }).join('\n        ')}
+              const el = elements.find(e => e.id === id);
+              return `<li>${escapeHtml(el?.label || this.t('unknown'))}</li>`;
+            }).join('\n        ')}
       </ul>
     </div>\n`;
-      }
+          }
 
-      if (insights.isolated.length > 0) {
-        html += `    <div class="insight-box">
+          if (insights.isolated.length > 0) {
+            out += `    <div class="insight-box">
       <div class="insight-title">${this.t('isolatedElements')} (${insights.isolated.length})</div>
       <p style="font-size:9pt;color:var(--color-secondary)">${this.t('isolatedDescription')}</p>
       <ul class="insight-list">
         ${insights.isolated.slice(0, 10).map(id => {
-          const el = elements.find(e => e.id === id);
-          return `<li>${escapeHtml(el?.label || this.t('unknown'))}</li>`;
-        }).join('\n        ')}
+              const el = elements.find(e => e.id === id);
+              return `<li>${escapeHtml(el?.label || this.t('unknown'))}</li>`;
+            }).join('\n        ')}
         ${insights.isolated.length > 10 ? `<li>${this.t('andMore', { count: insights.isolated.length - 10 })}</li>` : ''}
       </ul>
     </div>\n`;
-      }
+          }
 
-      html += `  </section>\n`;
-    }
-
-    // Timeline (real events)
-    if (options.includeTimeline && allEvents.length > 0) {
-      html += `  <section>
+          out += `  </section>\n`;
+        }
+        return out;
+      },
+      timeline: () => {
+        let out = '';
+        if (options.includeTimeline && allEvents.length > 0) {
+          out += `  <section>
     <h2>${this.t('timeline')} (${allEvents.length} ${this.t('events').toLowerCase()})</h2>
     <table class="timeline-table">
       <tr><th>${this.t('date')}</th><th>${this.t('element')}</th><th>${this.t('event')}</th><th>${this.t('details')}</th></tr>
       ${allEvents.map(ev => {
-        const dateStr = formatEventWhen(ev, locale);
-        const location = ev.geo ? `${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' (zone)' : ''}` : '';
-        return `<tr>
+            const dateStr = formatEventWhen(ev, locale);
+            const location = ev.geo ? `${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' (zone)' : ''}` : '';
+            return `<tr>
         <td>${escapeHtml(dateStr)}</td>
-        <td>${escapeHtml(ev.elementLabel)}</td>
+        <td>${this.elementRefHTML(ev.elementId, ev.elementLabel)}</td>
         <td>${escapeHtml(ev.label)}</td>
         <td>${ev.description ? escapeHtml(ev.description) : ''}${location ? ` [${location}]` : ''}</td>
       </tr>`;
-      }).join('\n      ')}
+          }).join('\n      ')}
     </table>
   </section>\n`;
-    }
-
-    // Elements
-    if (options.includeElements) {
-      html += `  <section>
+        }
+        return out;
+      },
+      elements: () => {
+        let out = '';
+        if (options.includeElements) {
+          out += `  <section>
     <h2>${this.t('elements')} (${elements.length})</h2>\n`;
 
-      if (options.groupElementsByTag) {
-        const tagGroups = this.groupByTags(sortedElements, locale);
-        for (const [tag, tagElements] of Object.entries(tagGroups)) {
-          html += `    <h3>${escapeHtml(tag)} (${tagElements.length})</h3>\n`;
-          html += this.renderElementsTableHTML(tagElements, assets, options);
+          const writeList = (list: Element[], tagLevel: 'h3' | 'h4') => {
+            if (options.groupElementsByTag) {
+              const tagGroups = this.groupByTags(list, locale);
+              for (const [tag, tagElements] of Object.entries(tagGroups)) {
+                out += `    <${tagLevel}>${escapeHtml(tag)} (${tagElements.length})</${tagLevel}>\n`;
+                out += this.renderElementsTableHTML(tagElements, assets, options);
+              }
+            } else {
+              out += this.renderElementsTableHTML(list, assets, options);
+            }
+          };
+          // The elements of the scope first, then those linked to them
+          const { primary, linked } = this.splitPrimary(sortedElements, options);
+          writeList(primary, 'h3');
+          if (linked.length > 0) {
+            out += `    <h3 class="linked-heading">${this.t('linkedElements')} (${linked.length})</h3>\n`;
+            writeList(linked, 'h4');
+          }
+
+          out += `  </section>\n`;
         }
-      } else {
-        html += this.renderElementsTableHTML(sortedElements, assets, options);
-      }
-
-      html += `  </section>\n`;
-    }
-
-    // Links
-    if (options.includeLinks && links.length > 0) {
-      html += `  <section>
+        return out;
+      },
+      links: () => {
+        let out = '';
+        if (options.includeLinks && links.length > 0) {
+          out += `  <section>
     <h2>${this.t('links')} (${links.length})</h2>
     <table>
       <tr><th>${this.t('from')}</th><th>${this.t('to')}</th><th>${this.t('type')}</th><th>${this.t('label')}</th><th>${this.t('notes')}</th>${options.includeFiles ? `<th>${this.t('files')}</th>` : ''}</tr>
       ${links.map(link => {
-        const fromEl = elements.find(e => e.id === link.fromId);
-        const toEl = elements.find(e => e.id === link.toId);
-        const arrow = link.directed ? '→' : '↔';
-        const files = this.ownerAssets(link.assetIds, assets);
-        return `<tr>
-        <td>${escapeHtml(fromEl?.label || '?')}</td>
-        <td>${escapeHtml(toEl?.label || '?')}</td>
+            const fromEl = elements.find(e => e.id === link.fromId);
+            const toEl = elements.find(e => e.id === link.toId);
+            const arrow = link.directed ? '→' : '↔';
+            const files = this.ownerAssets(link.assetIds, assets);
+            return `<tr>
+        <td>${this.elementRefHTML(link.fromId, fromEl?.label || '?')}</td>
+        <td>${this.elementRefHTML(link.toId, toEl?.label || '?')}</td>
         <td>${arrow}</td>
         <td>${link.label ? escapeHtml(link.label) : '-'}</td>
         <td class="markdown-content">${link.notes ? this.markdownToHTML(link.notes) : '-'}</td>
         ${options.includeFiles ? `<td class="file-list">${files.length > 0 ? files.map(a => escapeHtml(a.filename)).join('<br>') : '-'}</td>` : ''}
       </tr>`;
-      }).join('\n      ')}
+          }).join('\n      ')}
     </table>
   </section>\n`;
-    }
-
-    // Files with media previews
-    if (options.includeFiles && totalFiles > 0) {
-      html += `  <section>
+        }
+        return out;
+      },
+      files: () => {
+        let out = '';
+        if (options.includeFiles && totalFiles > 0) {
+          out += `  <section>
     <h2>${this.t('attachedFiles')} (${totalFiles})</h2>
     <div class="media-grid">\n`;
 
-      const owners = [
-        ...elements.map(el => ({ caption: el.label, assetIds: el.assetIds })),
-        ...links.map(lk => ({ caption: this.linkCaption(lk, elements), assetIds: lk.assetIds ?? [] })),
-      ];
-      for (const owner of owners) {
-        for (const assetId of owner.assetIds) {
-          const asset = assets.find(a => a.id === assetId);
-          if (!asset) continue;
-          const sizeKB = (asset.size / 1024).toFixed(1);
-          const isImage = asset.mimeType.startsWith('image/');
-          // Thumbnails can come from a collaboration peer, and this document is
-          // opened via a same-origin blob: URL by openForPrint().
-          const thumb = safeDataImageUrl(asset.thumbnailDataUrl);
-          const hasPreview = isImage && thumb;
+          const owners = [
+            ...elements.map(el => ({ caption: el.label, assetIds: el.assetIds })),
+            ...links.map(lk => ({ caption: this.linkCaption(lk, elements), assetIds: lk.assetIds ?? [] })),
+          ];
+          for (const owner of owners) {
+            for (const assetId of owner.assetIds) {
+              const asset = assets.find(a => a.id === assetId);
+              if (!asset) continue;
+              const sizeKB = (asset.size / 1024).toFixed(1);
+              const isImage = asset.mimeType.startsWith('image/');
+              // Thumbnails can come from a collaboration peer, and this document is
+              // opened via a same-origin blob: URL by openForPrint().
+              const thumb = safeDataImageUrl(asset.thumbnailDataUrl);
+              const hasPreview = isImage && thumb;
 
-          html += `      <div class="media-item">
+              out += `      <div class="media-item">
         ${hasPreview ? `<img src="${thumb}" alt="${escapeHtml(asset.filename)}" />` : `<div style="width:100pt;height:60pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:8pt;color:var(--color-secondary)">${asset.mimeType.split('/')[0].toUpperCase()}</div>`}
         <div class="media-name">${escapeHtml(asset.filename)}</div>
         <div style="font-size:7pt;color:var(--color-secondary)">${escapeHtml(owner.caption)} - ${sizeKB} Ko</div>
       </div>\n`;
-        }
-      }
+            }
+          }
 
-      html += `    </div>
+          out += `    </div>
   </section>\n`;
-    }
+        }
+        return out;
+      },
+      fiches: () => {
+        let out = '';
+        if (options.includeFiches) {
+          const elementsWithData = sortedElements.filter(hasFiche);
 
-    // Detailed element sheets
-    if (options.includeFiches) {
-      const elementsWithData = sortedElements.filter(el =>
-        el.properties.length > 0 || el.events.length > 0 || el.notes || el.assetIds.length > 0
-      );
+          // The sheets of the scope first, then those of the linked elements
+          const { primary, linked } = this.splitPrimary(elementsWithData, options);
+          if (elementsWithData.length > 0) {
+            // No empty heading when only linked elements have a sheet
+            if (primary.length > 0) {
+              out += `  <section>
+    <h2>${this.t('detailedSheets')} (${primary.length})</h2>\n`;
+            }
 
-      if (elementsWithData.length > 0) {
-        html += `  <section>
-    <h2>${this.t('detailedSheets')} (${elementsWithData.length})</h2>\n`;
+            for (const el of [...primary, ...linked]) {
+              // With a sheet per page, each sheet but the first after a heading starts a page
+              const headed = el === primary[0] || el === linked[0];
+              if (el === linked[0]) {
+                const newPage = options.fichePerPage && primary.length > 0 ? ' class="new-page"' : '';
+                out += `${primary.length > 0 ? '  </section>\n' : ''}  <section${newPage}>
+    <h2>${this.t('linkedSheets')} (${linked.length})</h2>\n`;
+              }
+              const connections = links
+                .filter(l => l.fromId === el.id || l.toId === el.id)
+                .map(l => {
+                  const otherId = l.fromId === el.id ? l.toId : l.fromId;
+                  const otherEl = elements.find(e => e.id === otherId);
+                  const direction = l.fromId === el.id ? '→' : '←';
+                  return { id: otherId, label: otherEl?.label || '?', linkLabel: l.label, direction };
+                });
 
-        for (const el of elementsWithData) {
-          const connections = links
-            .filter(l => l.fromId === el.id || l.toId === el.id)
-            .map(l => {
-              const otherId = l.fromId === el.id ? l.toId : l.fromId;
-              const otherEl = elements.find(e => e.id === otherId);
-              const direction = l.fromId === el.id ? '→' : '←';
-              return { label: otherEl?.label || '?', linkLabel: l.label, direction };
-            });
+              const elAssets = el.assetIds
+                .map(id => assets.find(a => a.id === id))
+                .filter((a): a is Asset => a !== undefined);
 
-          const elAssets = el.assetIds
-            .map(id => assets.find(a => a.id === id))
-            .filter((a): a is Asset => a !== undefined);
+              out += `    <div class="fiche${options.fichePerPage && !headed ? ' new-page' : ''}" id="${this.ficheAnchor(el.id)}">
+      <h3 style="margin:0 0 8pt;color:var(--color-primary)">${escapeHtml(el.label)}</h3>\n`;
 
-          html += `    <div class="fiche">
-      <h3 style="margin:0 0 8pt;color:var(--color-primary)">${escapeHtml(el.label)}</h3>
-      <table class="fiche-table">
+              // Files first, with their previews: they are what the reader looks at first
+              if (elAssets.length > 0) {
+                out += `      <div style="margin-bottom:8pt">
+        <div style="font-size:8pt;text-transform:uppercase;color:var(--color-secondary);padding:4pt 0;background:var(--color-bg-alt)">${this.t('files')} (${elAssets.length})</div>
+        <div class="media-grid" style="margin-top:6pt">
+          ${elAssets.map(a => {
+                const isImage = a.mimeType.startsWith('image/');
+                const thumb = safeDataImageUrl(a.thumbnailDataUrl);
+                const hasPreview = isImage && thumb;
+                return `<div class="media-item" style="max-width:100pt">
+            ${hasPreview ? `<img src="${thumb}" alt="${escapeHtml(a.filename)}" style="max-width:90pt;max-height:60pt" />` : `<div style="width:60pt;height:40pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:7pt;color:var(--color-secondary)">${a.mimeType.split('/')[0].toUpperCase()}</div>`}
+            <div style="font-size:7pt;color:var(--color-secondary);word-break:break-all">${escapeHtml(a.filename)}</div>
+            <div style="font-size:6pt;color:var(--color-secondary)">${(a.size / 1024).toFixed(1)} Ko</div>
+          </div>`;
+              }).join('\n          ')}
+        </div>
+      </div>\n`;
+              }
+
+              out += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('identity')}</th></tr>
         <tr><td>${this.t('tags')}</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ') : '-'}</td></tr>
         <tr><td>${this.evaluationTitle()}</td><td>${this.evaluationText(el)}</td></tr>
@@ -510,61 +670,55 @@ class ReportService {
         ${el.notes ? `<tr><td>${this.t('notes')}</td><td class="markdown-content">${this.markdownToHTML(el.notes)}</td></tr>` : ''}
       </table>\n`;
 
-          // Properties
-          if (el.properties.length > 0) {
-            html += `      <table class="fiche-table">
+              // Properties
+              if (el.properties.length > 0) {
+                out += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('properties')} (${el.properties.length})</th></tr>
         ${el.properties.map(p => `<tr><td>${escapeHtml(p.key)}</td><td>${escapeHtml(formatPropertyValue(p.value, p.type, locale, p.timeZone))}</td></tr>`).join('\n        ')}
       </table>\n`;
-          }
+              }
 
-          // Events
-          if (el.events.length > 0) {
-            html += `      <table class="fiche-table">
+              // Events
+              if (el.events.length > 0) {
+                out += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('events')} (${el.events.length})</th></tr>
         ${el.events.map(ev => {
-          const dateStr = formatEventWhen(ev, locale);
-          const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
-          return `<tr><td>${escapeHtml(dateStr)}</td><td><b>${escapeHtml(ev.label)}</b>${ev.description ? ` - ${escapeHtml(ev.description)}` : ''}${geo}</td></tr>`;
-        }).join('\n        ')}
+              const dateStr = formatEventWhen(ev, locale);
+              const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
+              return `<tr><td>${escapeHtml(dateStr)}</td><td><b>${escapeHtml(ev.label)}</b>${ev.description ? ` - ${escapeHtml(ev.description)}` : ''}${geo}</td></tr>`;
+            }).join('\n        ')}
       </table>\n`;
-          }
+              }
 
-          // Connections
-          if (connections.length > 0) {
-            html += `      <table class="fiche-table">
+              // Connections
+              if (connections.length > 0) {
+                out += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('relations')} (${connections.length})</th></tr>
-        ${connections.map(c => `<tr><td>${c.direction}</td><td><b>${escapeHtml(c.label)}</b>${c.linkLabel ? ` (${escapeHtml(c.linkLabel)})` : ''}</td></tr>`).join('\n        ')}
+        ${connections.map(c => `<tr><td>${c.direction}</td><td><b>${this.elementRefHTML(c.id, c.label)}</b>${c.linkLabel ? ` (${escapeHtml(c.linkLabel)})` : ''}</td></tr>`).join('\n        ')}
       </table>\n`;
-          }
+              }
 
-          // Files with previews
-          if (elAssets.length > 0) {
-            html += `      <div style="margin-bottom:8pt">
-        <div style="font-size:8pt;text-transform:uppercase;color:var(--color-secondary);padding:4pt 0;background:var(--color-bg-alt)">${this.t('files')} (${elAssets.length})</div>
-        <div class="media-grid" style="margin-top:6pt">
-          ${elAssets.map(a => {
-            const isImage = a.mimeType.startsWith('image/');
-            const thumb = safeDataImageUrl(a.thumbnailDataUrl);
-            const hasPreview = isImage && thumb;
-            return `<div class="media-item" style="max-width:100pt">
-            ${hasPreview ? `<img src="${thumb}" alt="${escapeHtml(a.filename)}" style="max-width:90pt;max-height:60pt" />` : `<div style="width:60pt;height:40pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:7pt;color:var(--color-secondary)">${a.mimeType.split('/')[0].toUpperCase()}</div>`}
-            <div style="font-size:7pt;color:var(--color-secondary);word-break:break-all">${escapeHtml(a.filename)}</div>
-            <div style="font-size:6pt;color:var(--color-secondary)">${(a.size / 1024).toFixed(1)} Ko</div>
-          </div>`;
-          }).join('\n          ')}
-        </div>
-      </div>\n`;
-          }
+              out += `    </div>\n`;
+            }
 
-          html += `    </div>\n`;
+            out += `  </section>\n`;
+          }
         }
-
-        html += `  </section>\n`;
-      }
+        return out;
+      },
+    };
+    // On paper, each part after the first may start a new page
+    let written = 0;
+    for (const section of normalizeSectionOrder(options.sectionOrder)) {
+      const part = parts[section]();
+      if (!part) continue;
+      if (written > 0 && options.pageBreaks) html += `  <div class="page-break"></div>\n`;
+      html += part;
+      written++;
     }
 
-    html += `</body>
+    html += `  <footer class="generated-by">${escapeHtml(this.t('generatedBy'))} - <a href="${ZERONEURONE_URL}" target="_blank" rel="noopener noreferrer">${ZERONEURONE_URL.replace('https://', '')}</a></footer>
+</body>
 </html>`;
 
     return html;
@@ -597,7 +751,7 @@ class ReportService {
             }).join(', ')
           : '-';
         return `<tr>
-        <td><span class="color-dot" style="background:${safeColor(el.visual.color, '#d4cec4')}"></span>${escapeHtml(el.label)}</td>
+        <td><span class="color-dot" style="background:${safeColor(el.visual.color, '#d4cec4')}"></span>${this.elementRefHTML(el.id, el.label)}</td>
         <td class="markdown-content">${el.notes ? this.markdownToHTML(el.notes) : '-'}</td>
         <td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') : '-'}</td>
         <td>${this.evaluationText(el)}</td>
@@ -642,233 +796,271 @@ class ReportService {
     let md = `# ${title}\n\n`;
     md += `*${this.t('generatedOn', { date: new Date().toLocaleDateString(dateLocale(locale)), time: new Date().toLocaleTimeString(dateLocale(locale)) })}*\n\n`;
 
-    // Description
-    if (options.includeDescription && dossier.description) {
-      md += `> ${dossier.description}\n\n`;
-    }
-
-    // Summary
-    if (options.includeSummary) {
-      const geoElements = elements.filter(el => el.geo || el.events.some(ev => ev.geo));
-      const tagCounts = this.getTagCounts(elements);
-
-      md += `## ${this.t('summary')}\n\n`;
-      md += `| ${this.t('metric')} | ${this.t('value')} |\n`;
-      md += `|----------|--------|\n`;
-      md += `| ${this.t('elements')} | ${elements.length} |\n`;
-      md += `| ${this.t('links')} | ${links.length} |\n`;
-      md += `| ${this.t('events')} | ${totalEvents} |\n`;
-      md += `| ${this.t('locations')} | ${geoElements.length} |\n`;
-      md += `| ${this.t('uniqueTags')} | ${Object.keys(tagCounts).length} |\n`;
-      md += `| ${this.t('files')} | ${totalFiles} |\n\n`;
-    }
-
-    // Insights
-    if (options.includeInsights && insights) {
-      md += `## ${this.t('graphAnalysis')}\n\n`;
-
-      if (insights.clusters.length > 1) {
-        md += `### ${this.t('clustersIdentified')} (${insights.clusters.length})\n\n`;
-        md += `| ${this.t('cluster')} | ${this.t('nbElements')} | ${this.t('elements')} |\n`;
-        md += `|---------|-------------|----------|\n`;
-        for (const cluster of insights.clusters) {
-          const clusterEls = cluster.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
-          const more = cluster.elementIds.length > 5 ? ` (+${cluster.elementIds.length - 5})` : '';
-          md += `| ${cluster.id} | ${cluster.elementIds.length} | ${clusterEls.join(', ')}${more} |\n`;
+    // Each part, written in the order the user chose
+    const parts: Record<ReportSection, () => string> = {
+      description: () => {
+        let out = '';
+        if (options.includeDescription && dossier.description) {
+          out += `> ${dossier.description}\n\n`;
         }
-        md += `\n`;
-      }
+        return out;
+      },
+      summary: () => {
+        let out = '';
+        if (options.includeSummary) {
+          const geoElements = elements.filter(el => el.geo || el.events.some(ev => ev.geo));
+          const tagCounts = this.getTagCounts(elements);
 
-      if (insights.centrality.length > 0) {
-        md += `### ${this.t('centralElements')} (top 10)\n\n`;
-        md += `| ${this.t('element')} | ${this.t('centralityScore')} | ${this.t('connections')} |\n`;
-        md += `|---------|-------|------------|\n`;
-        const topCentral = insights.centrality.slice(0, 10);
-        for (const c of topCentral) {
-          const el = elements.find(e => e.id === c.elementId);
-          const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
-          md += `| ${el?.label || this.t('unknown')} | ${c.score.toFixed(3)} | ${connectionCount} |\n`;
+          out += `## ${this.t('summary')}\n\n`;
+          out += `| ${this.t('metric')} | ${this.t('value')} |\n`;
+          out += `|----------|--------|\n`;
+          out += `| ${this.t('elements')} | ${elements.length} |\n`;
+          out += `| ${this.t('links')} | ${links.length} |\n`;
+          out += `| ${this.t('events')} | ${totalEvents} |\n`;
+          out += `| ${this.t('locations')} | ${geoElements.length} |\n`;
+          out += `| ${this.t('uniqueTags')} | ${Object.keys(tagCounts).length} |\n`;
+          out += `| ${this.t('files')} | ${totalFiles} |\n\n`;
         }
-        md += `\n`;
-      }
+        return out;
+      },
+      // Captures are not written into Markdown
+      graph: () => '',
+      map: () => '',
+      timelineView: () => '',
+      insights: () => {
+        let out = '';
+        if (options.includeInsights && insights) {
+          out += `## ${this.t('graphAnalysis')}\n\n`;
 
-      if (insights.bridges.length > 0) {
-        md += `### ${this.t('bridgeElements')} (${insights.bridges.length})\n\n`;
-        md += `*${this.t('bridgeDescription')}*\n\n`;
-        for (const id of insights.bridges.slice(0, 10)) {
-          const el = elements.find(e => e.id === id);
-          md += `- ${el?.label || this.t('unknown')}\n`;
-        }
-        md += `\n`;
-      }
-
-      if (insights.isolated.length > 0) {
-        md += `### ${this.t('isolatedElements')} (${insights.isolated.length})\n\n`;
-        md += `*${this.t('isolatedDescription')}*\n\n`;
-        for (const id of insights.isolated.slice(0, 10)) {
-          const el = elements.find(e => e.id === id);
-          md += `- ${el?.label || this.t('unknown')}\n`;
-        }
-        if (insights.isolated.length > 10) {
-          md += `- ${this.t('andMore', { count: insights.isolated.length - 10 })}\n`;
-        }
-        md += `\n`;
-      }
-    }
-
-    // Timeline (real events)
-    if (options.includeTimeline && allEvents.length > 0) {
-      md += `## ${this.t('timeline')} (${allEvents.length} ${this.t('events').toLowerCase()})\n\n`;
-      md += `| ${this.t('date')} | ${this.t('element')} | ${this.t('event')} | ${this.t('details')} |\n`;
-      md += `|------|---------|-----------|----------|\n`;
-      for (const ev of allEvents) {
-        const dateStr = formatEventWhen(ev, locale);
-        const location = ev.geo && ev.geo.type === 'point' ? `[${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
-        const details = [ev.description, location].filter(Boolean).join(' ');
-        md += `| ${dateStr} | ${ev.elementLabel} | ${ev.label} | ${details || '-'} |\n`;
-      }
-      md += `\n`;
-    }
-
-    // Elements
-    if (options.includeElements) {
-      md += `## ${this.t('elements')} (${elements.length})\n\n`;
-
-      if (options.groupElementsByTag) {
-        const tagGroups = this.groupByTags(sortedElements, locale);
-        for (const [tag, tagElements] of Object.entries(tagGroups)) {
-          md += `### ${tag} (${tagElements.length})\n\n`;
-          md += this.renderElementsTableMarkdown(tagElements, assets, options);
-        }
-      } else {
-        md += this.renderElementsTableMarkdown(sortedElements, assets, options);
-      }
-    }
-
-    // Links
-    if (options.includeLinks && links.length > 0) {
-      md += `## ${this.t('links')} (${links.length})\n\n`;
-      const linkFiles = options.includeFiles;
-      md += `| ${this.t('from')} | ${this.t('to')} | ${this.t('type')} | ${this.t('label')} | ${this.t('notes')} |${linkFiles ? ` ${this.t('files')} |` : ''}\n`;
-      md += `|----|------|------|-------|-------|${linkFiles ? '-------|' : ''}\n`;
-      for (const link of links) {
-        const fromEl = elements.find(e => e.id === link.fromId);
-        const toEl = elements.find(e => e.id === link.toId);
-        const arrow = link.directed ? '→' : '↔';
-        const files = linkFiles ? ` ${this.ownerAssets(link.assetIds, assets).map(a => a.filename).join(', ') || '-'} |` : '';
-        md += `| ${fromEl?.label || '?'} | ${toEl?.label || '?'} | ${arrow} | ${link.label || '-'} | ${link.notes || '-'} |${files}\n`;
-      }
-      md += `\n`;
-    }
-
-    // Files
-    if (options.includeFiles && totalFiles > 0) {
-      md += `## ${this.t('attachedFiles')} (${totalFiles})\n\n`;
-      md += `| ${this.t('attachedTo')} | ${this.t('filename')} | ${this.t('fileType')} | ${this.t('size')} |\n`;
-      md += `|---------|---------|------|--------|\n`;
-      const owners = [
-        ...elements.map(el => ({ caption: el.label, assetIds: el.assetIds })),
-        ...links.map(lk => ({ caption: this.linkCaption(lk, elements), assetIds: lk.assetIds ?? [] })),
-      ];
-      for (const owner of owners) {
-        for (const assetId of owner.assetIds) {
-          const asset = assets.find(a => a.id === assetId);
-          if (asset) {
-            const sizeKB = (asset.size / 1024).toFixed(1);
-            md += `| ${owner.caption} | ${asset.filename} | ${asset.mimeType} | ${sizeKB} Ko |\n`;
-          }
-        }
-      }
-      md += `\n`;
-    }
-
-    // Detailed element sheets
-    if (options.includeFiches) {
-      const elementsWithData = sortedElements.filter(el =>
-        el.properties.length > 0 || el.events.length > 0 || el.notes || el.assetIds.length > 0
-      );
-
-      if (elementsWithData.length > 0) {
-        md += `## ${this.t('detailedSheets')} (${elementsWithData.length})\n\n`;
-
-        for (const el of elementsWithData) {
-          const connections = links
-            .filter(l => l.fromId === el.id || l.toId === el.id)
-            .map(l => {
-              const otherId = l.fromId === el.id ? l.toId : l.fromId;
-              const otherEl = elements.find(e => e.id === otherId);
-              const direction = l.fromId === el.id ? '→' : '←';
-              return { label: otherEl?.label || '?', linkLabel: l.label, direction };
-            });
-
-          const elAssets = el.assetIds
-            .map(id => assets.find(a => a.id === id))
-            .filter((a): a is Asset => a !== undefined);
-
-          md += `### ${el.label}\n\n`;
-
-          // Identity
-          md += `**${this.t('identity')}**\n\n`;
-          md += `| ${this.t('field')} | ${this.t('value')} |\n`;
-          md += `|-------|--------|\n`;
-          md += `| ${this.t('tags')} | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
-          md += `| ${this.evaluationTitle()} | ${this.evaluationText(el)} |\n`;
-          md += `| ${this.t('source')} | ${el.source ? joinSourceLines(sourceToMarkdown(el.source, getSourceSchemeNames()), '<br>') : '-'} |\n`;
-          if (el.notes) {
-            md += `| ${this.t('notes')} | ${el.notes.replace(/\n/g, ' ')} |\n`;
-          }
-          md += `\n`;
-
-          // Properties
-          if (el.properties.length > 0) {
-            md += `**${this.t('properties')} (${el.properties.length})**\n\n`;
-            md += `| ${this.t('property')} | ${this.t('value')} |\n`;
-            md += `|-----------|--------|\n`;
-            for (const p of el.properties) {
-              md += `| ${p.key} | ${formatPropertyValue(p.value, p.type, locale, p.timeZone)} |\n`;
+          if (insights.clusters.length > 1) {
+            out += `### ${this.t('clustersIdentified')} (${insights.clusters.length})\n\n`;
+            out += `| ${this.t('cluster')} | ${this.t('nbElements')} | ${this.t('elements')} |\n`;
+            out += `|---------|-------------|----------|\n`;
+            for (const cluster of insights.clusters) {
+              const clusterEls = cluster.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
+              const more = cluster.elementIds.length > 5 ? ` (+${cluster.elementIds.length - 5})` : '';
+              out += `| ${cluster.id} | ${cluster.elementIds.length} | ${clusterEls.join(', ')}${more} |\n`;
             }
-            md += `\n`;
+            out += `\n`;
           }
 
-          // Events
-          if (el.events.length > 0) {
-            md += `**${this.t('events')} (${el.events.length})**\n\n`;
-            md += `| ${this.t('date')} | ${this.t('event')} | ${this.t('details')} |\n`;
-            md += `|------|-----------|----------|\n`;
-            for (const ev of el.events) {
-              const dateStr = formatEventWhen(ev, locale);
-              const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
-              md += `| ${dateStr} | ${ev.label} | ${ev.description || '-'}${geo} |\n`;
+          if (insights.centrality.length > 0) {
+            out += `### ${this.t('centralElements')} (top 10)\n\n`;
+            out += `| ${this.t('element')} | ${this.t('centralityScore')} | ${this.t('connections')} |\n`;
+            out += `|---------|-------|------------|\n`;
+            const topCentral = insights.centrality.slice(0, 10);
+            for (const c of topCentral) {
+              const el = elements.find(e => e.id === c.elementId);
+              const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
+              out += `| ${el?.label || this.t('unknown')} | ${c.score.toFixed(3)} | ${connectionCount} |\n`;
             }
-            md += `\n`;
+            out += `\n`;
           }
 
-          // Connections
-          if (connections.length > 0) {
-            md += `**${this.t('relations')} (${connections.length})**\n\n`;
-            md += `| ${this.t('direction')} | ${this.t('element')} | ${this.t('linkType')} |\n`;
-            md += `|-----------|---------|---------------|\n`;
-            for (const c of connections) {
-              md += `| ${c.direction} | ${c.label} | ${c.linkLabel || '-'} |\n`;
+          if (insights.bridges.length > 0) {
+            out += `### ${this.t('bridgeElements')} (${insights.bridges.length})\n\n`;
+            out += `*${this.t('bridgeDescription')}*\n\n`;
+            for (const id of insights.bridges.slice(0, 10)) {
+              const el = elements.find(e => e.id === id);
+              out += `- ${el?.label || this.t('unknown')}\n`;
             }
-            md += `\n`;
+            out += `\n`;
           }
 
-          // Files
-          if (elAssets.length > 0) {
-            md += `**${this.t('files')} (${elAssets.length})**\n\n`;
-            md += `| ${this.t('fileType')} | ${this.t('filename')} | ${this.t('size')} |\n`;
-            md += `|------|---------|--------|\n`;
-            for (const a of elAssets) {
-              md += `| ${a.mimeType.split('/')[0]} | ${a.filename} | ${(a.size / 1024).toFixed(1)} Ko |\n`;
+          if (insights.isolated.length > 0) {
+            out += `### ${this.t('isolatedElements')} (${insights.isolated.length})\n\n`;
+            out += `*${this.t('isolatedDescription')}*\n\n`;
+            for (const id of insights.isolated.slice(0, 10)) {
+              const el = elements.find(e => e.id === id);
+              out += `- ${el?.label || this.t('unknown')}\n`;
             }
-            md += `\n`;
+            if (insights.isolated.length > 10) {
+              out += `- ${this.t('andMore', { count: insights.isolated.length - 10 })}\n`;
+            }
+            out += `\n`;
           }
-
-          md += `---\n\n`;
         }
-      }
-    }
+        return out;
+      },
+      timeline: () => {
+        let out = '';
+        if (options.includeTimeline && allEvents.length > 0) {
+          out += `## ${this.t('timeline')} (${allEvents.length} ${this.t('events').toLowerCase()})\n\n`;
+          out += `| ${this.t('date')} | ${this.t('element')} | ${this.t('event')} | ${this.t('details')} |\n`;
+          out += `|------|---------|-----------|----------|\n`;
+          for (const ev of allEvents) {
+            const dateStr = formatEventWhen(ev, locale);
+            const location = ev.geo && ev.geo.type === 'point' ? `[${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
+            const details = [ev.description, location].filter(Boolean).join(' ');
+            out += `| ${dateStr} | ${ev.elementLabel} | ${ev.label} | ${details || '-'} |\n`;
+          }
+          out += `\n`;
+        }
+        return out;
+      },
+      elements: () => {
+        let out = '';
+        if (options.includeElements) {
+          out += `## ${this.t('elements')} (${elements.length})\n\n`;
+
+          const writeList = (list: Element[], tagLevel: string) => {
+            if (options.groupElementsByTag) {
+              const tagGroups = this.groupByTags(list, locale);
+              for (const [tag, tagElements] of Object.entries(tagGroups)) {
+                out += `${tagLevel} ${tag} (${tagElements.length})\n\n`;
+                out += this.renderElementsTableMarkdown(tagElements, assets, options);
+              }
+            } else {
+              out += this.renderElementsTableMarkdown(list, assets, options);
+            }
+          };
+          // The elements of the scope first, then those linked to them
+          const { primary, linked } = this.splitPrimary(sortedElements, options);
+          writeList(primary, '###');
+          if (linked.length > 0) {
+            out += `### ${this.t('linkedElements')} (${linked.length})\n\n`;
+            writeList(linked, '####');
+          }
+        }
+        return out;
+      },
+      links: () => {
+        let out = '';
+        if (options.includeLinks && links.length > 0) {
+          out += `## ${this.t('links')} (${links.length})\n\n`;
+          const linkFiles = options.includeFiles;
+          out += `| ${this.t('from')} | ${this.t('to')} | ${this.t('type')} | ${this.t('label')} | ${this.t('notes')} |${linkFiles ? ` ${this.t('files')} |` : ''}\n`;
+          out += `|----|------|------|-------|-------|${linkFiles ? '-------|' : ''}\n`;
+          for (const link of links) {
+            const fromEl = elements.find(e => e.id === link.fromId);
+            const toEl = elements.find(e => e.id === link.toId);
+            const arrow = link.directed ? '→' : '↔';
+            const files = linkFiles ? ` ${this.ownerAssets(link.assetIds, assets).map(a => a.filename).join(', ') || '-'} |` : '';
+            out += `| ${fromEl?.label || '?'} | ${toEl?.label || '?'} | ${arrow} | ${link.label || '-'} | ${link.notes || '-'} |${files}\n`;
+          }
+          out += `\n`;
+        }
+        return out;
+      },
+      files: () => {
+        let out = '';
+        if (options.includeFiles && totalFiles > 0) {
+          out += `## ${this.t('attachedFiles')} (${totalFiles})\n\n`;
+          out += `| ${this.t('attachedTo')} | ${this.t('filename')} | ${this.t('fileType')} | ${this.t('size')} |\n`;
+          out += `|---------|---------|------|--------|\n`;
+          const owners = [
+            ...elements.map(el => ({ caption: el.label, assetIds: el.assetIds })),
+            ...links.map(lk => ({ caption: this.linkCaption(lk, elements), assetIds: lk.assetIds ?? [] })),
+          ];
+          for (const owner of owners) {
+            for (const assetId of owner.assetIds) {
+              const asset = assets.find(a => a.id === assetId);
+              if (asset) {
+                const sizeKB = (asset.size / 1024).toFixed(1);
+                out += `| ${owner.caption} | ${asset.filename} | ${asset.mimeType} | ${sizeKB} Ko |\n`;
+              }
+            }
+          }
+          out += `\n`;
+        }
+        return out;
+      },
+      fiches: () => {
+        let out = '';
+        if (options.includeFiches) {
+          const elementsWithData = sortedElements.filter(hasFiche);
+
+          // The sheets of the scope first, then those of the linked elements
+          const { primary, linked } = this.splitPrimary(elementsWithData, options);
+          if (elementsWithData.length > 0) {
+            if (primary.length > 0) out += `## ${this.t('detailedSheets')} (${primary.length})\n\n`;
+
+            for (const el of [...primary, ...linked]) {
+              if (el === linked[0]) out += `## ${this.t('linkedSheets')} (${linked.length})\n\n`;
+              const connections = links
+                .filter(l => l.fromId === el.id || l.toId === el.id)
+                .map(l => {
+                  const otherId = l.fromId === el.id ? l.toId : l.fromId;
+                  const otherEl = elements.find(e => e.id === otherId);
+                  const direction = l.fromId === el.id ? '→' : '←';
+                  return { label: otherEl?.label || '?', linkLabel: l.label, direction };
+                });
+
+              const elAssets = el.assetIds
+                .map(id => assets.find(a => a.id === id))
+                .filter((a): a is Asset => a !== undefined);
+
+              out += `### ${el.label}\n\n`;
+
+              // Files first: they are what the reader looks at first
+              if (elAssets.length > 0) {
+                out += `**${this.t('files')} (${elAssets.length})**\n\n`;
+                out += `| ${this.t('fileType')} | ${this.t('filename')} | ${this.t('size')} |\n`;
+                out += `|------|---------|--------|\n`;
+                for (const a of elAssets) {
+                  out += `| ${a.mimeType.split('/')[0]} | ${a.filename} | ${(a.size / 1024).toFixed(1)} Ko |\n`;
+                }
+                out += `\n`;
+              }
+
+              // Identity
+              out += `**${this.t('identity')}**\n\n`;
+              out += `| ${this.t('field')} | ${this.t('value')} |\n`;
+              out += `|-------|--------|\n`;
+              out += `| ${this.t('tags')} | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
+              out += `| ${this.evaluationTitle()} | ${this.evaluationText(el)} |\n`;
+              out += `| ${this.t('source')} | ${el.source ? joinSourceLines(sourceToMarkdown(el.source, getSourceSchemeNames()), '<br>') : '-'} |\n`;
+              if (el.notes) {
+                out += `| ${this.t('notes')} | ${el.notes.replace(/\n/g, ' ')} |\n`;
+              }
+              out += `\n`;
+
+              // Properties
+              if (el.properties.length > 0) {
+                out += `**${this.t('properties')} (${el.properties.length})**\n\n`;
+                out += `| ${this.t('property')} | ${this.t('value')} |\n`;
+                out += `|-----------|--------|\n`;
+                for (const p of el.properties) {
+                  out += `| ${p.key} | ${formatPropertyValue(p.value, p.type, locale, p.timeZone)} |\n`;
+                }
+                out += `\n`;
+              }
+
+              // Events
+              if (el.events.length > 0) {
+                out += `**${this.t('events')} (${el.events.length})**\n\n`;
+                out += `| ${this.t('date')} | ${this.t('event')} | ${this.t('details')} |\n`;
+                out += `|------|-----------|----------|\n`;
+                for (const ev of el.events) {
+                  const dateStr = formatEventWhen(ev, locale);
+                  const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
+                  out += `| ${dateStr} | ${ev.label} | ${ev.description || '-'}${geo} |\n`;
+                }
+                out += `\n`;
+              }
+
+              // Connections
+              if (connections.length > 0) {
+                out += `**${this.t('relations')} (${connections.length})**\n\n`;
+                out += `| ${this.t('direction')} | ${this.t('element')} | ${this.t('linkType')} |\n`;
+                out += `|-----------|---------|---------------|\n`;
+                for (const c of connections) {
+                  out += `| ${c.direction} | ${c.label} | ${c.linkLabel || '-'} |\n`;
+                }
+                out += `\n`;
+              }
+
+
+              out += `---\n\n`;
+            }
+          }
+        }
+        return out;
+      },
+    };
+    for (const section of normalizeSectionOrder(options.sectionOrder)) md += parts[section]();
+
+    md += `---\n\n*${this.t('generatedBy')} - [${ZERONEURONE_URL.replace('https://', '')}](${ZERONEURONE_URL})*\n`;
 
     return md;
   }
@@ -1087,6 +1279,49 @@ class ReportService {
 
     const blob = new Blob([content], { type: mimeType });
     downloadBlob(blob, filename + extension);
+  }
+
+  /** Elements whose name leads to their sheet: those with one, when sheets and links are asked for */
+  private linkedFicheIds(elements: Element[], options: ReportOptions): ReadonlySet<string> {
+    if (!options.includeFiches || !options.ficheLinks) return new Set();
+    return new Set(elements.filter(hasFiche).map(el => el.id));
+  }
+
+  private ficheAnchor(id: string): string {
+    return ficheAnchor(id);
+  }
+
+  /** An element's name, leading to its sheet when it has one in this report */
+  private elementRefHTML(id: string, label: string): string {
+    const text = escapeHtml(label);
+    return this.ficheIds.has(id) ? `<a class="fiche-link" href="#${this.ficheAnchor(id)}">${text}</a>` : text;
+  }
+
+  /** Text as the inside of a CSS string: quotes, backslashes and line ends escaped, no tag closing */
+  private cssString(text: string): string {
+    return text.replace(/[\\"]/g, '\\$&').replace(/[\r\n]+/g, ' ').replace(/</g, '\\3C ');
+  }
+
+  /**
+   * Elements split into those of the scope and those only linked to it, each
+   * keeping its order. Without a scope, all are in the first part.
+   */
+  private splitPrimary(elements: Element[], options: ReportOptions): { primary: Element[]; linked: Element[] } {
+    if (!options.primaryElementIds) return { primary: elements, linked: [] };
+    const ids = new Set(options.primaryElementIds);
+    return {
+      primary: elements.filter(el => ids.has(el.id)),
+      linked: elements.filter(el => !ids.has(el.id)),
+    };
+  }
+
+  /** A map or timeline capture (SVG markup) as an image section */
+  private svgSectionHTML(heading: string, svg: string | null | undefined): string {
+    if (!svg) return '';
+    return `  <section class="screenshot-section">
+    <h2>${escapeHtml(heading)}</h2>
+    <img src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" alt="${escapeHtml(heading)}" style="width:100%;height:auto;border:1px solid var(--color-border)" />
+  </section>\n`;
   }
 
   /** A link named by its ends, as in the files lists: "A → B (label)" */

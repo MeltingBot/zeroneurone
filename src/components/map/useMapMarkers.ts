@@ -54,6 +54,8 @@ export interface MapMarkersParams {
   editingZoneId: string | null;
   eventZoneIds: ReadonlySet<string>;
   showDensity: boolean;
+  /** Every marker on its own, none gathered in a cluster (synthesis capture) */
+  unclustered: boolean;
   anonymousMode: boolean;
   hideMedia: boolean;
   showCommentBadges: boolean;
@@ -102,6 +104,7 @@ export function useMapMarkers({
   editingZoneId,
   eventZoneIds,
   showDensity,
+  unclustered,
   anonymousMode,
   hideMedia,
   showCommentBadges,
@@ -231,7 +234,8 @@ export function useMapMarkers({
     sc.load(basePoints);
     superclusterRef.current = sc;
 
-    const clusters = sc.getClusters([-180, -90, 180, 90], zoom);
+    // Past the maxZoom of the index, no point is gathered
+    const clusters = sc.getClusters([-180, -90, 180, 90], unclustered ? 21 : zoom);
 
     // Build cluster state lookup — keyed by markerKey, with parallel elementId→firstMarkerKey
     // so consumers that still reason per-element (link layers) can resolve to a state entry.
@@ -589,7 +593,7 @@ export function useMapMarkers({
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, getThumbnail, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t, clusterMarkersRef, clusterMetaRef, clusterStateRef, dragStartGeoRef, effectiveGeoElementsRef, elementIdToFirstMarkerKeyRef, eventPopoverHandlersRef, forceSpiderfyKeysRef, isDraggingRef, mapRef, markerOffsetsRef, markersRef, setClusteringVersion, setDraggedPositions, superclusterRef, toggleOffMapRef, openElementMenuRef]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, getThumbnail, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, unclustered, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded, t, clusterMarkersRef, clusterMetaRef, clusterStateRef, dragStartGeoRef, effectiveGeoElementsRef, elementIdToFirstMarkerKeyRef, eventPopoverHandlersRef, forceSpiderfyKeysRef, isDraggingRef, mapRef, markerOffsetsRef, markersRef, setClusteringVersion, setDraggedPositions, superclusterRef, toggleOffMapRef, openElementMenuRef]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
