@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "De termijn begint bij de afsluiting.",
       "unusedFiles": "Ongebruikte bestanden",
       "unusedFilesErase": "Wissen",
+      "unusedFilesRestore": "Herstellen",
       "unusedFilesConfirm": "Deze bestanden wissen?"
     },
     "placeholders": {

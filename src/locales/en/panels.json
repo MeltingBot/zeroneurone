@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "The period will start at closure.",
       "unusedFiles": "Unused files",
       "unusedFilesErase": "Erase",
+      "unusedFilesRestore": "Restore",
       "unusedFilesConfirm": "Erase these files?"
     },
     "placeholders": {

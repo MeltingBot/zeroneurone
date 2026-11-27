@@ -70,6 +70,7 @@
       "retentionStartsAtClosure": "El termini començarà en el tancament.",
       "unusedFiles": "Fitxers sense ús",
       "unusedFilesErase": "Esborra",
+      "unusedFilesRestore": "Restaura",
       "unusedFilesConfirm": "Vols esborrar aquests fitxers?"
     },
     "placeholders": {

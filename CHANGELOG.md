@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.96.2
+
+### Fichiers inutilisés
+
+- **Restaurer** — les fichiers cochés reviennent sur le canvas, un
+  élément par fichier au centre de la vue (annulable par Ctrl+Z).
+- **Actions en icônes** — Restaurer et Effacer passent en petites
+  icônes avec infobulle, sur la ligne « Tout sélectionner ».
+
 ## 2.96.1
 
 ### Synthèse
