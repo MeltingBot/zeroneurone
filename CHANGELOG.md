@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.96.4
+
+### Documentation
+
+- **ZNQuery** — la page des requêtes devient une section de quatre
+  pages, en français et en anglais : prise en main sur un dossier
+  d'exemple téléchargeable, référence du langage (priorité des
+  opérateurs, champ absent, multi-valeurs, casse, dates, erreurs),
+  recettes prêtes à copier, résultats et intégrations.
+- **Compagnon mobile** — sept captures (partage, ouverture, liste,
+  saisie, carte, chronologie, fiche), QR code flouté. Le shortcode
+  `screenshot` accepte une largeur.
+
 ## 2.96.3
 
 ### Documentation
