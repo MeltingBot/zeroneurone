@@ -1,7 +1,8 @@
-{{/* Capture d'écran : {{< screenshot "fichier.png" "Légende" >}} (fichiers dans static/images/screenshots/) */}}
+{{/* Capture d'écran : {{< screenshot "fichier.webp" "Légende" [largeur en px] >}} (fichiers dans static/images/screenshots/). La largeur sert aux captures de téléphone et de fenêtres étroites : l'image est alors centrée. */}}
 {{ $file := .Get 0 }}
 {{ $alt := .Get 1 | default "" }}
-<figure class="screenshot">
-  <img src="{{ printf "images/screenshots/%s" $file | relURL }}" alt="{{ $alt }}" loading="lazy" style="max-width:100%;border:1px solid var(--gray-200,#e8e3db);border-radius:4px;">
+{{ $width := .Get 2 }}
+<figure class="screenshot"{{ if $width }} style="text-align:center;"{{ end }}>
+  <img src="{{ printf "images/screenshots/%s" $file | relURL }}" alt="{{ $alt }}" loading="lazy" style="max-width:100%;{{ with $width }}width:{{ . }}px;{{ end }}border:1px solid var(--gray-200,#e8e3db);border-radius:4px;">
   {{ with $alt }}<figcaption style="font-size:0.85em;opacity:0.75;text-align:center;">{{ . }}</figcaption>{{ end }}
 </figure>
