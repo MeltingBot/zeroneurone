@@ -126,6 +126,8 @@ A bit. Each dossier remembers everything you moved, tweaked, deleted. And up to 
 
 Diet plan: **hard drive** icon → **Maintenance** → **Purge all**. Content doesn't move a pixel, only the dead weight goes. Shared dossiers are exempt. The details are in [Storage and maintenance]({{< relref "reference/maintenance" >}}).
 
+A file nothing uses anymore is erased from the browser. It stays listed as long as an undo (Ctrl+Z) can still bring it back, or in a shared dossier: dossier panel → **Retention** → **Unused files**, to restore it or erase it for good.
+
 ---
 
 ## Usage
@@ -183,7 +185,7 @@ Yes. Dossier panel → **Information evaluation** → pick **Europol (4x4)** or 
 
 ### Can I write my report in it?
 
-Yes. **Report** tab in the side panel: Markdown sections, and `[[` to cite an element. The reference becomes a clickable link to the graph — no more "see appendix 3, page 12". Starting from a blank page? **Synthesis** (toolbar) generates a structured first draft from the dossier, in HTML, Markdown or JSON, or straight to print.
+Yes. **Report** tab in the side panel: Markdown sections, and `[[` to cite an element. The reference becomes a clickable link to the graph — no more "see appendix 3, page 12". Starting from a blank page? **Synthesis** (toolbar) generates a structured first draft, for the whole dossier, one tab or your selection, in HTML, DOCX, Markdown or JSON+, or straight to print (PDF). Details in [Synthesis]({{< relref "features/synthesis" >}}).
 
 ### Filters aren't enough anymore, now what?
 
@@ -201,6 +203,10 @@ The second one brings back everything within two links of a suspect. Queries can
 ZeroNeurone reads it for you. Attach a photo, a PDF, an Office document or an email: it digs in and shows you what it found. Camera, capture date, author, modification dates, sender, an email's originating IP, tracking pixels... Tick what you care about, it becomes properties of the element.
 
 A photo with **GPS coordinates**? The element lands straight on the map. Clicked "Ignore" a bit fast? The **information** icon on the file row runs the analysis again. And it all happens in your browser: your files don't go anywhere to be analysed. Details in [Attached files]({{< relref "features/attachments" >}}).
+
+### Can I attach a file to a link?
+
+Yes. Select the link: its detail panel has a **Files** section, just like an element. Ideal for the document that proves the relationship itself: the sale deed, the transfer order, the call log. A paperclip and the file count appear under the link's label, and search finds the link through the file's text. Details in [Attached files]({{< relref "features/attachments#files-on-a-link" >}}).
 
 ### Can I move the side panel?
 
@@ -221,6 +227,10 @@ Chronological view of all dated elements. With a **density heatmap** showing the
 ### Does it find things on its own?
 
 Only when you ask. The **Insights** panel puts the graph through the wringer: **clusters** (who hangs out with whom), **centrality** (who's in the middle of everything), **bridges** (those linking two worlds), isolated elements, cycles. Select two elements and it finds the **shortest path** between them. It shows, you conclude. Details in [Graph analysis]({{< relref "features/graph-analysis" >}}).
+
+### Can it suggest links to me?
+
+Yes, on demand. **Suggestions** tab (light bulb icon) → **Analyze dossier**. It spots what your data hints at: two people with the same phone number, two suspects in the same place at the same time... It **suggests**, you **decide**: nothing is created without your approval. The analysis never runs in the background, and only covers displayed elements (filters and tab included). Details in [Link suggestions]({{< relref "features/link-suggestions" >}}).
 
 ### My graph looks like a plate of spaghetti
 
@@ -246,7 +256,7 @@ Details in [Filters and views]({{< relref "features/filters-views" >}}).
 
 ### I have an Excel, does it work?
 
-Export your Excel to CSV first, then import the CSV. ZeroNeurone doesn't speak `.xlsx`.
+Yes. Import your `.xlsx` (or LibreOffice's `.ods`) directly. If the columns are ZeroNeurone's own, everything lands as is; otherwise a wizard lets you map each column to a field. Only the old `.xls` (Excel 97-2003) has to be saved as `.xlsx` first. Details in [Import]({{< relref "import-export/import#spreadsheet-xlsx-ods" >}}).
 
 ### Is it compatible with Gephi?
 
@@ -413,7 +423,7 @@ Yes. Retention duration, policy and starting point, as well as closure, are sync
 
 ### Mobile version?
 
-No. The interface is designed for a screen, a keyboard, a mouse. On phone it would be frustrating for everyone.
+No app, but a **mobile companion**: open a shared dossier in your phone's browser, nothing to install. In the field, a photo, note or position goes straight into the dossier; you can also browse elements, the map and the timeline, tweak notes, tags and properties, and comment. Actual analysis remains a big-screen affair. The dossier must be shared in **asynchronous mode**, then you scan the QR code. Details in [Mobile companion]({{< relref "features/mobile-companion" >}}).
 
 ### An API?
 
