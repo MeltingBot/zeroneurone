@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.96.3
+
+### Documentation
+
+- **Captures d'écran** — 24 captures (WebP) sur 21 pages, en français
+  et en anglais : interface, éléments et liens, vues, filtres,
+  analyses, rapport, synthèse, recherche, requêtes, tags, import,
+  export, collaboration. Shortcode `screenshot`.
+- **FAQ** — compagnon mobile, import XLSX/ODS et formats de la
+  synthèse mis à jour ; nouvelles questions sur les suggestions de
+  liens, les fichiers joints à un lien et les fichiers inutilisés.
+
 ## 2.96.2
 
 ### Fichiers inutilisés
