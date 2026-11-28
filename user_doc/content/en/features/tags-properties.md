@@ -7,6 +7,10 @@ weight: 2
 
 Enrich your elements and links with **tags** for categorization and **properties** for structured data.
 
+{{< screenshot "tags-manager.png" "Tag manager" >}}
+
+{{< screenshot "properties-section.png" "Element Properties section" >}}
+
 ## Tags
 
 Tags are free-form labels to categorize your elements and links.

@@ -8,6 +8,8 @@ weight: 2
 Intégrez des données externes ou restaurez un dossier sauvegardé.
 
 
+{{< screenshot "import-dialog.png" "Fenêtre d'import" >}}
+
 ## Ouvrir l'import
 
 Menu **⋯** → **Importer**

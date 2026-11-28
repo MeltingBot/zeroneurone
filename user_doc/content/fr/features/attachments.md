@@ -8,6 +8,8 @@ weight: 7
 Attachez des documents, images et fichiers à vos éléments, et à vos liens, pour enrichir votre documentation.
 
 
+{{< screenshot "files-section.png" "Section Fichiers d'un élément" >}}
+
 ## Formats supportés
 
 | Catégorie | Formats |
