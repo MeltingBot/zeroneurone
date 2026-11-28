@@ -8,6 +8,8 @@ weight: 2
 ZeroNeurone's interface is organized around the central canvas, with contextual side panels.
 
 
+{{< screenshot "canvas-overview.webp" "The canvas with its tabs, toolbar and side panel" >}}
+
 ## Main Areas
 
 ### 1. Top Toolbar

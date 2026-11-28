@@ -8,6 +8,8 @@ weight: 1
 Sauvegardez et partagez vos dossiers dans différents formats.
 
 
+{{< screenshot "export-dialog.webp" "Fenêtre d'export" >}}
+
 ## Ouvrir l'export
 
 Menu **⋯** → **Exporter**

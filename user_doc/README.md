@@ -111,12 +111,16 @@ user_doc/
 2. Utiliser le shortcode dans le markdown :
 
 ```markdown
-{{</* screenshot "nom-fichier.png" "Description de l'image" */>}}
+{{</* screenshot "nom-fichier.webp" "Description de l'image" */>}}
 ```
 
-Si l'image n'existe pas, un placeholder est affiché.
+Les captures (WebP, qualité 88) sont prises en français, thème clair, 1440×900, sur un dossier fictif (« Demo Affaire Delmas », généré avec le skill zeroneurone-generator). Les pages EN réutilisent les mêmes images avec une légende traduite.
 
-Voir `static/images/screenshots/README.md` pour la liste des screenshots à créer.
+Le build local passe par Docker (le Hugo snap n'accède pas au thème) :
+
+```bash
+docker run --rm -v "$PWD":/src -v /chemin/sortie:/out hugomods/hugo:exts-0.147.0 hugo --destination /out --minify
+```
 
 ## Ajouter une langue
 

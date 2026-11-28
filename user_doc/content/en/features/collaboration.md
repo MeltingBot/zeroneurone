@@ -8,6 +8,8 @@ weight: 9
 Work together on a dossier in real-time with secure, end-to-end encrypted synchronization.
 
 
+{{< screenshot "share-dialog.webp" "Collaboration dialog" >}}
+
 ## Security Principles
 
 | Aspect | Protection |

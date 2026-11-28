@@ -17,6 +17,8 @@ Les deux grilles normalisées évaluent séparément **la source** et **l'inform
 
 ---
 
+{{< screenshot "confidence-source.webp" "Section Métadonnées : confiance et source" >}}
+
 ## Choisir le modèle d'un dossier
 
 1. Ouvrez un dossier

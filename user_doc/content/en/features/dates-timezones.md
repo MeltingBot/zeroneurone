@@ -7,6 +7,8 @@ weight: 6
 
 ---
 
+{{< screenshot "events-section.webp" "Events section: dated period with time zone" >}}
+
 ## Display Time Zone
 
 All times are shown in the system time zone (computer setting). It is shown in the dossier panel, **Dates** section.

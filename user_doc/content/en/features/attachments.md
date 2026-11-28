@@ -8,6 +8,8 @@ weight: 7
 Attach documents, images, and files to your elements, and to your links, to enrich your documentation.
 
 
+{{< screenshot "files-section.webp" "Element Files section" >}}
+
 ## Supported Formats
 
 | Category | Formats |

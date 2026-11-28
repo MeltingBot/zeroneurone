@@ -9,6 +9,8 @@ Générez des rapports structurés automatiques à partir de votre dossier.
 
 ---
 
+{{< screenshot "synthesis-dialog.webp" "Fenêtre de génération de la synthèse" >}}
+
 ## Accéder à la synthèse
 
 Barre d'outils → Bouton **Synthèse** (icône document)

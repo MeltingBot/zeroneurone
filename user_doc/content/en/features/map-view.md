@@ -7,6 +7,8 @@ weight: 5
 
 Visualize your geolocated elements on an interactive 3D map.
 
+{{< screenshot "map-view.webp" "Map view: geolocated elements, clusters and links" >}}
+
 ## Activate Map View
 
 | Method | Action |

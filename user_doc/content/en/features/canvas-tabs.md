@@ -9,6 +9,8 @@ Organize your dossier into **thematic workspaces**. Each tab contains a subset o
 
 ---
 
+{{< screenshot "canvas-tabs.webp" "Canvas tabs: the \"Flux financiers\" tab fades elements that are not members" >}}
+
 ## Tab Bar
 
 The tab bar appears below the toolbar as soon as at least one tab exists. It always includes the **All** view, which shows every element regardless of tab membership.

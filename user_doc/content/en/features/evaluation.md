@@ -17,6 +17,8 @@ Both standard grids evaluate **the source** and **the information** separately. 
 
 ---
 
+{{< screenshot "confidence-source.webp" "Metadata section: confidence and source" >}}
+
 ## Choose the model of a dossier
 
 1. Open a dossier

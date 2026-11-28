@@ -7,6 +7,8 @@ weight: 4
 
 Organisez un dossier en **onglets thématiques**. Chaque onglet contient un sous-ensemble d'éléments, permettant de scinder un dossier complexe en espaces de travail ciblés (ex : "Flux financiers", "Personnes d'interet", "Lieux").
 
+{{< screenshot "canvas-tabs.webp" "Onglets du canvas : l'onglet « Flux financiers » estompe les éléments qui n'en font pas partie" >}}
+
 ## Barre d'onglets
 
 La barre d'onglets apparait sous la barre d'outils des qu'au moins un onglet existe. Elle affiche :

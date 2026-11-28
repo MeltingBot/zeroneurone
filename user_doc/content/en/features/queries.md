@@ -7,6 +7,8 @@ weight: 4
 
 The **Queries** panel lets you filter your data with a structured language. Two modes are available: a **visual builder** (point and click) and a **text editor** (ZNQuery syntax).
 
+{{< screenshot "query-panel.webp" "Query panel: matching elements are highlighted" >}}
+
 ## Accessing the panel
 
 - **Queries** tab in the side panel

@@ -126,6 +126,8 @@ Un peu. Chaque dossier garde la trace de tout ce que vous avez bougé, retouché
 
 Cure d'amaigrissement : icône **disque dur** → **Maintenance** → **Tout purger**. Le contenu ne bouge pas d'un pixel, seul le superflu part. Les dossiers partagés sont dispensés. Le détail est dans [Stockage et maintenance]({{< relref "reference/maintenance" >}}).
 
+Un fichier que plus rien n'utilise est effacé du navigateur. Il reste listé tant qu'une annulation (Ctrl+Z) peut le rendre, ou dans un dossier partagé : panneau du dossier → **Rétention** → **Fichiers inutilisés**, pour le restaurer ou l'effacer pour de bon.
+
 ---
 
 ## Utilisation
@@ -183,7 +185,7 @@ Des **espaces de travail thématiques** au sein d'un même dossier. Un onglet pa
 
 ### Je peux rédiger mon rapport dedans ?
 
-Oui. Onglet **Rapport** du panneau latéral : des sections en Markdown, et `[[` pour citer un élément. La référence devient un lien cliquable vers le graphe — fini les « cf. annexe 3, page 12 ». Vous partez d'une page blanche ? La **Synthèse** (barre d'outils) génère un premier jet structuré à partir du dossier, en HTML, Markdown ou JSON, ou directement à l'impression.
+Oui. Onglet **Rapport** du panneau latéral : des sections en Markdown, et `[[` pour citer un élément. La référence devient un lien cliquable vers le graphe — fini les « cf. annexe 3, page 12 ». Vous partez d'une page blanche ? La **Synthèse** (barre d'outils) génère un premier jet structuré, pour le dossier entier, un onglet ou votre sélection, en HTML, DOCX, Markdown ou JSON+, ou directement à l'impression (PDF). Détails dans [Synthèse]({{< relref "features/synthesis" >}}).
 
 ### Les filtres ne suffisent plus, je fais comment ?
 
@@ -201,6 +203,10 @@ La deuxième ramène tout ce qui est à deux liens d'un suspect. Les requêtes s
 ZeroNeurone les lit pour vous. Joignez une photo, un PDF, un document Office ou un e-mail : il fouille dedans et vous montre ce qu'il a trouvé. Appareil, date de prise de vue, auteur, dates de modification, expéditeur, IP d'origine d'un mail, pixels de tracking... Vous cochez ce qui vous intéresse, ça devient des propriétés de l'élément.
 
 Une photo avec des **coordonnées GPS** ? L'élément atterrit directement sur la carte. Vous aviez cliqué « Ignorer » un peu vite ? L'icône **information** sur la ligne du fichier relance l'analyse. Et tout se passe dans votre navigateur : vos fichiers ne partent nulle part pour être analysés. Détails dans [Fichiers joints]({{< relref "features/attachments" >}}).
+
+### Je peux joindre un fichier à un lien ?
+
+Oui. Sélectionnez le lien : son panneau de détail a une section **Fichiers**, comme un élément. Idéal pour la pièce qui prouve la relation elle-même : l'acte de vente, l'ordre de virement, le relevé d'appels. Un trombone et le nombre de fichiers s'affichent sous le libellé du lien, et la recherche retrouve le lien grâce au texte du fichier. Détails dans [Fichiers joints]({{< relref "features/attachments#fichiers-sur-un-lien" >}}).
 
 ### Je peux déplacer le panneau latéral ?
 
@@ -221,6 +227,10 @@ Vue chronologique de tous les éléments datés. Avec une **barre de densité** 
 ### Il trouve des choses tout seul ?
 
 Seulement quand vous lui demandez. Le panneau **Insights** passe le graphe à la moulinette : **clusters** (qui traîne avec qui), **centralité** (qui est au milieu de tout), **ponts** (ceux qui relient deux mondes), éléments isolés, cycles. Sélectionnez deux éléments et il trouve le **plus court chemin** entre eux. Il montre, vous concluez. Détails dans [Analyse de graphe]({{< relref "features/graph-analysis" >}}).
+
+### Il peut me proposer des liens ?
+
+Oui, à la demande. Onglet **Suggestions** (icône ampoule) → **Analyser le dossier**. Il repère ce que vos données laissent supposer : deux personnes avec le même numéro de téléphone, deux suspects au même endroit au même moment... Il **propose**, vous **décidez** : rien n'est créé sans votre accord. L'analyse ne tourne jamais en arrière-plan, et ne porte que sur les éléments affichés (filtres et onglet compris). Détails dans [Suggestions de liens]({{< relref "features/link-suggestions" >}}).
 
 ### Mon graphe ressemble à un plat de spaghettis
 
@@ -246,7 +256,7 @@ Détails dans [Filtres et vues]({{< relref "features/filters-views" >}}).
 
 ### J'ai un Excel, ça marche ?
 
-Exportez votre Excel en CSV d'abord, puis importez le CSV. ZeroNeurone ne parle pas le `.xlsx`.
+Oui. Importez directement votre `.xlsx` (ou le `.ods` de LibreOffice). Si les colonnes sont celles de ZeroNeurone, tout arrive tel quel ; sinon un assistant vous laisse relier chaque colonne à un champ. Seul le vieux `.xls` (Excel 97-2003) doit d'abord repasser en `.xlsx`. Détails dans [Import]({{< relref "import-export/import#tableur-xlsx-ods" >}}).
 
 ### C'est compatible avec Gephi ?
 
@@ -413,7 +423,7 @@ Oui. La durée, la politique et le point de départ de la rétention, ainsi que 
 
 ### Version mobile ?
 
-Non. L'interface est pensée pour un écran, un clavier, une souris. Sur téléphone ce serait frustrant pour tout le monde.
+Pas d'application, mais un **compagnon mobile** : on ouvre un dossier partagé dans le navigateur du téléphone, sans rien installer. Sur le terrain, photo, note ou position arrivent directement dans le dossier ; on y consulte aussi les éléments, la carte et la chronologie, on retouche notes, tags et propriétés, on commente. L'analyse à proprement parler reste une affaire de grand écran. Il faut partager le dossier en **mode asynchrone**, puis scanner le QR code. Détails dans [Compagnon mobile]({{< relref "features/mobile-companion" >}}).
 
 ### Une API ?
 

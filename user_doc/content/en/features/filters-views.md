@@ -7,6 +7,10 @@ weight: 3
 
 Master the complexity of your data with **filters** and save your configurations with **views**.
 
+{{< screenshot "filters-panel.webp" "Filters tab: quick filters, tabs, tags" >}}
+
+{{< screenshot "views-panel.webp" "Views tab: display options and saved views" >}}
+
 ## Filters
 
 The **Filters** panel allows you to show or hide elements based on various criteria.

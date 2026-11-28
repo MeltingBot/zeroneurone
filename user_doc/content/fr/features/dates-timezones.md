@@ -7,6 +7,8 @@ weight: 6
 
 ---
 
+{{< screenshot "events-section.webp" "Section Événements : période datée avec fuseau" >}}
+
 ## Fuseau d'affichage
 
 Toutes les heures sont affichées dans le fuseau du système (réglage de l'ordinateur). Il est indiqué dans le panneau du dossier, section **Dates**.
