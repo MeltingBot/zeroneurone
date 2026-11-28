@@ -9,6 +9,8 @@ ZeroNeurone repère les liens que vos données laissent supposer : deux personne
 
 ---
 
+{{< screenshot "link-suggestions.png" "Onglet Suggestions : paramètres d'analyse" >}}
+
 ## Lancer l'analyse
 
 - Onglet **Suggestions** du panneau latéral (icône ampoule) → **Analyser le dossier**

@@ -9,6 +9,8 @@ Generate automatic structured reports from your dossier.
 
 ---
 
+{{< screenshot "synthesis-dialog.png" "Synthesis generation dialog" >}}
+
 ## Access synthesis
 
 Toolbar → **Synthesis** button (document icon)

@@ -9,6 +9,8 @@ Affichez les elements du dossier, ou ses liens, dans un tableau triable et filtr
 
 ---
 
+{{< screenshot "matrix-view.png" "Vue matrice : tableau des éléments et de leurs propriétés" >}}
+
 ## Acces
 
 Basculez en vue matrice via le **selecteur de vue** dans la barre d'outils (icone tableau) ou appuyez sur **4**.

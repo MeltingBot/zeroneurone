@@ -9,6 +9,8 @@ Display the dossier's elements, or its links, in a sortable, filterable spreadsh
 
 ---
 
+{{< screenshot "matrix-view.png" "Matrix view: elements table with properties" >}}
+
 ## Access
 
 Switch to matrix view using the **view selector** in the top toolbar (table icon) or press **4**.

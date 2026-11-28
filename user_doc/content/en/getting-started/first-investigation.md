@@ -7,6 +7,8 @@ weight: 1
 
 A **dossier** in ZeroNeurone is a complete workspace containing your elements, links, views, and attached files.
 
+{{< screenshot "dossier-list.png" "Investigation list" >}}
+
 ## Create a Dossier
 
 1. From the home page, click **New Dossier**

@@ -8,6 +8,8 @@ weight: 4
 ZeroNeurone utilise des algorithmes de théorie des graphes pour révéler des patterns cachés dans vos données.
 
 
+{{< screenshot "insights-panel.png" "Onglet Analyses : rôles, clusters, chemins" >}}
+
 ## Panneau Insights
 
 Accédez aux analyses via le panneau **Insights** (icône graphique à gauche).

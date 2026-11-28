@@ -7,6 +7,10 @@ weight: 1
 
 **Elements** and **links** are the fundamental building blocks of your analysis in ZeroNeurone.
 
+{{< screenshot "element-detail.png" "Element detail: identity, notes, tags" >}}
+
+{{< screenshot "link-detail.png" "Link detail: linked elements, label, direction" >}}
+
 ## Elements
 
 An element represents any concept: person, place, organization, object, event, document...

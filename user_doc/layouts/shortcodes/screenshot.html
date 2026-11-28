@@ -1,0 +1,7 @@
+{{/* Capture d'écran : {{< screenshot "fichier.png" "Légende" >}} (fichiers dans static/images/screenshots/) */}}
+{{ $file := .Get 0 }}
+{{ $alt := .Get 1 | default "" }}
+<figure class="screenshot">
+  <img src="{{ printf "images/screenshots/%s" $file | relURL }}" alt="{{ $alt }}" loading="lazy" style="max-width:100%;border:1px solid var(--gray-200,#e8e3db);border-radius:4px;">
+  {{ with $alt }}<figcaption style="font-size:0.85em;opacity:0.75;text-align:center;">{{ . }}</figcaption>{{ end }}
+</figure>

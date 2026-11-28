@@ -7,6 +7,10 @@ weight: 3
 
 Maîtrisez la complexité de vos données avec les **filtres** et sauvegardez vos configurations avec les **vues**.
 
+{{< screenshot "filters-panel.png" "Onglet Filtres : filtres rapides, onglets, tags" >}}
+
+{{< screenshot "views-panel.png" "Onglet Vues : affichage et vues sauvegardées" >}}
+
 ## Filtres
 
 Le panneau **Filtres** permet d'afficher ou masquer des éléments selon différents critères.

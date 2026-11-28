@@ -9,6 +9,8 @@ ZeroNeurone spots the links your data points to: two people with the same phone 
 
 ---
 
+{{< screenshot "link-suggestions.png" "Suggestions tab: analysis settings" >}}
+
 ## Run the Analysis
 
 - **Suggestions** tab of the side panel (light bulb icon) → **Analyze dossier**
