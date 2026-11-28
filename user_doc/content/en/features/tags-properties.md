@@ -7,9 +7,9 @@ weight: 2
 
 Enrich your elements and links with **tags** for categorization and **properties** for structured data.
 
-{{< screenshot "tags-manager.png" "Tag manager" >}}
+{{< screenshot "tags-manager.webp" "Tag manager" >}}
 
-{{< screenshot "properties-section.png" "Element Properties section" >}}
+{{< screenshot "properties-section.webp" "Element Properties section" >}}
 
 ## Tags
 

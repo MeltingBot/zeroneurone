@@ -8,7 +8,7 @@ weight: 9
 Travaillez à plusieurs sur un dossier en temps réel avec synchronisation sécurisée et chiffrée de bout en bout.
 
 
-{{< screenshot "share-dialog.png" "Fenêtre de collaboration" >}}
+{{< screenshot "share-dialog.webp" "Fenêtre de collaboration" >}}
 
 ## Principes de sécurité
 

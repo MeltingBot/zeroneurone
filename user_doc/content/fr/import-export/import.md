@@ -8,7 +8,7 @@ weight: 2
 Intégrez des données externes ou restaurez un dossier sauvegardé.
 
 
-{{< screenshot "import-dialog.png" "Fenêtre d'import" >}}
+{{< screenshot "import-dialog.webp" "Fenêtre d'import" >}}
 
 ## Ouvrir l'import
 

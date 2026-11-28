@@ -7,9 +7,9 @@ weight: 3
 
 Master the complexity of your data with **filters** and save your configurations with **views**.
 
-{{< screenshot "filters-panel.png" "Filters tab: quick filters, tabs, tags" >}}
+{{< screenshot "filters-panel.webp" "Filters tab: quick filters, tabs, tags" >}}
 
-{{< screenshot "views-panel.png" "Views tab: display options and saved views" >}}
+{{< screenshot "views-panel.webp" "Views tab: display options and saved views" >}}
 
 ## Filters
 

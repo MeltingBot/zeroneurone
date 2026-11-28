@@ -9,7 +9,7 @@ ZeroNeurone spots the links your data points to: two people with the same phone 
 
 ---
 
-{{< screenshot "link-suggestions.png" "Suggestions tab: analysis settings" >}}
+{{< screenshot "link-suggestions.webp" "Suggestions tab: analysis settings" >}}
 
 ## Run the Analysis
 

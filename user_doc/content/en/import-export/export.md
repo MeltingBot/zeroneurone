@@ -8,7 +8,7 @@ weight: 1
 Save and share your dossiers in various formats.
 
 
-{{< screenshot "export-dialog.png" "Export dialog" >}}
+{{< screenshot "export-dialog.webp" "Export dialog" >}}
 
 ## Open Export
 

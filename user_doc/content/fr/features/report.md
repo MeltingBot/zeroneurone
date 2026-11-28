@@ -9,7 +9,7 @@ Rédigez des rapports structurés avec références aux éléments de votre doss
 
 ---
 
-{{< screenshot "report-panel.png" "Panel Rapport avec références cliquables" >}}
+{{< screenshot "report-panel.webp" "Panel Rapport avec références cliquables" >}}
 
 ## Accéder au rapport
 

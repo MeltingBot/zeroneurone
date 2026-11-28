@@ -7,9 +7,9 @@ weight: 2
 
 Enrichissez vos éléments et liens avec des **tags** pour la catégorisation et des **propriétés** pour les données structurées.
 
-{{< screenshot "tags-manager.png" "Gestionnaire de tags" >}}
+{{< screenshot "tags-manager.webp" "Gestionnaire de tags" >}}
 
-{{< screenshot "properties-section.png" "Section Propriétés d'un élément" >}}
+{{< screenshot "properties-section.webp" "Section Propriétés d'un élément" >}}
 
 ## Tags
 

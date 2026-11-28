@@ -7,7 +7,7 @@ weight: 4
 
 Le panneau **Requêtes** permet de filtrer vos données avec un langage structuré. Deux modes sont disponibles : un **builder visuel** (clic) et un **éditeur texte** (syntaxe ZNQuery).
 
-{{< screenshot "query-panel.png" "Panneau Requête : les éléments correspondants sont mis en évidence" >}}
+{{< screenshot "query-panel.webp" "Panneau Requête : les éléments correspondants sont mis en évidence" >}}
 
 ## Accéder au panneau
 

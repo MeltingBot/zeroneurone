@@ -7,9 +7,9 @@ weight: 1
 
 Les **éléments** et **liens** sont les briques fondamentales de votre analyse dans ZeroNeurone.
 
-{{< screenshot "element-detail.png" "Détail d'un élément : identité, notes, tags" >}}
+{{< screenshot "element-detail.webp" "Détail d'un élément : identité, notes, tags" >}}
 
-{{< screenshot "link-detail.png" "Détail d'un lien : éléments liés, libellé, direction" >}}
+{{< screenshot "link-detail.webp" "Détail d'un lien : éléments liés, libellé, direction" >}}
 
 ## Éléments
 

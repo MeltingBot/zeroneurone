@@ -9,7 +9,7 @@ Affichez les elements du dossier, ou ses liens, dans un tableau triable et filtr
 
 ---
 
-{{< screenshot "matrix-view.png" "Vue matrice : tableau des éléments et de leurs propriétés" >}}
+{{< screenshot "matrix-view.webp" "Vue matrice : tableau des éléments et de leurs propriétés" >}}
 
 ## Acces
 

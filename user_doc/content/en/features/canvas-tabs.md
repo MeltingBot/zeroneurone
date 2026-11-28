@@ -9,7 +9,7 @@ Organize your dossier into **thematic workspaces**. Each tab contains a subset o
 
 ---
 
-{{< screenshot "canvas-tabs.png" "Canvas tabs: the \"Flux financiers\" tab fades elements that are not members" >}}
+{{< screenshot "canvas-tabs.webp" "Canvas tabs: the \"Flux financiers\" tab fades elements that are not members" >}}
 
 ## Tab Bar
 

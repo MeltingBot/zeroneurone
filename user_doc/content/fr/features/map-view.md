@@ -7,7 +7,7 @@ weight: 5
 
 Visualisez vos éléments géolocalisés sur une carte interactive avec rendu 3D.
 
-{{< screenshot "map-view.png" "Vue carte : éléments géolocalisés, regroupements et liens" >}}
+{{< screenshot "map-view.webp" "Vue carte : éléments géolocalisés, regroupements et liens" >}}
 
 ## Activer la vue carte
 

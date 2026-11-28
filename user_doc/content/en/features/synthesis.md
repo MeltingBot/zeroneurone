@@ -9,7 +9,7 @@ Generate automatic structured reports from your dossier.
 
 ---
 
-{{< screenshot "synthesis-dialog.png" "Synthesis generation dialog" >}}
+{{< screenshot "synthesis-dialog.webp" "Synthesis generation dialog" >}}
 
 ## Access synthesis
 

@@ -7,7 +7,7 @@ weight: 1
 
 Un **dossier** dans ZeroNeurone est un espace de travail complet contenant vos éléments, liens, vues et fichiers joints.
 
-{{< screenshot "dossier-list.png" "Liste des dossiers" >}}
+{{< screenshot "dossier-list.webp" "Liste des dossiers" >}}
 
 ## Créer un dossier
 

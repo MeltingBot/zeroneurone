@@ -8,7 +8,7 @@ weight: 6
 Visualisez la dimension temporelle de vos données avec la vue chronologique.
 
 
-{{< screenshot "timeline-view.png" "Timeline en mode dispersion" >}}
+{{< screenshot "timeline-view.webp" "Timeline en mode dispersion" >}}
 
 ## Activer la timeline
 

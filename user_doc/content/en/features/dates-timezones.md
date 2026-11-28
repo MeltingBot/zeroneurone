@@ -7,7 +7,7 @@ weight: 6
 
 ---
 
-{{< screenshot "events-section.png" "Events section: dated period with time zone" >}}
+{{< screenshot "events-section.webp" "Events section: dated period with time zone" >}}
 
 ## Display Time Zone
 

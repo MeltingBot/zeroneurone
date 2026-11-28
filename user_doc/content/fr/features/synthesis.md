@@ -9,7 +9,7 @@ Générez des rapports structurés automatiques à partir de votre dossier.
 
 ---
 
-{{< screenshot "synthesis-dialog.png" "Fenêtre de génération de la synthèse" >}}
+{{< screenshot "synthesis-dialog.webp" "Fenêtre de génération de la synthèse" >}}
 
 ## Accéder à la synthèse
 

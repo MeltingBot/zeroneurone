@@ -9,7 +9,7 @@ Display the dossier's elements, or its links, in a sortable, filterable spreadsh
 
 ---
 
-{{< screenshot "matrix-view.png" "Matrix view: elements table with properties" >}}
+{{< screenshot "matrix-view.webp" "Matrix view: elements table with properties" >}}
 
 ## Access
 

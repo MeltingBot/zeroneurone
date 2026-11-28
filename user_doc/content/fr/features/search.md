@@ -8,7 +8,7 @@ weight: 8
 Trouvez rapidement n'importe quel élément ou lien dans votre dossier.
 
 
-{{< screenshot "search.png" "Recherche rapide (Ctrl+K)" >}}
+{{< screenshot "search.webp" "Recherche rapide (Ctrl+K)" >}}
 
 ## Recherche rapide
 

@@ -8,7 +8,7 @@ weight: 8
 Quickly find any element or link in your dossier.
 
 
-{{< screenshot "search.png" "Quick search (Ctrl+K)" >}}
+{{< screenshot "search.webp" "Quick search (Ctrl+K)" >}}
 
 ## Quick Search
 

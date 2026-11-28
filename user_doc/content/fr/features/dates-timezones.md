@@ -7,7 +7,7 @@ weight: 6
 
 ---
 
-{{< screenshot "events-section.png" "Section Événements : période datée avec fuseau" >}}
+{{< screenshot "events-section.webp" "Section Événements : période datée avec fuseau" >}}
 
 ## Fuseau d'affichage
 

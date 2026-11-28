@@ -8,7 +8,7 @@ weight: 6
 Visualize the temporal dimension of your data with the chronological view.
 
 
-{{< screenshot "timeline-view.png" "Timeline in scatter mode" >}}
+{{< screenshot "timeline-view.webp" "Timeline in scatter mode" >}}
 
 ## Activate Timeline
 

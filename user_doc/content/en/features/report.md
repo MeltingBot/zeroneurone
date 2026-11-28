@@ -9,7 +9,7 @@ Write structured reports with references to elements in your dossier.
 
 ---
 
-{{< screenshot "report-panel.png" "Report panel with clickable references" >}}
+{{< screenshot "report-panel.webp" "Report panel with clickable references" >}}
 
 ## Access the report
 

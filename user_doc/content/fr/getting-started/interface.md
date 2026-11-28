@@ -8,7 +8,7 @@ weight: 2
 L'interface de ZeroNeurone est organisée autour du canvas central, avec des panneaux latéraux contextuels.
 
 
-{{< screenshot "canvas-overview.png" "Le canvas avec ses onglets, sa barre d'outils et le panneau latéral" >}}
+{{< screenshot "canvas-overview.webp" "Le canvas avec ses onglets, sa barre d'outils et le panneau latéral" >}}
 
 ## Zones principales
 

@@ -8,7 +8,7 @@ weight: 4
 ZeroNeurone uses graph theory algorithms to reveal hidden patterns in your data.
 
 
-{{< screenshot "insights-panel.png" "Analysis tab: roles, clusters, paths" >}}
+{{< screenshot "insights-panel.webp" "Analysis tab: roles, clusters, paths" >}}
 
 ## Insights Panel
 

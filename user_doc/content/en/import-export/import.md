@@ -8,7 +8,7 @@ weight: 2
 Integrate external data or restore a saved dossier.
 
 
-{{< screenshot "import-dialog.png" "Import dialog" >}}
+{{< screenshot "import-dialog.webp" "Import dialog" >}}
 
 ## Open Import
 
