@@ -9,6 +9,10 @@ Ouvrez un dossier partagé sur un téléphone, depuis le navigateur, sans instal
 
 Le compagnon passe par la [collaboration]({{< relref "collaboration" >}}) : le dossier doit être partagé **en mode asynchrone**.
 
+Cinq onglets en bas de l'écran : **Éléments**, **Carte**, **Chronologie**, **Commentaires** et **Nouveau** (la capture).
+
+{{< screenshot "companion-list.webp" "Le compagnon : la liste des éléments du dossier" "280" >}}
+
 ---
 
 ## Ouvrir un dossier sur le téléphone
@@ -17,6 +21,10 @@ Le compagnon passe par la [collaboration]({{< relref "collaboration" >}}) : le d
 2. Dans la fenêtre de partage, cliquez **Ouvrir sur mobile** : un QR code s'affiche
 3. Scannez-le avec l'appareil photo du téléphone
 4. Indiquez votre nom (il apparaît aux autres participants), puis **Ouvrir sur ce téléphone**
+
+{{< screenshot "companion-qr.webp" "Fenêtre de partage sur le poste : le QR code (flouté ici) ouvre le compagnon" "300" >}}
+
+{{< screenshot "companion-join.webp" "Première ouverture sur le téléphone : nom et code d'écriture" "280" >}}
 
 Le dossier est ensuite listé à l'adresse `/m/` : plus besoin du QR code pour le rouvrir.
 
@@ -45,6 +53,8 @@ Relais auto-hébergé : cette remise à un appareil seul demande le relais de la
 ## Nouvel élément
 
 Onglet **Nouveau** : seul un titre ou une note suffit ; photos, fichiers et position sont facultatifs. Les actions sont des icônes ; un appui long ou un lecteur d'écran en donne le nom.
+
+{{< screenshot "companion-new.webp" "Formulaire Nouveau : titre, note, source, et position du téléphone" "280" >}}
 
 | Champ | Usage |
 |-------|-------|
@@ -81,6 +91,10 @@ Sans réseau, la capture est enregistrée sur le téléphone et l'en-tête affic
 | **Chronologie** | Périodes et événements des éléments, liens datés, groupés par jour (la date de collecte n'y figure pas, comme sur le poste). En haut, une frise des années (ou des mois) avec le nombre d'entrées de chacune : la toucher saute à la période. Les boutons à droite inversent l'ordre (plus récent d'abord) et sautent à une date. Toucher un événement ouvre la fiche sur cet événement |
 | **Commentaires** | Commentaires ouverts du dossier (résolus sur demande) ; résoudre, rouvrir, supprimer (après confirmation) |
 
+{{< screenshot "companion-map.webp" "Carte : éléments localisés et liens entre eux" "280" >}}
+
+{{< screenshot "companion-timeline.webp" "Chronologie : événements groupés par jour, frise des mois en haut" "280" >}}
+
 ### Onglets et tags
 
 Sous la recherche, les onglets du canvas : en toucher un n'affiche que ses éléments (liste, carte, chronologie, recherche). Le bouton de réglage à droite crée, renomme et supprime les onglets ; la suppression laisse les éléments dans le dossier.
@@ -95,6 +109,8 @@ La barre de recherche reste en haut de tous les écrans. La recherche est celle 
 
 Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 
+{{< screenshot "companion-element.webp" "Fiche d'un élément : tags, note, informations et onglets" "280" >}}
+
 - **Pièces jointes** : la miniature est toujours là. Un fichier ajouté depuis un poste est demandé à un poste en ligne quand vous le touchez (une barre montre la réception), puis gardé sur le téléphone. Sans poste en ligne : **Disponible quand un poste est en ligne**
 
 - **Libellé** : le crayon à côté du nom, en haut, le modifie
@@ -108,7 +124,7 @@ Tags, note, photos (toucher pour agrandir), informations, liens, commentaires.
 - **+** à droite des **Liens** : choisir l'autre élément (recherche, ou création sur place, qui reçoit la date de collecte), le sens, le libellé et la source
 - **Modifier un lien** : le crayon d'une ligne de lien change son libellé et son sens, vu depuis l'élément affiché, ou le supprime (corbeille, deux appuis)
 - **Supprimer** : **Supprimer l'élément**, en bas de la fiche, le supprime avec ses liens, après confirmation
- Le **graphe du voisinage** montre l'élément au centre et ses voisins ; **1** / **2** règle le nombre de niveaux, pincer pour zoomer, toucher un voisin pour ouvrir sa fiche. Le bouton retour du téléphone revient à l'élément précédent.
+- **Voisinage** : le **graphe du voisinage** montre l'élément au centre et ses voisins ; **1** / **2** règle le nombre de niveaux, pincer pour zoomer, toucher un voisin pour ouvrir sa fiche. Le bouton retour du téléphone revient à l'élément précédent.
 
 ---
 

@@ -9,6 +9,10 @@ Open a shared dossier on a phone, in the browser, with nothing to install: captu
 
 The companion relies on [collaboration]({{< relref "collaboration" >}}): the dossier must be shared **in async mode**.
 
+Five tabs at the bottom of the screen: **Elements**, **Map**, **Timeline**, **Comments** and **New** (the capture).
+
+{{< screenshot "companion-list.webp" "The companion: the dossier's element list" "280" >}}
+
 ---
 
 ## Opening a dossier on the phone
@@ -17,6 +21,10 @@ The companion relies on [collaboration]({{< relref "collaboration" >}}): the dos
 2. In the share window, click **Open on mobile**: a QR code appears
 3. Scan it with the phone's camera
 4. Enter your name (shown to the other participants), then **Open on this phone**
+
+{{< screenshot "companion-qr.webp" "Share window on the computer: the QR code (blurred here) opens the companion" "300" >}}
+
+{{< screenshot "companion-join.webp" "First opening on the phone: name and write code" "280" >}}
 
 The dossier is then listed at the `/m/` address: no QR code needed to reopen it.
 
@@ -45,6 +53,8 @@ When the dossier is first opened on the phone, a computer that has it open must 
 ## New element
 
 **New** tab: a title or a note is enough; photos, files and location are optional. Actions are icons; a long press or a screen reader gives their name.
+
+{{< screenshot "companion-new.webp" "New form: title, note, source, and the phone's location" "280" >}}
 
 | Field | Use |
 |-------|-----|
@@ -81,6 +91,10 @@ Without a network, the capture is stored on the phone and the header shows **N p
 | **Timeline** | Element periods and events, dated links, grouped by day (the collection date is left out, as on the computer). At the top, a strip of years (or months) with how many entries each holds: tap one to jump to it. The buttons on the right reverse the order (newest first) and jump to a date. Tapping an event opens the element on it |
 | **Comments** | Open comments of the dossier (resolved ones on request); resolve, reopen, delete (after a confirmation) |
 
+{{< screenshot "companion-map.webp" "Map: located elements and the links between them" "280" >}}
+
+{{< screenshot "companion-timeline.webp" "Timeline: events grouped by day, months strip at the top" "280" >}}
+
 ### Tabs and tags
 
 Below the search, the canvas tabs: tap one to show its elements only (list, map, timeline, search). The settings button on the right creates, renames and deletes tabs; deleting one leaves its elements in the dossier.
@@ -95,6 +109,8 @@ The search bar stays at the top of every screen. Search works as on the computer
 
 Tags, note, photos (tap to enlarge), details, links, comments.
 
+{{< screenshot "companion-element.webp" "Element page: tags, note, details and tabs" "280" >}}
+
 - **Attachments**: the thumbnail is always there. A file added from a computer is asked from a computer online when you tap it (a bar shows it arriving), then kept on the phone. With no computer online: **Available when a computer is online**
 
 - **Label**: the pencil beside the name, at the top, edits it
@@ -108,7 +124,7 @@ Tags, note, photos (tap to enlarge), details, links, comments.
 - **+** right of **Links**: pick the other element (search, or create it on the spot, with the collection date), the direction, the label and the source
 - **Edit a link**: the pencil on a link row changes its label and its direction, as seen from the element shown, or deletes it (bin, tapped twice)
 - **Delete**: **Delete element**, at the bottom of the page, deletes it with its links, after confirmation
- The **neighbourhood graph** shows the element in the centre with its neighbours; **1** / **2** sets the number of levels, pinch to zoom, tap a neighbour to open it. The phone's back button returns to the previous element.
+- **Neighbourhood**: the **neighbourhood graph** shows the element in the centre with its neighbours; **1** / **2** sets the number of levels, pinch to zoom, tap a neighbour to open it. The phone's back button returns to the previous element.
 
 ---
 
